@@ -5,6 +5,8 @@
 > 本模块基于开源项目 [`coolzyd9107/oplus_coloros17_status_bar_force_show_seconds`](https://github.com/coolzyd9107/oplus_coloros17_status_bar_force_show_seconds)（仅适配 ColorOS 17、去除原生显秒的 5 分钟时限）扩展而来，新增了"点击切换"与"ColorOS 15/16 自渲染显秒"能力。
 >
 > 本仓库：<https://github.com/kelebao/ColorOS15ClockSeconds>
+>
+> ✅ **已在 ColorOS 15 真机实测可用**（状态栏显秒、点击切换、下拉通知栏均正常）。
 
 ---
 
@@ -79,8 +81,6 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 ./gradlew assembleDebug
 ```
 
-
-
 ### 国内网络（Google Maven 不可达）
 
 若 `dl.google.com/dl/android/maven2` 连不通（AGP / AndroidX 会拉取失败），
@@ -102,8 +102,6 @@ settingsEvaluated { settings ->
 
 > SDK 仓库（`dl.google.com/android/repository`）一般仍可访问，缺失的 Platform/Build-Tools 会由 AGP 自动下载。
 
-
-
 ## 备份与续开发（重要）
 
 ### 必须保留的文件
@@ -120,8 +118,6 @@ settingsEvaluated { settings ->
 | 清单 | `app/src/main/AndroidManifest.xml` | 权限、Activity |
 | 文档 | `README.md` | 安装 / 构建 / 省电说明 |
 | CI | `.github/workflows/release.yml` | 打 tag 出签名包 |
-
-
 
 ## 排查
 
