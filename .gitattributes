@@ -1,0 +1,15 @@
+# 统一换行符，避免跨平台/CI 出错
+* text=auto
+
+# gradlew 是 shell 脚本：必须保持 LF，否则 Linux/macOS/CI 上无法执行
+gradlew text eol=lf
+
+# Windows 批处理保持 CRLF
+*.bat text eol=crlf
+
+# 二进制文件不做换行转换
+*.jar binary
+*.keystore binary
+*.p12 binary
+*.png binary
+*.jpg binary

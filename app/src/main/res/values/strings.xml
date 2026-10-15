@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">ColorOS 时钟显秒</string>
+    <string name="module_description">在状态栏时钟显示秒，点击时钟可切换显秒开关，适配 ColorOS 15 及以上。</string>
+
+    <string name="settings_title">ColorOS 时钟显秒</string>
+    <string name="settings_status_title">当前状态</string>
+    <string name="settings_enabled">显秒：已开启</string>
+    <string name="settings_disabled">显秒：已关闭</string>
+    <string name="settings_gesture_title">切换手势</string>
+    <string name="settings_gesture_click">单击时钟</string>
+    <string name="settings_gesture_long_press">长按时钟</string>
+    <string name="settings_hint">提示：修改后需重启 SystemUI 或重启设备生效。若单击与下拉通知栏冲突，请改用长按手势。</string>
+    <string name="settings_refresh">刷新状态</string>
+</resources>

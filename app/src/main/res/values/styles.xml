@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 仅使用系统框架控件，不依赖 Material 组件库，避免额外依赖解析风险。 -->
+    <style name="Theme.ColorOSClockSeconds" parent="@android:style/Theme.DeviceDefault.DayNight" />
+</resources>
