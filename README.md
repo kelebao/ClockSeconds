@@ -130,13 +130,21 @@ settingsEvaluated { settings ->
 
 ### 项目之外、最容易漏掉的两样 ⚠️
 
-1. **`C:\Users\HSG\.gradle\init.gradle`** —— 阿里云镜像配置，是**本项目能在本机构建成功的关键**。
+1. **`%USERPROFILE%\.gradle\init.gradle`**（即 `C:\Users\<你的用户名>\.gradle\init.gradle`）—— 阿里云镜像配置，是**在国内网络下构建成功的关键**。
    重装系统或换机器后必须重建，否则 Google Maven 拉不下来、构建直接失败。
 2. **签名密钥**（仅当以后要发布 release）：密钥库放项目 `.secrets/`（已被 `.gitignore` 忽略），
    另需在 GitHub 仓库配置 4 个 Secrets。**密钥丢失后无法覆盖安装旧版本，务必单独备份。**
 
 
-> 也可直接用 Android Studio 打开该目录，并把 **Gradle JDK** 选为 `C:\Users\HSG\.jdks\jbr-21.0.11`
+### 下次继续开发
+
+```bash
+cd <项目目录>\ColorOS15ClockSeconds
+set JAVA_HOME=C:\Users\<你的用户名>\.jdks\jbr-21.x.x
+gradlew.bat assembleDebug
+```
+
+> 也可直接用 Android Studio 打开该目录，并把 **Gradle JDK** 选为上面那个 JDK 21
 > （**不要**用 Android Studio 自带的 JBR 25）。
 
 ## 排查
