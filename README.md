@@ -3,6 +3,8 @@
 一个 LSPosed 模块：让状态栏（左上角）时钟显示**秒**，并支持**点击时钟切换显秒开关**，适配 **ColorOS 15 及以上**（OPPO / 一加 / 真我）。
 
 > 本模块基于开源项目 [`coolzyd9107/oplus_coloros17_status_bar_force_show_seconds`](https://github.com/coolzyd9107/oplus_coloros17_status_bar_force_show_seconds)（仅适配 ColorOS 17、去除原生显秒的 5 分钟时限）扩展而来，新增了"点击切换"与"ColorOS 15/16 自渲染显秒"能力。
+>
+> 本仓库：<https://github.com/kelebao/ColorOS15ClockSeconds>
 
 ---
 
