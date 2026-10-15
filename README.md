@@ -8,6 +8,15 @@
 
 ---
 
+## 下载安装
+
+从 [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) 页面下载最新版 `app-release.apk`，然后：
+
+1. 安装 APK（需允许"安装未知来源应用"）
+2. 在 **LSPosed** 中启用本模块
+3. 作用域勾选：**系统界面（`com.android.systemui`）** 与 **设置（`com.android.settings`）**
+4. 重启这两个进程（或重启手机）
+
 ## 功能
 
 | 功能 | 说明 |
@@ -135,17 +144,6 @@ settingsEvaluated { settings ->
 2. **签名密钥**（仅当以后要发布 release）：密钥库放项目 `.secrets/`（已被 `.gitignore` 忽略），
    另需在 GitHub 仓库配置 4 个 Secrets。**密钥丢失后无法覆盖安装旧版本，务必单独备份。**
 
-
-### 下次继续开发
-
-```bash
-cd <项目目录>\ColorOS15ClockSeconds
-set JAVA_HOME=C:\Users\<你的用户名>\.jdks\jbr-21.x.x
-gradlew.bat assembleDebug
-```
-
-> 也可直接用 Android Studio 打开该目录，并把 **Gradle JDK** 选为上面那个 JDK 21
-> （**不要**用 Android Studio 自带的 JBR 25）。
 
 ## 排查
 
