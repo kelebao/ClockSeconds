@@ -135,13 +135,6 @@ settingsEvaluated { settings ->
 2. **签名密钥**（仅当以后要发布 release）：密钥库放项目 `.secrets/`（已被 `.gitignore` 忽略），
    另需在 GitHub 仓库配置 4 个 Secrets。**密钥丢失后无法覆盖安装旧版本，务必单独备份。**
 
-### 下次继续开发
-
-```bash
-cd C:\Users\HSG\Documents\AIKF\ColorOS15ClockSeconds
-set JAVA_HOME=C:\Users\HSG\.jdks\jbr-21.0.11
-gradlew.bat assembleDebug
-```
 
 > 也可直接用 Android Studio 打开该目录，并把 **Gradle JDK** 选为 `C:\Users\HSG\.jdks\jbr-21.0.11`
 > （**不要**用 Android Studio 自带的 JBR 25）。
