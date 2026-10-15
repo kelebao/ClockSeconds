@@ -1,4 +1,4 @@
-package com.aikf.coloros15clockseconds;
+package io.github.kelebao.colorosclockseconds;
 
 import android.content.ContentResolver;
 import android.provider.Settings;

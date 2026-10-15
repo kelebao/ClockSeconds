@@ -1,4 +1,4 @@
-package com.aikf.coloros15clockseconds.hook;
+package io.github.kelebao.colorosclockseconds.hook;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -23,7 +23,7 @@ import io.github.libxposed.api.XposedInterface.ExceptionMode;
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam;
 
-import com.aikf.coloros15clockseconds.ClockSecondsConfig;
+import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
 
 /**
  * 状态栏时钟显秒模块主入口（新版 libxposed API 102）。

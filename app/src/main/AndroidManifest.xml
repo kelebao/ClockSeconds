@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 用于设置页写入显秒/手势状态；普通应用需通过 adb 授予：
-         adb shell pm grant com.aikf.coloros15clockseconds android.permission.WRITE_SECURE_SETTINGS -->
+         adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
     <application

@@ -58,7 +58,7 @@
 
 > 配置页写入 `Settings.Secure` 需要 `WRITE_SECURE_SETTINGS`。普通应用需手动授予：
 > ```bash
-> adb shell pm grant com.aikf.coloros15clockseconds android.permission.WRITE_SECURE_SETTINGS
+> adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
 > 未授予时配置页仍可读取状态，但请用"点击状态栏时钟"完成切换
 > （该动作运行在 SystemUI 进程内，天然具备权限）。

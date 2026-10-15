@@ -1,4 +1,4 @@
-package com.aikf.coloros15clockseconds.settings;
+package io.github.kelebao.colorosclockseconds.settings;
 
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -14,7 +14,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.aikf.coloros15clockseconds.ClockSecondsConfig;
+import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
 
 /**
  * 模块设置页（从 LSPosed 管理器打开，桌面不生成图标）。
@@ -30,7 +30,7 @@ public final class ModuleSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(com.aikf.coloros15clockseconds.R.string.settings_title);
+        setTitle(io.github.kelebao.colorosclockseconds.R.string.settings_title);
         setContentView(buildContentView());
         refreshStatus();
     }
@@ -49,7 +49,7 @@ public final class ModuleSettingsActivity extends Activity {
         root.setPadding(pad, pad, pad, pad);
 
         TextView statusTitle = new TextView(this);
-        statusTitle.setText(com.aikf.coloros15clockseconds.R.string.settings_status_title);
+        statusTitle.setText(io.github.kelebao.colorosclockseconds.R.string.settings_status_title);
         statusTitle.setTextSize(16f);
         statusTitle.setPadding(0, 0, 0, dp(8));
         root.addView(statusTitle);
@@ -60,12 +60,12 @@ public final class ModuleSettingsActivity extends Activity {
         root.addView(statusView);
 
         Button refresh = new Button(this);
-        refresh.setText(com.aikf.coloros15clockseconds.R.string.settings_refresh);
+        refresh.setText(io.github.kelebao.colorosclockseconds.R.string.settings_refresh);
         refresh.setOnClickListener(v -> refreshStatus());
         root.addView(refresh);
 
         TextView gestureTitle = new TextView(this);
-        gestureTitle.setText(com.aikf.coloros15clockseconds.R.string.settings_gesture_title);
+        gestureTitle.setText(io.github.kelebao.colorosclockseconds.R.string.settings_gesture_title);
         gestureTitle.setTextSize(16f);
         gestureTitle.setPadding(0, dp(24), 0, dp(8));
         root.addView(gestureTitle);
@@ -73,10 +73,10 @@ public final class ModuleSettingsActivity extends Activity {
         RadioGroup group = new RadioGroup(this);
         RadioButton click = new RadioButton(this);
         click.setId(1);
-        click.setText(com.aikf.coloros15clockseconds.R.string.settings_gesture_click);
+        click.setText(io.github.kelebao.colorosclockseconds.R.string.settings_gesture_click);
         RadioButton longPress = new RadioButton(this);
         longPress.setId(2);
-        longPress.setText(com.aikf.coloros15clockseconds.R.string.settings_gesture_long_press);
+        longPress.setText(io.github.kelebao.colorosclockseconds.R.string.settings_gesture_long_press);
         group.addView(click);
         group.addView(longPress);
 
@@ -104,7 +104,7 @@ public final class ModuleSettingsActivity extends Activity {
         root.addView(group);
 
         TextView hint = new TextView(this);
-        hint.setText(com.aikf.coloros15clockseconds.R.string.settings_hint);
+        hint.setText(io.github.kelebao.colorosclockseconds.R.string.settings_hint);
         hint.setTextSize(13f);
         hint.setGravity(Gravity.START);
         hint.setPadding(0, dp(24), 0, 0);
@@ -120,8 +120,8 @@ public final class ModuleSettingsActivity extends Activity {
         boolean nativeSupported = nativeCapabilityLikelyPresent();
         boolean enabled = ClockSecondsConfig.isEnabled(getContentResolver(), nativeSupported);
         statusView.setText(enabled
-                ? com.aikf.coloros15clockseconds.R.string.settings_enabled
-                : com.aikf.coloros15clockseconds.R.string.settings_disabled);
+                ? io.github.kelebao.colorosclockseconds.R.string.settings_enabled
+                : io.github.kelebao.colorosclockseconds.R.string.settings_disabled);
     }
 
     private boolean writeGesture(ContentResolver resolver, int gesture) {
