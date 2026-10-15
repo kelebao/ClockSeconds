@@ -79,11 +79,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 ./gradlew assembleDebug
 ```
 
-APK 生成于 `app/build/outputs/apk/debug/app-debug.apk`。
 
-> ✅ 本项目已在 **JDK 21 + Android SDK 35** 下实测编译通过，产物约 **37 KB**。
-> ⚠️ Android Studio 自带的 JBR 若为 **JDK 25**，Gradle 8.x 不支持（Gradle 8 最高支持到 JDK 23），
-> 请改用 JDK 17/21（Android Studio 通常在 `C:\Users\<用户>\.jdks\jbr-21.x.x` 另装了一份 JDK 21）。
 
 ### 国内网络（Google Maven 不可达）
 
@@ -107,13 +103,6 @@ settingsEvaluated { settings ->
 > SDK 仓库（`dl.google.com/android/repository`）一般仍可访问，缺失的 Platform/Build-Tools 会由 AGP 自动下载。
 
 
-## 兼容性与已知局限
-
-- ✅ **已实测编译通过**（JDK 21 + Android SDK 35），可产出可安装的 debug APK。
-- ⚠️ **尚未在真机上运行验证**（当前无 ColorOS 真机），运行时行为需按测试用例确认。
-- 自渲染路径依赖 ColorOS 定制时钟类的**方法名与候选类名**（见 `ClockSecondsConfig.CLOCK_CLASS_CANDIDATES`）。
-  若某机型方法名不同，需要按日志（TAG `ColorOSClockSeconds`）补充候选类名/方法名。
-- 单击时钟与"下拉通知栏"在同一热区，个别机型可能需要改用长按手势。
 
 ## 备份与续开发（重要）
 
@@ -132,17 +121,6 @@ settingsEvaluated { settings ->
 | 文档 | `README.md` | 安装 / 构建 / 省电说明 |
 | CI | `.github/workflows/release.yml` | 打 tag 出签名包 |
 
-### 可以删除（下次构建自动重建）
-
-- `build/`、`app/build/`、`.gradle/` —— 编译产物与缓存，删掉不影响任何东西
-- `local.properties` —— 仅记录本机 SDK 路径（`sdk.dir=D\:\Android\Sdk`），换机器改这一行即可
-
-### 项目之外、最容易漏掉的两样 ⚠️
-
-1. **`%USERPROFILE%\.gradle\init.gradle`**（即 `C:\Users\<你的用户名>\.gradle\init.gradle`）—— 阿里云镜像配置，是**在国内网络下构建成功的关键**。
-   重装系统或换机器后必须重建，否则 Google Maven 拉不下来、构建直接失败。
-2. **签名密钥**（仅当以后要发布 release）：密钥库放项目 `.secrets/`（已被 `.gitignore` 忽略），
-   另需在 GitHub 仓库配置 4 个 Secrets。**密钥丢失后无法覆盖安装旧版本，务必单独备份。**
 
 
 ## 排查
