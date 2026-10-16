@@ -3,6 +3,8 @@ package io.github.kelebao.colorosclockseconds;
 import android.content.ContentResolver;
 import android.provider.Settings;
 
+import java.lang.reflect.Method;
+
 /**
  * 模块配置与状态读写。
  *
@@ -86,5 +88,38 @@ public final class ClockSecondsConfig {
     /** 写入切换手势偏好。 */
     public static void setGesture(ContentResolver resolver, int gesture) {
         Settings.Secure.putInt(resolver, TOGGLE_GESTURE_KEY, gesture);
+    }
+
+    /**
+     * 读取 ColorOS 大版本号（如 {@code "15.0"} / {@code "17.0"} -> 15 / 17）。
+     *
+     * <p>原生显秒去时限逻辑仅在 ColorOS 17+ 上验证过；15/16 上系统同名的
+     * {@code ClockSecondsController} 类存在但行为不同，hook 后会导致 SystemUI 崩溃。
+     * 因此模块需要区分版本，仅在 17+ 启用原生路径。读不到版本号时返回 -1，
+     * 交由调用方保守处理（不走原生路径）。</p>
+     */
+    public static int getColorOSMajorVersion() {
+        String[] keys = {
+                "ro.oplus.version",
+                "ro.build.version.oplus",
+                "persist.oplus.version",
+        };
+        try {
+            Class<?> sp = Class.forName("android.os.SystemProperties");
+            Method get = sp.getDeclaredMethod("get", String.class, String.class);
+            for (String key : keys) {
+                String ver = (String) get.invoke(null, key, "");
+                if (ver != null && !ver.isEmpty()) {
+                    String major = ver.split("\\.")[0].trim();
+                    int v = Integer.parseInt(major);
+                    if (v > 0) {
+                        return v;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 反射失败（隐藏 API 不可用等），交给调用方保守处理
+        }
+        return -1;
     }
 }

@@ -93,11 +93,19 @@ public final class ClockSecondsModule extends XposedModule {
 
     @Override
     public void onPackageLoaded(PackageLoadedParam param) {
-        String packageName = param.getPackageName();
-        if (ClockSecondsConfig.SYSTEM_UI_PACKAGE.equals(packageName)) {
-            installSystemUiHooks(param.getDefaultClassLoader());
-        } else if (ClockSecondsConfig.SETTINGS_PACKAGE.equals(packageName)) {
-            installSettingsHooks(param.getDefaultClassLoader());
+        // 最后防线：任何未捕获异常都绝不能冒泡到 LSPosed 框架，
+        // 否则会导致 SystemUI 进程崩溃、触发 LSPosed 安全模式（所有模块失效）。
+        try {
+            String packageName = param.getPackageName();
+            if (ClockSecondsConfig.SYSTEM_UI_PACKAGE.equals(packageName)) {
+                installSystemUiHooks(param.getDefaultClassLoader());
+            } else if (ClockSecondsConfig.SETTINGS_PACKAGE.equals(packageName)) {
+                installSettingsHooks(param.getDefaultClassLoader());
+            }
+        } catch (Throwable fatal) {
+            log(Log.ERROR, TAG,
+                    "FATAL: uncaught exception during package load; aborting to avoid SystemUI crash",
+                    fatal);
         }
     }
 
@@ -106,9 +114,16 @@ public final class ClockSecondsModule extends XposedModule {
     // ==================================================================
 
     private void installSystemUiHooks(ClassLoader classLoader) {
+        int cosMajor = ClockSecondsConfig.getColorOSMajorVersion();
         nativeSupported = ClockSecondsConfig.isNativeSupported(classLoader);
-        log(Log.INFO, TAG, "ColorOS native clock-seconds capability: " + nativeSupported);
-        if (nativeSupported) {
+        // 关键修复：原生去时限逻辑仅在 ColorOS 17+ 验证过。15/16 上系统同名类存在但行为不同，
+        // hook 后会让 SystemUI 崩溃并触发 LSPosed 安全模式。因此仅在 17+ 且确有原生能力时走原生路径；
+        // 其它情况（含版本号读不到）一律走自渲染路径，避免误 hook 造成崩溃。
+        boolean useNativePath = nativeSupported && cosMajor >= 17;
+        log(Log.INFO, TAG, "ColorOS major=" + cosMajor
+                + ", nativeSupported=" + nativeSupported
+                + ", useNativePath=" + useNativePath);
+        if (useNativePath) {
             installNativeLimitRemovalHooks(classLoader);
         }
         installClockViewHooks(classLoader);
@@ -214,13 +229,23 @@ public final class ClockSecondsModule extends XposedModule {
                         .setId(HOOK_CLOCK_SMALL_TIME_ID)
                         .setExceptionMode(ExceptionMode.PROTECTIVE)
                         .intercept(chain -> {
-                            Object self = chain.getThisObject();
-                            attachToggleListenerIfNeeded(self);
-                            if (shouldRenderSeconds(self)) {
-                                ensureTicker(self);
-                                return formatNowWithSeconds(contextOf(self));
+                            try {
+                                Object self = chain.getThisObject();
+                                attachToggleListenerIfNeeded(self);
+                                if (shouldRenderSeconds(self)) {
+                                    ensureTicker(self);
+                                    return formatNowWithSeconds(contextOf(self));
+                                }
+                                return chain.proceed();
+                            } catch (Throwable error) {
+                                // 兜底：任何异常都回退到系统原行为，绝不让状态栏时钟调用方崩溃
+                                log(Log.ERROR, TAG, "getSmallTime intercept failed, fallback to original", error);
+                                try {
+                                    return chain.proceed();
+                                } catch (Throwable ignored) {
+                                    return null;
+                                }
                             }
-                            return chain.proceed();
                         });
                 log(Log.INFO, TAG, "Hooked getSmallTime for seconds rendering");
             } catch (Throwable error) {
@@ -233,14 +258,23 @@ public final class ClockSecondsModule extends XposedModule {
                         .setId(HOOK_CLOCK_UPDATE_ID)
                         .setExceptionMode(ExceptionMode.PROTECTIVE)
                         .intercept(chain -> {
-                            Object result = chain.proceed();
-                            Object self = chain.getThisObject();
-                            attachToggleListenerIfNeeded(self);
-                            if (shouldRenderSeconds(self)) {
-                                ensureTicker(self);
-                                applyTextDirectly(self);
+                            try {
+                                Object result = chain.proceed();
+                                Object self = chain.getThisObject();
+                                attachToggleListenerIfNeeded(self);
+                                if (shouldRenderSeconds(self)) {
+                                    ensureTicker(self);
+                                    applyTextDirectly(self);
+                                }
+                                return result;
+                            } catch (Throwable error) {
+                                log(Log.ERROR, TAG, "updateClock intercept failed, fallback to original", error);
+                                try {
+                                    return chain.proceed();
+                                } catch (Throwable ignored) {
+                                    return null;
+                                }
                             }
-                            return result;
                         });
                 log(Log.INFO, TAG, "Hooked updateClock for seconds rendering");
             } catch (Throwable error) {
