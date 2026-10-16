@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- legacy Xposed API 模块声明（参考 io.github.betterclock）：
+     - 作用域只声明 SystemUI（模块只 hook 系统界面进程）
+     - 入口类在 assets/xposed_init 中指定 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 用于设置页写入显秒/手势状态；普通应用需通过 adb 授予：
-         adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS -->
+
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
     <application
         android:allowBackup="false"
-        android:description="@string/module_description"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/module_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.ColorOSClockSeconds">
+
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="@string/module_description" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="93" />
+        <meta-data
+            android:name="xposedscope"
+            android:value="com.android.systemui" />
+
         <activity
             android:name=".settings.ModuleSettingsActivity"
             android:exported="true"

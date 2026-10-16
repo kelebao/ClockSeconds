@@ -21,14 +21,14 @@ android {
         applicationId = "io.github.kelebao.colorosclockseconds"
         minSdk = 29
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.0.3"
     }
 
     signingConfigs {
         if (hasReleaseSigning) {
             create("release") {
-                storeFile = file(requireNotNull(releaseStoreFile))
+                storeFile = rootProject.file(requireNotNull(releaseStoreFile))
                 storePassword = requireNotNull(releaseStorePassword)
                 keyAlias = requireNotNull(releaseKeyAlias)
                 keyPassword = requireNotNull(releaseKeyPassword)
@@ -52,5 +52,6 @@ android {
 }
 
 dependencies {
-    compileOnly("io.github.libxposed:api:102.0.0")
+    // 改用 legacy Xposed API（与 betterclock 一致，已在 ColorOS 15 真机验证不崩溃）
+    compileOnly("de.robv.android.xposed:api:82")
 }

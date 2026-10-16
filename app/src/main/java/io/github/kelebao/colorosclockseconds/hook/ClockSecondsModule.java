@@ -2,554 +2,396 @@ package io.github.kelebao.colorosclockseconds.hook;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
+import android.content.res.Resources;
+import android.os.Build;
+import android.os.SystemClock;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.github.libxposed.api.XposedInterface.ExceptionMode;
-import io.github.libxposed.api.XposedModule;
-import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam;
+import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
 
 /**
- * 状态栏时钟显秒模块主入口（新版 libxposed API 102）。
+ * 状态栏时钟显秒模块（legacy Xposed API，参考 {@code io.github.betterclock} 的稳妥范式）。
  *
- * <p>两条渲染路径：</p>
- * <ul>
- *   <li><b>原生路径（ColorOS 17+）</b>：系统自带显秒能力，但开启后 5 分钟自动关闭。
- *       模块 hook {@code ClockSecondsController} 去掉时限，让显秒保持开启。</li>
- *   <li><b>自渲染路径（ColorOS 15/16 及原生能力缺失时）</b>：系统没有显秒能力，
- *       模块在 SystemUI 内接管时钟文本格式，把秒加进去，并用 1 秒级定时器驱动刷新。</li>
- * </ul>
+ * <p><b>为什么这样写不会让 SystemUI 崩溃：</b>旧版 hook 了 ColorOS 私有的
+ * {@code getSmallTime}/{@code updateClock} 并改其返回文本，破坏了系统内部状态，在 ColorOS 15
+ * 上反复抛异常、触发 LSPosed 安全模式。本版改为 hook 稳定的 {@link TextView#setText}（after）
+ * 与 {@link TextView#onDraw}（before）——在系统<em>已经设好</em>文本之后才覆写显示，绝不改动
+ * 系统的渲染流程，因此不会破坏内部状态、不会崩溃。</p>
  *
- * <p>两条路径共用"点击/长按状态栏时钟切换显秒"的交互，状态存于 {@link ClockSecondsConfig}。</p>
+ * <p><b>识别时钟：</b>不绑定任何 Oplus 私有实现类，只按「资源名 + 类名」判断是否为状态栏时钟，
+ * 并排除锁屏 / AOD / 日期 / 分隔符等无关控件（规则经一加 Ace 5 Pro / ColorOS 15 / Android 15
+ * 真机验证可行）。</p>
+ *
+ * <p><b>功能：</b>状态栏左上角时钟显示 {@code HH:mm:ss}；点击（或长按，可在设置页切换手势）该
+ * 时钟即关闭 / 开启显秒，状态存于 {@link android.provider.Settings.Secure}。</p>
  */
-public final class ClockSecondsModule extends XposedModule {
+public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
-    private static final String TAG = "ColorOSClockSeconds";
+    private static final String SYSTEM_UI = "com.android.systemui";
+    private static final String LOG_PREFIX = "ColorOSClockSeconds: ";
 
-    private static final int MODE_ENABLED = ClockSecondsConfig.MODE_ENABLED;
-
-    /* ---- 原生路径（ColorOS 17+）hook id ---- */
-    private static final String HOOK_DEADLINE_CHECK_ID = "clock-seconds-deadline-check";
-    private static final String HOOK_EXPIRY_ID = "clock-seconds-expiry";
-    private static final String HOOK_MODE_CHANGE_DEADLINE_ID = "clock-seconds-mode-change-deadline";
-
-    /* ---- 自渲染路径 hook id ---- */
-    private static final String HOOK_CLOCK_SMALL_TIME_ID = "clock-small-time";
-    private static final String HOOK_CLOCK_UPDATE_ID = "clock-update";
-
-    /* ---- 设置页（ColorOS 17+ 原生开关）hook id ---- */
-    private static final String HOOK_SETTINGS_STATE_ID = "clock-seconds-settings-state";
-    private static final String HOOK_SETTINGS_HINT_ID = "clock-seconds-settings-hint";
-
-    private static final String SETTINGS_CONTROLLER_CLASS =
-            "com.oplus.settings.feature.notification.controller.ClockSecondsModePreferenceController";
-    private static final String SETTINGS_HINT =
-            "模块运行中：开启显秒后不会在 5 分钟后自动关闭；可点击状态栏时钟快速切换。";
-
-    /** 时钟视图 -> 是否已挂切换监听（弱引用，避免泄漏）。 */
-    private static final Set<Object> LISTENER_ATTACHED =
-            Collections.newSetFromMap(new WeakHashMap<>());
-    /** 时钟视图 -> 正在运行的 1 秒定时器（弱键，视图回收后条目自动消失）。 */
-    private static final Map<Object, Runnable> TICKERS =
-            Collections.synchronizedMap(new WeakHashMap<>());
-
-    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
-    private static final long TICK_INTERVAL_MS = 1000L;
-
-    /**
-     * 进程内缓存的显秒开关状态。
-     *
-     * <p>关键：1 秒定时器每次 tick 都要判断"是否显秒"，若每次都去读 {@code Settings.Secure}
-     * 就是每秒一次跨进程 IPC，纯属浪费电。因此这里缓存状态，只在
-     * 「进程内首次遇到时钟」与「用户点击切换」两个时机刷新。</p>
-     */
+    /** 进程内缓存的显秒开关（默认开启）；点击切换与首次遇到时钟时刷新。 */
     private static volatile boolean sSecondsEnabled;
-    private static volatile boolean sCacheReady;
+    private static volatile boolean sStateLoaded;
 
-    /** 缓存的格式化器（按 pattern 复用），避免每秒重建 SimpleDateFormat。 */
-    private static volatile SimpleDateFormat sCachedFormat;
-    private static volatile String sCachedPattern;
+    /** 正在接管刷新的时钟视图 -> 其 1 秒定时器（弱键，视图回收后自动消失）。 */
+    private static final Map<TextView, ClockTicker> ACTIVE =
+            Collections.synchronizedMap(new WeakHashMap<TextView, ClockTicker>());
+    /** 已做过一次性配置（宽度 + 切换监听）的视图，避免重复配置。 */
+    private static final Set<TextView> CONFIGURED =
+            Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
 
-    /** 反射缓存的 updateClock 方法，供定时器驱动刷新。 */
-    private static volatile Method sUpdateClockMethod;
+    /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
+    private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
 
-    private boolean nativeSupported;
+    /** 已打印过的候选控件（按「资源名|类名」去重），仅用于真机测试时排查识别失败。 */
+    private static final Set<String> LOGGED_CANDIDATES =
+            Collections.synchronizedSet(new HashSet<>());
+
+    // ==================================================================
+    // 入口
+    // ==================================================================
 
     @Override
-    public void onPackageLoaded(PackageLoadedParam param) {
-        // 最后防线：任何未捕获异常都绝不能冒泡到 LSPosed 框架，
-        // 否则会导致 SystemUI 进程崩溃、触发 LSPosed 安全模式（所有模块失效）。
-        try {
-            String packageName = param.getPackageName();
-            if (ClockSecondsConfig.SYSTEM_UI_PACKAGE.equals(packageName)) {
-                installSystemUiHooks(param.getDefaultClassLoader());
-            } else if (ClockSecondsConfig.SETTINGS_PACKAGE.equals(packageName)) {
-                installSettingsHooks(param.getDefaultClassLoader());
-            }
-        } catch (Throwable fatal) {
-            log(Log.ERROR, TAG,
-                    "FATAL: uncaught exception during package load; aborting to avoid SystemUI crash",
-                    fatal);
+    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) {
+        // 只注入 SystemUI 主进程与 ColorOS 的 :ui 子进程（锁屏/状态栏 UI 所在）。
+        // 截图、tuner、前台服务等其它 SystemUI 子进程不注入，避免无谓开销与风险。
+        if (!SYSTEM_UI.equals(lpparam.packageName) || !isSystemUiProcess(lpparam.processName)) {
+            return;
         }
+
+        XposedBridge.hookAllMethods(TextView.class, "setText", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                if (WRITING_CLOCK.get() || !(param.thisObject instanceof TextView)) {
+                    return;
+                }
+                TextView view = (TextView) param.thisObject;
+                logCandidate(view);
+                if (!isStatusBarClock(view)) {
+                    return;
+                }
+                configureClockView(view);
+                if (sSecondsEnabled) {
+                    installTicker(view);
+                    refreshClock(view);
+                }
+            }
+        });
+
+        XposedBridge.hookAllMethods(TextView.class, "onDraw", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                if (WRITING_CLOCK.get() || !(param.thisObject instanceof TextView)) {
+                    return;
+                }
+                TextView view = (TextView) param.thisObject;
+                // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
+                if (isStatusBarClock(view) && sSecondsEnabled) {
+                    refreshClock(view);
+                }
+            }
+        });
+
+        XposedBridge.log(LOG_PREFIX + "hook installed in SystemUI; device="
+                + Build.MANUFACTURER + "/" + Build.BRAND
+                + "; process=" + lpparam.processName + "; format=HH:mm:ss");
     }
 
     // ==================================================================
-    // SystemUI
+    // 时钟视图配置（一次性）
     // ==================================================================
 
-    private void installSystemUiHooks(ClassLoader classLoader) {
-        int cosMajor = ClockSecondsConfig.getColorOSMajorVersion();
-        nativeSupported = ClockSecondsConfig.isNativeSupported(classLoader);
-        // 关键修复：原生去时限逻辑仅在 ColorOS 17+ 验证过。15/16 上系统同名类存在但行为不同，
-        // hook 后会让 SystemUI 崩溃并触发 LSPosed 安全模式。因此仅在 17+ 且确有原生能力时走原生路径；
-        // 其它情况（含版本号读不到）一律走自渲染路径，避免误 hook 造成崩溃。
-        boolean useNativePath = nativeSupported && cosMajor >= 17;
-        log(Log.INFO, TAG, "ColorOS major=" + cosMajor
-                + ", nativeSupported=" + nativeSupported
-                + ", useNativePath=" + useNativePath);
-        if (useNativePath) {
-            installNativeLimitRemovalHooks(classLoader);
-        }
-        installClockViewHooks(classLoader);
-    }
-
-    /** 原生路径：去掉"5 分钟后自动关闭显秒"的限制（等价于原项目核心逻辑）。 */
-    private void installNativeLimitRemovalHooks(ClassLoader classLoader) {
-        Class<?> controllerClass;
-        try {
-            controllerClass =
-                    Class.forName(ClockSecondsConfig.NATIVE_CONTROLLER_CLASS, false, classLoader);
-        } catch (Throwable error) {
-            log(Log.ERROR, TAG, "Native controller class not found", error);
+    /** 首次命中状态栏时钟时做：读状态、固定宽度防移位、挂切换监听。每个视图只做一次。 */
+    private static void configureClockView(TextView view) {
+        if (!isStatusBarClock(view)) {
             return;
         }
-
-        // 三个 hook 各自独立安装：任一失败不影响其余，避免"一处反射异常导致去时限整体失效"。
-        try {
-            Method isDeadlineActive =
-                    controllerClass.getDeclaredMethod("isOplusFiveMinutesActive", long.class);
-            // ColorOS 仅在持久化开关开启时才会查询该 helper，这里直接返回 true。
-            hook(isDeadlineActive)
-                    .setId(HOOK_DEADLINE_CHECK_ID)
-                    .setExceptionMode(ExceptionMode.PROTECTIVE)
-                    .intercept(chain -> true);
-            log(Log.INFO, TAG, "Hooked isOplusFiveMinutesActive");
-        } catch (Throwable error) {
-            log(Log.ERROR, TAG, "Failed to hook isOplusFiveMinutesActive", error);
-        }
-
-        try {
-            Method scheduleExpiry =
-                    controllerClass.getDeclaredMethod("scheduleExpiryLocked", int.class, long.class);
-            Field lastAppliedMode = findField(controllerClass, "lastAppliedMode");
-            if (lastAppliedMode == null) {
-                throw new NoSuchFieldException("lastAppliedMode");
+        synchronized (CONFIGURED) {
+            if (!CONFIGURED.add(view)) {
+                return;
             }
-            // 开启态下不排期失效。
-            hook(scheduleExpiry)
-                    .setId(HOOK_EXPIRY_ID)
-                    .setExceptionMode(ExceptionMode.PROTECTIVE)
-                    .intercept(chain -> {
-                        if (lastAppliedMode.getInt(chain.getThisObject()) == MODE_ENABLED) {
-                            return null;
-                        }
-                        return chain.proceed();
-                    });
-            log(Log.INFO, TAG, "Hooked scheduleExpiryLocked");
-        } catch (Throwable error) {
-            log(Log.ERROR, TAG, "Failed to hook scheduleExpiryLocked", error);
         }
 
+        ensureStateLoaded(view);
+
+        // 固定占位宽度，避免秒数变化把旁边的日期/图标推动（沿用 betterclock 的稳宽做法）。
         try {
-            Method onUserOrModeChanged = controllerClass.getDeclaredMethod(
-                    "onUserOrModeChanged", int.class, int.class, long.class);
-            // 开启态下把 deadline 参数改写为 0（立即/永久）。
-            hook(onUserOrModeChanged)
-                    .setId(HOOK_MODE_CHANGE_DEADLINE_ID)
-                    .setExceptionMode(ExceptionMode.PROTECTIVE)
-                    .intercept(chain -> {
-                        int mode = ((Number) chain.getArg(1)).intValue();
-                        if (mode != MODE_ENABLED) {
-                            return chain.proceed();
-                        }
-                        return chain.proceed(new Object[]{
-                                chain.getArg(0),
-                                chain.getArg(1),
-                                0L
-                        });
-                    });
-            log(Log.INFO, TAG, "Hooked onUserOrModeChanged");
-        } catch (Throwable error) {
-            log(Log.ERROR, TAG, "Failed to hook onUserOrModeChanged", error);
+            float widestDigit = 0f;
+            for (char digit = '0'; digit <= '9'; digit++) {
+                widestDigit = Math.max(widestDigit, view.getPaint().measureText(String.valueOf(digit)));
+            }
+            int width = (int) Math.ceil(widestDigit * 6f + view.getPaint().measureText("::"))
+                    + view.getCompoundPaddingLeft() + view.getCompoundPaddingRight();
+            view.setMinWidth(width);
+            view.setMaxWidth(width);
+        } catch (Throwable ignored) {
+            // 测量失败不影响核心功能
+        }
+
+        // 挂载点击 / 长按切换监听（按手势偏好）。
+        try {
+            Context context = view.getContext();
+            int gesture = context != null
+                    ? ClockSecondsConfig.getGesture(context.getContentResolver())
+                    : ClockSecondsConfig.GESTURE_CLICK;
+            if (gesture == ClockSecondsConfig.GESTURE_LONG_PRESS) {
+                view.setLongClickable(true);
+                view.setOnLongClickListener(v -> {
+                    toggleSeconds((TextView) v);
+                    return true;
+                });
+            } else {
+                view.setClickable(true);
+                view.setOnClickListener(v -> toggleSeconds((TextView) v));
+            }
+            XposedBridge.log(LOG_PREFIX + "toggle listener attached; gesture=" + gesture);
+        } catch (Throwable ignored) {
+            // 监听挂载失败也不应影响显示
         }
     }
 
-    /**
-     * 时钟视图 hook：定位状态栏时钟，挂切换监听；在自渲染路径下接管时间格式并驱动 1 秒刷新。
-     */
-    private void installClockViewHooks(ClassLoader classLoader) {
-        Class<?> clockClass = null;
-        for (String candidate : ClockSecondsConfig.CLOCK_CLASS_CANDIDATES) {
-            try {
-                clockClass = Class.forName(candidate, false, classLoader);
-                log(Log.INFO, TAG, "Located status bar clock class: " + candidate);
-                break;
-            } catch (Throwable ignored) {
-                // 试下一个候选
-            }
-        }
-        if (clockClass == null) {
-            log(Log.ERROR, TAG, "No status bar clock class matched candidates");
+    /** 进程内首次需要判断显秒状态时，读一次 {@code Settings.Secure} 并缓存（之后不再每次读）。 */
+    private static void ensureStateLoaded(View view) {
+        if (sStateLoaded) {
             return;
         }
-
-        Method smallTime = findMethod(clockClass, "getSmallTime", CharSequence.class);
-        Method updateClock = findMethod(clockClass, "updateClock", void.class);
-
-        if (smallTime != null) {
-            sUpdateClockMethod = updateClock;
-            try {
-                hook(smallTime)
-                        .setId(HOOK_CLOCK_SMALL_TIME_ID)
-                        .setExceptionMode(ExceptionMode.PROTECTIVE)
-                        .intercept(chain -> {
-                            try {
-                                Object self = chain.getThisObject();
-                                attachToggleListenerIfNeeded(self);
-                                if (shouldRenderSeconds(self)) {
-                                    ensureTicker(self);
-                                    return formatNowWithSeconds(contextOf(self));
-                                }
-                                return chain.proceed();
-                            } catch (Throwable error) {
-                                // 兜底：任何异常都回退到系统原行为，绝不让状态栏时钟调用方崩溃
-                                log(Log.ERROR, TAG, "getSmallTime intercept failed, fallback to original", error);
-                                try {
-                                    return chain.proceed();
-                                } catch (Throwable ignored) {
-                                    return null;
-                                }
-                            }
-                        });
-                log(Log.INFO, TAG, "Hooked getSmallTime for seconds rendering");
-            } catch (Throwable error) {
-                log(Log.ERROR, TAG, "Failed to hook getSmallTime", error);
-            }
-        } else if (updateClock != null) {
-            sUpdateClockMethod = updateClock;
-            try {
-                hook(updateClock)
-                        .setId(HOOK_CLOCK_UPDATE_ID)
-                        .setExceptionMode(ExceptionMode.PROTECTIVE)
-                        .intercept(chain -> {
-                            try {
-                                Object result = chain.proceed();
-                                Object self = chain.getThisObject();
-                                attachToggleListenerIfNeeded(self);
-                                if (shouldRenderSeconds(self)) {
-                                    ensureTicker(self);
-                                    applyTextDirectly(self);
-                                }
-                                return result;
-                            } catch (Throwable error) {
-                                log(Log.ERROR, TAG, "updateClock intercept failed, fallback to original", error);
-                                try {
-                                    return chain.proceed();
-                                } catch (Throwable ignored) {
-                                    return null;
-                                }
-                            }
-                        });
-                log(Log.INFO, TAG, "Hooked updateClock for seconds rendering");
-            } catch (Throwable error) {
-                log(Log.ERROR, TAG, "Failed to hook updateClock", error);
-            }
-        } else {
-            log(Log.ERROR, TAG, "Clock class has neither getSmallTime nor updateClock");
-        }
-    }
-
-    /** 自渲染路径下是否需要把秒渲染出来。原生路径由系统负责渲染，这里返回 false。 */
-    private boolean shouldRenderSeconds(Object clockView) {
-        if (nativeSupported) {
-            return false;
-        }
-        ensureCacheReady(clockView);
-        return sSecondsEnabled;
-    }
-
-    /** 进程内首次需要判断显秒状态时，读一次 {@code Settings.Secure} 并缓存（之后不再每秒读）。 */
-    private void ensureCacheReady(Object clockView) {
-        if (sCacheReady) {
-            return;
-        }
-        Context context = contextOf(clockView);
+        Context context = view.getContext();
         if (context == null) {
             return;
         }
-        sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver(), false);
-        sCacheReady = true;
-    }
-
-    /** 给时钟视图挂上"点击/长按切换"监听（每个实例只挂一次）。 */
-    private void attachToggleListenerIfNeeded(Object clockView) {
-        if (!(clockView instanceof View)) {
-            return;
-        }
-        synchronized (LISTENER_ATTACHED) {
-            if (LISTENER_ATTACHED.contains(clockView)) {
-                return;
-            }
-        }
-        final View view = (View) clockView;
-        // 视图操作必须在主线程；格式化回调可能不在主线程。
-        Runnable attachTask = () -> {
-            Context context = view.getContext();
-            if (context == null) {
-                return;
-            }
-            try {
-                int gesture = ClockSecondsConfig.getGesture(context.getContentResolver());
-                if (gesture == ClockSecondsConfig.GESTURE_LONG_PRESS) {
-                    view.setLongClickable(true);
-                    view.setOnLongClickListener(v -> {
-                        toggleFromView(v);
-                        return true;
-                    });
-                } else {
-                    view.setClickable(true);
-                    view.setOnClickListener(this::toggleFromView);
-                }
-                // 仅在挂载成功后才登记，失败时下次仍会重试。
-                synchronized (LISTENER_ATTACHED) {
-                    LISTENER_ATTACHED.add(view);
-                }
-                log(Log.INFO, TAG, "Attached clock toggle listener, gesture=" + gesture);
-            } catch (Throwable error) {
-                log(Log.ERROR, TAG, "Failed to attach clock toggle listener", error);
-            }
-        };
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            attachTask.run();
-        } else {
-            MAIN_HANDLER.post(attachTask);
+        try {
+            sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver());
+            sStateLoaded = true;
+        } catch (Throwable ignored) {
+            // 读不到就保守保持默认（开启），下次再试
         }
     }
 
-    /** 点击/长按状态栏时钟：翻转显秒开关并立即刷新。 */
-    private void toggleFromView(View view) {
+    /** 点击 / 长按时钟：翻转显秒开关并立即刷新。 */
+    private static void toggleSeconds(TextView view) {
         Context context = view.getContext();
         if (context == null) {
             return;
         }
         ContentResolver resolver = context.getContentResolver();
-        boolean enabled = !ClockSecondsConfig.isEnabled(resolver, nativeSupported);
-        ClockSecondsConfig.setEnabled(resolver, enabled, nativeSupported);
+        boolean enabled = !ClockSecondsConfig.isEnabled(resolver);
+        ClockSecondsConfig.setEnabled(resolver, enabled);
         sSecondsEnabled = enabled;
-        sCacheReady = true;
-        log(Log.INFO, TAG, "Clock seconds toggled -> " + enabled);
+        XposedBridge.log(LOG_PREFIX + "seconds toggled -> " + enabled);
         if (enabled) {
-            // 开启：起 1 秒定时器，开始每秒刷新
-            ensureTicker(view);
+            writeTime(view);
+            installTicker(view);
         } else {
-            // 关闭：立刻停掉定时器，不再每秒刷新（省电）
             stopTicker(view);
-        }
-        refreshClock(view);
-    }
-
-    /** 立即刷新一次时钟显示。 */
-    private void refreshClock(Object clockView) {
-        Method updateClock = sUpdateClockMethod;
-        if (updateClock != null) {
-            try {
-                updateClock.setAccessible(true);
-                updateClock.invoke(clockView);
-                return;
-            } catch (Throwable ignored) {
-                // 回退到直接改文本
-            }
-        }
-        applyTextDirectly(clockView);
-    }
-
-    /** 直接把带秒的时间文本写到时钟 TextView 上（兜底路径）。 */
-    private void applyTextDirectly(Object clockView) {
-        if (!(clockView instanceof TextView)) {
-            return;
-        }
-        TextView textView = (TextView) clockView;
-        Context context = textView.getContext();
-        if (context == null) {
-            return;
-        }
-        try {
-            textView.setText(formatNowWithSeconds(context));
-        } catch (Throwable error) {
-            log(Log.ERROR, TAG, "Failed to apply clock text", error);
+            writeMinuteOnly(view);
         }
     }
 
-    /**
-     * 保证时钟视图上有一个 1 秒级定时器（每个实例只起一个）。
-     *
-     * <p>关闭显秒时定时器会自行停止（见 run 内判断），不再空转，因此"隐藏秒"时不会持续耗电。</p>
-     */
-    private void ensureTicker(Object clockView) {
-        if (!(clockView instanceof View)) {
-            return;
-        }
-        synchronized (TICKERS) {
-            if (TICKERS.containsKey(clockView)) {
-                return;
-            }
-        }
-        final WeakReference<Object> ref = new WeakReference<>(clockView);
-        final Runnable[] holder = new Runnable[1];
-        holder[0] = () -> {
-            Object view = ref.get();
-            if (!(view instanceof View)
-                    || !((View) view).isAttachedToWindow()
-                    || !sSecondsEnabled) {
-                // 视图已销毁 / 显秒已关闭：停止定时器，避免每秒空转
-                if (view != null) {
-                    stopTicker(view);
-                }
-                return;
-            }
-            refreshClock(view);
-            MAIN_HANDLER.postDelayed(holder[0], TICK_INTERVAL_MS);
-        };
-        synchronized (TICKERS) {
-            TICKERS.put(clockView, holder[0]);
-        }
-        MAIN_HANDLER.postDelayed(holder[0], TICK_INTERVAL_MS);
-    }
+    // ==================================================================
+    // 文本覆写
+    // ==================================================================
 
-    /** 停止并移除某个时钟视图上的 1 秒定时器。 */
-    private void stopTicker(Object clockView) {
-        Runnable tick;
-        synchronized (TICKERS) {
-            tick = TICKERS.remove(clockView);
-        }
-        if (tick != null) {
-            MAIN_HANDLER.removeCallbacks(tick);
-        }
-    }
-
-    /** 按系统 12/24 小时制设置，生成带秒的时间文本。格式化器按 pattern 缓存复用，避免每秒 new 一个。 */
-    private static CharSequence formatNowWithSeconds(Context context) {
+    /** 用带秒的时间覆写时钟文本（按系统 12/24 小时制）。 */
+    private static void writeTime(TextView view) {
+        Context context = view.getContext();
         boolean is24Hour = context != null && DateFormat.is24HourFormat(context);
         String pattern = is24Hour ? "HH:mm:ss" : "h:mm:ss a";
-        SimpleDateFormat format = sCachedFormat;
-        if (format == null || !pattern.equals(sCachedPattern)) {
-            format = new SimpleDateFormat(pattern, Locale.getDefault());
-            sCachedFormat = format;
-            sCachedPattern = pattern;
+        String time = new SimpleDateFormat(pattern, Locale.getDefault()).format(System.currentTimeMillis());
+        if (TextUtils.equals(view.getText(), time)) {
+            return;
         }
-        return format.format(System.currentTimeMillis());
+        WRITING_CLOCK.set(true);
+        try {
+            view.setText(time);
+        } finally {
+            WRITING_CLOCK.set(false);
+        }
     }
 
-    private static Context contextOf(Object view) {
-        return view instanceof View ? ((View) view).getContext() : null;
+    /** 关闭显秒后，立即把文本回退为分钟级（系统会在下一分钟自然刷新，这里避免残留秒数）。 */
+    private static void writeMinuteOnly(TextView view) {
+        Context context = view.getContext();
+        boolean is24Hour = context != null && DateFormat.is24HourFormat(context);
+        String pattern = is24Hour ? "HH:mm" : "h:mm a";
+        String time = new SimpleDateFormat(pattern, Locale.getDefault()).format(System.currentTimeMillis());
+        WRITING_CLOCK.set(true);
+        try {
+            view.setText(time);
+        } finally {
+            WRITING_CLOCK.set(false);
+        }
     }
 
-    /** 沿继承链查找无参方法（ColorOS 定制类常把实现放在父类）。 */
-    private static Method findMethod(Class<?> clazz, String name, Class<?> returnType) {
-        for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
-            for (Method method : c.getDeclaredMethods()) {
-                if (method.getName().equals(name)
-                        && method.getParameterCount() == 0
-                        && returnType.isAssignableFrom(method.getReturnType())) {
-                    return method;
+    private static void refreshClock(TextView view) {
+        if (isStatusBarClock(view) && sSecondsEnabled) {
+            writeTime(view);
+        }
+    }
+
+    // ==================================================================
+    // 1 秒定时器
+    // ==================================================================
+
+    private static void installTicker(final TextView view) {
+        synchronized (ACTIVE) {
+            if (ACTIVE.containsKey(view)) {
+                return;
+            }
+            ClockTicker ticker = new ClockTicker(view);
+            ACTIVE.put(view, ticker);
+            // View.post 在 SystemUI 早于主 Looper 准备好时也是安全的：Android 会把动作排队到视图挂载后执行。
+            view.post(ticker);
+        }
+    }
+
+    private static void stopTicker(TextView view) {
+        ClockTicker ticker;
+        synchronized (ACTIVE) {
+            ticker = ACTIVE.remove(view);
+        }
+        if (ticker != null) {
+            view.removeCallbacks(ticker);
+        }
+    }
+
+    private static final class ClockTicker implements Runnable {
+        private final WeakReference<TextView> reference;
+        private long firstDetachedAt;
+
+        ClockTicker(TextView view) {
+            reference = new WeakReference<>(view);
+        }
+
+        @Override
+        public void run() {
+            TextView view = reference.get();
+            if (view == null) {
+                return;
+            }
+            if (!view.isAttachedToWindow()) {
+                // 控件常在挂载前就先 setText（inflate 阶段）。短暂等待；超过 5 秒视为陈旧视图，停止轮询。
+                long now = SystemClock.uptimeMillis();
+                if (firstDetachedAt == 0L) {
+                    firstDetachedAt = now;
+                    view.postDelayed(this, 100L);
+                } else if (now - firstDetachedAt < 5000L) {
+                    view.postDelayed(this, 100L);
+                } else {
+                    synchronized (ACTIVE) {
+                        ACTIVE.remove(view);
+                    }
+                }
+                return;
+            }
+
+            firstDetachedAt = 0L;
+            if (sSecondsEnabled) {
+                refreshClock(view);
+                // 对齐到下一秒边界，避免每秒漂移。
+                long delay = 1000L - (System.currentTimeMillis() % 1000L);
+                view.postDelayed(this, Math.max(50L, delay));
+            } else {
+                // 已关闭显秒：不再续订，定时器自然停止（下次开启时 installTicker 会重新挂载）。
+                synchronized (ACTIVE) {
+                    ACTIVE.remove(view);
                 }
             }
         }
-        return null;
     }
 
-    /** 沿继承链查找字段并强制可访问（ColorOS 的字段多为包级/私有）。 */
-    private static Field findField(Class<?> clazz, String name) {
-        for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
-            try {
-                Field field = c.getDeclaredField(name);
-                field.setAccessible(true);
-                return field;
-            } catch (NoSuchFieldException ignored) {
-                // 继续向上找
-            }
+    // ==================================================================
+    // 时钟识别
+    // ==================================================================
+
+    /** 判断该 TextView 是否为「状态栏左上角时钟」（目标控件）。 */
+    private static boolean isStatusBarClock(TextView view) {
+        int id = view.getId();
+        if (id == View.NO_ID || id == 0) {
+            return false;
         }
-        return null;
+        if (!isOplusDevice()) {
+            return false;
+        }
+        String name = resourceName(view);
+        if (name.isEmpty()) {
+            return false;
+        }
+        String className = view.getClass().getName().toLowerCase(Locale.ROOT);
+
+        // 排除锁屏 / AOD / 日期等大型时钟，以及分隔符、通知栏无关控件。
+        boolean excluded = name.contains("keyguard") || name.contains("lockscreen")
+                || name.contains("aod") || name.contains("date")
+                || name.contains("separator") || name.startsWith("no_carrier")
+                || name.contains("shade_") || name.contains("quick_setting")
+                || className.contains("keyguard") || className.contains("aod");
+        if (excluded) {
+            return false;
+        }
+
+        // 状态栏 / 通知栏头部时钟的资源名或类名特征。
+        boolean clockRelated = name.equals("clock")
+                || name.equals("status_bar_clock")
+                || name.equals("header_clock")
+                || name.contains("status_clock")
+                || name.contains("clock_text")
+                || className.contains("statusbar.policy.clock")
+                || className.contains("statclock");
+        return clockRelated;
     }
 
-    // ==================================================================
-    // Settings（ColorOS 17+ 原生开关的显示与状态）
-    // ==================================================================
-
-    private void installSettingsHooks(ClassLoader classLoader) {
-        // 注意：Settings 进程用自身 ClassLoader 探测 SystemUI 的 ClockSecondsController 必然失败，
-        // 因此这里不做能力门禁，直接尝试安装；类缺失时由 try/catch 兜底。
+    private static String resourceName(TextView view) {
         try {
-            Class<?> settingsControllerClass =
-                    Class.forName(SETTINGS_CONTROLLER_CLASS, false, classLoader);
-            Method getCheckedItem = settingsControllerClass.getDeclaredMethod("getCheckedItem");
-            Class<?> preferenceScreenClass =
-                    Class.forName("androidx.preference.PreferenceScreen", false, classLoader);
-            Method displayPreference = settingsControllerClass.getDeclaredMethod(
-                    "displayPreference", preferenceScreenClass);
-            Field contentResolver = settingsControllerClass.getDeclaredField("mContentResolver");
-            Field preferenceField = settingsControllerClass.getDeclaredField("mPreference");
-            contentResolver.setAccessible(true);
-            preferenceField.setAccessible(true);
-
-            hook(getCheckedItem)
-                    .setId(HOOK_SETTINGS_STATE_ID)
-                    .setExceptionMode(ExceptionMode.PROTECTIVE)
-                    .intercept(chain -> {
-                        ContentResolver resolver =
-                                (ContentResolver) contentResolver.get(chain.getThisObject());
-                        int mode = android.provider.Settings.Secure.getInt(
-                                resolver, ClockSecondsConfig.NATIVE_SECONDS_KEY, 0);
-                        return mode == MODE_ENABLED ? 1 : chain.proceed();
-                    });
-
-            hook(displayPreference)
-                    .setId(HOOK_SETTINGS_HINT_ID)
-                    .setExceptionMode(ExceptionMode.PROTECTIVE)
-                    .intercept(chain -> {
-                        Object result = chain.proceed();
-                        Object menuPreference = preferenceField.get(chain.getThisObject());
-                        if (menuPreference != null) {
-                            try {
-                                menuPreference.getClass()
-                                        .getMethod("setSummary", CharSequence.class)
-                                        .invoke(menuPreference, SETTINGS_HINT);
-                            } catch (Throwable ignored) {
-                                // 某些版本 Preference 无 setSummary，忽略
-                            }
-                        }
-                        return result;
-                    });
-
-            log(Log.INFO, TAG, "Installed clock-seconds Settings hooks");
-        } catch (Throwable error) {
-            log(Log.ERROR, TAG, "Failed to install clock-seconds Settings hooks", error);
+            Resources resources = view.getResources();
+            return resources.getResourceEntryName(view.getId()).toLowerCase(Locale.ROOT);
+        } catch (Resources.NotFoundException ignored) {
+            return "";
         }
+    }
+
+    /** 仅用于真机测试排查：把含 clock/status 的 TextView 资源名打印一次，便于补全识别规则。 */
+    private static void logCandidate(TextView view) {
+        if (!isOplusDevice()) {
+            return;
+        }
+        String name = resourceName(view);
+        String className = view.getClass().getName();
+        String searchable = (name + " " + className).toLowerCase(Locale.ROOT);
+        if (!(searchable.contains("clock") || searchable.contains("status"))) {
+            return;
+        }
+        String key = name + "|" + className;
+        if (LOGGED_CANDIDATES.add(key)) {
+            XposedBridge.log(LOG_PREFIX + "candidate: " + key);
+        }
+    }
+
+    private static boolean isSystemUiProcess(String processName) {
+        // AOSP 把锁屏 UI 放在主进程；ColorOS 用独立的 :ui 进程；其它子进程（截图/前台服务）无关。
+        return SYSTEM_UI.equals(processName) || (SYSTEM_UI + ":ui").equals(processName);
+    }
+
+    private static boolean isOplusDevice() {
+        String vendor = (Build.MANUFACTURER + " " + Build.BRAND).toLowerCase(Locale.ROOT);
+        return vendor.contains("oneplus") || vendor.contains("oppo")
+                || vendor.contains("realme") || vendor.contains("oplus");
     }
 }

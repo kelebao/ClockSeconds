@@ -3,7 +3,6 @@ package io.github.kelebao.colorosclockseconds.settings;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -117,8 +116,7 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     private void refreshStatus() {
-        boolean nativeSupported = nativeCapabilityLikelyPresent();
-        boolean enabled = ClockSecondsConfig.isEnabled(getContentResolver(), nativeSupported);
+        boolean enabled = ClockSecondsConfig.isEnabled(getContentResolver());
         statusView.setText(enabled
                 ? io.github.kelebao.colorosclockseconds.R.string.settings_enabled
                 : io.github.kelebao.colorosclockseconds.R.string.settings_disabled);
@@ -131,19 +129,6 @@ public final class ModuleSettingsActivity extends Activity {
             return true;
         } catch (SecurityException e) {
             Toast.makeText(this, "无写入权限，需通过 adb 授予 WRITE_SECURE_SETTINGS", Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
-
-    /**
-     * 模块设置页无法反射 SystemUI 的类，这里用 Secure 键是否可读来粗略判断
-     * 是否运行在 ColorOS 17+ 环境（原生键由系统写入时存在）。
-     */
-    private boolean nativeCapabilityLikelyPresent() {
-        try {
-            Settings.Secure.getInt(getContentResolver(), ClockSecondsConfig.NATIVE_SECONDS_KEY);
-            return true;
-        } catch (Settings.SettingNotFoundException e) {
             return false;
         }
     }

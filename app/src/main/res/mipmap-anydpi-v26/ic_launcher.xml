@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 8.0+ (API 26+) 自适应图标。
+    - 背景：浅蓝纯色（与头像蓝色系呼应）
+    - 前景：用户提供的二次元头像居中，108dp 总图保留 78% 头像（落入 72dp 安全区）
+    - 前景在各 dpi 下独立适配：108/162/216/324/432 像素画布
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

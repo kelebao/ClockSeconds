@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 自适应图标背景色：与头发蓝色呼应的 ColorOS 蓝，亮度适中 -->
+    <color name="ic_launcher_background">#1E88E5</color>
+</resources>
