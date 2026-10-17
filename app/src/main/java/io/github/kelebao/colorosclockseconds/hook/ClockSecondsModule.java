@@ -5,13 +5,14 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.SystemClock;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.text.format.DateFormat;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
@@ -25,6 +26,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
+import io.github.kelebao.colorosclockseconds.BuildConfig;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
 
 /**
@@ -36,12 +38,17 @@ import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
  * 与 {@link TextView#onDraw}（before）——在系统<em>已经设好</em>文本之后才覆写显示，绝不改动
  * 系统的渲染流程，因此不会破坏内部状态、不会崩溃。</p>
  *
+ * <p><b>保留 ColorOS 小时红色：</b>系统状态栏时钟的小时数字本是红色（用 {@code Spannable} 的
+ * 前景色 Span 实现）。本模块不替换整段文本，而是缓存系统在 {@code setText} 时给出的<em>原始文本
+ * （含红色 Span）</em>，仅在其后追加 {@code :ss}，红色 Span 因而天然保留，且自动跟随系统 12/24 制。</p>
+ *
+ * <p><b>不阻碍下拉状态栏：</b>切换手势改用 {@link GestureDetector} + {@link View#setOnTouchListener}，
+ * 且监听始终 {@code return false} 不消费触摸事件——只有「点击 / 长按且不移动」才切换显秒，
+ * 下拉等滑动手势原样穿透给状态栏容器，正常拉下通知栏。</p>
+ *
  * <p><b>识别时钟：</b>不绑定任何 Oplus 私有实现类，只按「资源名 + 类名」判断是否为状态栏时钟，
  * 并排除锁屏 / AOD / 日期 / 分隔符等无关控件（规则经一加 Ace 5 Pro / ColorOS 15 / Android 15
  * 真机验证可行）。</p>
- *
- * <p><b>功能：</b>状态栏左上角时钟显示 {@code HH:mm:ss}；点击（或长按，可在设置页切换手势）该
- * 时钟即关闭 / 开启显秒，状态存于 {@link android.provider.Settings.Secure}。</p>
  */
 public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
@@ -58,11 +65,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 已做过一次性配置（宽度 + 切换监听）的视图，避免重复配置。 */
     private static final Set<TextView> CONFIGURED =
             Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
+    /**
+     * 系统给出的「无秒原始文本」（含小时红色 Span）。writeTime 只在其后追加 {@code :ss}，
+     * 因此红色与 12/24 制都跟随系统，无需自己构造格式化器。
+     */
+    private static final Map<TextView, CharSequence> BASE_TEXT =
+            Collections.synchronizedMap(new WeakHashMap<TextView, CharSequence>());
 
     /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
     private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
 
-    /** 已打印过的候选控件（按「资源名|类名」去重），仅用于真机测试时排查识别失败。 */
+    /** 已打印过的候选控件（按「资源名|类名」去重），仅 DEBUG 构建用于真机排查识别失败。 */
     private static final Set<String> LOGGED_CANDIDATES =
             Collections.synchronizedSet(new HashSet<>());
 
@@ -85,6 +98,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     return;
                 }
                 TextView view = (TextView) param.thisObject;
+                // 缓存系统原始文本（含小时红色 Span），供 writeTime 在其后追加秒。
+                if (isStatusBarClock(view) && param.args != null && param.args.length > 0
+                        && param.args[0] instanceof CharSequence) {
+                    BASE_TEXT.put(view, (CharSequence) param.args[0]);
+                }
                 logCandidate(view);
                 if (!isStatusBarClock(view)) {
                     return;
@@ -111,9 +129,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
         });
 
-        XposedBridge.log(LOG_PREFIX + "hook installed in SystemUI; device="
-                + Build.MANUFACTURER + "/" + Build.BRAND
-                + "; process=" + lpparam.processName + "; format=HH:mm:ss");
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "hook installed in SystemUI; device="
+                    + Build.MANUFACTURER + "/" + Build.BRAND
+                    + "; process=" + lpparam.processName + "; format=HH:mm:ss");
+        }
     }
 
     // ==================================================================
@@ -148,22 +168,35 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
 
         // 挂载点击 / 长按切换监听（按手势偏好）。
+        // 关键：OnTouchListener 始终 return false，不消费触摸，下拉等滑动手势留给状态栏容器处理。
         try {
             Context context = view.getContext();
             int gesture = context != null
                     ? ClockSecondsConfig.getGesture(context.getContentResolver())
                     : ClockSecondsConfig.GESTURE_CLICK;
-            if (gesture == ClockSecondsConfig.GESTURE_LONG_PRESS) {
-                view.setLongClickable(true);
-                view.setOnLongClickListener(v -> {
-                    toggleSeconds((TextView) v);
+            GestureDetector gd = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onSingleTapUp(MotionEvent e) {
+                    if (gesture == ClockSecondsConfig.GESTURE_CLICK) {
+                        toggleSeconds(view);
+                    }
                     return true;
-                });
-            } else {
-                view.setClickable(true);
-                view.setOnClickListener(v -> toggleSeconds((TextView) v));
+                }
+
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    if (gesture == ClockSecondsConfig.GESTURE_LONG_PRESS) {
+                        toggleSeconds(view);
+                    }
+                }
+            });
+            view.setOnTouchListener((v, event) -> {
+                gd.onTouchEvent(event);
+                return false; // 不消费：点击已在 GestureDetector 内处理，滑动手势穿透给状态栏
+            });
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "toggle listener attached; gesture=" + gesture);
             }
-            XposedBridge.log(LOG_PREFIX + "toggle listener attached; gesture=" + gesture);
         } catch (Throwable ignored) {
             // 监听挂载失败也不应影响显示
         }
@@ -196,7 +229,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         boolean enabled = !ClockSecondsConfig.isEnabled(resolver);
         ClockSecondsConfig.setEnabled(resolver, enabled);
         sSecondsEnabled = enabled;
-        XposedBridge.log(LOG_PREFIX + "seconds toggled -> " + enabled);
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "seconds toggled -> " + enabled);
+        }
         if (enabled) {
             writeTime(view);
             installTicker(view);
@@ -207,35 +242,42 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     // ==================================================================
-    // 文本覆写
+    // 文本覆写（保留系统原文本 + 红色 Span，仅追加秒）
     // ==================================================================
 
-    /** 用带秒的时间覆写时钟文本（按系统 12/24 小时制）。 */
+    /** 用「系统原文本 + :ss」覆写时钟（红色 Span 由 BASE_TEXT 继承，自动跟随 12/24 制）。 */
     private static void writeTime(TextView view) {
-        Context context = view.getContext();
-        boolean is24Hour = context != null && DateFormat.is24HourFormat(context);
-        String pattern = is24Hour ? "HH:mm:ss" : "h:mm:ss a";
-        String time = new SimpleDateFormat(pattern, Locale.getDefault()).format(System.currentTimeMillis());
-        if (TextUtils.equals(view.getText(), time)) {
+        CharSequence base = BASE_TEXT.get(view);
+        if (base == null) {
+            base = view.getText();
+        }
+        int second = (int) ((System.currentTimeMillis() / 1000) % 60);
+        String ss = String.format(Locale.US, ":%02d", second);
+        SpannableStringBuilder sb = new SpannableStringBuilder(base);
+        sb.append(ss);
+        if (TextUtils.equals(view.getText(), sb)) {
             return;
         }
         WRITING_CLOCK.set(true);
         try {
-            view.setText(time);
+            view.setText(sb);
         } finally {
             WRITING_CLOCK.set(false);
         }
     }
 
-    /** 关闭显秒后，立即把文本回退为分钟级（系统会在下一分钟自然刷新，这里避免残留秒数）。 */
+    /** 关闭显秒后，立即把文本回退为系统原文本（无秒、保留红色 Span）。 */
     private static void writeMinuteOnly(TextView view) {
-        Context context = view.getContext();
-        boolean is24Hour = context != null && DateFormat.is24HourFormat(context);
-        String pattern = is24Hour ? "HH:mm" : "h:mm a";
-        String time = new SimpleDateFormat(pattern, Locale.getDefault()).format(System.currentTimeMillis());
+        CharSequence base = BASE_TEXT.get(view);
+        if (base == null) {
+            base = view.getText();
+        }
+        if (TextUtils.equals(view.getText(), base)) {
+            return;
+        }
         WRITING_CLOCK.set(true);
         try {
-            view.setText(time);
+            view.setText(base);
         } finally {
             WRITING_CLOCK.set(false);
         }
@@ -367,8 +409,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 仅用于真机测试排查：把含 clock/status 的 TextView 资源名打印一次，便于补全识别规则。 */
+    /** 仅 DEBUG 构建：把含 clock/status 的 TextView 资源名打印一次，便于补全识别规则或排查。 */
     private static void logCandidate(TextView view) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
         if (!isOplusDevice()) {
             return;
         }

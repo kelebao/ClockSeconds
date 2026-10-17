@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.kelebao.colorosclockseconds"
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
     }
 
     signingConfigs {
@@ -43,6 +43,11 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
+    }
+
+    // 启用 BuildConfig 生成（AGP 8.x 默认关闭），供 release 构建用 BuildConfig.DEBUG 门控排查日志。
+    buildFeatures {
+        buildConfig = true
     }
 
     compileOptions {
