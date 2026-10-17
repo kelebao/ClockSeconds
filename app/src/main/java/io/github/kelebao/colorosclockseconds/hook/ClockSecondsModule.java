@@ -6,7 +6,9 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -37,10 +39,10 @@ import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
  * 与 {@link TextView#onDraw}（before）——在系统<em>已经设好</em>文本之后才覆写显示，绝不改动
  * 系统的渲染流程，因此不会破坏内部状态、不会崩溃。</p>
  *
- * <p><b>保留 ColorOS 小时红色：</b>系统状态栏时钟的小时数字红色来自时钟 {@link TextView} 自身的
- * 文字颜色（textColor），并非一段 {@code Spannable} 前景色 Span。本模块不替换整段文本，而是缓存系统
- * 在 {@code setText} 时给出的<em>原始文本</em>，仅在其后追加 {@code :ss}，追加的文字自动继承同样的
- * 文字色，因此红色天然保留，且自动跟随系统 12/24 制。</p>
+ * <p><b>ColorOS 专属红色样式：</b>在 ColorOS 上，本模块额外把状态栏时钟「小时的十位数」标红
+ * （例如 {@code 13} 的 {@code 1}、{@code 05} 的 {@code 0}），其余文字（分钟、秒）保持系统原色。
+ * 实现方式是在覆写后的文本上给十位数那一个字符追加一段红色 {@code ForegroundColorSpan}；
+ * 追加的 {@code :ss} 不标红，跟随系统时钟文字色。单位数小时（如 {@code 9:45}）无十位，不标红。</p>
  *
  * <p><b>不阻碍下拉状态栏：</b>切换手势改为 hook 系统全局的 {@link View#dispatchTouchEvent}，
  * 仅当按下点落在已识别时钟的屏幕边界内、且几乎无位移（点击）或按住 500ms（长按）时才切换显秒；
@@ -54,6 +56,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     private static final String SYSTEM_UI = "com.android.systemui";
     private static final String LOG_PREFIX = "ColorOSClockSeconds: ";
+
+    /** ColorOS 专属：小时十位数标红颜色（Material Red 500）。仅用于 ColorOS 状态栏时钟。 */
+    private static final int HOUR_RED_COLOR = 0xFFF44336;
 
     /** 进程内缓存的显秒开关（默认开启）；点击切换与首次遇到时钟时刷新。 */
     private static volatile boolean sSecondsEnabled;
@@ -364,6 +369,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String ss = String.format(Locale.US, ":%02d", second);
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
         sb.append(ss);
+        // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
+        applyHourTensRed(sb);
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
                     + (base instanceof android.text.Spannable));
@@ -379,7 +386,27 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 关闭显秒后，立即把文本回退为系统原文本（无秒、保留红色 Span）。 */
+    /**
+     * ColorOS 专属样式：仅把「小时十位数」标红，其余文字（分钟、秒）保持系统原色。
+     * 小时在文本开头、冒号之前；当其为两位数字（如 13、05）时，第一位即十位数，标红；
+     * 无前导零的单位数小时（如 9:45）没有十位，不标红。
+     */
+    private static void applyHourTensRed(SpannableStringBuilder sb) {
+        int colon = -1;
+        for (int i = 0; i < sb.length(); i++) {
+            char c = sb.charAt(i);
+            if (c == ':' || c == '：') {
+                colon = i;
+                break;
+            }
+        }
+        // 小时部分 = [0, colon)；有且仅有两位数字（含十位）时才标红第一位。
+        if (colon >= 2 && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
+            sb.setSpan(new ForegroundColorSpan(HOUR_RED_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+    }
+
+    /** 关闭显秒后，立即把文本回退为系统原文本（无秒、保留系统时钟原样式）。 */
     private static void writeMinuteOnly(TextView view) {
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
