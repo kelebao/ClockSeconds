@@ -1,8 +1,7 @@
-# ColorOS 时钟显秒（ColorOS Clock Seconds）
+# 时钟显秒（Clock Seconds）
 
-一个 LSPosed 模块：让状态栏（左上角）时钟显示**秒**，并支持**点击时钟切换显秒开关**，适配 **ColorOS 15 及以上**（OPPO / 一加 / 真我）。
+一个 LSPosed 模块：让状态栏（左上角）时钟显示**秒**，并支持**点击时钟切换显秒开关**。已在 ColorOS 15 真机验证，同时兼容小米、红米、一加 等有root的厂商机型。
 
-> 本模块基于开源项目 [`coolzyd9107/oplus_coloros17_status_bar_force_show_seconds`](https://github.com/coolzyd9107/oplus_coloros17_status_bar_force_show_seconds)（仅适配 ColorOS 17、去除原生显秒的 5 分钟时限）扩展而来，新增了"点击切换"与"ColorOS 15/16 自渲染显秒"能力。
 >
 > 本仓库：<https://github.com/kelebao/ColorOS15ClockSeconds>
 >
@@ -25,9 +24,9 @@
 |------|------|
 | 状态栏显秒 | 状态栏时钟显示到秒（`HH:mm:ss` / `h:mm:ss a`，跟随系统 12/24 小时制） |
 | 点击切换 | **单击**状态栏时钟即切换显秒开/关；也可在设置页改为**长按** |
-| 小时红色 | ColorOS 专属样式：仅把小时「十位数」标红（如 `13` 的 `1`、`05` 的 `0`），分钟与秒保持系统原色；单位数小时（如 `9:45`）无十位不标红。其它机型（小米 / 荣耀 / vivo 等）不生效——模块只在 Oplus 设备（一加 / OPPO / 真我）激活 |
+| 小时红色 | 把小时「十位数」标红（如 `13` 的 `1`、`05` 的 `0`），分钟与秒保持系统原色；单位数小时（如 `9:45`）无十位不标红。所有厂商机型均生效 |
 | 持久化 | 状态存于 `Settings.Secure`，跨进程共享，重启 SystemUI 后保持 |
-| 适配范围 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）统一生效；不依赖任何 Oplus 私有类，避免触发 LSPosed 安全模式 |
+| 适配范围 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真机验证；小米 / 荣耀 / 红米 等有 root 的其它厂商同步生效。不依赖任何厂商私有类，避免触发 LSPosed 安全模式。最低支持 Android 10 |
 
 ## 工作原理
 
@@ -37,7 +36,7 @@
 - **显秒**：hook 稳定的 `TextView.setText`（after）缓存系统在状态栏时钟上给出的原始文本，
   再 hook `TextView.onDraw`（before）在系统已设好文本之后覆写显示 `原文本:ss`，
   并用 1 秒级 `Handler` 驱动刷新。追加的秒保持系统时钟自身的文字色（实测为白色 `#ccffffff`）。
-  在 ColorOS 上额外把「小时十位数」标红（给该字符追加一段红色 `ForegroundColorSpan`），
+  同时把「小时十位数」标红（给该字符追加一段红色 `ForegroundColorSpan`），无论显秒开启或关闭均保持红色；
   分钟与秒不标红；单位数小时无十位则不标红。
 - **切换**：ColorOS 的通知面板会拦截状态栏区域的触摸，时钟自身的 `OnTouchListener` 收不到事件。
   因此模块改为 hook 系统全局的 `View.dispatchTouchEvent`，仅当按下点落在已识别时钟的屏幕边界内、
@@ -81,24 +80,6 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 ./gradlew assembleDebug
 ```
 
-### 国内网络（Google Maven 不可达）
-
-若 `dl.google.com/dl/android/maven2` 连不通（AGP / AndroidX 会拉取失败），
-在 `~/.gradle/init.gradle` 加入阿里云镜像即可（不修改项目文件）：
-
-```groovy
-settingsEvaluated { settings ->
-    settings.pluginManagement.repositories {
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-    }
-    settings.dependencyResolutionManagement.repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-    }
-}
-```
 
 > SDK 仓库（`dl.google.com/android/repository`）一般仍可访问，缺失的 Platform/Build-Tools 会由 AGP 自动下载。
 
