@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">นาฬิกาแสดงวินาที</string>
+    <string name="module_description">แสดงวินาทีบนนาฬิกาแถบสถานะ แตะนาฬิกาเพื่อสลับการแสดงวินาที หลักสิบของชั่วโมงจะแสดงเป็นสีแดง ตรวจสอบบน ColorOS 15 แล้ว รองรับ Xiaomi, OnePlus และแบรนด์อื่น ๆ ขั้นต่ำ Android 10</string>
+
+    <string name="settings_title">นาฬิกาแสดงวินาที</string>
+    <string name="settings_status_title">สถานะปัจจุบัน</string>
+    <string name="settings_enabled">วินาที: เปิด</string>
+    <string name="settings_disabled">วินาที: ปิด</string>
+    <string name="settings_gesture_title">ท่าทางสลับ</string>
+    <string name="settings_gesture_click">แตะนาฬิกา</string>
+    <string name="settings_gesture_long_press">กดนาฬิกาค้าง</string>
+    <string name="settings_hint">หมายเหตุ: ต้องรีสตาร์ท SystemUI หรือรีบูตเครื่องเพื่อให้การเปลี่ยนแปลงมีผล หากการแตะชนกับการเลื่อนแถบแจ้งเตือน กรุณาใช้ท่าทางกดค้างแทน</string>
+    <string name="settings_refresh">รีเฟรชสถานะ</string>
+</resources>

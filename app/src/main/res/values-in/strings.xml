@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Jam dengan Detik</string>
+    <string name="module_description">Menampilkan detik pada jam bilah status. Ketuk jam untuk menyalangkan detik; digit puluhan jam berwarna merah. Teruji di ColorOS 15, juga berfungsi di Xiaomi, OnePlus, dan merek lain. Minimal Android 10.</string>
+
+    <string name="settings_title">Jam dengan Detik</string>
+    <string name="settings_status_title">Status saat ini</string>
+    <string name="settings_enabled">Detik: Aktif</string>
+    <string name="settings_disabled">Detik: Nonaktif</string>
+    <string name="settings_gesture_title">Gestur beralih</string>
+    <string name="settings_gesture_click">Ketuk jam</string>
+    <string name="settings_gesture_long_press">Tekan lama jam</string>
+    <string name="settings_hint">Catatan: mulai ulang SystemUI atau perangkat agar perubahan berlaku. Jika ketukan bertentangan dengan menarik panel notifikasi, beralihlah ke gestur tekan lama.</string>
+    <string name="settings_refresh">Segarkan status</string>
+</resources>

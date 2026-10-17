@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Giây trên đồng hồ</string>
+    <string name="module_description">Hiển thị giây trên đồng hồ thanh trạng thái. Nhấn vào đồng hồ để bật/tắt giây; chữ số hàng chục của giờ được tô màu đỏ. Đã kiểm chứng trên ColorOS 15, cũng hoạt động trên Xiaomi, OnePlus và các hãng khác. Tối thiểu Android 10.</string>
+
+    <string name="settings_title">Giây trên đồng hồ</string>
+    <string name="settings_status_title">Trạng thái hiện tại</string>
+    <string name="settings_enabled">Giây: Bật</string>
+    <string name="settings_disabled">Giây: Tắt</string>
+    <string name="settings_gesture_title">Cử chỉ chuyển</string>
+    <string name="settings_gesture_click">Nhấn đồng hồ</string>
+    <string name="settings_gesture_long_press">Nhấn giữ đồng hồ</string>
+    <string name="settings_hint">Lưu ý: hãy khởi động lại SystemUI hoặc khởi động lại thiết bị để thay đổi có hiệu lực. Nếu nhấn xung đột với kéo xuống thanh thông báo, hãy chuyển sang cử chỉ nhấn giữ.</string>
+    <string name="settings_refresh">Làm mới trạng thái</string>
+</resources>

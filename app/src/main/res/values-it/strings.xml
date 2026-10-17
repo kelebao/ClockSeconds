@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Orologio con i secondi</string>
+    <string name="module_description">Mostra i secondi sull\'orologio della barra di stato. Tocca l\'orologio per attivare/disattivare i secondi; la decina dell\'ora è colorata di rosso. Verificato su ColorOS 15, funziona anche su Xiaomi, OnePlus e altri produttori. Minimo Android 10.</string>
+
+    <string name="settings_title">Orologio con i secondi</string>
+    <string name="settings_status_title">Stato attuale</string>
+    <string name="settings_enabled">Secondi: attivi</string>
+    <string name="settings_disabled">Secondi: disattivati</string>
+    <string name="settings_gesture_title">Gesto di commutazione</string>
+    <string name="settings_gesture_click">Tocca l\'orologio</string>
+    <string name="settings_gesture_long_press">Tieni premuto l\'orologio</string>
+    <string name="settings_hint">Nota: riavvia SystemUI o il dispositivo per applicare le modifiche. Se il tocco entra in conflitto con il pannello delle notifiche, passa al gesto di pressione prolungata.</string>
+    <string name="settings_refresh">Aggiorna stato</string>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Uhr mit Sekunden</string>
+    <string name="module_description">Zeigt Sekunden in der Statusleistenuhr an. Tippe auf die Uhr, um die Sekundenanzeige umzuschalten; die Zehnerstelle der Stunde wird rot gefärbt. Auf ColorOS 15 verifiziert, funktioniert auch auf Xiaomi, OnePlus und anderen Herstellern. Mindestens Android 10.</string>
+
+    <string name="settings_title">Uhr mit Sekunden</string>
+    <string name="settings_status_title">Aktueller Status</string>
+    <string name="settings_enabled">Sekunden: Ein</string>
+    <string name="settings_disabled">Sekunden: Aus</string>
+    <string name="settings_gesture_title">Umschalt-Geste</string>
+    <string name="settings_gesture_click">Uhr antippen</string>
+    <string name="settings_gesture_long_press">Uhr gedrückt halten</string>
+    <string name="settings_hint">Hinweis: Starte SystemUI neu oder starte das Gerät neu, damit Änderungen wirksam werden. Falls das Antippen mit dem Herunterziehen der Statusleiste kollidiert, wechsle zur Langdruck-Geste.</string>
+    <string name="settings_refresh">Status aktualisieren</string>
+</resources>

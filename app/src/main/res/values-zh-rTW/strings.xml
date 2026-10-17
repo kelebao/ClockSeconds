@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">時鐘顯秒</string>
+    <string name="module_description">在狀態欄時鐘顯示秒，點擊時鐘可切換顯秒開關，並將小時十位數標紅。已在 ColorOS 15 實機驗證，相容小米、一加等其它廠商機型，最低支援 Android 10。</string>
+
+    <string name="settings_title">時鐘顯秒</string>
+    <string name="settings_status_title">目前狀態</string>
+    <string name="settings_enabled">顯秒：已開啟</string>
+    <string name="settings_disabled">顯秒：已關閉</string>
+    <string name="settings_gesture_title">切換手勢</string>
+    <string name="settings_gesture_click">點擊時鐘</string>
+    <string name="settings_gesture_long_press">長按時鐘</string>
+    <string name="settings_hint">提示：修改後需重新啟動 SystemUI 或重新開機才會生效。若點擊與下拉通知欄衝突，請改用長按手勢。</string>
+    <string name="settings_refresh">重新整理狀態</string>
+</resources>

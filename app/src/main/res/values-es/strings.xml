@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Segundos en el reloj</string>
+    <string name="module_description">Muestra los segundos en el reloj de la barra de estado. Toca el reloj para alternar los segundos; la decena de la hora se muestra en rojo. Verificado en ColorOS 15, también funciona en Xiaomi, OnePlus y otros fabricantes. Mínimo Android 10.</string>
+
+    <string name="settings_title">Segundos en el reloj</string>
+    <string name="settings_status_title">Estado actual</string>
+    <string name="settings_enabled">Segundos: activados</string>
+    <string name="settings_disabled">Segundos: desactivados</string>
+    <string name="settings_gesture_title">Gesto de alternancia</string>
+    <string name="settings_gesture_click">Tocar el reloj</string>
+    <string name="settings_gesture_long_press">Mantener pulsado el reloj</string>
+    <string name="settings_hint">Nota: reinicia SystemUI o el dispositivo para que los cambios surtan efecto. Si el toque entra en conflicto con el desplegable de notificaciones, cambia al gesto de pulsación larga.</string>
+    <string name="settings_refresh">Actualizar estado</string>
+</resources>

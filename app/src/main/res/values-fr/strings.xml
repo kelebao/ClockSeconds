@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Secondes à l\'horloge</string>
+    <string name="module_description">Affiche les secondes sur l\'horloge de la barre d\'état. Touchez l\'horloge pour activer/désactiver les secondes ; les dizaines de l\'heure sont colorées en rouge. Vérifié sur ColorOS 15, fonctionne aussi sur Xiaomi, OnePlus et d\'autres marques. Android 10 minimum.</string>
+
+    <string name="settings_title">Secondes à l\'horloge</string>
+    <string name="settings_status_title">État actuel</string>
+    <string name="settings_enabled">Secondes : activées</string>
+    <string name="settings_disabled">Secondes : désactivées</string>
+    <string name="settings_gesture_title">Geste de bascule</string>
+    <string name="settings_gesture_click">Toucher l\'horloge</string>
+    <string name="settings_gesture_long_press">Appui long sur l\'horloge</string>
+    <string name="settings_hint">Remarque : redémarrez SystemUI ou l\'appareil pour appliquer les modifications. Si le touche entre en conflit avec le déroulement du panneau de notifications, passez au geste d\'appui long.</string>
+    <string name="settings_refresh">Actualiser l\'état</string>
+</resources>

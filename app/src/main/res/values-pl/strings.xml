@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Zegar z sekundami</string>
+    <string name="module_description">Pokazuje sekundy na zegarze paska statusu. Dotknij zegara, aby włączyć/wyłączyć sekundy; dziesiątki godziny są kolorowane na czerwono. Zweryfikowano na ColorOS 15, działa też na Xiaomi, OnePlus i innych producentach. Minimum Android 10.</string>
+
+    <string name="settings_title">Zegar z sekundami</string>
+    <string name="settings_status_title">Aktualny stan</string>
+    <string name="settings_enabled">Sekundy: włączone</string>
+    <string name="settings_disabled">Sekundy: wyłączone</string>
+    <string name="settings_gesture_title">Gest przełączania</string>
+    <string name="settings_gesture_click">Dotknij zegara</string>
+    <string name="settings_gesture_long_press">Przytrzymaj zegar</string>
+    <string name="settings_hint">Uwaga: uruchom ponownie SystemUI lub zrestartuj urządzenie, aby zmiany zostały zastosowane. Jeśli dotykanie koliduje z rozwijaniem panelu powiadomień, przełącz na gest przytrzymania.</string>
+    <string name="settings_refresh">Odśwież stan</string>
+</resources>

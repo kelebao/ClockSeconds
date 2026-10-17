@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">საათი წამებით</string>
+    <string name="module_description">აჩვენებს წამებს სტატუსის ზოლის საათზე. დააჭირეთ საათს წამების ჩვენების ჩასართავად/გამოსართავად; საათის ათეულის ციფრი წითელია. შემოწმებულია ColorOS 15-ზე, მუშაობს Xiaomi, OnePlus და სხვა მწარმოებლებზეც. მინიმუმ Android 10.</string>
+
+    <string name="settings_title">საათი წამებით</string>
+    <string name="settings_status_title">მიმდინარე მდგომარეობა</string>
+    <string name="settings_enabled">წამები: ჩართული</string>
+    <string name="settings_disabled">წამები: გამორთული</string>
+    <string name="settings_gesture_title">გადართვის ჟესტი</string>
+    <string name="settings_gesture_click">დააჭირეთ საათს</string>
+    <string name="settings_gesture_long_press">დააჭირეთ ხანგრძლივად საათს</string>
+    <string name="settings_hint">შენიშვნა: ცვლილებების მისაღებად გადატვირთეთ SystemUI ან მოწყობილობა. თუ დაჭერა კონფლიქტშია შეტყობინებების პანელის ჩამოწევასთან, გამოიყენეთ ხანგრძლივი დაჭერის ჟესტი.</string>
+    <string name="settings_refresh">სტატუსის განახლება</string>
+</resources>

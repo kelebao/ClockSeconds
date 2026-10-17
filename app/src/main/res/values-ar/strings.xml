@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">ساعة مع الثواني</string>
+    <string name="module_description">تعرض الثواني على ساعة شريط الحالة. انقر على الساعة لتبديل عرض الثواني، وتصبح خانة العشرات من الساعة باللون الأحمر. تم التحقق منه على ColorOS 15، ويعمل أيضًا على شاومي وون بلس وغيرها. أدنى إصدار أندرويد 10.</string>
+
+    <string name="settings_title">ساعة مع الثواني</string>
+    <string name="settings_status_title">الحالة الحالية</string>
+    <string name="settings_enabled">الثواني: مفعّلة</string>
+    <string name="settings_disabled">الثواني: معطّلة</string>
+    <string name="settings_gesture_title">إيماءة التبديل</string>
+    <string name="settings_gesture_click">النقر على الساعة</string>
+    <string name="settings_gesture_long_press">الضغط المطوّل على الساعة</string>
+    <string name="settings_hint">ملاحظة: أعد تشغيل SystemUI أو الجهاز لتصبح التغييرات سارية. إذا تعارض النقر مع سحب لوحة الإشعارات، فانتقل إلى إيماءة الضغط المطوّل.</string>
+    <string name="settings_refresh">تحديث الحالة</string>
+</resources>

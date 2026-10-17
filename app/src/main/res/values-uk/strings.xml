@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Секунди на годиннику</string>
+    <string name="module_description">Показує секунди на годиннику рядка стану. Торкніться годинника, щоб перемкнути відображення секунд; десятки години будуть червоними. Перевірено на ColorOS 15, також працює на Xiaomi, OnePlus та інших виробниках. Мінімум Android 10.</string>
+
+    <string name="settings_title">Секунди на годиннику</string>
+    <string name="settings_status_title">Поточний стан</string>
+    <string name="settings_enabled">Секунди: увімкнено</string>
+    <string name="settings_disabled">Секунди: вимкнено</string>
+    <string name="settings_gesture_title">Жест перемикання</string>
+    <string name="settings_gesture_click">Торкнутися годинника</string>
+    <string name="settings_gesture_long_press">Утримувати годинник</string>
+    <string name="settings_hint">Примітка: перезапустіть SystemUI або перезавантажте пристрій, щоб зміни набули чинності. Якщо торкання конфліктує з відкриттям панелі сповіщень, використовуйте жест утримання.</string>
+    <string name="settings_refresh">Оновити стан</string>
+</resources>

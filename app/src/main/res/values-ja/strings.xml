@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">時計の秒表示</string>
+    <string name="module_description">ステータスバーの時計に秒を表示します。時計をタップすると秒表示を切り替えられ、時間の十の位が赤くなります。ColorOS 15 で実機検証済み。Xiaomi・OnePlus など他のメーカーにも対応。最低 Android 10。</string>
+
+    <string name="settings_title">時計の秒表示</string>
+    <string name="settings_status_title">現在の状態</string>
+    <string name="settings_enabled">秒表示：オン</string>
+    <string name="settings_disabled">秒表示：オフ</string>
+    <string name="settings_gesture_title">切り替えジェスチャー</string>
+    <string name="settings_gesture_click">時計をタップ</string>
+    <string name="settings_gesture_long_press">時計を長押し</string>
+    <string name="settings_hint">注意：変更を反映するには SystemUI を再起動するか端末を再起動してください。タップが通知欄のプルダウンと競合する場合は、長押しジェスチャーに変更してください。</string>
+    <string name="settings_refresh">状態を更新</string>
+</resources>

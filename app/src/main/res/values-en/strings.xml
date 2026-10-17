@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Clock Seconds</string>
+    <string name="module_description">Show seconds in the status bar clock. Tap the clock to toggle seconds, and the hour tens digit is colored red. Verified on ColorOS 15; also works on Xiaomi, OnePlus and other vendors. Minimum Android 10.</string>
+
+    <string name="settings_title">Clock Seconds</string>
+    <string name="settings_status_title">Current state</string>
+    <string name="settings_enabled">Seconds: On</string>
+    <string name="settings_disabled">Seconds: Off</string>
+    <string name="settings_gesture_title">Toggle gesture</string>
+    <string name="settings_gesture_click">Tap clock</string>
+    <string name="settings_gesture_long_press">Long-press clock</string>
+    <string name="settings_hint">Note: restart SystemUI or reboot the device for changes to take effect. If tapping conflicts with pulling down the notification shade, switch to the long-press gesture.</string>
+    <string name="settings_refresh">Refresh state</string>
+</resources>

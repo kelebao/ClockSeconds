@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">Секунды в часах</string>
+    <string name="module_description">Показываем секунды в часах строки состояния. Нажмите на часы, чтобы переключить отображение секунд; десятки часов будут красными. Проверено на ColorOS 15, также работает на Xiaomi, OnePlus и других устройствах. Минимум Android 10.</string>
+
+    <string name="settings_title">Секунды в часах</string>
+    <string name="settings_status_title">Текущее состояние</string>
+    <string name="settings_enabled">Секунды: включены</string>
+    <string name="settings_disabled">Секунды: выключены</string>
+    <string name="settings_gesture_title">Жест переключения</string>
+    <string name="settings_gesture_click">Нажатие на часы</string>
+    <string name="settings_gesture_long_press">Долгое нажатие</string>
+    <string name="settings_hint">Примечание: для применения изменений перезапустите SystemUI или перезагрузите устройство. Если нажатие конфликтует с открытием шторки уведомлений, используйте жест долгого нажатия.</string>
+    <string name="settings_refresh">Обновить состояние</string>
+</resources>
