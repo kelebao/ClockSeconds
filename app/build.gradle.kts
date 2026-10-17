@@ -43,6 +43,12 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
+        debug {
+            // 调试期用生产 key 签名，便于直接覆盖安装 v1.0.4 的 release 包抓日志（无需卸载）。
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
     }
 
     // 启用 BuildConfig 生成（AGP 8.x 默认关闭），供 release 构建用 BuildConfig.DEBUG 门控排查日志。

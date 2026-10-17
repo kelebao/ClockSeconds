@@ -16,7 +16,7 @@
 
 1. 安装 APK（需允许"安装未知来源应用"）
 2. 在 **LSPosed** 中启用本模块
-3. 作用域勾选：**系统界面（`com.android.systemui`）** 与 **设置（`com.android.settings`）**
+3. 作用域勾选：**系统界面（`com.android.systemui`）**
 4. 重启这两个进程（或重启手机）
 
 ## 功能
@@ -26,34 +26,33 @@
 | 状态栏显秒 | 状态栏时钟显示到秒（`HH:mm:ss` / `h:mm:ss a`，跟随系统 12/24 小时制） |
 | 点击切换 | **单击**状态栏时钟即切换显秒开/关；也可在设置页改为**长按** |
 | 持久化 | 状态存于 `Settings.Secure`，跨进程共享，重启 SystemUI 后保持 |
-| ColorOS 17+ | 复用系统原生显秒能力，并去掉"5 分钟后自动关闭"的限制 |
-| ColorOS 15/16 | 系统无原生能力，模块在 SystemUI 内自渲染秒并驱动 1 秒级刷新 |
+| 适配范围 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）统一生效；不依赖任何 Oplus 私有类，避免触发 LSPosed 安全模式 |
 
 ## 工作原理
 
-模块用**运行时能力探测**选择渲染路径：
+模块只 hook **SystemUI** 一个进程，采用稳妥的 legacy Xposed 范式，
+**完全不触碰 Oplus 私有类**，因此不会破坏系统内部状态、不会触发 LSPosed 安全模式：
 
-- **原生路径（ColorOS 17+）**：检测到 `com.oplus.systemui.statusbar.clock.ClockSecondsController` 时，
-  hook 其 `isOplusFiveMinutesActive` / `scheduleExpiryLocked` / `onUserOrModeChanged`，
-  使显秒不再 5 分钟后自动关闭。
-- **自渲染路径（ColorOS 15/16）**：未检测到原生能力时，定位状态栏时钟视图，
-  接管其时间格式化（`getSmallTime`，缺失时退化为 hook `updateClock` 后直接改文本），
-  并用 1 秒级 `Handler` 驱动刷新。
-
-两条路径共用"点击/长按时钟 → 翻转 `Settings.Secure` 开关 → 立即刷新"的交互。
+- **显秒**：hook 稳定的 `TextView.setText`（after）缓存系统在状态栏时钟上给出的原始文本，
+  再 hook `TextView.onDraw`（before）在系统已设好文本之后覆写显示 `原文本:ss`，
+  并用 1 秒级 `Handler` 驱动刷新。追加的秒自动继承系统时钟自身的文字色
+  （含 ColorOS 小时红色，红色来自时钟 `TextView` 的 textColor 而非一段 `Spannable` Span），
+  因此红色天然保留，且跟随系统 12/24 小时制。
+- **切换**：ColorOS 的通知面板会拦截状态栏区域的触摸，时钟自身的 `OnTouchListener` 收不到事件。
+  因此模块改为 hook 系统全局的 `View.dispatchTouchEvent`，仅当按下点落在已识别时钟的屏幕边界内、
+  且几乎无位移（点击）或按住 500ms（长按）时才翻转 `Settings.Secure` 开关；模块**不消费**
+  任何触摸事件，下拉通知栏照常。
 
 ## 安装
 
-1. 在 **LSPosed** 中启用本模块，作用域勾选：
-   - System UI：`com.android.systemui`
-   - 设置：`com.android.settings`
-2. 重启这两个进程或重启设备。
+1. 在 **LSPosed** 中启用本模块，作用域勾选：**System UI：`com.android.systemui`**（仅此一个）。
+2. 重启 SystemUI 进程或重启设备。
 3. 配置页从 **LSPosed 管理器**打开（桌面不生成图标）。
 
 ## 使用
 
 - **单击状态栏时钟**：切换显秒开/关（默认手势）。
-- 若单击与"下拉通知栏"冲突，进入配置页把切换手势改为**长按**。
+- 切换通过全局触摸命中判定实现，**不会与"下拉通知栏"冲突**——纯点击切换、下拉滑动照常拉出通知栏；若你更习惯，也可在配置页把切换手势改为**长按**。
 - 配置页可查看当前状态、切换手势、刷新状态。
 
 > 配置页写入 `Settings.Secure` 需要 `WRITE_SECURE_SETTINGS`。普通应用需手动授予：
@@ -69,7 +68,7 @@
 - **关闭显秒时**：模块会**立即停止该定时器**（`stopTicker`），不再有任何每秒唤醒，也不再有跨进程读取，
   回到系统原本的"每分钟刷新一次"节奏，因此关闭显秒确实更省电。
 - 状态采用**进程内缓存**（`sSecondsEnabled`），定时器不会每秒去读 `Settings.Secure`（避免每秒一次 IPC）。
-- 时间格式化器按 12/24 小时制 pattern 缓存复用，不会每秒 `new SimpleDateFormat`。
+- 模块不构造任何时间格式化器，直接复用系统给出的原文本并仅追加 `:ss`，因此没有格式化器开销。
 - 定时器持有的是视图的**弱引用**，且仅在视图 `isAttachedToWindow()` 时继续，视图销毁后自动退出。
 
 ## 构建
@@ -121,8 +120,21 @@ settingsEvaluated { settings ->
 
 ## 排查
 
-查看 LSPosed 日志与 logcat，过滤 TAG：
+查看 LSPosed 日志与 logcat：
 
-```bash
-adb logcat -s ColorOSClockSeconds
-```
+- **Release 构建**已用 `BuildConfig.DEBUG` 门控剥除所有诊断日志（更小、更干净），
+  logcat 中不会输出本模块日志。
+- 如需排查，临时安装 **debug 构建**（`assembleDebug`，用同一生产密钥签名可直接覆盖安装），
+  再过滤 TAG：
+
+  ```bash
+  adb logcat -s ColorOSClockSeconds
+  ```
+
+- 若完全不显示秒：先确认 LSPosed 已勾选 SystemUI 作用域并重启；再检查开关是否被持久化为关闭——
+  可在 adb 中读取 / 强制写入：
+
+  ```bash
+  adb shell settings get secure coloros_clock_seconds_enabled   # 1=开 0=关
+  adb shell settings put  secure coloros_clock_seconds_enabled 1
+  ```

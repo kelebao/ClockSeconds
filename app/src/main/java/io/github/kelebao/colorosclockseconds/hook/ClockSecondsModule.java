@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -38,13 +37,14 @@ import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
  * 与 {@link TextView#onDraw}（before）——在系统<em>已经设好</em>文本之后才覆写显示，绝不改动
  * 系统的渲染流程，因此不会破坏内部状态、不会崩溃。</p>
  *
- * <p><b>保留 ColorOS 小时红色：</b>系统状态栏时钟的小时数字本是红色（用 {@code Spannable} 的
- * 前景色 Span 实现）。本模块不替换整段文本，而是缓存系统在 {@code setText} 时给出的<em>原始文本
- * （含红色 Span）</em>，仅在其后追加 {@code :ss}，红色 Span 因而天然保留，且自动跟随系统 12/24 制。</p>
+ * <p><b>保留 ColorOS 小时红色：</b>系统状态栏时钟的小时数字红色来自时钟 {@link TextView} 自身的
+ * 文字颜色（textColor），并非一段 {@code Spannable} 前景色 Span。本模块不替换整段文本，而是缓存系统
+ * 在 {@code setText} 时给出的<em>原始文本</em>，仅在其后追加 {@code :ss}，追加的文字自动继承同样的
+ * 文字色，因此红色天然保留，且自动跟随系统 12/24 制。</p>
  *
- * <p><b>不阻碍下拉状态栏：</b>切换手势改用 {@link GestureDetector} + {@link View#setOnTouchListener}，
- * 且监听始终 {@code return false} 不消费触摸事件——只有「点击 / 长按且不移动」才切换显秒，
- * 下拉等滑动手势原样穿透给状态栏容器，正常拉下通知栏。</p>
+ * <p><b>不阻碍下拉状态栏：</b>切换手势改为 hook 系统全局的 {@link View#dispatchTouchEvent}，
+ * 仅当按下点落在已识别时钟的屏幕边界内、且几乎无位移（点击）或按住 500ms（长按）时才切换显秒；
+ * 模块<em>不消费</em>任何触摸事件，下拉等滑动手势原样交给系统，正常拉下通知栏。</p>
  *
  * <p><b>识别时钟：</b>不绑定任何 Oplus 私有实现类，只按「资源名 + 类名」判断是否为状态栏时钟，
  * 并排除锁屏 / AOD / 日期 / 分隔符等无关控件（规则经一加 Ace 5 Pro / ColorOS 15 / Android 15
@@ -66,11 +66,27 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final Set<TextView> CONFIGURED =
             Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
     /**
-     * 系统给出的「无秒原始文本」（含小时红色 Span）。writeTime 只在其后追加 {@code :ss}，
+     * 系统给出的「无秒原始文本」。系统时钟文字色（非 Span）让追加的 {@code :ss} 自动同色，
      * 因此红色与 12/24 制都跟随系统，无需自己构造格式化器。
      */
     private static final Map<TextView, CharSequence> BASE_TEXT =
             Collections.synchronizedMap(new WeakHashMap<TextView, CharSequence>());
+
+    /**
+     * 状态栏时钟视图（首次识别后缓存）与其当前屏幕边界。ColorOS 上通知面板会拦截状态栏区域的触摸，
+     * 时钟自身的 {@code OnTouchListener} 收不到事件；因此改用「全局 hook {@code View.dispatchTouchEvent} +
+     * 边界命中」来检测点击/长按，时钟视图本身不消费触摸，下拉通知栏照常。
+     */
+    private static volatile TextView sClockView;
+    private static final android.graphics.Rect sClockRect = new android.graphics.Rect();
+    private static final Object sClockRectLock = new Object();
+
+    /** 点击/长按检测状态（全局单次手势，避免重复触发）。 */
+    private static volatile boolean sPendingTap;
+    private static long sDownTime;
+    private static float sDownX, sDownY;
+    private static android.os.Handler sTouchHandler;
+    private static Runnable sLongPressTask;
 
     /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
     private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
@@ -87,6 +103,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) {
         // 只注入 SystemUI 主进程与 ColorOS 的 :ui 子进程（锁屏/状态栏 UI 所在）。
         // 截图、tuner、前台服务等其它 SystemUI 子进程不注入，避免无谓开销与风险。
+        if (BuildConfig.DEBUG && SYSTEM_UI.equals(lpparam.packageName)) {
+            XposedBridge.log(LOG_PREFIX + "HANDLE SystemUI process=" + lpparam.processName);
+        }
         if (!SYSTEM_UI.equals(lpparam.packageName) || !isSystemUiProcess(lpparam.processName)) {
             return;
         }
@@ -98,7 +117,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     return;
                 }
                 TextView view = (TextView) param.thisObject;
-                // 缓存系统原始文本（含小时红色 Span），供 writeTime 在其后追加秒。
+                // 缓存系统原始文本（追加的秒继承系统时钟文字色），供 writeTime 在其后追加秒。
                 if (isStatusBarClock(view) && param.args != null && param.args.length > 0
                         && param.args[0] instanceof CharSequence) {
                     BASE_TEXT.put(view, (CharSequence) param.args[0]);
@@ -129,6 +148,20 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
         });
 
+        // 全局触摸监听：ColorOS 通知面板会拦截状态栏区域触摸，时钟自身的 OnTouchListener 收不到。
+        // 这里 hook 所有 View 的 dispatchTouchEvent，仅当按下点在已识别时钟的屏幕边界内、且
+        // 几乎无位移（点击）或按住 500ms（长按）时才切换显秒；不消费事件，下拉通知栏不受影响。
+        XposedBridge.hookAllMethods(android.view.View.class, "dispatchTouchEvent", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                if (sClockView == null || !(param.args != null && param.args.length > 0
+                        && param.args[0] instanceof MotionEvent)) {
+                    return;
+                }
+                handleClockTouch((MotionEvent) param.args[0]);
+            }
+        });
+
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "hook installed in SystemUI; device="
                     + Build.MANUFACTURER + "/" + Build.BRAND
@@ -144,6 +177,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static void configureClockView(TextView view) {
         if (!isStatusBarClock(view)) {
             return;
+        }
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "CONFIG CLOCK: " + resourceName(view)
+                    + " | " + view.getClass().getName());
         }
         synchronized (CONFIGURED) {
             if (!CONFIGURED.add(view)) {
@@ -167,38 +204,107 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 测量失败不影响核心功能
         }
 
-        // 挂载点击 / 长按切换监听（按手势偏好）。
-        // 关键：OnTouchListener 始终 return false，不消费触摸，下拉等滑动手势留给状态栏容器处理。
+        // 缓存时钟视图与其屏幕边界（供全局 dispatchTouchEvent 监听做点击/长按命中判断）。
+        // 不再给时钟挂 OnTouchListener：ColorOS 通知面板会拦截状态栏区域触摸，时钟自身收不到事件；
+        // 全局监听在 dispatchTouchEvent 层命中时钟边界，且不消费事件，下拉通知栏不受影响。
         try {
-            Context context = view.getContext();
-            int gesture = context != null
-                    ? ClockSecondsConfig.getGesture(context.getContentResolver())
-                    : ClockSecondsConfig.GESTURE_CLICK;
-            GestureDetector gd = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public boolean onSingleTapUp(MotionEvent e) {
-                    if (gesture == ClockSecondsConfig.GESTURE_CLICK) {
-                        toggleSeconds(view);
-                    }
-                    return true;
-                }
-
-                @Override
-                public void onLongPress(MotionEvent e) {
-                    if (gesture == ClockSecondsConfig.GESTURE_LONG_PRESS) {
-                        toggleSeconds(view);
-                    }
-                }
-            });
-            view.setOnTouchListener((v, event) -> {
-                gd.onTouchEvent(event);
-                return false; // 不消费：点击已在 GestureDetector 内处理，滑动手势穿透给状态栏
-            });
+            sClockView = view;
+            refreshClockRect(view);
             if (BuildConfig.DEBUG) {
-                XposedBridge.log(LOG_PREFIX + "toggle listener attached; gesture=" + gesture);
+                XposedBridge.log(LOG_PREFIX + "clock view cached; bounds=" + sClockRect
+                        + " gesture=" + ClockSecondsConfig.getGesture(view.getContext().getContentResolver()));
             }
         } catch (Throwable ignored) {
-            // 监听挂载失败也不应影响显示
+            // 缓存失败不影响显示
+        }
+    }
+
+    /** 刷新时钟视图当前屏幕边界（每次配置时调用，覆盖旋转/状态变化；按下时也会再刷新一次）。 */
+    private static void refreshClockRect(View view) {
+        try {
+            int[] loc = new int[2];
+            view.getLocationOnScreen(loc);
+            synchronized (sClockRectLock) {
+                sClockRect.set(loc[0], loc[1], loc[0] + view.getWidth(), loc[1] + view.getHeight());
+            }
+        } catch (Throwable ignored) {
+            // 视图未布局时拿不到，等下次配置/按下再刷新
+        }
+    }
+
+    /**
+     * 全局触摸监听（由 {@code View.dispatchTouchEvent} 触发）。判断按下点是否落在状态栏时钟边界内，
+     * 识别「点击（几乎无位移）」或「长按（按住 500ms）」切换显秒；滑动（下拉）不触发，且不消费事件。
+     */
+    private static void handleClockTouch(MotionEvent ev) {
+        try {
+            if (sTouchHandler == null) {
+                sTouchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            }
+            int gesture = sClockView.getContext() != null
+                    ? ClockSecondsConfig.getGesture(sClockView.getContext().getContentResolver())
+                    : ClockSecondsConfig.GESTURE_CLICK;
+            int action = ev.getAction();
+            if (action == MotionEvent.ACTION_DOWN) {
+                refreshClockRect(sClockView); // 每次按下刷新边界，覆盖旋转/状态变化
+                float x = ev.getRawX(), y = ev.getRawY();
+                boolean hit;
+                synchronized (sClockRectLock) {
+                    hit = sClockRect.contains((int) x, (int) y);
+                }
+                if (hit) {
+                    sPendingTap = true;
+                    sDownTime = ev.getEventTime();
+                    sDownX = x;
+                    sDownY = y;
+                    if (gesture == ClockSecondsConfig.GESTURE_LONG_PRESS) {
+                        final Runnable task = () -> {
+                            if (sPendingTap) {
+                                sPendingTap = false;
+                                toggleSeconds(sClockView);
+                            }
+                        };
+                        sLongPressTask = task;
+                        sTouchHandler.postDelayed(task, 500);
+                    }
+                }
+            } else if (action == MotionEvent.ACTION_MOVE) {
+                if (sPendingTap) {
+                    float dx = Math.abs(ev.getRawX() - sDownX);
+                    float dy = Math.abs(ev.getRawY() - sDownY);
+                    if (dx > 16 || dy > 16) {
+                        sPendingTap = false;
+                        if (sLongPressTask != null) {
+                            sTouchHandler.removeCallbacks(sLongPressTask);
+                            sLongPressTask = null;
+                        }
+                    }
+                }
+            } else if (action == MotionEvent.ACTION_UP) {
+                if (sPendingTap) {
+                    sPendingTap = false;
+                    if (sLongPressTask != null) {
+                        sTouchHandler.removeCallbacks(sLongPressTask);
+                        sLongPressTask = null;
+                    }
+                    if (gesture == ClockSecondsConfig.GESTURE_CLICK) {
+                        long dt = ev.getEventTime() - sDownTime;
+                        float dx = Math.abs(ev.getRawX() - sDownX);
+                        float dy = Math.abs(ev.getRawY() - sDownY);
+                        if (dt < 400 && dx < 16 && dy < 16) {
+                            toggleSeconds(sClockView);
+                        }
+                    }
+                }
+            } else if (action == MotionEvent.ACTION_CANCEL) {
+                sPendingTap = false;
+                if (sLongPressTask != null) {
+                    sTouchHandler.removeCallbacks(sLongPressTask);
+                    sLongPressTask = null;
+                }
+            }
+        } catch (Throwable ignored) {
+            // 触摸识别异常绝不应影响系统
         }
     }
 
@@ -214,6 +320,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver());
             sStateLoaded = true;
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "STATE loaded enabled=" + sSecondsEnabled);
+            }
         } catch (Throwable ignored) {
             // 读不到就保守保持默认（开启），下次再试
         }
@@ -242,10 +351,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     // ==================================================================
-    // 文本覆写（保留系统原文本 + 红色 Span，仅追加秒）
+    // 文本覆写（保留系统原文本，追加的秒继承时钟文字色，仅追加秒）
     // ==================================================================
 
-    /** 用「系统原文本 + :ss」覆写时钟（红色 Span 由 BASE_TEXT 继承，自动跟随 12/24 制）。 */
+    /** 用「系统原文本 + :ss」覆写时钟（追加的秒继承系统时钟文字色，自动跟随 12/24 制）。 */
     private static void writeTime(TextView view) {
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
@@ -255,6 +364,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String ss = String.format(Locale.US, ":%02d", second);
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
         sb.append(ss);
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
+                    + (base instanceof android.text.Spannable));
+        }
         if (TextUtils.equals(view.getText(), sb)) {
             return;
         }
@@ -418,14 +531,23 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             return;
         }
         String name = resourceName(view);
+        CharSequence txt = view.getText();
+        String text = txt == null ? "" : txt.toString();
+        // 诊断探针：任何显示「数字:数字」时间格式的 TextView 都打印（定位真实状态栏时钟资源名）。
+        if (text.matches(".*\\d{1,2}[:：]\\d{2}.*")
+                && LOGGED_CANDIDATES.add("TIME|" + name + "|" + view.getClass().getName())) {
+            XposedBridge.log(LOG_PREFIX + "TIMETV: " + name + " | "
+                    + view.getClass().getName() + " text=[" + text + "]");
+        }
         String className = view.getClass().getName();
-        String searchable = (name + " " + className).toLowerCase(Locale.ROOT);
-        if (!(searchable.contains("clock") || searchable.contains("status"))) {
+        String searchable = (name + " " + className + " " + text).toLowerCase(Locale.ROOT);
+        if (!(searchable.contains("clock") || searchable.contains("status")
+                || searchable.contains("time") || searchable.contains("main"))) {
             return;
         }
         String key = name + "|" + className;
         if (LOGGED_CANDIDATES.add(key)) {
-            XposedBridge.log(LOG_PREFIX + "candidate: " + key);
+            XposedBridge.log(LOG_PREFIX + "candidate: " + key + " text=[" + view.getText() + "]");
         }
     }
 
