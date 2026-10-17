@@ -39,7 +39,7 @@ import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
  * 与 {@link TextView#onDraw}（before）——在系统<em>已经设好</em>文本之后才覆写显示，绝不改动
  * 系统的渲染流程，因此不会破坏内部状态、不会崩溃。</p>
  *
- * <p><b>ColorOS 专属红色样式：</b>在 ColorOS 上，本模块额外把状态栏时钟「小时的十位数」标红
+ * <p><b>小时十位数红色样式：</b>本模块把状态栏时钟「小时的十位数」标红
  * （例如 {@code 13} 的 {@code 1}、{@code 05} 的 {@code 0}），其余文字（分钟、秒）保持系统原色。
  * 实现方式是在覆写后的文本上给十位数那一个字符追加一段红色 {@code ForegroundColorSpan}；
  * 追加的 {@code :ss} 不标红，跟随系统时钟文字色。单位数小时（如 {@code 9:45}）无十位，不标红。</p>
@@ -48,16 +48,16 @@ import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
  * 仅当按下点落在已识别时钟的屏幕边界内、且几乎无位移（点击）或按住 500ms（长按）时才切换显秒；
  * 模块<em>不消费</em>任何触摸事件，下拉等滑动手势原样交给系统，正常拉下通知栏。</p>
  *
- * <p><b>识别时钟：</b>不绑定任何 Oplus 私有实现类，只按「资源名 + 类名」判断是否为状态栏时钟，
- * 并排除锁屏 / AOD / 日期 / 分隔符等无关控件（规则经一加 Ace 5 Pro / ColorOS 15 / Android 15
- * 真机验证可行）。</p>
+ * <p><b>识别时钟：</b>不绑定任何厂商私有实现类，只按「资源名 + 类名」判断是否为状态栏时钟，
+ * 并排除锁屏 / AOD / 日期 / 分隔符等无关控件。规则经 ColorOS 15 真机验证，同时包含 AOSP
+ * 风格类名，可在小米、荣耀、vivo 等其它厂商机型上尝试生效。</p>
  */
 public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     private static final String SYSTEM_UI = "com.android.systemui";
     private static final String LOG_PREFIX = "ColorOSClockSeconds: ";
 
-    /** ColorOS 专属：小时十位数标红颜色（Material Red 500）。仅用于 ColorOS 状态栏时钟。 */
+    /** 小时十位数标红颜色（Material Red 500）。 */
     private static final int HOUR_RED_COLOR = 0xFFF44336;
 
     /** 进程内缓存的显秒开关（默认开启）；点击切换与首次遇到时钟时刷新。 */
@@ -135,6 +135,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 if (sSecondsEnabled) {
                     installTicker(view);
                     refreshClock(view);
+                } else {
+                    // 不显秒时也要保持小时十位数红色样式（系统每分钟更新 HH:mm 时拦截标红）。
+                    applyRedToBaseText(view);
                 }
             }
         });
@@ -387,7 +390,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
-     * ColorOS 专属样式：仅把「小时十位数」标红，其余文字（分钟、秒）保持系统原色。
+     * 仅把「小时十位数」标红，其余文字（分钟、秒）保持系统原色。
      * 小时在文本开头、冒号之前；当其为两位数字（如 13、05）时，第一位即十位数，标红；
      * 无前导零的单位数小时（如 9:45）没有十位，不标红。
      */
@@ -406,18 +409,33 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 关闭显秒后，立即把文本回退为系统原文本（无秒、保留系统时钟原样式）。 */
+    /** 关闭显秒后，立即把文本回退为系统原文本，并应用小时十位数红色样式。 */
     private static void writeMinuteOnly(TextView view) {
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
             base = view.getText();
         }
-        if (TextUtils.equals(view.getText(), base)) {
-            return;
-        }
+        SpannableStringBuilder sb = new SpannableStringBuilder(base);
+        applyHourTensRed(sb);
         WRITING_CLOCK.set(true);
         try {
-            view.setText(base);
+            view.setText(sb);
+        } finally {
+            WRITING_CLOCK.set(false);
+        }
+    }
+
+    /** 对系统原文本应用小时十位数红色样式（不显秒时，系统每次更新分钟都会调用）。 */
+    private static void applyRedToBaseText(TextView view) {
+        CharSequence base = BASE_TEXT.get(view);
+        if (base == null) {
+            base = view.getText();
+        }
+        SpannableStringBuilder sb = new SpannableStringBuilder(base);
+        applyHourTensRed(sb);
+        WRITING_CLOCK.set(true);
+        try {
+            view.setText(sb);
         } finally {
             WRITING_CLOCK.set(false);
         }
@@ -510,9 +528,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (id == View.NO_ID || id == 0) {
             return false;
         }
-        if (!isOplusDevice()) {
-            return false;
-        }
         String name = resourceName(view);
         if (name.isEmpty()) {
             return false;
@@ -552,9 +567,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 仅 DEBUG 构建：把含 clock/status 的 TextView 资源名打印一次，便于补全识别规则或排查。 */
     private static void logCandidate(TextView view) {
         if (!BuildConfig.DEBUG) {
-            return;
-        }
-        if (!isOplusDevice()) {
             return;
         }
         String name = resourceName(view);
