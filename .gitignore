@@ -5,3 +5,6 @@ local.properties
 .idea/
 .secrets/
 deliverables/
+
+# APK 产物不入库（交付统一放 deliverables/）
+*.apk
