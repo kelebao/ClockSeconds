@@ -52,6 +52,18 @@ English · **简体中文**
 - 切换通过全局触摸命中判定实现，**不会与"下拉通知栏"冲突**——纯点击切换、下拉滑动照常拉出通知栏；若你更习惯，也可在配置页把切换手势改为**长按**。
 - 配置页可查看当前状态、切换手势、刷新状态。
 
+## 语言适配
+
+应用界面完整适配 **21 种语言**，安装后**无需任何设置**，自动跟随手机系统语言：
+
+- **自动匹配**：Android 启动应用时按当前系统语言自动加载对应语言资源；在「设置 → 系统 → 语言与输入法」里切换语言后**立即生效**，无需重装应用。
+- **精确匹配与回退**：系统语言为已适配语言时显示该语言（如 English → 英文、日本語 → 日文、Deutsch → 德文）；未适配的语言（如印地语）自动回退为简体中文。
+- **覆盖范围**：界面全部文案均已翻译——模块名、模块描述、设置页所有文字；阿拉伯语与波斯语自动启用 RTL（从右至左）布局。
+- **语言列表**：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული。
+
+> LSPosed 管理器中显示的模块名与描述同样跟随系统语言（读取的是同一套多语言资源）；
+> 仅模块仓库网页端的 Description 需由作者单独设置，不随设备语言变化。
+
 ## 工作原理
 
 模块只 hook **SystemUI** 一个进程，采用稳妥的 legacy Xposed 范式，
@@ -108,6 +120,23 @@ settingsEvaluated { settings ->
 > SDK 仓库（`dl.google.com/android/repository`）一般仍可访问，缺失的 Platform/Build-Tools 会由 AGP 自动下载。
 
 </details>
+
+## 备份与续开发（重要）
+
+### 必须保留的文件
+
+`ColorOS15ClockSeconds/` 目录中，**除 `build/`、`.gradle/` 外的所有文件**都要保留（源码部分仅约 140 KB）：
+
+| 类别 | 文件 | 说明 |
+|------|------|------|
+| 构建脚本 | `settings.gradle.kts`、`build.gradle.kts`、`app/build.gradle.kts`、`gradle.properties` | 版本、依赖、编译参数 |
+| Gradle Wrapper | `gradlew`、`gradlew.bat`、`gradle/wrapper/*` | 锁定 Gradle 8.14.5 |
+| 源码 | `app/src/main/java/**`（3 个 `.java`） | 模块逻辑主体 |
+| 资源 | `app/src/main/res/**` | 字符串（默认中文 + 21 种语言 values-xx）、主题 |
+| Xposed 元数据 | `app/src/main/resources/META-INF/xposed/*` | 入口类、scope、API 版本 |
+| 清单 | `app/src/main/AndroidManifest.xml` | 权限、Activity |
+| 文档 | `README.md`、`README_EN.md` | 中文 / 英文说明 |
+| CI | `.github/workflows/release.yml` | 打 tag 出签名包 |
 
 ## 排查
 

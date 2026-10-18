@@ -52,6 +52,19 @@ No vendor-private classes involved. Verified on ColorOS 15, and designed to cove
 - Toggling is implemented with a global touch hit-test, so it **never conflicts with "pull down the notification shade"** — a pure tap toggles, a swipe still pulls the shade down. You can switch to a **long-press** gesture in the config page if you prefer.
 - The config page shows the current state, the gesture setting, and a refresh button.
 
+## Language Support
+
+The app UI is fully localized into **21 languages** with **zero configuration** — it follows your phone's system language automatically:
+
+- **Automatic matching**: Android loads the matching language resources when the app starts; changing the system language (Settings → System → Languages & input) takes effect **immediately**, no reinstall needed.
+- **Exact match with fallback**: supported languages show their own UI (e.g. English → English, 日本語 → Japanese, Deutsch → German); unsupported languages fall back to Simplified Chinese.
+- **Coverage**: every string is translated — module name, module description, and the whole settings page. Arabic and Persian automatically use RTL (right-to-left) layout.
+- **Language list**: 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული.
+
+> The module name and description shown in the LSPosed manager follow the system language as well
+> (they resolve from the same resource set); only the module repository's web-side Description
+> is set manually by the author and does not follow the device language.
+
 ## How It Works
 
 The module hooks **SystemUI** only, using the well-tested legacy Xposed approach,
