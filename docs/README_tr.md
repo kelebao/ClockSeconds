@@ -140,6 +140,10 @@ logcat inceleyin:
 
 </details>
 
+## Geri Bildirim
+
+Soru, öneri veya görüşleriniz mi var? [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) sayfasına yazmaktan çekinmeyin, en kısa sürede yanıt vereceğim.
+
 ## License
 
 [MIT](LICENSE) © kelebao

@@ -154,6 +154,8 @@ TEXTS = {
                   "barra di stato del tuo dispositivo è coperto dalle regole di riconoscimento; "
                   "se non lo è, basta una riga di regola in più."),
         ],
+        'h_feedback': 'Feedback',
+        'feedback': 'Hai domande, suggerimenti o commenti? Lascia un messaggio su [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues), risponderò al più presto.',
         'h_license': 'License',
     },
 }

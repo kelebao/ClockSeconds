@@ -154,6 +154,8 @@ TEXTS = {
                   'um zu prüfen, ob Ressourcenname / Klassenname der Statusleisten-Uhr Ihres Geräts '
                   'von den Erkennungsregeln abgedeckt sind; wenn nicht, genügt eine zusätzliche Regelzeile.'),
         ],
+        'h_feedback': 'Feedback',
+        'feedback': 'Fragen, Ideen oder Rückmeldungen? Hinterlasse einfach eine Nachricht auf [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) — ich melde mich bald.',
         'h_license': 'License',
     },
 }

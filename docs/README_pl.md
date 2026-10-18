@@ -141,6 +141,10 @@ Sprawdź logcat:
 
 </details>
 
+## Opinie
+
+Masz pytania, sugestie lub uwagi? Zostaw wiadomość na [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) — odpowiem najszybciej, jak to możliwe.
+
 ## License
 
 [MIT](LICENSE) © kelebao

@@ -144,6 +144,8 @@ TEXTS = {
                   '`candidate:` / `CONFIG CLOCK:` 출력을 보아 해당 기기 상태 표시줄 시계의 '
                   '리소스명·클래스명이 인식 규칙에 포함되는지 확인. 없다면 규칙 한 줄 추가면 충분.'),
         ],
+        'h_feedback': '피드백',
+        'feedback': '질문, 제안 또는 사용 후기가 있으시면 [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues)에 남겨 주세요. 가능한 한 빨리 답변드리겠습니다.',
         'h_license': 'License',
     },
 }

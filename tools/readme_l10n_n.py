@@ -153,6 +153,8 @@ TEXTS = {
                   'urządzenia jest objęta regułami rozpoznawania; jeśli nie, wystarczy dodać '
                   'jedną linię reguły.'),
         ],
+        'h_feedback': 'Opinie',
+        'feedback': 'Masz pytania, sugestie lub uwagi? Zostaw wiadomość na [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) — odpowiem najszybciej, jak to możliwe.',
         'h_license': 'License',
     },
 }

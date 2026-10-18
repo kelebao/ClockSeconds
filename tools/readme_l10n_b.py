@@ -147,6 +147,8 @@ TEXTS = {
                   'to see whether your device\'s status bar clock resource name / class name is '
                   'covered by the recognition rules; if not, one extra rule line is all it takes.'),
         ],
+        'h_feedback': 'Feedback',
+        'feedback': 'Have a question, suggestion, or feedback? Leave a message on [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) — I will reply as soon as I can.',
         'h_license': 'License',
     },
 }

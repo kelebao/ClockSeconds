@@ -156,6 +156,8 @@ TEXTS = {
                   "d'état de votre appareil est couvert par les règles de reconnaissance ; "
                   "sinon, une simple ligne de règle en plus suffit."),
         ],
+        'h_feedback': 'Retours',
+        'feedback': 'Des questions, suggestions ou remarques ? Laissez un message sur [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues), je réponds dès que possible.',
         'h_license': 'License',
     },
 }

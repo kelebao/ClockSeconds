@@ -141,6 +141,10 @@ Lihat logcat:
 
 </details>
 
+## Umpan Balik
+
+Punya pertanyaan, saran, atau masukan? Silakan tinggalkan pesan di [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues), saya akan membalas secepatnya.
+
 ## License
 
 [MIT](LICENSE) © kelebao

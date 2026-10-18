@@ -189,7 +189,9 @@ def render(t, cur, base=''):
             L += bullets([item[1]])
     while L and L[-1] == '':
         L.pop()
-    L += ['', '</details>', '', '## ' + t['h_license'], '',
+    L += ['', '</details>', '',
+          '## ' + t['h_feedback'], '', t['feedback'], '',
+          '## ' + t['h_license'], '',
           '[MIT](LICENSE) © kelebao', '']
     return '\n'.join(L)
 

@@ -133,6 +133,10 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 </details>
 
+## უკუკავშირი
+
+კითხვები, შემოთვალი ან გამოხმაურება გაქვთ? დაწერეთ [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues)-ზე — რაც შეიძლება მალე გიპასუხებთ.
+
 ## License
 
 [MIT](LICENSE) © kelebao

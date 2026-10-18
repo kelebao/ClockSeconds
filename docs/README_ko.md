@@ -139,6 +139,10 @@ logcat을 확인하세요:
 
 </details>
 
+## 피드백
+
+질문, 제안 또는 사용 후기가 있으시면 [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues)에 남겨 주세요. 가능한 한 빨리 답변드리겠습니다.
+
 ## License
 
 [MIT](LICENSE) © kelebao

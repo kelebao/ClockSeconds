@@ -141,6 +141,10 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 </details>
 
+## Обратная связь
+
+Есть вопросы, предложения или отзывы? Оставьте сообщение на [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) — постараюсь ответить как можно скорее.
+
 ## License
 
 [MIT](LICENSE) © kelebao

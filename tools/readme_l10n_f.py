@@ -148,6 +148,8 @@ TEXTS = {
                   'cihazınızın durum çubuğu saati kaynak adının / sınıf adının tanıma kurallarında '
                   'olup olmadığını görün; değilse tek bir kural satırı eklemek yeterlidir.'),
         ],
+        'h_feedback': 'Geri Bildirim',
+        'feedback': 'Soru, öneri veya görüşleriniz mi var? [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) sayfasına yazmaktan çekinmeyin, en kısa sürede yanıt vereceğim.',
         'h_license': 'License',
     },
 }

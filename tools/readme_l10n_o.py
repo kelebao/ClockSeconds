@@ -153,6 +153,8 @@ TEXTS = {
                   'do seu dispositivo está coberto pelas regras de reconhecimento; se não estiver, '
                   'uma linha de regra extra basta.'),
         ],
+        'h_feedback': 'Feedback',
+        'feedback': 'Tem dúvidas, sugestões ou comentários? Deixe uma mensagem em [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) — respondo o quanto antes.',
         'h_license': 'License',
     },
 }

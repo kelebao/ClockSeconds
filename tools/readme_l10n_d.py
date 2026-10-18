@@ -146,6 +146,8 @@ TEXTS = {
                   '時計のリソース名・クラス名が認識規則に含まれているか確認。'
                   '含まれていなければ規則を 1 行追加するだけです。'),
         ],
+        'h_feedback': 'フィードバック',
+        'feedback': '不具合・ご要望・ご感想があれば、[GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) へお気軽にどうぞ。できる限り早く対応します。',
         'h_license': 'License',
     },
 }

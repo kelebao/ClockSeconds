@@ -155,6 +155,8 @@ TEXTS = {
                   'estado de tu dispositivo está cubierto por las reglas de reconocimiento; '
                   'si no lo está, basta con añadir una línea de regla.'),
         ],
+        'h_feedback': 'Comentarios',
+        'feedback': '¿Tienes preguntas, sugerencias o comentarios? Deja un mensaje en [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) y te responderé lo antes posible.',
         'h_license': 'License',
     },
 }

@@ -147,6 +147,8 @@ TEXTS = {
                   'xác nhận tên tài nguyên / tên lớp của đồng hồ thanh trạng thái trên máy đó có nằm '
                   'trong quy tắc nhận diện không; nếu không thì chỉ cần bổ sung một dòng quy tắc.'),
         ],
+        'h_feedback': 'Phản hồi',
+        'feedback': 'Có câu hỏi, góp ý hoặc chia sẻ? Hãy để lại lời nhắn tại [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues), tôi sẽ phản hồi sớm nhất có thể.',
         'h_license': 'License',
     },
 }

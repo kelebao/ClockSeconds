@@ -129,6 +129,8 @@ TEXTS = {
             ('b', '若在非 ColorOS 机型上不生效：装 debug 版看日志里的 `candidate:` / `CONFIG CLOCK:` 输出，\n'
                   '确认该机型状态栏时钟的资源名与类名是否在识别规则内，若不在则补一条规则即可。'),
         ],
+        'h_feedback': '反馈与建议',
+        'feedback': '有问题、建议或使用心得？欢迎到 [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) 留言，我会及时回复。',
         'h_license': 'License',
     },
 }

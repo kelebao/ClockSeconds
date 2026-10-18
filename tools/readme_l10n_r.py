@@ -151,6 +151,8 @@ TEXTS = {
                   'untuk memastikan nama sumber / nama kelas jam bilah status perangkat Anda sudah '
                   'tercakup oleh aturan pengenalan; jika belum, cukup tambah satu baris aturan.'),
         ],
+        'h_feedback': 'Umpan Balik',
+        'feedback': 'Punya pertanyaan, saran, atau masukan? Silakan tinggalkan pesan di [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues), saya akan membalas secepatnya.',
         'h_license': 'License',
     },
 }

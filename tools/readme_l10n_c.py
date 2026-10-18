@@ -129,6 +129,8 @@ TEXTS = {
             ('b', '若在非 ColorOS 機型上不生效：裝 debug 版看日誌裡的 `candidate:` / `CONFIG CLOCK:` 輸出，\n'
                   '確認該機型狀態欄時鐘的資源名與類名是否在識別規則內，若不在則補一條規則即可。'),
         ],
+        'h_feedback': '反饋與建議',
+        'feedback': '有問題、建議或使用心得？歡迎到 [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) 留言，我會盡快回覆。',
         'h_license': 'License',
     },
 }
