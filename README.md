@@ -1,6 +1,6 @@
 <div align="center">
 
-English · **简体中文**
+**简体中文** · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -8,14 +8,13 @@ English · **简体中文**
 
 # 时钟显秒（Clock Seconds）
 
-让状态栏时钟显示**秒**，单击即切换，小时十位数**常驻标红**。<br>
-不依赖任何厂商私有类，已在 ColorOS 15 真机验证，同时覆盖小米、一加、荣耀、vivo 等主流厂商。
+让状态栏时钟显示**秒**，单击即切换，小时十位数**常驻标红**。<br>不依赖任何厂商私有类，已在 ColorOS 15 真机验证，同时覆盖小米、一加、荣耀、vivo 等主流厂商。
 
 ![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 ![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.io/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
+![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
 
 </div>
@@ -49,7 +48,7 @@ English · **简体中文**
 ## 使用
 
 - **单击状态栏时钟**：切换显秒开/关（默认手势）。
-- 切换通过全局触摸命中判定实现，**不会与"下拉通知栏"冲突**——纯点击切换、下拉滑动照常拉出通知栏；若你更习惯，也可在配置页把切换手势改为**长按**。
+- 切换通过全局触摸命中判定实现，**不会与“下拉通知栏”冲突**——纯点击切换、下拉滑动照常拉出通知栏；若你更习惯，也可在配置页把切换手势改为**长按**。
 - 配置页可查看当前状态、切换手势、刷新状态。
 
 ## 工作原理
@@ -69,9 +68,9 @@ English · **简体中文**
 
 ## 省电说明
 
-- **开启显秒时**：模块需要 1 秒级定时器驱动刷新（这是"显示秒"的固有开销，约 60 次/分钟重绘时钟）。
+- **开启显秒时**：模块需要 1 秒级定时器驱动刷新（这是“显示秒”的固有开销，约 60 次/分钟重绘时钟）。
 - **关闭显秒时**：模块会**立即停止该定时器**（`stopTicker`），不再有任何每秒唤醒，也不再有跨进程读取，
-  回到系统原本的"每分钟刷新一次"节奏，因此关闭显秒确实更省电。
+  回到系统原本的“每分钟刷新一次”节奏，因此关闭显秒确实更省电。
 - 状态采用**进程内缓存**（`sSecondsEnabled`），定时器不会每秒去读 `Settings.Secure`（避免每秒一次 IPC）。
 - 模块不构造任何时间格式化器，直接复用系统给出的原文本并仅追加 `:ss`，因此没有格式化器开销。
 - 定时器持有的是视图的**弱引用**，且仅在视图 `isAttachedToWindow()` 时继续，视图销毁后自动退出。
@@ -85,33 +84,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 ./gradlew assembleDebug
 ```
 
-<details>
-<summary>国内网络（Google Maven 不可达）</summary>
-
-若 `dl.google.com/dl/android/maven2` 连不通（AGP / AndroidX 会拉取失败），
-在 `~/.gradle/init.gradle` 加入阿里云镜像即可（不修改项目文件）：
-
-```groovy
-settingsEvaluated { settings ->
-    settings.pluginManagement.repositories {
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-    }
-    settings.dependencyResolutionManagement.repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-    }
-}
-```
-
-> SDK 仓库（`dl.google.com/android/repository`）一般仍可访问，缺失的 Platform/Build-Tools 会由 AGP 自动下载。
-
-</details>
-
 ## 备份与续开发（重要）
-
-### 必须保留的文件
 
 `ColorOS15ClockSeconds/` 目录中，**除 `build/`、`.gradle/` 外的所有文件**都要保留（源码部分仅约 140 KB）：
 
@@ -123,7 +96,7 @@ settingsEvaluated { settings ->
 | 资源 | `app/src/main/res/**` | 字符串（默认中文 + 21 种语言 values-xx）、主题 |
 | Xposed 元数据 | `app/src/main/resources/META-INF/xposed/*` | 入口类、scope、API 版本 |
 | 清单 | `app/src/main/AndroidManifest.xml` | 权限、Activity |
-| 文档 | `README.md`、`README_EN.md` | 中文 / 英文说明 |
+| 文档 | `README*.md` | 21 种语言的说明文档 |
 | CI | `.github/workflows/release.yml` | 打 tag 出签名包 |
 
 ## 排查

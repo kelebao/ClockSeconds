@@ -1,6 +1,6 @@
 <div align="center">
 
-**English** · [简体中文](README.md)
+[简体中文](README.md) · **English** · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -8,14 +8,13 @@
 
 # Clock Seconds (时钟显秒)
 
-Show **seconds** in the status bar clock, toggle with a single tap, and keep the **hour tens digit in red**.<br>
-No vendor-private classes involved. Verified on ColorOS 15, and designed to cover Xiaomi, OnePlus, Honor, vivo and other major vendors.
+Show **seconds** in the status bar clock, toggle with a single tap, and keep the **hour tens digit in red**.<br>No vendor-private classes involved. Verified on ColorOS 15, and designed to cover Xiaomi, OnePlus, Honor, vivo and other major vendors.
 
 ![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 ![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.io/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
+![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
 
 </div>
@@ -25,7 +24,7 @@ No vendor-private classes involved. Verified on ColorOS 15, and designed to cove
 ## Features
 
 | Feature | Description |
-|---------|-------------|
+|------|------|
 | Seconds | The status bar clock shows seconds (`HH:mm:ss` / `h:mm:ss a`, follows the system 12/24-hour setting) |
 | Tap to toggle | **Tap** the status bar clock to toggle seconds on/off; long-press gesture also available |
 | Red hour digit | The hour **tens digit** is colored red (the `1` in `13`, the `0` in `05`); minutes and seconds keep the system color. Single-digit hours (e.g. `9:45`) have no tens digit and stay untouched. Effective on all vendors |
@@ -60,8 +59,8 @@ and **never touches any vendor-private class**, so system internal state is neve
 - **Seconds**: hook the stable `TextView.setText` (after) to cache the raw text the system puts on the status bar clock,
   then hook `TextView.onDraw` (before) to overwrite the display with `rawText:ss` after the system has set it,
   driven by a 1-second `Handler`. The appended seconds inherit the clock's own text color (measured `#ccffffff`).
-  The hour tens digit is additionally colored red (a red `ForegroundColorSpan` on that single character),
-  regardless of whether seconds are shown; minutes and seconds are never red; single-digit hours have no tens digit and stay untouched.
+  The hour tens digit is additionally colored red (a red `ForegroundColorSpan` on that single character), regardless of whether seconds are shown;
+  minutes and seconds are never red; single-digit hours have no tens digit and stay untouched.
 - **Toggle**: ColorOS's notification panel intercepts touches in the status bar area, so the clock's own `OnTouchListener` never receives events.
   The module therefore hooks the global `View.dispatchTouchEvent` and only flips the `Settings.Secure` switch when the press lands inside
   the recognized clock's screen bounds with almost no movement (tap) or is held for 500 ms (long-press). The module **does not consume**
@@ -85,29 +84,20 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 ./gradlew assembleDebug
 ```
 
-<details>
-<summary>Networks without access to Google Maven</summary>
+## Backup & Continued Development (Important)
 
-If `dl.google.com/dl/android/maven2` is unreachable (AGP / AndroidX downloads will fail),
-add the Aliyun mirror in `~/.gradle/init.gradle` (no project file changes needed):
+In the `ColorOS15ClockSeconds/` directory, **keep every file except `build/` and `.gradle/`** (the source part is only about 140 KB):
 
-```groovy
-settingsEvaluated { settings ->
-    settings.pluginManagement.repositories {
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-    }
-    settings.dependencyResolutionManagement.repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-    }
-}
-```
-
-> The SDK repository (`dl.google.com/android/repository`) is generally still reachable; missing Platform/Build-Tools are downloaded automatically by AGP.
-
-</details>
+| Category | File | Note |
+|------|------|------|
+| Build scripts | `settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle.properties` | Version, dependencies, compiler flags |
+| Gradle Wrapper | `gradlew`, `gradlew.bat`, `gradle/wrapper/*` | Pins Gradle 8.14.5 |
+| Source | `app/src/main/java/**` (3 `.java` files) | The module logic |
+| Resources | `app/src/main/res/**` | Strings (default Chinese + 21 values-xx locales), theme |
+| Xposed metadata | `app/src/main/resources/META-INF/xposed/*` | Entry class, scope, API version |
+| Manifest | `app/src/main/AndroidManifest.xml` | Permissions, Activity |
+| Docs | `README*.md` | Documentation in 21 languages |
+| CI | `.github/workflows/release.yml` | Tag-triggered signed builds |
 
 ## Troubleshooting
 
