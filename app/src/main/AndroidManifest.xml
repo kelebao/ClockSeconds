@@ -4,6 +4,7 @@
      - 入口类在 assets/xposed_init 中指定 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
     <application

@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">نگه داشتن ساعت</string>
     <string name="settings_hint">نکته: برای اعمال تغییرات، SystemUI را دوباره راه‌اندازی کنید یا دستگاه را ری‌استارت کنید. اگر ضربه زدن با کشیدن نوار اعلان‌ها تداخل دارد، از حرکت نگه داشتن استفاده کنید.</string>
     <string name="settings_refresh">به‌روزرسانی وضعیت</string>
+    <string name="settings_section_general">عمومی</string>
+    <string name="settings_update_auto">بررسی خودکار به‌روزرسانی</string>
+    <string name="settings_update_auto_sum">هنگام باز شدن برنامه، نسخه‌های جدید بررسی شود</string>
+    <string name="settings_update_check">بررسی به‌روزرسانی</string>
+    <string name="settings_update_open">دریافت به‌روزرسانی</string>
+    <string name="settings_update_open_sum">دریافت آخرین نسخه از GitHub</string>
+    <string name="settings_section_about">درباره ماژول</string>
+    <string name="settings_about_version">نسخه: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">مشاهده کد منبع در GitHub</string>
+    <string name="settings_about_licenses">پروانه‌های متن‌باز</string>
+    <string name="settings_about_licenses_sum">کتابخانه‌های متن‌باز ثالث استفاده‌شده</string>
+    <string name="update_checking">در حال بررسی به‌روزرسانی…</string>
+    <string name="update_latest">شما روی آخرین نسخه هستید</string>
+    <string name="update_failed">بررسی به‌روزرسانی ناموفق بود. شبکه را بررسی کنید و دوباره تلاش کنید</string>
+    <string name="update_dialog_title">نسخه جدید موجود است</string>
+    <string name="update_dialog_msg">نسخه جدید %1$s یافت شد (نسخه فعلی: %2$s). رفتن به صفحه به‌روزرسانی؟</string>
+    <string name="update_go">به‌روزرسانی</string>
+    <string name="update_later">بعداً</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+کد منبع این ماژول: MIT © kelebao</string>
 </resources>

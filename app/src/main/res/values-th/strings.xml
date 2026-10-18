@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">กดนาฬิกาค้าง</string>
     <string name="settings_hint">หมายเหตุ: ต้องรีสตาร์ท SystemUI หรือรีบูตเครื่องเพื่อให้การเปลี่ยนแปลงมีผล หากการแตะชนกับการเลื่อนแถบแจ้งเตือน กรุณาใช้ท่าทางกดค้างแทน</string>
     <string name="settings_refresh">รีเฟรชสถานะ</string>
+    <string name="settings_section_general">ทั่วไป</string>
+    <string name="settings_update_auto">ตรวจสอบอัปเดตอัตโนมัติ</string>
+    <string name="settings_update_auto_sum">ตรวจหาเวอร์ชันใหม่เมื่อเปิดแอป</string>
+    <string name="settings_update_check">ตรวจสอบอัปเดต</string>
+    <string name="settings_update_open">รับอัปเดต</string>
+    <string name="settings_update_open_sum">รับเวอร์ชันล่าสุดจาก GitHub</string>
+    <string name="settings_section_about">เกี่ยวกับโมดูล</string>
+    <string name="settings_about_version">เวอร์ชัน: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">ดูซอร์สโค้ดบน GitHub</string>
+    <string name="settings_about_licenses">สิทธิ์การใช้งานโอเพนซอร์ส</string>
+    <string name="settings_about_licenses_sum">ไลบรารีโอเพนซอร์สของบุคคลที่สามที่ใช้</string>
+    <string name="update_checking">กำลังตรวจสอบอัปเดต…</string>
+    <string name="update_latest">คุณใช้เวอร์ชันล่าสุดอยู่แล้ว</string>
+    <string name="update_failed">ตรวจสอบอัปเดตล้มเหลว โปรดตรวจสอบเครือข่ายแล้วลองอีกครั้ง</string>
+    <string name="update_dialog_title">มีเวอร์ชันใหม่</string>
+    <string name="update_dialog_msg">พบเวอร์ชันใหม่ %1$s (ปัจจุบัน %2$s) ไปหน้าอัปเดตเลยไหม</string>
+    <string name="update_go">อัปเดต</string>
+    <string name="update_later">ภายหลัง</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+ซอร์สโค้ดของโมดูลนี้: MIT © kelebao</string>
 </resources>

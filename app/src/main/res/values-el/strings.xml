@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Πατήστε παρατεταμένα το ρολόι</string>
     <string name="settings_hint">Σημείωση: επανεκκινήστε το SystemUI ή τη συσκευή για να εφαρμοστούν οι αλλαγές. Αν το πάτημα συγκρούεται με το κατέβασμα του πάνελ ειδοποιήσεων, χρησιμοποιήστε το χείρος παρατεταμένου πατήματος.</string>
     <string name="settings_refresh">Ανανέωση κατάστασης</string>
+    <string name="settings_section_general">Γενικά</string>
+    <string name="settings_update_auto">Αυτόματος έλεγχος ενημερώσεων</string>
+    <string name="settings_update_auto_sum">Έλεγχος νέων εκδόσεων κατά το άνοιγμα της εφαρμογής</string>
+    <string name="settings_update_check">Έλεγχος ενημερώσεων</string>
+    <string name="settings_update_open">Λήψη ενημέρωσης</string>
+    <string name="settings_update_open_sum">Λήψη της τελευταίας έκδοσης από το GitHub</string>
+    <string name="settings_section_about">Σχετικά με τη μονάδα</string>
+    <string name="settings_about_version">Έκδοση: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Δείτε τον πηγαίο κώδικα στο GitHub</string>
+    <string name="settings_about_licenses">Άδειες ανοιχτού κώδικα</string>
+    <string name="settings_about_licenses_sum">Βιβλιοθήκες ανοιχτού κώδικα τρίτων που χρησιμοποιούνται</string>
+    <string name="update_checking">Έλεγχος για ενημερώσεις…</string>
+    <string name="update_latest">Έχετε ήδη την τελευταία έκδοση</string>
+    <string name="update_failed">Ο έλεγχος ενημερώσεων απέτυχε. Ελέγξτε το δίκτυο και δοκιμάστε ξανά</string>
+    <string name="update_dialog_title">Διαθέσιμη νέα έκδοση</string>
+    <string name="update_dialog_msg">Βρέθηκε η νέα έκδοση %1$s (τρέχουσα: %2$s). Μετάβαση στη σελίδα ενημέρωσης;</string>
+    <string name="update_go">Ενημέρωση</string>
+    <string name="update_later">Αργότερα</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Πηγαίος κώδικας αυτής της μονάδας: MIT © kelebao</string>
 </resources>

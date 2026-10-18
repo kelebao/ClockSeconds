@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Saati basılı tut</string>
     <string name="settings_hint">Not: Değişikliklerin etkin olması için SystemUI\'yi yeniden başlatın veya cihazı yeniden başlatın. Dokunma bildirim panosunu açma ile çakışıyorsa basılı tutma hareketine geçin.</string>
     <string name="settings_refresh">Durumu yenile</string>
+    <string name="settings_section_general">Genel</string>
+    <string name="settings_update_auto">Güncellemeleri otomatik denetle</string>
+    <string name="settings_update_auto_sum">Uygulama açıldığında yeni sürümleri denetle</string>
+    <string name="settings_update_check">Güncellemeleri denetle</string>
+    <string name="settings_update_open">Güncellemeyi al</string>
+    <string name="settings_update_open_sum">GitHub\'dan en son sürümü al</string>
+    <string name="settings_section_about">Modül hakkında</string>
+    <string name="settings_about_version">Sürüm: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Kaynak kodunu GitHub\'da gör</string>
+    <string name="settings_about_licenses">Açık kaynak lisansları</string>
+    <string name="settings_about_licenses_sum">Kullanılan üçüncü taraf açık kaynak kütüphaneleri</string>
+    <string name="update_checking">Güncellemeler denetleniyor…</string>
+    <string name="update_latest">En son sürümü kullanıyorsunuz</string>
+    <string name="update_failed">Güncelleme denetlenemedi. Ağ bağlantınızı kontrol edip tekrar deneyin</string>
+    <string name="update_dialog_title">Yeni sürüm var</string>
+    <string name="update_dialog_msg">Yeni sürüm %1$s bulundu (mevcut: %2$s). Güncelleme sayfasına gidilsin mi?</string>
+    <string name="update_go">Güncelle</string>
+    <string name="update_later">Sonra</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Bu modülün kaynak kodu: MIT © kelebao</string>
 </resources>

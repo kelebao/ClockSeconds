@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Tieni premuto l\'orologio</string>
     <string name="settings_hint">Nota: riavvia SystemUI o il dispositivo per applicare le modifiche. Se il tocco entra in conflitto con il pannello delle notifiche, passa al gesto di pressione prolungata.</string>
     <string name="settings_refresh">Aggiorna stato</string>
+    <string name="settings_section_general">Generale</string>
+    <string name="settings_update_auto">Controlla aggiornamenti automaticamente</string>
+    <string name="settings_update_auto_sum">Cerca nuove versioni all\'avvio dell\'app</string>
+    <string name="settings_update_check">Controlla aggiornamenti</string>
+    <string name="settings_update_open">Ottieni aggiornamento</string>
+    <string name="settings_update_open_sum">Ottieni l\'ultima versione da GitHub</string>
+    <string name="settings_section_about">Informazioni sul modulo</string>
+    <string name="settings_about_version">Versione: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Vedi il codice sorgente su GitHub</string>
+    <string name="settings_about_licenses">Licenze open source</string>
+    <string name="settings_about_licenses_sum">Librerie open source di terze parti utilizzate</string>
+    <string name="update_checking">Controllo degli aggiornamenti…</string>
+    <string name="update_latest">Hai già la versione più recente</string>
+    <string name="update_failed">Controllo degli aggiornamenti non riuscito. Verifica la connessione e riprova</string>
+    <string name="update_dialog_title">Nuova versione disponibile</string>
+    <string name="update_dialog_msg">Trovata la nuova versione %1$s (attuale: %2$s). Andare alla pagina di aggiornamento?</string>
+    <string name="update_go">Aggiorna</string>
+    <string name="update_later">Più tardi</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Codice sorgente di questo modulo: MIT © kelebao</string>
 </resources>

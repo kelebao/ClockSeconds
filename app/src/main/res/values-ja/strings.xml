@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">時計を長押し</string>
     <string name="settings_hint">注意：変更を反映するには SystemUI を再起動するか端末を再起動してください。タップが通知欄のプルダウンと競合する場合は、長押しジェスチャーに変更してください。</string>
     <string name="settings_refresh">状態を更新</string>
+    <string name="settings_section_general">一般</string>
+    <string name="settings_update_auto">更新を自動チェック</string>
+    <string name="settings_update_auto_sum">アプリ起動時に新しいバージョンを確認します</string>
+    <string name="settings_update_check">更新をチェック</string>
+    <string name="settings_update_open">更新を取得</string>
+    <string name="settings_update_open_sum">GitHub から最新バージョンを取得</string>
+    <string name="settings_section_about">モジュールについて</string>
+    <string name="settings_about_version">バージョン：%1$s（%2$d）</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">GitHub でソースコードを見る</string>
+    <string name="settings_about_licenses">オープンソースライセンス</string>
+    <string name="settings_about_licenses_sum">使用中のサードパーティ製オープンソースライブラリ</string>
+    <string name="update_checking">更新を確認中…</string>
+    <string name="update_latest">最新バージョンです</string>
+    <string name="update_failed">更新の確認に失敗しました。ネットワークを確認してもう一度お試しください</string>
+    <string name="update_dialog_title">新しいバージョンがあります</string>
+    <string name="update_dialog_msg">新しいバージョン %1$s が見つかりました（現在：%2$s）。更新ページを開きますか？</string>
+    <string name="update_go">更新</string>
+    <string name="update_later">後で</string>
+    <string name="licenses_text">Xposed API（de.robv.android.xposed:api:82）：Apache License 2.0
+このモジュールのソースコード：MIT © kelebao</string>
 </resources>

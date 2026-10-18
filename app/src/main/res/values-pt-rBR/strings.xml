@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Pressionar o relógio</string>
     <string name="settings_hint">Nota: reinicie o SystemUI ou o dispositivo para que as alterações tenham efeito. Se o toque conflitar com a rolagem do painel de notificações, use o gesto de pressionamento longo.</string>
     <string name="settings_refresh">Atualizar estado</string>
+    <string name="settings_section_general">Geral</string>
+    <string name="settings_update_auto">Verificar atualizações automaticamente</string>
+    <string name="settings_update_auto_sum">Buscar novas versões ao abrir o aplicativo</string>
+    <string name="settings_update_check">Verificar atualizações</string>
+    <string name="settings_update_open">Obter atualização</string>
+    <string name="settings_update_open_sum">Obter a versão mais recente do GitHub</string>
+    <string name="settings_section_about">Sobre o módulo</string>
+    <string name="settings_about_version">Versão: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Ver o código-fonte no GitHub</string>
+    <string name="settings_about_licenses">Licenças de código aberto</string>
+    <string name="settings_about_licenses_sum">Bibliotecas de código aberto de terceiros usadas</string>
+    <string name="update_checking">Verificando atualizações…</string>
+    <string name="update_latest">Você está na versão mais recente</string>
+    <string name="update_failed">Falha ao verificar atualizações. Verifique sua conexão e tente novamente</string>
+    <string name="update_dialog_title">Nova versão disponível</string>
+    <string name="update_dialog_msg">Nova versão %1$s encontrada (atual: %2$s). Ir para a página de atualização?</string>
+    <string name="update_go">Atualizar</string>
+    <string name="update_later">Mais tarde</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Código-fonte deste módulo: MIT © kelebao</string>
 </resources>

@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Appui long sur l\'horloge</string>
     <string name="settings_hint">Remarque : redémarrez SystemUI ou l\'appareil pour appliquer les modifications. Si le touche entre en conflit avec le déroulement du panneau de notifications, passez au geste d\'appui long.</string>
     <string name="settings_refresh">Actualiser l\'état</string>
+    <string name="settings_section_general">Général</string>
+    <string name="settings_update_auto">Vérifier les mises à jour automatiquement</string>
+    <string name="settings_update_auto_sum">Rechercher les nouvelles versions au démarrage de l\'application</string>
+    <string name="settings_update_check">Rechercher les mises à jour</string>
+    <string name="settings_update_open">Obtenir la mise à jour</string>
+    <string name="settings_update_open_sum">Obtenir la dernière version sur GitHub</string>
+    <string name="settings_section_about">À propos du module</string>
+    <string name="settings_about_version">Version : %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Voir le code source sur GitHub</string>
+    <string name="settings_about_licenses">Licences open source</string>
+    <string name="settings_about_licenses_sum">Bibliothèques open source tierces utilisées</string>
+    <string name="update_checking">Recherche de mises à jour…</string>
+    <string name="update_latest">Vous utilisez la dernière version</string>
+    <string name="update_failed">Échec de la vérification des mises à jour. Vérifiez votre connexion et réessayez</string>
+    <string name="update_dialog_title">Nouvelle version disponible</string>
+    <string name="update_dialog_msg">Nouvelle version %1$s trouvée (actuelle : %2$s). Aller à la page de mise à jour ?</string>
+    <string name="update_go">Mettre à jour</string>
+    <string name="update_later">Plus tard</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82) : Apache License 2.0
+Code source de ce module : MIT © kelebao</string>
 </resources>

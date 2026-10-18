@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Przytrzymaj zegar</string>
     <string name="settings_hint">Uwaga: uruchom ponownie SystemUI lub zrestartuj urządzenie, aby zmiany zostały zastosowane. Jeśli dotykanie koliduje z rozwijaniem panelu powiadomień, przełącz na gest przytrzymania.</string>
     <string name="settings_refresh">Odśwież stan</string>
+    <string name="settings_section_general">Ogólne</string>
+    <string name="settings_update_auto">Automatycznie sprawdzaj aktualizacje</string>
+    <string name="settings_update_auto_sum">Sprawdzaj nowe wersje przy uruchomieniu aplikacji</string>
+    <string name="settings_update_check">Sprawdź aktualizacje</string>
+    <string name="settings_update_open">Pobierz aktualizację</string>
+    <string name="settings_update_open_sum">Pobierz najnowszą wersję z GitHuba</string>
+    <string name="settings_section_about">Informacje o module</string>
+    <string name="settings_about_version">Wersja: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Zobacz kod źródłowy na GitHubie</string>
+    <string name="settings_about_licenses">Licencje open source</string>
+    <string name="settings_about_licenses_sum">Używane biblioteki open source</string>
+    <string name="update_checking">Sprawdzanie aktualizacji…</string>
+    <string name="update_latest">Masz najnowszą wersję</string>
+    <string name="update_failed">Nie udało się sprawdzić aktualizacji. Sprawdź sieć i spróbuj ponownie</string>
+    <string name="update_dialog_title">Dostępna nowa wersja</string>
+    <string name="update_dialog_msg">Znaleziono nową wersję %1$s (bieżąca: %2$s). Przejść do strony aktualizacji?</string>
+    <string name="update_go">Aktualizuj</string>
+    <string name="update_later">Później</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Kod źródłowy tego modułu: MIT © kelebao</string>
 </resources>

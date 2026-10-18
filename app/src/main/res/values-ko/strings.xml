@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">시계 길게 누르기</string>
     <string name="settings_hint">참고: 변경 사항을 적용하려면 SystemUI를 다시 시작하거나 기기를 재부팅하세요. 탭이 알림 창 내리기와 충돌하면 길게 누르기 제스처로 변경하세요.</string>
     <string name="settings_refresh">상태 새로고침</string>
+    <string name="settings_section_general">일반</string>
+    <string name="settings_update_auto">업데이트 자동 확인</string>
+    <string name="settings_update_auto_sum">앱을 열 때 새 버전을 확인합니다</string>
+    <string name="settings_update_check">업데이트 확인</string>
+    <string name="settings_update_open">업데이트 받기</string>
+    <string name="settings_update_open_sum">GitHub에서 최신 버전 받기</string>
+    <string name="settings_section_about">모듈 정보</string>
+    <string name="settings_about_version">버전: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">GitHub에서 소스 코드 보기</string>
+    <string name="settings_about_licenses">오픈 소스 라이선스</string>
+    <string name="settings_about_licenses_sum">사용된 서드파티 오픈 소스 라이브러리</string>
+    <string name="update_checking">업데이트 확인 중…</string>
+    <string name="update_latest">이미 최신 버전입니다</string>
+    <string name="update_failed">업데이트 확인에 실패했습니다. 네트워크를 확인하고 다시 시도하세요</string>
+    <string name="update_dialog_title">새 버전 사용 가능</string>
+    <string name="update_dialog_msg">새 버전 %1$s을(를) 찾았습니다(현재: %2$s). 업데이트 페이지로 이동하시겠습니까?</string>
+    <string name="update_go">업데이트</string>
+    <string name="update_later">나중에</string>
+    <string name="licenses_text">Xposed API(de.robv.android.xposed:api:82): Apache License 2.0
+이 모듈의 소스 코드: MIT © kelebao</string>
 </resources>

@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Mantener pulsado el reloj</string>
     <string name="settings_hint">Nota: reinicia SystemUI o el dispositivo para que los cambios surtan efecto. Si el toque entra en conflicto con el desplegable de notificaciones, cambia al gesto de pulsación larga.</string>
     <string name="settings_refresh">Actualizar estado</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_update_auto">Buscar actualizaciones automáticamente</string>
+    <string name="settings_update_auto_sum">Buscar versiones nuevas al abrir la aplicación</string>
+    <string name="settings_update_check">Buscar actualizaciones</string>
+    <string name="settings_update_open">Obtener actualización</string>
+    <string name="settings_update_open_sum">Obtener la última versión de GitHub</string>
+    <string name="settings_section_about">Acerca del módulo</string>
+    <string name="settings_about_version">Versión: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Ver el código fuente en GitHub</string>
+    <string name="settings_about_licenses">Licencias de código abierto</string>
+    <string name="settings_about_licenses_sum">Bibliotecas de terceros de código abierto utilizadas</string>
+    <string name="update_checking">Buscando actualizaciones…</string>
+    <string name="update_latest">Ya tienes la última versión</string>
+    <string name="update_failed">No se pudo buscar actualizaciones. Comprueba tu conexión e inténtalo de nuevo</string>
+    <string name="update_dialog_title">Nueva versión disponible</string>
+    <string name="update_dialog_msg">Se encontró la nueva versión %1$s (actual: %2$s). ¿Ir a la página de actualización?</string>
+    <string name="update_go">Actualizar</string>
+    <string name="update_later">Más tarde</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Código fuente de este módulo: MIT © kelebao</string>
 </resources>

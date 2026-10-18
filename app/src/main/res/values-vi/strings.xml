@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Nhấn giữ đồng hồ</string>
     <string name="settings_hint">Lưu ý: hãy khởi động lại SystemUI hoặc khởi động lại thiết bị để thay đổi có hiệu lực. Nếu nhấn xung đột với kéo xuống thanh thông báo, hãy chuyển sang cử chỉ nhấn giữ.</string>
     <string name="settings_refresh">Làm mới trạng thái</string>
+    <string name="settings_section_general">Chung</string>
+    <string name="settings_update_auto">Tự động kiểm tra cập nhật</string>
+    <string name="settings_update_auto_sum">Tự kiểm tra phiên bản mới khi mở ứng dụng</string>
+    <string name="settings_update_check">Kiểm tra cập nhật</string>
+    <string name="settings_update_open">Tải bản cập nhật</string>
+    <string name="settings_update_open_sum">Tải phiên bản mới nhất từ GitHub</string>
+    <string name="settings_section_about">Giới thiệu về mô-đun</string>
+    <string name="settings_about_version">Phiên bản: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Xem mã nguồn trên GitHub</string>
+    <string name="settings_about_licenses">Giấy phép nguồn mở</string>
+    <string name="settings_about_licenses_sum">Các thư viện nguồn mở bên thứ ba đã dùng</string>
+    <string name="update_checking">Đang kiểm tra cập nhật…</string>
+    <string name="update_latest">Bạn đang dùng bản mới nhất</string>
+    <string name="update_failed">Kiểm tra cập nhật thất bại. Hãy kiểm tra mạng và thử lại</string>
+    <string name="update_dialog_title">Có phiên bản mới</string>
+    <string name="update_dialog_msg">Đã tìm thấy phiên bản mới %1$s (hiện tại: %2$s). Mở trang cập nhật?</string>
+    <string name="update_go">Cập nhật</string>
+    <string name="update_later">Để sau</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Mã nguồn của mô-đun này: MIT © kelebao</string>
 </resources>

@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Долгое нажатие</string>
     <string name="settings_hint">Примечание: для применения изменений перезапустите SystemUI или перезагрузите устройство. Если нажатие конфликтует с открытием шторки уведомлений, используйте жест долгого нажатия.</string>
     <string name="settings_refresh">Обновить состояние</string>
+    <string name="settings_section_general">Общее</string>
+    <string name="settings_update_auto">Автопроверка обновлений</string>
+    <string name="settings_update_auto_sum">Проверять новые версии при запуске приложения</string>
+    <string name="settings_update_check">Проверить обновления</string>
+    <string name="settings_update_open">Получить обновление</string>
+    <string name="settings_update_open_sum">Получить последнюю версию с GitHub</string>
+    <string name="settings_section_about">О модуле</string>
+    <string name="settings_about_version">Версия: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Исходный код на GitHub</string>
+    <string name="settings_about_licenses">Открытые лицензии</string>
+    <string name="settings_about_licenses_sum">Используемые сторонние библиотеки с открытым кодом</string>
+    <string name="update_checking">Проверка обновлений…</string>
+    <string name="update_latest">Установлена последняя версия</string>
+    <string name="update_failed">Не удалось проверить обновления. Проверьте сеть и повторите попытку</string>
+    <string name="update_dialog_title">Доступна новая версия</string>
+    <string name="update_dialog_msg">Найдена новая версия %1$s (текущая: %2$s). Перейти на страницу обновления?</string>
+    <string name="update_go">Обновить</string>
+    <string name="update_later">Позже</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Исходный код этого модуля: MIT © kelebao</string>
 </resources>

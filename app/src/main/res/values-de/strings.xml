@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Uhr gedrückt halten</string>
     <string name="settings_hint">Hinweis: Starte SystemUI neu oder starte das Gerät neu, damit Änderungen wirksam werden. Falls das Antippen mit dem Herunterziehen der Statusleiste kollidiert, wechsle zur Langdruck-Geste.</string>
     <string name="settings_refresh">Status aktualisieren</string>
+    <string name="settings_section_general">Allgemein</string>
+    <string name="settings_update_auto">Automatisch nach Updates suchen</string>
+    <string name="settings_update_auto_sum">Beim Öffnen der App nach neuen Versionen suchen</string>
+    <string name="settings_update_check">Nach Updates suchen</string>
+    <string name="settings_update_open">Update holen</string>
+    <string name="settings_update_open_sum">Neueste Version von GitHub holen</string>
+    <string name="settings_section_about">Über das Modul</string>
+    <string name="settings_about_version">Version: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">Quellcode auf GitHub ansehen</string>
+    <string name="settings_about_licenses">Open-Source-Lizenzen</string>
+    <string name="settings_about_licenses_sum">Verwendete Drittanbieter-Bibliotheken</string>
+    <string name="update_checking">Suche nach Updates…</string>
+    <string name="update_latest">Du hast die neueste Version</string>
+    <string name="update_failed">Update-Suche fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut</string>
+    <string name="update_dialog_title">Neue Version verfügbar</string>
+    <string name="update_dialog_msg">Neue Version %1$s gefunden (aktuell: %2$s). Zur Update-Seite wechseln?</string>
+    <string name="update_go">Aktualisieren</string>
+    <string name="update_later">Später</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Quellcode dieses Moduls: MIT © kelebao</string>
 </resources>

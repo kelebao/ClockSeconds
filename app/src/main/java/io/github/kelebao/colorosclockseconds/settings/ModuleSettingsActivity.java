@@ -1,19 +1,29 @@
 package io.github.kelebao.colorosclockseconds.settings;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import io.github.kelebao.colorosclockseconds.BuildConfig;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
+import io.github.kelebao.colorosclockseconds.R;
 
 /**
  * 模块设置页（从 LSPosed 管理器打开，桌面不生成图标）。
@@ -21,17 +31,30 @@ import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
  * <p>说明：普通应用进程写入 {@link Settings.Secure} 需要 {@code WRITE_SECURE_SETTINGS}。
  * 若未授予，页面仅展示状态与手势偏好，真正的切换请用"点击状态栏时钟"完成
  * （该动作运行在 SystemUI 进程内，天然具备权限）。</p>
+ *
+ * <p>更新检查：打开页面时（默认开启，可关）访问模块仓库 Releases API，
+ * 发现新版本弹窗提醒，确认后跳转 Browser 打开 Releases 页。</p>
  */
 public final class ModuleSettingsActivity extends Activity {
+
+    /** 模块仓库 Releases 页（LSPosed 模块仓库，tag = versionCode-versionName）。 */
+    private static final String RELEASES_URL =
+            "https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases";
+    /** 源码仓库主页。 */
+    private static final String REPO_URL = "https://github.com/kelebao/ClockSeconds";
+
+    private static final String PREFS_NAME = "clock_seconds_settings";
+    private static final String KEY_AUTO_UPDATE = "auto_update";
 
     private TextView statusView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(io.github.kelebao.colorosclockseconds.R.string.settings_title);
+        setTitle(R.string.settings_title);
         setContentView(buildContentView());
         refreshStatus();
+        maybeAutoCheckUpdate();
     }
 
     @Override
@@ -48,7 +71,7 @@ public final class ModuleSettingsActivity extends Activity {
         root.setPadding(pad, pad, pad, pad);
 
         TextView statusTitle = new TextView(this);
-        statusTitle.setText(io.github.kelebao.colorosclockseconds.R.string.settings_status_title);
+        statusTitle.setText(R.string.settings_status_title);
         statusTitle.setTextSize(16f);
         statusTitle.setPadding(0, 0, 0, dp(8));
         root.addView(statusTitle);
@@ -59,12 +82,12 @@ public final class ModuleSettingsActivity extends Activity {
         root.addView(statusView);
 
         Button refresh = new Button(this);
-        refresh.setText(io.github.kelebao.colorosclockseconds.R.string.settings_refresh);
+        refresh.setText(R.string.settings_refresh);
         refresh.setOnClickListener(v -> refreshStatus());
         root.addView(refresh);
 
         TextView gestureTitle = new TextView(this);
-        gestureTitle.setText(io.github.kelebao.colorosclockseconds.R.string.settings_gesture_title);
+        gestureTitle.setText(R.string.settings_gesture_title);
         gestureTitle.setTextSize(16f);
         gestureTitle.setPadding(0, dp(24), 0, dp(8));
         root.addView(gestureTitle);
@@ -72,10 +95,10 @@ public final class ModuleSettingsActivity extends Activity {
         RadioGroup group = new RadioGroup(this);
         RadioButton click = new RadioButton(this);
         click.setId(1);
-        click.setText(io.github.kelebao.colorosclockseconds.R.string.settings_gesture_click);
+        click.setText(R.string.settings_gesture_click);
         RadioButton longPress = new RadioButton(this);
         longPress.setId(2);
-        longPress.setText(io.github.kelebao.colorosclockseconds.R.string.settings_gesture_long_press);
+        longPress.setText(R.string.settings_gesture_long_press);
         group.addView(click);
         group.addView(longPress);
 
@@ -103,11 +126,14 @@ public final class ModuleSettingsActivity extends Activity {
         root.addView(group);
 
         TextView hint = new TextView(this);
-        hint.setText(io.github.kelebao.colorosclockseconds.R.string.settings_hint);
+        hint.setText(R.string.settings_hint);
         hint.setTextSize(13f);
         hint.setGravity(Gravity.START);
         hint.setPadding(0, dp(24), 0, 0);
         root.addView(hint);
+
+        buildUpdateSection(root);
+        buildAboutSection(root);
 
         ScrollView scroll = new ScrollView(this);
         scroll.addView(root, new ViewGroup.LayoutParams(
@@ -115,11 +141,139 @@ public final class ModuleSettingsActivity extends Activity {
         return scroll;
     }
 
+    // ---------- 更新 ----------
+
+    private void buildUpdateSection(LinearLayout root) {
+        addSectionLabel(root, R.string.settings_section_general);
+
+        // 自动检查更新（开关 + 副标题，整体一行：左文字右开关）
+        LinearLayout switchRow = new LinearLayout(this);
+        switchRow.setOrientation(LinearLayout.HORIZONTAL);
+        switchRow.setGravity(Gravity.CENTER_VERTICAL);
+        switchRow.setPadding(dp(12), dp(12), dp(12), 0);
+
+        TextView autoLabel = new TextView(this);
+        autoLabel.setText(R.string.settings_update_auto);
+        autoLabel.setTextSize(16f);
+        autoLabel.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        switchRow.addView(autoLabel);
+
+        Switch autoSwitch = new Switch(this);
+        autoSwitch.setChecked(prefs().getBoolean(KEY_AUTO_UPDATE, true));
+        autoSwitch.setOnCheckedChangeListener((v, checked) -> {
+            prefs().edit().putBoolean(KEY_AUTO_UPDATE, checked).apply();
+            if (checked) {
+                // 刚打开自动检查：立即给出一次反馈（有新版弹窗 / 否则提示已最新）。
+                runUpdateCheck(true);
+            }
+        });
+        switchRow.addView(autoSwitch);
+        root.addView(switchRow);
+
+        addSubLabel(root, R.string.settings_update_auto_sum);
+
+        Button check = new Button(this);
+        check.setText(R.string.settings_update_check);
+        check.setOnClickListener(v -> runUpdateCheck(true));
+        root.addView(check);
+
+        addRow(root, R.string.settings_update_open, R.string.settings_update_open_sum,
+                v -> openUrl(RELEASES_URL));
+    }
+
+    private void buildAboutSection(LinearLayout root) {
+        addSectionLabel(root, R.string.settings_section_about);
+
+        LinearLayout versionRow = addRow(root, getString(R.string.settings_about_version,
+                BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE), null, null);
+        if (BuildConfig.DEBUG) {
+            // 仅供真机验证「发现新版本」弹窗与跳转链路（release 构建自动排除）。
+            versionRow.setOnLongClickListener(v -> {
+                showUpdateDialog("9.9.9");
+                return true;
+            });
+        }
+        addRow(root, R.string.settings_about_github, R.string.settings_about_github_sum,
+                v -> openUrl(REPO_URL));
+        addRow(root, R.string.settings_about_licenses, R.string.settings_about_licenses_sum,
+                v -> showLicensesDialog());
+    }
+
+    /** 打开设置页时按偏好自动检查一次（静默：无新版不打扰）。 */
+    private void maybeAutoCheckUpdate() {
+        if (prefs().getBoolean(KEY_AUTO_UPDATE, true)) {
+            runUpdateCheck(false);
+        }
+    }
+
+    /**
+     * @param manual true = 用户手动触发，需要 Toast 反馈；false = 自动触发，无新版不打扰
+     */
+    private void runUpdateCheck(final boolean manual) {
+        if (manual) {
+            Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
+        }
+        UpdateChecker.check(this, (remoteVersion, failed) -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+            if (failed) {
+                if (manual) {
+                    Toast.makeText(this, R.string.update_failed,
+                            Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+            if (remoteVersion != null
+                    && UpdateChecker.compareVersions(remoteVersion,
+                    BuildConfig.VERSION_NAME) > 0) {
+                showUpdateDialog(remoteVersion);
+            } else if (manual) {
+                Toast.makeText(this, R.string.update_latest,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showUpdateDialog(String remoteVersion) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.update_dialog_title)
+                .setMessage(getString(R.string.update_dialog_msg,
+                        remoteVersion, BuildConfig.VERSION_NAME))
+                .setPositiveButton(R.string.update_go,
+                        (d, w) -> openUrl(RELEASES_URL))
+                .setNegativeButton(R.string.update_later, null)
+                .show();
+    }
+
+    private void showLicensesDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_about_licenses)
+                .setMessage(R.string.licenses_text)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    private void openUrl(String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, url, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private SharedPreferences prefs() {
+        return getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+    }
+
+    // ---------- 原有逻辑 ----------
+
     private void refreshStatus() {
         boolean enabled = ClockSecondsConfig.isEnabled(getContentResolver());
         statusView.setText(enabled
-                ? io.github.kelebao.colorosclockseconds.R.string.settings_enabled
-                : io.github.kelebao.colorosclockseconds.R.string.settings_disabled);
+                ? R.string.settings_enabled
+                : R.string.settings_disabled);
     }
 
     private boolean writeGesture(ContentResolver resolver, int gesture) {
@@ -131,6 +285,76 @@ public final class ModuleSettingsActivity extends Activity {
             Toast.makeText(this, "无写入权限，需通过 adb 授予 WRITE_SECURE_SETTINGS", Toast.LENGTH_LONG).show();
             return false;
         }
+    }
+
+    // ---------- 视图小工具 ----------
+
+    private void addSectionLabel(LinearLayout parent, int textRes) {
+        TextView t = new TextView(this);
+        t.setText(textRes);
+        t.setTextSize(16f);
+        t.setTypeface(t.getTypeface(), android.graphics.Typeface.BOLD);
+        t.setPadding(0, dp(24), 0, dp(8));
+        parent.addView(t);
+    }
+
+    private void addSubLabel(LinearLayout parent, int textRes) {
+        TextView t = new TextView(this);
+        t.setText(textRes);
+        t.setTextSize(13f);
+        t.setPadding(dp(12), 0, dp(12), dp(4));
+        t.setTextColor(secondaryTextColor());
+        parent.addView(t);
+    }
+
+    /**
+     * 列表行（字符串资源版）：主标题 + 可选副标题，可点击（带系统 selectable 反馈）。
+     * listener 为 null 时纯展示（如版本号）。返回行视图便于附加监听。
+     */
+    private LinearLayout addRow(LinearLayout parent, int titleRes,
+                        Integer subtitleRes, View.OnClickListener listener) {
+        return addRow(parent, getText(titleRes), subtitleRes, listener);
+    }
+
+    private LinearLayout addRow(LinearLayout parent, CharSequence title,
+                        Integer subtitleRes, View.OnClickListener listener) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(dp(12), dp(12), dp(12), dp(12));
+        if (listener != null) {
+            TypedValue tv = new TypedValue();
+            getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
+            if (tv.resourceId != 0) {
+                row.setBackgroundResource(tv.resourceId);
+            }
+            row.setClickable(true);
+            row.setFocusable(true);
+            row.setOnClickListener(listener);
+        }
+
+        TextView t = new TextView(this);
+        t.setText(title);
+        t.setTextSize(16f);
+        row.addView(t);
+
+        if (subtitleRes != null) {
+            TextView s = new TextView(this);
+            s.setText(subtitleRes);
+            s.setTextSize(13f);
+            s.setTextColor(secondaryTextColor());
+            row.addView(s);
+        }
+        parent.addView(row);
+        return row;
+    }
+
+    private int secondaryTextColor() {
+        TypedValue tv = new TypedValue();
+        getTheme().resolveAttribute(android.R.attr.textColorSecondary, tv, true);
+        if (tv.resourceId != 0) {
+            return getResources().getColor(tv.resourceId, getTheme());
+        }
+        return tv.data;
     }
 
     private int dp(int value) {

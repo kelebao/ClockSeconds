@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">الضغط المطوّل على الساعة</string>
     <string name="settings_hint">ملاحظة: أعد تشغيل SystemUI أو الجهاز لتصبح التغييرات سارية. إذا تعارض النقر مع سحب لوحة الإشعارات، فانتقل إلى إيماءة الضغط المطوّل.</string>
     <string name="settings_refresh">تحديث الحالة</string>
+    <string name="settings_section_general">عام</string>
+    <string name="settings_update_auto">التحقق التلقائي من التحديثات</string>
+    <string name="settings_update_auto_sum">البحث عن إصدارات جديدة عند فتح التطبيق</string>
+    <string name="settings_update_check">التحقق من التحديثات</string>
+    <string name="settings_update_open">الحصول على التحديث</string>
+    <string name="settings_update_open_sum">الحصول على أحدث إصدار من GitHub</string>
+    <string name="settings_section_about">حول الوحدة</string>
+    <string name="settings_about_version">الإصدار: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">عرض الكود المصدري على GitHub</string>
+    <string name="settings_about_licenses">تراخيص المصادر المفتوحة</string>
+    <string name="settings_about_licenses_sum">مكتبات الطرف الثالث مفتوحة المصدر المستخدمة</string>
+    <string name="update_checking">جارٍ التحقق من التحديثات…</string>
+    <string name="update_latest">أنت على أحدث إصدار</string>
+    <string name="update_failed">فشل التحقق من التحديثات. تحقق من الشبكة وحاول مرة أخرى</string>
+    <string name="update_dialog_title">يتوفر إصدار جديد</string>
+    <string name="update_dialog_msg">تم العثور على الإصدار الجديد %1$s (الحالي: %2$s). الانتقال إلى صفحة التحديث؟</string>
+    <string name="update_go">تحديث</string>
+    <string name="update_later">لاحقاً</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+الكود المصدري لهذه الوحدة: MIT © kelebao</string>
 </resources>

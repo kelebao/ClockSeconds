@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">Long-press clock</string>
     <string name="settings_hint">Note: restart SystemUI or reboot the device for changes to take effect. If tapping conflicts with pulling down the notification shade, switch to the long-press gesture.</string>
     <string name="settings_refresh">Refresh state</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_update_auto">Check for updates automatically</string>
+    <string name="settings_update_auto_sum">Check for new versions when the app opens</string>
+    <string name="settings_update_check">Check for updates</string>
+    <string name="settings_update_open">Get update</string>
+    <string name="settings_update_open_sum">Get the latest version from GitHub</string>
+    <string name="settings_section_about">About module</string>
+    <string name="settings_about_version">Version: %1$s (%2$d)</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">View source code on GitHub</string>
+    <string name="settings_about_licenses">Open-source licenses</string>
+    <string name="settings_about_licenses_sum">View third-party open-source libraries used</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_latest">You are on the latest version</string>
+    <string name="update_failed">Update check failed. Check your network and try again</string>
+    <string name="update_dialog_title">New version available</string>
+    <string name="update_dialog_msg">New version %1$s found (current: %2$s). Go to the update page?</string>
+    <string name="update_go">Update</string>
+    <string name="update_later">Later</string>
+    <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
+Source code of this module: MIT © kelebao</string>
 </resources>

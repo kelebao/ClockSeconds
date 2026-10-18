@@ -12,4 +12,25 @@
     <string name="settings_gesture_long_press">長按時鐘</string>
     <string name="settings_hint">提示：修改後需重新啟動 SystemUI 或重新開機才會生效。若點擊與下拉通知欄衝突，請改用長按手勢。</string>
     <string name="settings_refresh">重新整理狀態</string>
+    <string name="settings_section_general">常規</string>
+    <string name="settings_update_auto">自動檢查更新</string>
+    <string name="settings_update_auto_sum">應用啟動時自動檢測新版本</string>
+    <string name="settings_update_check">檢查更新</string>
+    <string name="settings_update_open">獲取更新</string>
+    <string name="settings_update_open_sum">從 GitHub 獲取最新版本</string>
+    <string name="settings_section_about">關於模組</string>
+    <string name="settings_about_version">版本：%1$s（%2$d）</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">在 GitHub 上查看原始碼</string>
+    <string name="settings_about_licenses">開放原始碼</string>
+    <string name="settings_about_licenses_sum">查看使用的第三方開源庫</string>
+    <string name="update_checking">正在檢查更新…</string>
+    <string name="update_latest">已是最新版本</string>
+    <string name="update_failed">檢查更新失敗，請檢查網路或稍後重試</string>
+    <string name="update_dialog_title">發現新版本</string>
+    <string name="update_dialog_msg">發現新版本 %1$s（目前 %2$s），是否前往更新頁面？</string>
+    <string name="update_go">前往更新</string>
+    <string name="update_later">稍後再說</string>
+    <string name="licenses_text">Xposed API（de.robv.android.xposed:api:82）：Apache License 2.0
+本模組原始碼：MIT © kelebao</string>
 </resources>
