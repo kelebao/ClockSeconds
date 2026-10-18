@@ -54,8 +54,6 @@ No vendor-private classes involved. Verified on ColorOS 15, and designed to cove
 
 ## Language Support
 
-The app UI is fully localized into **21 languages** with **zero configuration** — it follows your phone's system language automatically:
-
 - **Automatic matching**: Android loads the matching language resources when the app starts; changing the system language (Settings → System → Languages & input) takes effect **immediately**, no reinstall needed.
 - **Exact match with fallback**: supported languages show their own UI (e.g. English → English, 日本語 → Japanese, Deutsch → German); unsupported languages fall back to Simplified Chinese.
 - **Coverage**: every string is translated — module name, module description, and the whole settings page. Arabic and Persian automatically use RTL (right-to-left) layout.
