@@ -35,7 +35,7 @@ TEXTS = {
         ],
         'h_install': '安裝',
         'install': [
-            '從 [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) 下載最新版 APK',
+            '從 [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) 下載最新版 APK',
             '在 **LSPosed** 中啟用本模組，作用域勾選：**系統介面（`com.android.systemui`）**',
             '重啟 SystemUI 程序或重啟設備',
             '設定頁從 **LSPosed 管理器**打開（桌面不生成圖示）',
@@ -89,7 +89,7 @@ TEXTS = {
         ),
         'h_backup': '備份與續開發（重要）',
         'backup_intro': (
-            '`ColorOS15ClockSeconds/` 目錄中，**除 `build/`、`.gradle/` 外的所有檔案**'
+            '`ClockSeconds/` 目錄中，**除 `build/`、`.gradle/` 外的所有檔案**'
             '都要保留（源碼部分僅約 140 KB）：'
         ),
         'th_backup_cat': '類別',

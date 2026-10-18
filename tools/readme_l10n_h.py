@@ -36,7 +36,7 @@ TEXTS = {
         ],
         'h_install': 'Cài đặt',
         'install': [
-            'Tải APK mới nhất từ trang [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)',
+            'Tải APK mới nhất từ trang [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
             'Bật module trong **LSPosed**, phạm vi: **Giao diện hệ thống (`com.android.systemui`)**',
             'Khởi động lại tiến trình SystemUI hoặc khởi động lại thiết bị',
             'Mở trang cài đặt từ **trình quản lý LSPosed** (không tạo biểu tượng trên màn hình chính)',
@@ -103,7 +103,7 @@ TEXTS = {
         ),
         'h_backup': 'Sao lưu & phát triển tiếp (quan trọng)',
         'backup_intro': (
-            'Trong thư mục `ColorOS15ClockSeconds/`, **mọi file trừ `build/` và `.gradle/` '
+            'Trong thư mục `ClockSeconds/`, **mọi file trừ `build/` và `.gradle/` '
             'đều phải giữ lại** (phần mã nguồn chỉ khoảng 140 KB):'
         ),
         'th_backup_cat': 'Loại',

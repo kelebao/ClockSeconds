@@ -1,6 +1,6 @@
 <div align="center">
 
-**简体中文** · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+**简体中文** · [English](docs/README_EN.md) · [繁體中文](docs/README_zh-TW.md) · [日本語](docs/README_ja.md) · [한국어](docs/README_ko.md) · [Türkçe](docs/README_tr.md) · [Русский](docs/README_ru.md) · [Tiếng Việt](docs/README_vi.md) · [ไทย](docs/README_th.md) · [Deutsch](docs/README_de.md) · [Español](docs/README_es.md) · [Français](docs/README_fr.md) · [Українська](docs/README_uk.md) · [Polski](docs/README_pl.md) · [Português (Brasil)](docs/README_pt-BR.md) · [فارسی](docs/README_fa.md) · [العربية](docs/README_ar.md) · [Bahasa Indonesia](docs/README_id.md) · [Italiano](docs/README_it.md) · [Ελληνικά](docs/README_el.md) · [ქართული](docs/README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 让状态栏时钟显示**秒**，单击即切换，小时十位数**常驻标红**。<br>不依赖任何厂商私有类，已在 ColorOS 15 真机验证，同时覆盖小米、一加、荣耀、vivo 等主流厂商。
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@
 
 ## 安装
 
-1. 从 [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) 下载最新版 APK
+1. 从 [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) 下载最新版 APK
 2. 在 **LSPosed** 中启用本模块，作用域勾选：**系统界面（`com.android.systemui`）**
 3. 重启 SystemUI 进程或重启设备
 4. 配置页从 **LSPosed 管理器**打开（桌面不生成图标）
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## 备份与续开发（重要）
 
-`ColorOS15ClockSeconds/` 目录中，**除 `build/`、`.gradle/` 外的所有文件**都要保留（源码部分仅约 140 KB）：
+`ClockSeconds/` 目录中，**除 `build/`、`.gradle/` 外的所有文件**都要保留（源码部分仅约 140 KB）：
 
 | 类别 | 文件 | 说明 |
 |------|------|------|

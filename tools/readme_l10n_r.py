@@ -36,7 +36,7 @@ TEXTS = {
         ],
         'h_install': 'Instalasi',
         'install': [
-            'Unduh APK terbaru dari halaman [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)',
+            'Unduh APK terbaru dari halaman [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
             'Aktifkan modul di **LSPosed**, cakupan: **Antarmuka Sistem (`com.android.systemui`)**',
             'Mulai ulang proses SystemUI atau mulai ulang perangkat',
             'Buka halaman setelan dari **manajer LSPosed** (tidak ada ikon yang dibuat di peluncur)',
@@ -104,7 +104,7 @@ TEXTS = {
         ),
         'h_backup': 'Pencadangan & pengembangan lanjutan (penting)',
         'backup_intro': (
-            'Di direktori `ColorOS15ClockSeconds/`, **semua berkas kecuali `build/` dan '
+            'Di direktori `ClockSeconds/`, **semua berkas kecuali `build/` dan '
             '`.gradle/` harus dipertahankan** (bagian kode hanya sekitar 140 KB):'
         ),
         'th_backup_cat': 'Kategori',

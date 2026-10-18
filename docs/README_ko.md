@@ -1,6 +1,6 @@
 <div align="center">
 
-[简体中文](README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · **한국어** · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+[简体中文](../README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · **한국어** · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 상태 표시줄 시계에 **초**를 표시합니다. 한 번 탑으로 전환하고,시간 십의 자리는 **항상 빨강**.<br>제조사私有 클래스에 전혀 의존하지 않으며 ColorOS 15 실기기에서 검증되었습니다.샤오미·원플러스·아너·vivo 등 주요 제조사도 지원합니다.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@
 
 ## 설치
 
-1. [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)에서 최신 APK 다운로드
+1. [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)에서 최신 APK 다운로드
 2. **LSPosed**에서 모듈 활성화. 스코프: **시스템 UI（`com.android.systemui`）**
 3. SystemUI 프로세스 재시작 또는 기기 재부팅
 4. 설정 페이지는 **LSPosed 매니저**에서 열기（바탕화면 아이콘 생성 안 됨）
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## 백업 및 후속 개발（중요）
 
-`ColorOS15ClockSeconds/` 디렉터리에서는 **`build/`, `.gradle/`를 제외한 모든 파일**을 보관하세요（소스 부분은 약 140 KB에 불가）:
+`ClockSeconds/` 디렉터리에서는 **`build/`, `.gradle/`를 제외한 모든 파일**을 보관하세요（소스 부분은 약 140 KB에 불가）:
 
 | 분류 | 파일 | 설명 |
 |------|------|------|

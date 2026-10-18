@@ -1,6 +1,6 @@
 <div align="center">
 
-[简体中文](README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · **Русский** · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+[简体中文](../README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · **Русский** · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 Покажите **секунды** на часах в строке состояния, переключайте одним касанием и держите **десяток часа красным**.<br>Никаких приватных классов производителя. Проверено на реальном устройстве с ColorOS 15; также рассчитано на Xiaomi, OnePlus, Honor, vivo и других крупных производителей.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@
 
 ## Установка
 
-1. Скачайте последний APK со страницы [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)
+1. Скачайте последний APK со страницы [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)
 2. Включите модуль в **LSPosed**, область: **Системный интерфейс (`com.android.systemui`)**
 3. Перезапустите процесс SystemUI или перезагрузите устройство
 4. Страницу настроек открывайте из **менеджера LSPosed** (значок на рабочем столе не создаётся)
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## Резервная копия и продолжение разработки (важно)
 
-В каталоге `ColorOS15ClockSeconds/` нужно сохранять **все файлы, кроме `build/` и `.gradle/`** (исходники весят лишь около 140 КБ):
+В каталоге `ClockSeconds/` нужно сохранять **все файлы, кроме `build/` и `.gradle/`** (исходники весят лишь около 140 КБ):
 
 | Категория | Файл | Примечание |
 |------|------|------|

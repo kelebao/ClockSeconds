@@ -4,10 +4,10 @@
 
 Run:  python tools/gen_readme_i18n.py
 
-Outputs (repo root):
-    README.md            (简体中文, bold at position 1)
-    README_EN.md         (English)
-    README_zh-TW.md ... README_ka.md
+Outputs (repo root + docs/):
+    README.md            (简体中文, bold at position 1, stays at root)
+    docs/README_EN.md    (English)
+    docs/README_zh-TW.md ... docs/README_ka.md
 
 Also (re)generates the module-repo copy at
     ../../deliverables/lsposed-repo/README.md
@@ -29,6 +29,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+DOCS = os.path.join(ROOT, 'docs')
 sys.path.insert(0, HERE)
 
 # every readme_l10n_*.py module exposes a TEXTS dict {lang_code: slots}
@@ -64,16 +65,18 @@ LANGS = [
     ('ka',    'README_ka.md',    'ქართული'),
 ]
 
-REPO = 'https://github.com/kelebao/ColorOS15ClockSeconds'
+REPO = 'https://github.com/kelebao/ClockSeconds'
+MODULE_REPO = 'https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds'
 
+# Badges are wrapped in links so they are clickable:/n#   version -> Releases, lsposed -> module repo, stars -> stargazers, license -> LICENSE
 BADGES = (
-    '![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)\n'
+    '[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)]({repo}/releases/latest)\n'
     '![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)\n'
-    '![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)\n'
+    '[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)]({mod}/releases)\n'
     '![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)\n'
-    '![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)\n'
-    '![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)'
-)
+    '[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)]({repo}/stargazers)\n'
+    '[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)]({repo}/blob/main/LICENSE)'
+).format(repo=REPO, mod=MODULE_REPO)
 
 ADB_GRANT = ('adb shell pm grant io.github.kelebao.colorosclockseconds '
              'android.permission.WRITE_SECURE_SETTINGS')
@@ -81,13 +84,25 @@ BUILD_CODE = 'export JAVA_HOME=/path/to/jdk-17-or-21\n./gradlew assembleDebug'
 
 
 def lang_line(cur, base=''):
-    """Fixed order, 简体中文 first; current language bolded in place."""
+    """Fixed order, 简体中文 first; current language bolded in place.
+
+    简体中文 (README.md) stays at the repo root; every other language lives
+    in docs/ next to each other.  Links therefore depend on where the
+    current file lives:
+      * from the root README.md      -> docs/README_xx.md
+      * from docs/README_xx.md       -> README_yy.md (same dir)
+      * from docs/ back to 简体中文  -> ../README.md
+    """
     parts = []
     for code, fname, name in LANGS:
         if code == cur:
             parts.append('**%s**' % name)
+        elif code == 'zh':
+            path = 'README.md' if cur == 'zh' else '../README.md'
+            parts.append('[%s](%s%s)' % (name, base, path))
         else:
-            parts.append('[%s](%s%s)' % (name, base, fname))
+            path = ('docs/' + fname) if cur == 'zh' else fname
+            parts.append('[%s](%s%s)' % (name, base, path))
     return ' · '.join(parts)
 
 
@@ -162,12 +177,15 @@ def render(t, cur, base=''):
 
 
 def main():
+    os.makedirs(DOCS, exist_ok=True)
     for code, fname, _name in LANGS:
         text = render(TEXTS[code], code)
-        with open(os.path.join(ROOT, fname), 'w', encoding='utf-8',
-                  newline='\n') as f:
+        # 简体中文 stays at the repo root (GitHub renders it directly);
+        # all other languages live under docs/ to keep the root clean.
+        dest = os.path.join(ROOT if code == 'zh' else DOCS, fname)
+        with open(dest, 'w', encoding='utf-8', newline='\n') as f:
             f.write(text)
-        print('wrote ' + fname)
+        print('wrote ' + os.path.relpath(dest, ROOT))
     # module-repo copy: only 简体中文, language links as absolute URLs
     mod_dir = os.path.join(ROOT, '..', 'deliverables', 'lsposed-repo')
     mod_readme = os.path.join(mod_dir, 'README.md')

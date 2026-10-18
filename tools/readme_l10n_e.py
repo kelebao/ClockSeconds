@@ -36,7 +36,7 @@ TEXTS = {
         ],
         'h_install': '설치',
         'install': [
-            '[**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)에서 최신 APK 다운로드',
+            '[**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)에서 최신 APK 다운로드',
             '**LSPosed**에서 모듈 활성화. 스코프: **시스템 UI（`com.android.systemui`）**',
             'SystemUI 프로세스 재시작 또는 기기 재부팅',
             '설정 페이지는 **LSPosed 매니저**에서 열기（바탕화면 아이콘 생성 안 됨）',
@@ -101,7 +101,7 @@ TEXTS = {
         ),
         'h_backup': '백업 및 후속 개발（중요）',
         'backup_intro': (
-            '`ColorOS15ClockSeconds/` 디렉터리에서는 **`build/`, `.gradle/`를 제외한 '
+            '`ClockSeconds/` 디렉터리에서는 **`build/`, `.gradle/`를 제외한 '
             '모든 파일**을 보관하세요（소스 부분은 약 140 KB에 불가）:'
         ),
         'th_backup_cat': '분류',

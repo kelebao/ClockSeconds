@@ -36,7 +36,7 @@ TEXTS = {
         ],
         'h_install': 'インストール',
         'install': [
-            '[**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) から最新の APK をダウンロード',
+            '[**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) から最新の APK をダウンロード',
             '**LSPosed** でモジュールを有効化。スコープは**システム UI（`com.android.systemui`）**',
             'SystemUI プロセスを再起動、または端末を再起動',
             '設定ページは **LSPosed マネージャー**から開きます（ランチャーアイコンは作成されません）',
@@ -101,7 +101,7 @@ TEXTS = {
         ),
         'h_backup': 'バックアップと開発の引継ぎ（重要）',
         'backup_intro': (
-            '`ColorOS15ClockSeconds/` ディレクトリでは、**`build/`・`.gradle/` を除く'
+            '`ClockSeconds/` ディレクトリでは、**`build/`・`.gradle/` を除く'
             'すべてのファイル**を残してください（ソース部分は約 140 KB のみ）：'
         ),
         'th_backup_cat': 'カテゴリ',

@@ -1,6 +1,6 @@
 <div align="center">
 
-[简体中文](README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · **Tiếng Việt** · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+[简体中文](../README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · **Tiếng Việt** · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 Hiển thị **giây** trên đồng hồ thanh trạng thái, bật/tắt bằng một lần chạm, và giữ **hàng chục của giờ luôn màu đỏ**.<br>Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo và các hãng lớn khác.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@ Hiển thị **giây** trên đồng hồ thanh trạng thái, bật/tắt bằn
 
 ## Cài đặt
 
-1. Tải APK mới nhất từ trang [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)
+1. Tải APK mới nhất từ trang [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)
 2. Bật module trong **LSPosed**, phạm vi: **Giao diện hệ thống (`com.android.systemui`)**
 3. Khởi động lại tiến trình SystemUI hoặc khởi động lại thiết bị
 4. Mở trang cài đặt từ **trình quản lý LSPosed** (không tạo biểu tượng trên màn hình chính)
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## Sao lưu & phát triển tiếp (quan trọng)
 
-Trong thư mục `ColorOS15ClockSeconds/`, **mọi file trừ `build/` và `.gradle/` đều phải giữ lại** (phần mã nguồn chỉ khoảng 140 KB):
+Trong thư mục `ClockSeconds/`, **mọi file trừ `build/` và `.gradle/` đều phải giữ lại** (phần mã nguồn chỉ khoảng 140 KB):
 
 | Loại | Tệp | Ghi chú |
 |------|------|------|

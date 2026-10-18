@@ -1,6 +1,6 @@
 <div align="center">
 
-[简体中文](README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · **Italiano** · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+[简体中文](../README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · **Italiano** · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 Mostra i **secondi** sull'orologio della barra di stato, attiva/disattiva con un solo tocco e tieni la **decina dell'ora sempre rossa**.<br>Nessuna classe privata del produttore. Verificato su dispositivo reale con ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo e gli altri grandi produttori.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@ Mostra i **secondi** sull'orologio della barra di stato, attiva/disattiva con un
 
 ## Installazione
 
-1. Scarica l'APK più recente dalla pagina [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)
+1. Scarica l'APK più recente dalla pagina [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)
 2. Attiva il modulo in **LSPosed**, ambito: **Interfaccia di sistema (`com.android.systemui`)**
 3. Riavvia il processo SystemUI o riavvia il dispositivo
 4. Apri la pagina delle impostazioni dal **gestore LSPosed** (non viene creata alcuna icona nel launcher)
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## Backup e sviluppo continuativo (importante)
 
-Nella cartella `ColorOS15ClockSeconds/`, **vanno conservati tutti i file tranne `build/` e `.gradle/`** (la parte di codice pesa solo circa 140 KB):
+Nella cartella `ClockSeconds/`, **vanno conservati tutti i file tranne `build/` e `.gradle/`** (la parte di codice pesa solo circa 140 KB):
 
 | Categoria | File | Nota |
 |------|------|------|

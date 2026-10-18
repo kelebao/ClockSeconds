@@ -1,6 +1,6 @@
 <div align="center">
 
-[简体中文](README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · **Deutsch** · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+[简体中文](../README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · **Deutsch** · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 Zeigt **Sekunden** in der Statusleisten-Uhr an, Umschalten mit einmaligem Tippen, und die **Zehnerstelle der Stunde bleibt rot**.<br>Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo und andere große Hersteller ab.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@ Zeigt **Sekunden** in der Statusleisten-Uhr an, Umschalten mit einmaligem Tippen
 
 ## Installation
 
-1. Laden Sie die neueste APK von der Seite [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) herunter
+1. Laden Sie die neueste APK von der Seite [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) herunter
 2. Aktivieren Sie das Modul in **LSPosed**, Wirkungsbereich: **Systemoberfläche (`com.android.systemui`)**
 3. Starten Sie den SystemUI-Prozess neu oder starten Sie das Gerät neu
 4. Öffnen Sie die Einstellungsseite aus dem **LSPosed-Manager** heraus (auf dem Startbildschirm wird kein Symbol erzeugt)
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## Backup & Weiterentwicklung (wichtig)
 
-Im Verzeichnis `ColorOS15ClockSeconds/` müssen **alle Dateien außer `build/` und `.gradle/`** aufgehoben werden (der Quelltextteil ist nur etwa 140 KB groß):
+Im Verzeichnis `ClockSeconds/` müssen **alle Dateien außer `build/` und `.gradle/`** aufgehoben werden (der Quelltextteil ist nur etwa 140 KB groß):
 
 | Kategorie | Datei | Hinweis |
 |------|------|------|

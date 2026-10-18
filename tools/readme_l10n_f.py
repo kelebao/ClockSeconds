@@ -36,7 +36,7 @@ TEXTS = {
         ],
         'h_install': 'Kurulum',
         'install': [
-            '[**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) sayfasından en son APK indirin',
+            '[**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) sayfasından en son APK indirin',
             '**LSPosed** içinde modülü etkinleştirin, kapsam: **Sistem Arayüzü (`com.android.systemui`)**',
             'SystemUI işlemini yeniden başlatın veya cihazı yeniden başlatın',
             'Ayarlar sayfasını **LSPosed yöneticisinden** açın (masaüstü simgesi oluşturulmaz)',
@@ -103,7 +103,7 @@ TEXTS = {
         ),
         'h_backup': 'Yedekleme ve Geliştirmeye Devam (Önemli)',
         'backup_intro': (
-            '`ColorOS15ClockSeconds/` dizininde **`build/` ve `.gradle/` dışındaki tüm dosyalar** '
+            '`ClockSeconds/` dizininde **`build/` ve `.gradle/` dışındaki tüm dosyalar** '
             'korunmalıdır (kaynak kısmı yalnızca ~140 KB):'
         ),
         'th_backup_cat': 'Kategori',

@@ -36,7 +36,7 @@ TEXTS = {
         ],
         'h_install': 'Instalación',
         'install': [
-            'Descarga el APK más reciente de la página [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)',
+            'Descarga el APK más reciente de la página [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
             'Activa el módulo en **LSPosed**, ámbito: **Interfaz del sistema (`com.android.systemui`)**',
             'Reinicia el proceso SystemUI o reinicia el dispositivo',
             'Abre la página de configuración desde el **administrador de LSPosed** (no se crea icono en el lanzador)',
@@ -107,7 +107,7 @@ TEXTS = {
         ),
         'h_backup': 'Copia de seguridad y desarrollo continuado (importante)',
         'backup_intro': (
-            'En el directorio `ColorOS15ClockSeconds/`, **hay que conservar todos los archivos '
+            'En el directorio `ClockSeconds/`, **hay que conservar todos los archivos '
             'salvo `build/` y `.gradle/`** (la parte de código solo pesa unos 140 KB):'
         ),
         'th_backup_cat': 'Categoría',

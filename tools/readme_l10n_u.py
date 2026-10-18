@@ -23,7 +23,7 @@ TEXTS = {
         ],
         'h_install': 'ინსტალაცია',
         'install': [
-            'ჩამოტვირთეთ უახლესი APK გვერდიდან [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest)',
+            'ჩამოტვირთეთ უახლესი APK გვერდიდან [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
             'ჩართეთ მოდული **LSPosed**-ში, ფარგლები: **სისტემის ინტერფეისი (`com.android.systemui`)**',
             'გადატვირთეთ SystemUI-ის პროცესი ან გადატვირთეთ მოწყობილობა',
             'პარამეტრების გვერდი გახსენით **LSPosed მმართველიდან** (ლაუნჩერში ხატულა არ ქმნება)',
@@ -56,7 +56,7 @@ TEXTS = {
         'h_build': 'აწყობა',
         'build_intro': 'საჭიროა **JDK 17+** (რეკომენდებულია 17 ან 21) და **Android SDK Platform 35** (Build-Tools 35-ს AGP ავტომატურად აყენებს).',
         'h_backup': 'სარეზერვო ასლი და შემდგომი განვითარება (მნიშვნელოვანი)',
-        'backup_intro': '`ColorOS15ClockSeconds/` საქაღალდეში **ყველა ფაილი უნდა შენარჩუნდეს `build/`-ისა და `.gradle/`-ის გარდა** (კოდის ნაწილი მხოლოდ დაახლოებით 140 KB-ია):',
+        'backup_intro': '`ClockSeconds/` საქაღალდეში **ყველა ფაილი უნდა შენარჩუნდეს `build/`-ისა და `.gradle/`-ის გარდა** (კოდის ნაწილი მხოლოდ დაახლოებით 140 KB-ია):',
         'th_backup_cat': 'კატეგორია',
         'th_backup_files': 'ფაილი',
         'th_backup_note': 'შენიშვნა',

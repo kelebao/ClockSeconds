@@ -1,6 +1,6 @@
 <div align="center">
 
-[简体中文](README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · **Türkçe** · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+[简体中文](../README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · **Türkçe** · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · [فارسی](README_fa.md) · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 Durum çubuğu saatinde **saniyeleri** gösterin, tek dokunuşla açıp kapatın, saatin **onlar basamağını kırmızı** tutun.<br>Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda doğrulandı; Xiaomi, OnePlus, Honor, vivo ve diğer büyük üreticileri de kapsar.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@ Durum çubuğu saatinde **saniyeleri** gösterin, tek dokunuşla açıp kapatın
 
 ## Kurulum
 
-1. [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) sayfasından en son APK indirin
+1. [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) sayfasından en son APK indirin
 2. **LSPosed** içinde modülü etkinleştirin, kapsam: **Sistem Arayüzü (`com.android.systemui`)**
 3. SystemUI işlemini yeniden başlatın veya cihazı yeniden başlatın
 4. Ayarlar sayfasını **LSPosed yöneticisinden** açın (masaüstü simgesi oluşturulmaz)
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## Yedekleme ve Geliştirmeye Devam (Önemli)
 
-`ColorOS15ClockSeconds/` dizininde **`build/` ve `.gradle/` dışındaki tüm dosyalar** korunmalıdır (kaynak kısmı yalnızca ~140 KB):
+`ClockSeconds/` dizininde **`build/` ve `.gradle/` dışındaki tüm dosyalar** korunmalıdır (kaynak kısmı yalnızca ~140 KB):
 
 | Kategori | Dosya | Açıklama |
 |------|------|------|

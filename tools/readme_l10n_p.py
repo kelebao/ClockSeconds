@@ -36,7 +36,7 @@ TEXTS = {
         ],
         'h_install': 'نصب',
         'install': [
-            'newest APK را از صفحه [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) دانلود کنید',
+            'newest APK را از صفحه [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) دانلود کنید',
             'ماژول را در **LSPosed** فعال کنید، دامنه: **رابط سیستم (`com.android.systemui`)**',
             'فرآیند SystemUI یا دستگاه را دوباره راه‌اندازی کنید',
             'صفحه تنظیمات را از **مدیر LSPosed** باز کنید (آیکنی روی صفحه اصلی ساخته نمی‌شود)',
@@ -103,7 +103,7 @@ TEXTS = {
         ),
         'h_backup': 'پشتیبان‌گیری و توسعه بعدی (مهم)',
         'backup_intro': (
-            'در پوشه `ColorOS15ClockSeconds/`، **هر فایلی جز `build/` و `.gradle/` باید '
+            'در پوشه `ClockSeconds/`، **هر فایلی جز `build/` و `.gradle/` باید '
             'حفظ شود** (بخش کد فقط حدود ۱۴۰ کیلوبایت است):'
         ),
         'th_backup_cat': 'دسته',

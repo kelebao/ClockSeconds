@@ -1,6 +1,6 @@
 <div align="center">
 
-[简体中文](README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · **فارسی** · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
+[简体中文](../README.md) · [English](README_EN.md) · [繁體中文](README_zh-TW.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Türkçe](README_tr.md) · [Русский](README_ru.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [Deutsch](README_de.md) · [Español](README_es.md) · [Français](README_fr.md) · [Українська](README_uk.md) · [Polski](README_pl.md) · [Português (Brasil)](README_pt-BR.md) · **فارسی** · [العربية](README_ar.md) · [Bahasa Indonesia](README_id.md) · [Italiano](README_it.md) · [Ελληνικά](README_el.md) · [ქართული](README_ka.md)
 
 </div>
 
@@ -10,12 +10,12 @@
 
 **ثانیه**ها را روی ساعت نوار وضعیت نمایش دهید، با یک ضربه تبدیل کنید و **رقم دهگان ساعت را همیشه قرمز** نگه دارید.<br>بدون هیچ کلاس خصوصی سازنده. روی دستگاه واقعی با ColorOS 15 تأیید شده؛ همچنین شیائومی، وان‌پلاس، آنر، ویوو و سایر سازندگان بزرگ را پوشش می‌دهد.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)
+[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
-![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)
+[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
-![stars](https://img.shields.com/github/stars/kelebao/ColorOS15ClockSeconds.svg?style=flat-square)
-![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)
+[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
 </div>
 
@@ -34,7 +34,7 @@
 
 ## نصب
 
-1. newest APK را از صفحه [**Releases**](https://github.com/kelebao/ColorOS15ClockSeconds/releases/latest) دانلود کنید
+1. newest APK را از صفحه [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) دانلود کنید
 2. ماژول را در **LSPosed** فعال کنید، دامنه: **رابط سیستم (`com.android.systemui`)**
 3. فرآیند SystemUI یا دستگاه را دوباره راه‌اندازی کنید
 4. صفحه تنظیمات را از **مدیر LSPosed** باز کنید (آیکنی روی صفحه اصلی ساخته نمی‌شود)
@@ -86,7 +86,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
 
 ## پشتیبان‌گیری و توسعه بعدی (مهم)
 
-در پوشه `ColorOS15ClockSeconds/`، **هر فایلی جز `build/` و `.gradle/` باید حفظ شود** (بخش کد فقط حدود ۱۴۰ کیلوبایت است):
+در پوشه `ClockSeconds/`، **هر فایلی جز `build/` و `.gradle/` باید حفظ شود** (بخش کد فقط حدود ۱۴۰ کیلوبایت است):
 
 | دسته | فایل | توضیح |
 |------|------|------|
