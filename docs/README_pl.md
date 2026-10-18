@@ -51,6 +51,21 @@ Pokaż **sekundy** na zegarze paska stanu, przełączaj jednym dotknięciem i tr
 - Przełączanie realizowane jest przez globalne trafienie dotyku, więc **nigdy nie koliduje z „zejściem panelu powiadomień”**—— czyste dotknięcie przełącza, przeciągnięcie nadal rozwija panel. Jeśli wolisz, możesz zmienić gest na **długie naciśnięcie** na stronie ustawień.
 - Strona ustawień pokazuje aktualny stan, wybrany gest i przycisk odświeżenia.
 
+## Podgląd
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Sekundy wyłączone: `15:06` — dziesiątka godziny `1` pozostaje czerwona" width="100%">
+<br>
+Sekundy wyłączone: `15:06` — dziesiątka godziny `1` pozostaje czerwona
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Sekundy włączone: `15:06:03` — minuty i sekundy zachowują kolor systemowy" width="100%">
+<br>
+Sekundy włączone: `15:06:03` — minuty i sekundy zachowują kolor systemowy
+</td>
+</tr></table>
+
 ## Jak to działa
 
 Moduł hakuje tylko **SystemUI**, stosując sprawdzone podejście legacy Xposed,

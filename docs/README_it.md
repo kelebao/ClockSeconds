@@ -51,6 +51,21 @@ Mostra i **secondi** sull'orologio della barra di stato, attiva/disattiva con un
 - L'attivazione è implementata con un test di tocco globale, quindi **non entra mai in conflitto con il «trascinamento del pannello notifiche»**—— un tocco puro attiva/disattiva, uno striscia continua a tirare giù il pannello. Se preferisci, puoi passare al gesto **tocco prolungato** nella pagina delle impostazioni.
 - La pagina delle impostazioni mostra lo stato attuale, il gesto scelto e un pulsante di aggiornamento.
 
+## Anteprima
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Secondi disattivati: `15:06` — la cifra delle decine dell'ora `1` resta rossa" width="100%">
+<br>
+Secondi disattivati: `15:06` — la cifra delle decine dell'ora `1` resta rossa
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Secondi attivati: `15:06:03` — minuti e secondi mantengono il colore di sistema" width="100%">
+<br>
+Secondi attivati: `15:06:03` — minuti e secondi mantengono il colore di sistema
+</td>
+</tr></table>
+
 ## Come funziona
 
 Il modulo aggancia solo **SystemUI**, usando l'approccio legacy Xposed collaudato,

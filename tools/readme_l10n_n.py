@@ -59,6 +59,9 @@ TEXTS = {
             'na stronie ustawień.',
             'Strona ustawień pokazuje aktualny stan, wybrany gest i przycisk odświeżenia.',
         ],
+        'h_demo': 'Podgląd',
+        'cap_off': 'Sekundy wyłączone: `15:06` — dziesiątka godziny `1` pozostaje czerwona',
+        'cap_on': 'Sekundy włączone: `15:06:03` — minuty i sekundy zachowują kolor systemowy',
         'h_how': 'Jak to działa',
         'how_intro': [
             'Moduł hakuje tylko **SystemUI**, stosując sprawdzone podejście legacy Xposed,',

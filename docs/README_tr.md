@@ -51,6 +51,21 @@ Durum çubuğu saatinde **saniyeleri** gösterin, tek dokunuşla açıp kapatın
 - Açma/kapatma genel dokunma isabet testiyle uygulanır, bu yüzden **"bildirim panelini aşağı çekmek" ile asla çakışmaz** — saf dokunuş açıp kapatır, kaydırma paneli her zamanki gibi aşağı çeker. İsterseniz ayarlar sayfasından **uzun basma** hareketine geçebilirsiniz.
 - Ayarlar sayfasında mevcut durumu, hareket ayarını görüntüleyebilir ve yenileyebilirsiniz.
 
+## Önizleme
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Saniye kapalı: `15:06` — saatin onlar basamağı `1` kırmızı kalır" width="100%">
+<br>
+Saniye kapalı: `15:06` — saatin onlar basamağı `1` kırmızı kalır
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Saniye açık: `15:06:03` — dakika ve saniye sistem rengini korur" width="100%">
+<br>
+Saniye açık: `15:06:03` — dakika ve saniye sistem rengini korur
+</td>
+</tr></table>
+
 ## Nasıl Çalışır
 
 Modül yalnızca **SystemUI** sürecine hook uygular, kanıtlanmış legacy Xposed yaklaşımını kullanır

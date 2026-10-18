@@ -51,6 +51,21 @@
 - 切换通过全局触摸命中判定实现，**不会与“下拉通知栏”冲突**——纯点击切换、下拉滑动照常拉出通知栏；若你更习惯，也可在配置页把切换手势改为**长按**。
 - 配置页可查看当前状态、切换手势、刷新状态。
 
+## 效果预览
+
+<table><tr>
+<td align="center" width="50%">
+<img src="docs/screenshots/statusbar-seconds-off.jpg" alt="关闭显秒：`15:06`，小时十位「1」保持红色" width="100%">
+<br>
+关闭显秒：`15:06`，小时十位「1」保持红色
+</td>
+<td align="center" width="50%">
+<img src="docs/screenshots/statusbar-seconds-on.jpg" alt="开启显秒：`15:06:03`，分钟与秒保持系统原色" width="100%">
+<br>
+开启显秒：`15:06:03`，分钟与秒保持系统原色
+</td>
+</tr></table>
+
 ## 工作原理
 
 模块只 hook **SystemUI** 一个进程，采用稳妥的 legacy Xposed 范式，

@@ -51,6 +51,21 @@ Affichez les **secondes** sur l'horloge de la barre d'état, basculez d'un simpl
 - La bascule repose sur un test de touche globale, elle n'**entre donc jamais en conflit avec le « défilement du panneau de notifications »**—— un appui pur bascule, un balayage continue de dérouler le panneau. Si vous préférez, vous pouvez passer au geste **appui long** dans la page de réglages.
 - La page de réglages affiche l'état actuel, le geste choisi et un bouton d'actualisation.
 
+## Aperçu
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Secondes désactivées : `15:06` — le chiffre des dizaines de l'heure `1` reste rouge" width="100%">
+<br>
+Secondes désactivées : `15:06` — le chiffre des dizaines de l'heure `1` reste rouge
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Secondes activées : `15:06:03` — minutes et secondes gardent la couleur système" width="100%">
+<br>
+Secondes activées : `15:06:03` — minutes et secondes gardent la couleur système
+</td>
+</tr></table>
+
 ## Comment ça marche
 
 Le module n'accroche que **SystemUI**, en utilisant l'approche legacy Xposed bien rodée,

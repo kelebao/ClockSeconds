@@ -51,6 +51,21 @@ Tampilkan **detik** pada jam bilah status, alihkan dengan sekali sentuh, dan bua
 - Pengalihan diimplementasikan dengan uji sentuh global, jadi **tidak pernah bertabrakan dengan "menarik panel notifikasi ke bawah"**—— ketukan murni mengalihkan, tarikan tetap menarik panel ke bawah. Bila lebih suka, Anda bisa mengganti gestur menjadi **tekan lama** di halaman setelan.
 - Halaman setelan menampilkan status saat ini, gestur yang dipilih, dan tombol segarkan.
 
+## Pratinjau
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Detik mati: `15:06` — puluhan jam `1` tetap merah" width="100%">
+<br>
+Detik mati: `15:06` — puluhan jam `1` tetap merah
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Detik hidup: `15:06:03` — menit dan detik mempertahankan warna sistem" width="100%">
+<br>
+Detik hidup: `15:06:03` — menit dan detik mempertahankan warna sistem
+</td>
+</tr></table>
+
 ## Cara kerja
 
 Modul hanya meng-hook **SystemUI**, dengan pendekatan legacy Xposed yang sudah teruji,

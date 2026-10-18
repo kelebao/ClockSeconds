@@ -51,6 +51,21 @@ Mostre os **segundos** no relógio da barra de status, alterne com um único toq
 - A alternância é implementada com um teste de acerto de toque global, então ela **nunca entra em conflito com "puxar para baixo o painel de notificações"**—— um toque puro alterna, um arrasto continua puxando o painel. Se preferir, você pode trocar o gesto para **toque longo** na página de configurações.
 - A página de configurações mostra o estado atual, o gesto escolhido e um botão de atualizar.
 
+## Prévia
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Segundos desativados: `15:06` — o dígito da dezena da hora `1` continua vermelho" width="100%">
+<br>
+Segundos desativados: `15:06` — o dígito da dezena da hora `1` continua vermelho
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Segundos ativados: `15:06:03` — minutos e segundos mantêm a cor do sistema" width="100%">
+<br>
+Segundos ativados: `15:06:03` — minutos e segundos mantêm a cor do sistema
+</td>
+</tr></table>
+
 ## Como funciona
 
 O módulo só hooka o **SystemUI**, usando a abordagem legacy Xposed bem testada,

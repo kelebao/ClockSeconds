@@ -67,6 +67,7 @@ LANGS = [
 
 REPO = 'https://github.com/kelebao/ClockSeconds'
 MODULE_REPO = 'https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds'
+RAW = 'https://raw.githubusercontent.com/kelebao/ClockSeconds/main/'
 
 # Badges are wrapped in links so they are clickable:/n#   version -> Releases, lsposed -> module repo, stars -> stargazers, license -> LICENSE
 BADGES = (
@@ -81,6 +82,15 @@ BADGES = (
 ADB_GRANT = ('adb shell pm grant io.github.kelebao.colorosclockseconds '
              'android.permission.WRITE_SECURE_SETTINGS')
 BUILD_CODE = 'export JAVA_HOME=/path/to/jdk-17-or-21\n./gradlew assembleDebug'
+
+
+def shot(name, cur, base=''):
+    """Screenshot path under docs/screenshots/.
+    base set => module-repo copy: GitHub blob URLs serve an HTML page,
+    not image bytes, so images there must use the raw URL."""
+    if base:
+        return RAW + 'docs/screenshots/' + name
+    return ('docs/screenshots/' if cur == 'zh' else 'screenshots/') + name
 
 
 def lang_line(cur, base=''):
@@ -139,6 +149,14 @@ def render(t, cur, base=''):
           '> ' + t['note2'], '']
     # usage
     L += ['## ' + t['h_usage'], ''] + bullets(t['usage']) + ['']
+    # demo screenshots (side-by-side table; contiguous HTML block)
+    L += ['## ' + t['h_demo'], '', '<table><tr>']
+    for img, cap in (('statusbar-seconds-off.jpg', t['cap_off']),
+                     ('statusbar-seconds-on.jpg', t['cap_on'])):
+        L += ['<td align="center" width="50%">',
+              '<img src="%s" alt="%s" width="100%%">' % (shot(img, cur, base), cap),
+              '<br>', cap, '</td>']
+    L += ['</tr></table>', '']
     # how it works
     L += ['## ' + t['h_how'], ''] + t['how_intro'] + [''] + bullets(t['how']) + ['']
     # power saving

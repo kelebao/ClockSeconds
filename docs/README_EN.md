@@ -51,6 +51,21 @@ Show **seconds** in the status bar clock, toggle with a single tap, and keep the
 - Toggling is implemented with a global touch hit-test, so it **never conflicts with "pull down the notification shade"** — a pure tap toggles, a swipe still pulls the shade down. You can switch to a **long-press** gesture in the config page if you prefer.
 - The config page shows the current state, the gesture setting, and a refresh button.
 
+## Preview
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Seconds off: `15:06` — the tens digit `1` of the hour stays red" width="100%">
+<br>
+Seconds off: `15:06` — the tens digit `1` of the hour stays red
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Seconds on: `15:06:03` — minutes and seconds keep the system color" width="100%">
+<br>
+Seconds on: `15:06:03` — minutes and seconds keep the system color
+</td>
+</tr></table>
+
 ## How It Works
 
 The module hooks **SystemUI** only, using the well-tested legacy Xposed approach,

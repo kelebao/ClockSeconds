@@ -51,6 +51,21 @@ Zeigt **Sekunden** in der Statusleisten-Uhr an, Umschalten mit einmaligem Tippen
 - Das Umschalten wird über eine globale Touch-Trefferprüfung realisiert und **konfligiert niemals mit dem „Herunterziehen des Benachrichtigungsfelds“**—— reines Tippen schaltet um, Wischen zieht das Benachrichtigungsfeld weiterhin herunter. Wer es lieber mag, kann die Geste im Einstellungsbereich auf **langes Drücken** umstellen.
 - Die Einstellungsseite zeigt den aktuellen Zustand, die gewählte Geste und eine Aktualisieren-Schaltfläche.
 
+## Vorschau
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Sekunden aus: `15:06` — die Zehnerstelle der Stunde `1` bleibt rot" width="100%">
+<br>
+Sekunden aus: `15:06` — die Zehnerstelle der Stunde `1` bleibt rot
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Sekunden an: `15:06:03` — Minuten und Sekunden behalten die Systemfarbe" width="100%">
+<br>
+Sekunden an: `15:06:03` — Minuten und Sekunden behalten die Systemfarbe
+</td>
+</tr></table>
+
 ## Funktionsweise
 
 Das Modul hookt nur **SystemUI** und nutzt den bewährten Legacy-Xposed-Ansatz,

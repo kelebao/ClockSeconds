@@ -58,6 +58,9 @@ TEXTS = {
             'gesto para **toque longo** na página de configurações.',
             'A página de configurações mostra o estado atual, o gesto escolhido e um botão de atualizar.',
         ],
+        'h_demo': 'Prévia',
+        'cap_off': 'Segundos desativados: `15:06` — o dígito da dezena da hora `1` continua vermelho',
+        'cap_on': 'Segundos ativados: `15:06:03` — minutos e segundos mantêm a cor do sistema',
         'h_how': 'Como funciona',
         'how_intro': [
             'O módulo só hooka o **SystemUI**, usando a abordagem legacy Xposed bem testada,',

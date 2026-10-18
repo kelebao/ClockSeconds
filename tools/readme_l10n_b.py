@@ -56,6 +56,9 @@ TEXTS = {
             'shade down. You can switch to a **long-press** gesture in the config page if you prefer.',
             'The config page shows the current state, the gesture setting, and a refresh button.',
         ],
+        'h_demo': 'Preview',
+        'cap_off': 'Seconds off: `15:06` — the tens digit `1` of the hour stays red',
+        'cap_on': 'Seconds on: `15:06:03` — minutes and seconds keep the system color',
         'h_how': 'How It Works',
         'how_intro': [
             'The module hooks **SystemUI** only, using the well-tested legacy Xposed approach,',

@@ -57,6 +57,9 @@ TEXTS = {
             'như thường. Nếu quen hơn, bạn có thể đổi cử chỉ thành **nhấn giữ** trong trang cài đặt.',
             'Trang cài đặt cho xem trạng thái hiện tại, cử chỉ đang dùng và làm mới trạng thái.',
         ],
+        'h_demo': 'Xem trước',
+        'cap_off': 'Tắt giây: `15:06` — chữ số hàng chục của giờ `1` vẫn màu đỏ',
+        'cap_on': 'Bật giây: `15:06:03` — phút và giây giữ màu hệ thống',
         'h_how': 'Nguyên lý hoạt động',
         'how_intro': [
             'Module chỉ hook **một tiến trình SystemUI**, theo mẫu legacy Xposed vững chắc,',

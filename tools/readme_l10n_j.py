@@ -60,6 +60,9 @@ TEXTS = {
             'Geste im Einstellungsbereich auf **langes Drücken** umstellen.',
             'Die Einstellungsseite zeigt den aktuellen Zustand, die gewählte Geste und eine Aktualisieren-Schaltfläche.',
         ],
+        'h_demo': 'Vorschau',
+        'cap_off': 'Sekunden aus: `15:06` — die Zehnerstelle der Stunde `1` bleibt rot',
+        'cap_on': 'Sekunden an: `15:06:03` — Minuten und Sekunden behalten die Systemfarbe',
         'h_how': 'Funktionsweise',
         'how_intro': [
             'Das Modul hookt nur **SystemUI** und nutzt den bewährten Legacy-Xposed-Ansatz,',

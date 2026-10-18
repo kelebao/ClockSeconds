@@ -59,6 +59,9 @@ TEXTS = {
             "geste **appui long** dans la page de réglages.",
             "La page de réglages affiche l'état actuel, le geste choisi et un bouton d'actualisation.",
         ],
+        'h_demo': 'Aperçu',
+        'cap_off': "Secondes désactivées : `15:06` — le chiffre des dizaines de l'heure `1` reste rouge",
+        'cap_on': 'Secondes activées : `15:06:03` — minutes et secondes gardent la couleur système',
         'h_how': 'Comment ça marche',
         'how_intro': [
             "Le module n'accroche que **SystemUI**, en utilisant l'approche legacy Xposed bien rodée,",

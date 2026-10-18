@@ -51,6 +51,21 @@
 - 전환은 전역 터치 히트 테스트로 구현되어 **「알림창 내리기」와 충돌하지 않습니다**——순수 탭은 전환, 스와이프는 기존처럼 알림창을 내립니다. 설정 페이지에서 **길게 누르기**로 변경할 수도 있습니다.
 - 설정 페이지에서 현재 상태·제스처 설정을 확인하고 새로고침할 수 있습니다.
 
+## 미리보기
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="초 표시 끔: `15:06`, 시의 십의 자리 `1`은 빨간색 유지" width="100%">
+<br>
+초 표시 끔: `15:06`, 시의 십의 자리 `1`은 빨간색 유지
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="초 표시 켜짐: `15:06:03`, 분과 초는 시스템 기본 색상" width="100%">
+<br>
+초 표시 켜짐: `15:06:03`, 분과 초는 시스템 기본 색상
+</td>
+</tr></table>
+
 ## 작동 원리
 
 모듈은 **SystemUI** 프로세스만 hook하며, 검증된 legacy Xposed 방식을 사용하고,

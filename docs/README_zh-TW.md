@@ -51,6 +51,21 @@
 - 切換透過全域觸控命中判定實現，**不會與「下拉通知欄」衝突**——純點擊切換、下拉滑動照常拉出通知欄；若你更習慣，也可在設定頁把切換手勢改為**長按**。
 - 設定頁可檢視當前狀態、切換手勢、重新整理狀態。
 
+## 效果預覽
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="關閉顯秒：`15:06`，小時十位「1」保持紅色" width="100%">
+<br>
+關閉顯秒：`15:06`，小時十位「1」保持紅色
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="開啟顯秒：`15:06:03`，分鐘與秒保持系統原色" width="100%">
+<br>
+開啟顯秒：`15:06:03`，分鐘與秒保持系統原色
+</td>
+</tr></table>
+
 ## 工作原理
 
 模組只 hook **SystemUI** 一個程序，採用穩妥的 legacy Xposed 範式，

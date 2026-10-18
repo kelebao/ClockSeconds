@@ -59,6 +59,9 @@ TEXTS = {
             "**tocco prolungato** nella pagina delle impostazioni.",
             "La pagina delle impostazioni mostra lo stato attuale, il gesto scelto e un pulsante di aggiornamento.",
         ],
+        'h_demo': 'Anteprima',
+        'cap_off': "Secondi disattivati: `15:06` — la cifra delle decine dell'ora `1` resta rossa",
+        'cap_on': 'Secondi attivati: `15:06:03` — minuti e secondi mantengono il colore di sistema',
         'h_how': 'Come funziona',
         'how_intro': [
             "Il modulo aggancia solo **SystemUI**, usando l'approccio legacy Xposed collaudato,",

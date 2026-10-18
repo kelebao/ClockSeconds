@@ -58,6 +58,9 @@ TEXTS = {
             '**tekan lama** di halaman setelan.',
             'Halaman setelan menampilkan status saat ini, gestur yang dipilih, dan tombol segarkan.',
         ],
+        'h_demo': 'Pratinjau',
+        'cap_off': 'Detik mati: `15:06` — puluhan jam `1` tetap merah',
+        'cap_on': 'Detik hidup: `15:06:03` — menit dan detik mempertahankan warna sistem',
         'h_how': 'Cara kerja',
         'how_intro': [
             'Modul hanya meng-hook **SystemUI**, dengan pendekatan legacy Xposed yang sudah teruji,',

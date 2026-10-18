@@ -57,6 +57,9 @@ TEXTS = {
             'İsterseniz ayarlar sayfasından **uzun basma** hareketine geçebilirsiniz.',
             'Ayarlar sayfasında mevcut durumu, hareket ayarını görüntüleyebilir ve yenileyebilirsiniz.',
         ],
+        'h_demo': 'Önizleme',
+        'cap_off': 'Saniye kapalı: `15:06` — saatin onlar basamağı `1` kırmızı kalır',
+        'cap_on': 'Saniye açık: `15:06:03` — dakika ve saniye sistem rengini korur',
         'h_how': 'Nasıl Çalışır',
         'how_intro': [
             'Modül yalnızca **SystemUI** sürecine hook uygular, kanıtlanmış legacy Xposed yaklaşımını kullanır',

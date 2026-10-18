@@ -51,6 +51,21 @@ Hiển thị **giây** trên đồng hồ thanh trạng thái, bật/tắt bằn
 - Việc bật/tắt được thực hiện bằng phép kiểm tra chạm toàn cục, nên **không bao giờ xung đột với "kéo xuống thanh thông báo"** — chạm thuần túy thì bật/tắt, vuốt vẫn kéo thanh thông báo như thường. Nếu quen hơn, bạn có thể đổi cử chỉ thành **nhấn giữ** trong trang cài đặt.
 - Trang cài đặt cho xem trạng thái hiện tại, cử chỉ đang dùng và làm mới trạng thái.
 
+## Xem trước
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Tắt giây: `15:06` — chữ số hàng chục của giờ `1` vẫn màu đỏ" width="100%">
+<br>
+Tắt giây: `15:06` — chữ số hàng chục của giờ `1` vẫn màu đỏ
+</td>
+<td align="center" width="50%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Bật giây: `15:06:03` — phút và giây giữ màu hệ thống" width="100%">
+<br>
+Bật giây: `15:06:03` — phút và giây giữ màu hệ thống
+</td>
+</tr></table>
+
 ## Nguyên lý hoạt động
 
 Module chỉ hook **một tiến trình SystemUI**, theo mẫu legacy Xposed vững chắc,
