@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Ρολόι με δευτερόλεπτα</string>
-    <string name="module_description">Εμφανίζει τα δευτερόλεπτα στο ρολόι της γραμμής κατάστασης. Πατήστε το ρολόι για εναλλαγή των δευτερολέπτων· οι δεκάδες της ώρας εμφανίζονται με κόκκινο χρώμα. Επαληθεύτηκε στο ColorOS 15, λειτουργεί και σε Xiaomi, OnePlus και άλλους κατασκευαστές. Τουλάχιστον Android 10.</string>
+    <string name="module_description">Εμφανίζει τα δευτερόλεπτα στο ρολόι της γραμμής κατάστασης. Πατήστε το ρολόι για εναλλαγή των δευτερολέπτων· οι δεκάδες της ώρας εμφανίζονται με κόκκινο χρώμα.</string>
 
     <string name="settings_title">Ρολόι με δευτερόλεπτα</string>
     <string name="settings_status_title">Τρέχουσα κατάσταση</string>

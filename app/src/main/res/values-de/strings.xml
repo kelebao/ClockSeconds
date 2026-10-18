@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Uhr mit Sekunden</string>
-    <string name="module_description">Zeigt Sekunden in der Statusleistenuhr an. Tippe auf die Uhr, um die Sekundenanzeige umzuschalten; die Zehnerstelle der Stunde wird rot gefärbt. Auf ColorOS 15 verifiziert, funktioniert auch auf Xiaomi, OnePlus und anderen Herstellern. Mindestens Android 10.</string>
+    <string name="module_description">Zeigt Sekunden in der Statusleistenuhr an. Tippe auf die Uhr, um die Sekundenanzeige umzuschalten; die Zehnerstelle der Stunde wird rot gefärbt.</string>
 
     <string name="settings_title">Uhr mit Sekunden</string>
     <string name="settings_status_title">Aktueller Status</string>

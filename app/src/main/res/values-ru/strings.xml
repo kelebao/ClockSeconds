@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Секунды в часах</string>
-    <string name="module_description">Показываем секунды в часах строки состояния. Нажмите на часы, чтобы переключить отображение секунд; десятки часов будут красными. Проверено на ColorOS 15, также работает на Xiaomi, OnePlus и других устройствах. Минимум Android 10.</string>
+    <string name="module_description">Показываем секунды в часах строки состояния. Нажмите на часы, чтобы переключить отображение секунд; десятки часов будут красными.</string>
 
     <string name="settings_title">Секунды в часах</string>
     <string name="settings_status_title">Текущее состояние</string>

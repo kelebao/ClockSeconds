@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">นาฬิกาแสดงวินาที</string>
-    <string name="module_description">แสดงวินาทีบนนาฬิกาแถบสถานะ แตะนาฬิกาเพื่อสลับการแสดงวินาที หลักสิบของชั่วโมงจะแสดงเป็นสีแดง ตรวจสอบบน ColorOS 15 แล้ว รองรับ Xiaomi, OnePlus และแบรนด์อื่น ๆ ขั้นต่ำ Android 10</string>
+    <string name="module_description">แสดงวินาทีบนนาฬิกาแถบสถานะ แตะนาฬิกาเพื่อสลับการแสดงวินาที หลักสิบของชั่วโมงจะแสดงเป็นสีแดง</string>
 
     <string name="settings_title">นาฬิกาแสดงวินาที</string>
     <string name="settings_status_title">สถานะปัจจุบัน</string>

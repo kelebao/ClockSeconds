@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">ساعت با ثانیه</string>
-    <string name="module_description">ثانیه‌ها را روی ساعت نوار وضعیت نمایش می‌دهد. برای روشن/خاموش کردن ثانیه روی ساعت ضربه بزنید؛ رقم ده‌ها ساعت قرمز رنگ می‌شود. روی ColorOS 15 آزمایش شده، روی شیائومی، وان‌پلاس و سایر برندها هم کار می‌کند. حداقل اندروید ۱۰.</string>
+    <string name="module_description">ثانیه‌ها را روی ساعت نوار وضعیت نمایش می‌دهد. برای روشن/خاموش کردن ثانیه روی ساعت ضربه بزنید؛ رقم ده‌ها ساعت قرمز رنگ می‌شود.</string>
 
     <string name="settings_title">ساعت با ثانیه</string>
     <string name="settings_status_title">وضعیت فعلی</string>

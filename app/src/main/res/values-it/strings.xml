@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Orologio con i secondi</string>
-    <string name="module_description">Mostra i secondi sull\'orologio della barra di stato. Tocca l\'orologio per attivare/disattivare i secondi; la decina dell\'ora è colorata di rosso. Verificato su ColorOS 15, funziona anche su Xiaomi, OnePlus e altri produttori. Minimo Android 10.</string>
+    <string name="module_description">Mostra i secondi sull\'orologio della barra di stato. Tocca l\'orologio per attivare/disattivare i secondi; la decina dell\'ora è colorata di rosso.</string>
 
     <string name="settings_title">Orologio con i secondi</string>
     <string name="settings_status_title">Stato attuale</string>

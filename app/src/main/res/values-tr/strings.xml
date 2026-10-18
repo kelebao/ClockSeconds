@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Saat Saniye Gösterme</string>
-    <string name="module_description">Durum çubuğu saatinde saniyeleri gösterir. Saate dokunarak saniye gösterimini açıp kapatabilirsiniz; saatin onlar basamağı kırmızı renkte görünür. ColorOS 15\'te doğrulandı; Xiaomi, OnePlus ve diğer üreticilerde de çalışır. En az Android 10.</string>
+    <string name="module_description">Durum çubuğu saatinde saniyeleri gösterir. Saate dokunarak saniye gösterimini açıp kapatabilirsiniz; saatin onlar basamağı kırmızı renkte görünür.</string>
 
     <string name="settings_title">Saat Saniye Gösterme</string>
     <string name="settings_status_title">Mevcut durum</string>

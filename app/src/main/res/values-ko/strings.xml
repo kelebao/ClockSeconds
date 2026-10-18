@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">시계 초 단위 표시</string>
-    <string name="module_description">상태 표시줄 시계에 초를 표시합니다. 시계를 탭하면 초 표시를 켜고 끌 수 있으며, 시간의 십의 자리는 빨간색으로 표시됩니다. ColorOS 15 실기기 검증 완료. 샤오미, 원플러스 등 다른 제조사 기기도 지원합니다. 최소 Android 10.</string>
+    <string name="module_description">상태 표시줄 시계에 초를 표시합니다. 시계를 탭하면 초 표시를 켜고 끌 수 있으며, 시간의 십의 자리는 빨간색으로 표시됩니다.</string>
 
     <string name="settings_title">시계 초 단위 표시</string>
     <string name="settings_status_title">현재 상태</string>

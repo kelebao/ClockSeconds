@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Clock Seconds</string>
-    <string name="module_description">Show seconds in the status bar clock. Tap the clock to toggle seconds, and the hour tens digit is colored red. Verified on ColorOS 15; also works on Xiaomi, OnePlus and other vendors. Minimum Android 10.</string>
+    <string name="module_description">Show seconds in the status bar clock. Tap the clock to toggle seconds, and the hour tens digit is colored red.</string>
 
     <string name="settings_title">Clock Seconds</string>
     <string name="settings_status_title">Current state</string>

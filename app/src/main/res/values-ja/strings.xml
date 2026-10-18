@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">時計の秒表示</string>
-    <string name="module_description">ステータスバーの時計に秒を表示します。時計をタップすると秒表示を切り替えられ、時間の十の位が赤くなります。ColorOS 15 で実機検証済み。Xiaomi・OnePlus など他のメーカーにも対応。最低 Android 10。</string>
+    <string name="module_description">ステータスバーの時計に秒を表示します。時計をタップすると秒表示を切り替えられ、時間の十の位が赤くなります。</string>
 
     <string name="settings_title">時計の秒表示</string>
     <string name="settings_status_title">現在の状態</string>

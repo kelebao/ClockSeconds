@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">時鐘顯秒</string>
-    <string name="module_description">在狀態欄時鐘顯示秒，點擊時鐘可切換顯秒開關，並將小時十位數標紅。已在 ColorOS 15 實機驗證，相容小米、一加等其它廠商機型，最低支援 Android 10。</string>
+    <string name="module_description">在狀態欄時鐘顯示秒，點擊時鐘可切換顯秒開關，並將小時十位數標紅。</string>
 
     <string name="settings_title">時鐘顯秒</string>
     <string name="settings_status_title">目前狀態</string>

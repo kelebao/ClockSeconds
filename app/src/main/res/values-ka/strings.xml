@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">საათი წამებით</string>
-    <string name="module_description">აჩვენებს წამებს სტატუსის ზოლის საათზე. დააჭირეთ საათს წამების ჩვენების ჩასართავად/გამოსართავად; საათის ათეულის ციფრი წითელია. შემოწმებულია ColorOS 15-ზე, მუშაობს Xiaomi, OnePlus და სხვა მწარმოებლებზეც. მინიმუმ Android 10.</string>
+    <string name="module_description">აჩვენებს წამებს სტატუსის ზოლის საათზე. დააჭირეთ საათს წამების ჩვენების ჩასართავად/გამოსართავად; საათის ათეულის ციფრი წითელია.</string>
 
     <string name="settings_title">საათი წამებით</string>
     <string name="settings_status_title">მიმდინარე მდგომარეობა</string>
