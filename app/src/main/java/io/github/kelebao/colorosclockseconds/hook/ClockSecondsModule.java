@@ -199,17 +199,25 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         ensureStateLoaded(view);
 
         // 固定占位宽度，避免秒数变化把旁边的日期/图标推动（沿用 betterclock 的稳宽做法）。
-        try {
-            float widestDigit = 0f;
-            for (char digit = '0'; digit <= '9'; digit++) {
-                widestDigit = Math.max(widestDigit, view.getPaint().measureText(String.valueOf(digit)));
+        //
+        // 只在 ColorOS 系（OPPO / 一加 / realme）启用：
+        // 小米 HyperOS 的 MiuiClock 是 wrap_content 且没有重写 onMeasure，锁定宽度会让
+        // TextView 在固定宽度内无法完整绘制文本，状态栏时间整块消失（issue #2）。
+        //
+        // 且只设 minWidth、不设 maxWidth：时钟最宽就是 HH:mm:ss，minWidth 已足够防止
+        // 显秒开关引起的横向移位；maxWidth 在字体测量有偏差时会裁切文本，弊大于利。
+        if (isOplusDevice()) {
+            try {
+                float widestDigit = 0f;
+                for (char digit = '0'; digit <= '9'; digit++) {
+                    widestDigit = Math.max(widestDigit, view.getPaint().measureText(String.valueOf(digit)));
+                }
+                int width = (int) Math.ceil(widestDigit * 6f + view.getPaint().measureText("::"))
+                        + view.getCompoundPaddingLeft() + view.getCompoundPaddingRight();
+                view.setMinWidth(width);
+            } catch (Throwable ignored) {
+                // 测量失败不影响核心功能
             }
-            int width = (int) Math.ceil(widestDigit * 6f + view.getPaint().measureText("::"))
-                    + view.getCompoundPaddingLeft() + view.getCompoundPaddingRight();
-            view.setMinWidth(width);
-            view.setMaxWidth(width);
-        } catch (Throwable ignored) {
-            // 测量失败不影响核心功能
         }
 
         // 缓存时钟视图与其屏幕边界（供全局 dispatchTouchEvent 监听做点击/长按命中判断）。
