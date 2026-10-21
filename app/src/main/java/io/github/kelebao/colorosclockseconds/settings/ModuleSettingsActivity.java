@@ -6,25 +6,30 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Locale;
 
 import io.github.kelebao.colorosclockseconds.BuildConfig;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
@@ -33,12 +38,11 @@ import io.github.kelebao.colorosclockseconds.R;
 /**
  * 模块设置页（从 LSPosed 管理器打开，桌面不生成图标）。
  *
- * <p>说明：普通应用进程写入 {@link Settings.Secure} 需要 {@code WRITE_SECURE_SETTINGS}。
- * 若未授予，页面仅展示状态与手势偏好，真正的切换请用"点击状态栏时钟"完成
- * （该动作运行在 SystemUI 进程内，天然具备权限）。</p>
+ * <p>视觉风格：柔紫渐变底 + 大圆角白卡 + 胶囊按钮，全部用 framework 原生控件绘制
+ * （{@link GradientDrawable} 做渐变与圆角，{@code elevation} 做投影），不引入 AndroidX。</p>
  *
- * <p>更新检查：打开页面时（默认开启，可关）访问模块仓库 Releases API，
- * 发现新版本弹窗提醒，确认后跳转 Browser 打开 Releases 页。</p>
+ * <p>说明：普通应用进程写入 {@link Settings.Secure} 需要 {@code WRITE_SECURE_SETTINGS}；
+ * 没有该权限时改走广播，由 SystemUI 进程内的模块代写。</p>
  */
 public final class ModuleSettingsActivity extends Activity {
 
@@ -53,23 +57,53 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 小时十位数字可选颜色（第一项为默认红）。 */
     private static final int[] HOUR_COLORS = {
-            0xFFF44336, // 红（默认）
-            0xFFFF9800, // 橙
-            0xFFFFC107, // 黄
-            0xFF4CAF50, // 绿
-            0xFF00BCD4, // 青
-            0xFF2196F3, // 蓝
-            0xFF9C27B0, // 紫
-            0xFFE91E63, // 粉
-            0xFFFFFFFF, // 白
-            0xFF9E9E9E, // 灰
+            0xFFF44336, 0xFFFF9800, 0xFFFFC107, 0xFF4CAF50, 0xFF00BCD4,
+            0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFFFFFFFF, 0xFF9E9E9E,
     };
 
-    private TextView statusView;
+    // 浅色配色
+    private static final int LIGHT_BG_TOP = 0xFFF3EFFE;
+    private static final int LIGHT_BG_BOTTOM = 0xFFE9E2FF;
+    private static final int LIGHT_CARD = 0xFFFFFFFF;
+    private static final int LIGHT_TEXT = 0xFF1F1B2E;
+    private static final int LIGHT_TEXT_2 = 0xFF6B6480;
+    private static final int LIGHT_TEXT_3 = 0xFFA29BB8;
+    private static final int LIGHT_DIVIDER = 0xFFEFEBFA;
+
+    // 深色配色
+    private static final int DARK_BG_TOP = 0xFF1A1526;
+    private static final int DARK_BG_BOTTOM = 0xFF120F1C;
+    private static final int DARK_CARD = 0xFF241D38;
+    private static final int DARK_TEXT = 0xFFF2EEFF;
+    private static final int DARK_TEXT_2 = 0xFFB9B0D0;
+    private static final int DARK_TEXT_3 = 0xFF7D749A;
+    private static final int DARK_DIVIDER = 0xFF322A4A;
+
+    private static final int ACCENT_LIGHT = 0xFF6C4CF1;
+    private static final int ACCENT_DARK = 0xFFA98CFF;
+
+    private boolean night;
+    private TextView chipView;
+    private TextView previewView;
+    private TextView colorValueView;
+    private View colorDotView;
+
+    private final Handler ticker = new Handler(Looper.getMainLooper());
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            updatePreview();
+            ticker.postDelayed(this, 1000L);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        night = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
+        // 页面自带大标题，隐藏系统 ActionBar 避免标题重复。
+        requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         setTitle(R.string.settings_title);
         setContentView(buildContentView());
         applyStatusBarAppearance();
@@ -77,14 +111,21 @@ public final class ModuleSettingsActivity extends Activity {
         maybeAutoCheckUpdate();
     }
 
-    /**
-     * 浅色主题下把状态栏文字/图标切成深色：设置页背景是浅色，若系统仍画白色时钟会看不清
-     * （模块的小时颜色也会被"浅色背景压暗"规则误判成深色背景）。
-     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshStatus();
+        ticker.removeCallbacks(tick);
+        ticker.post(tick);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        ticker.removeCallbacks(tick);
+    }
+
     private void applyStatusBarAppearance() {
-        boolean night = (getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
-                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
         View decor = getWindow().getDecorView();
         int flags = decor.getSystemUiVisibility();
         if (night) {
@@ -95,129 +136,217 @@ public final class ModuleSettingsActivity extends Activity {
         decor.setSystemUiVisibility(flags);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshStatus();
-    }
+    // ==================================================================
+    // 页面骨架
+    // ==================================================================
 
     private ScrollView buildContentView() {
-        int pad = dp(20);
+        ScrollView scroll = new ScrollView(this);
+        GradientDrawable bg = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{night ? DARK_BG_TOP : LIGHT_BG_TOP,
+                        night ? DARK_BG_BOTTOM : LIGHT_BG_BOTTOM});
+        scroll.setBackground(bg);
+        scroll.setFillViewport(true);
+        // targetSdk 35 起系统强制边到边：内容会画到状态栏/导航栏下面，这里按系统栏高度留白，
+        // 并保留裁剪（clipToPadding 默认 true），滚动时内容不会钻到状态栏图标下面。
+        scroll.setOnApplyWindowInsetsListener((v, insets) -> {
+            int top;
+            int bottom;
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.graphics.Insets bars = insets.getInsets(
+                        android.view.WindowInsets.Type.systemBars());
+                top = bars.top;
+                bottom = bars.bottom;
+            } else {
+                top = insets.getSystemWindowInsetTop();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            v.setPadding(0, top, 0, bottom);
+            return insets;
+        });
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(pad, pad, pad, pad);
-
-        TextView statusTitle = new TextView(this);
-        statusTitle.setText(R.string.settings_status_title);
-        statusTitle.setTextSize(16f);
-        statusTitle.setPadding(0, 0, 0, dp(8));
-        root.addView(statusTitle);
-
-        statusView = new TextView(this);
-        statusView.setTextSize(20f);
-        statusView.setPadding(0, 0, 0, dp(16));
-        root.addView(statusView);
-
-        Button refresh = new Button(this);
-        refresh.setText(R.string.settings_refresh);
-        refresh.setOnClickListener(v -> refreshStatus());
-        root.addView(refresh);
-
-        TextView gestureTitle = new TextView(this);
-        gestureTitle.setText(R.string.settings_gesture_title);
-        gestureTitle.setTextSize(16f);
-        gestureTitle.setPadding(0, dp(24), 0, dp(8));
-        root.addView(gestureTitle);
-
-        RadioGroup group = new RadioGroup(this);
-        RadioButton click = new RadioButton(this);
-        click.setId(1);
-        click.setText(R.string.settings_gesture_click);
-        RadioButton longPress = new RadioButton(this);
-        longPress.setId(2);
-        longPress.setText(R.string.settings_gesture_long_press);
-        group.addView(click);
-        group.addView(longPress);
-
-        ContentResolver resolver = getContentResolver();
-        int current = ClockSecondsConfig.getGesture(resolver);
-        group.check(current == ClockSecondsConfig.GESTURE_LONG_PRESS ? 2 : 1);
-        final boolean[] reverting = {false};
-        final int[] lastChecked = {group.getCheckedRadioButtonId()};
-        group.setOnCheckedChangeListener((g, checkedId) -> {
-            if (reverting[0] || checkedId == ViewGroup.NO_ID) {
-                return;
-            }
-            int gesture = checkedId == 2
-                    ? ClockSecondsConfig.GESTURE_LONG_PRESS
-                    : ClockSecondsConfig.GESTURE_CLICK;
-            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GESTURE)
-                    .putExtra(ClockSecondsConfig.EXTRA_GESTURE, gesture);
-            applyConfig(ClockSecondsConfig.TOGGLE_GESTURE_KEY, gesture, intent, ok -> {
-                if (ok) {
-                    lastChecked[0] = checkedId;
-                } else {
-                    // 写入失败：回滚选中项，避免"假成功"。
-                    reverting[0] = true;
-                    g.check(lastChecked[0]);
-                    reverting[0] = false;
-                }
-            });
-        });
-        root.addView(group);
-
-        TextView hint = new TextView(this);
-        hint.setText(R.string.settings_hint);
-        hint.setTextSize(13f);
-        hint.setGravity(Gravity.START);
-        hint.setPadding(0, dp(24), 0, 0);
-        root.addView(hint);
-
-        buildColorSection(root);
-        buildUpdateSection(root);
-        buildAboutSection(root);
-
-        ScrollView scroll = new ScrollView(this);
+        root.setPadding(dp(18), dp(18), dp(18), dp(28));
         scroll.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        buildHeader(root);
+        buildPreviewCard(root);
+        buildStatsRow(root);
+        buildColorCard(root);
+        buildUpdateCard(root);
+        buildAboutCard(root);
+        buildPrimaryButton(root);
+        buildFooter(root);
         return scroll;
     }
 
-    // ---------- 小时颜色 ----------
+    private void buildHeader(LinearLayout root) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(4), 0, dp(4), dp(16));
 
-    private void buildColorSection(LinearLayout root) {
-        addSectionLabel(root, R.string.settings_color_title);
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-        // 总开关：关闭后恢复系统默认样式（时钟不加任何着色），默认开启。
+        TextView title = new TextView(this);
+        title.setText(R.string.settings_title);
+        title.setTextSize(24f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        texts.addView(title);
+        row.addView(texts);
+
+        chipView = new TextView(this);
+        chipView.setTextSize(12f);
+        chipView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        chipView.setPadding(dp(12), dp(6), dp(12), dp(6));
+        GradientDrawable chipBg = new GradientDrawable();
+        chipBg.setCornerRadius(dp(999));
+        chipBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
+        chipView.setBackground(chipBg);
+        chipView.setTextColor(accent());
+        row.addView(chipView);
+        root.addView(row);
+    }
+
+    private void buildPreviewCard(LinearLayout root) {
+        LinearLayout card = card();
+        previewView = new TextView(this);
+        previewView.setTextSize(44f);
+        previewView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        previewView.setTextColor(text());
+        card.addView(previewView);
+
+        LinearLayout foot = new LinearLayout(this);
+        foot.setOrientation(LinearLayout.HORIZONTAL);
+        foot.setGravity(Gravity.CENTER_VERTICAL);
+        foot.setPadding(0, dp(12), 0, 0);
+
+        View spacer = new View(this);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, dp(1), 1f));
+        foot.addView(spacer);
+        TextView ver = new TextView(this);
+        ver.setText("v" + BuildConfig.VERSION_NAME);
+        ver.setTextSize(12f);
+        ver.setTextColor(text3());
+        foot.addView(ver);
+        card.addView(foot);
+        root.addView(card);
+        updatePreview();
+    }
+
+    /** 两张并排小卡：切换手势 / 小时颜色。 */
+    private void buildStatsRow(LinearLayout root) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowLp.bottomMargin = dp(12);
+        row.setLayoutParams(rowLp);
+
+        LinearLayout gestureCard = statCard();
+        LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        lp1.rightMargin = dp(6);
+        gestureCard.setLayoutParams(lp1);
+        TextView gestureLabel = statLabel(R.string.settings_gesture_title);
+        gestureCard.addView(gestureLabel);
+        TextView gestureValue = new TextView(this);
+        gestureValue.setText(ClockSecondsConfig.getGesture(getContentResolver())
+                == ClockSecondsConfig.GESTURE_LONG_PRESS
+                ? R.string.settings_gesture_long_press : R.string.settings_gesture_click);
+        gestureValue.setTextSize(19f);
+        gestureValue.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        gestureValue.setTextColor(text());
+        gestureValue.setPadding(0, dp(6), 0, 0);
+        gestureCard.addView(gestureValue);
+        gestureCard.setOnClickListener(v -> showGestureDialog(gestureValue));
+        row.addView(gestureCard);
+
+        LinearLayout colorCard = statCard();
+        LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        lp2.leftMargin = dp(6);
+        colorCard.setLayoutParams(lp2);
+        colorCard.addView(statLabel(R.string.settings_color_title));
+
+        LinearLayout colorRow = new LinearLayout(this);
+        colorRow.setOrientation(LinearLayout.HORIZONTAL);
+        colorRow.setGravity(Gravity.CENTER_VERTICAL);
+        colorRow.setPadding(0, dp(8), 0, 0);
+
+        colorDotView = new View(this);
+        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(16), dp(16));
+        dotLp.rightMargin = dp(8);
+        colorDotView.setLayoutParams(dotLp);
+        colorRow.addView(colorDotView);
+
+        colorValueView = new TextView(this);
+        colorValueView.setTextSize(16f);
+        colorValueView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        colorValueView.setTextColor(text());
+        colorRow.addView(colorValueView);
+        colorCard.addView(colorRow);
+        row.addView(colorCard);
+
+        root.addView(row);
+        refreshColorSummary();
+    }
+
+    private void buildColorCard(LinearLayout root) {
+        LinearLayout card = card();
+
         LinearLayout switchRow = new LinearLayout(this);
         switchRow.setOrientation(LinearLayout.HORIZONTAL);
         switchRow.setGravity(Gravity.CENTER_VERTICAL);
-        switchRow.setPadding(dp(12), dp(12), dp(12), 0);
 
-        TextView label = new TextView(this);
-        label.setText(R.string.settings_color_enable);
-        label.setTextSize(16f);
-        label.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        switchRow.addView(label);
+        TextView title = new TextView(this);
+        title.setText(R.string.settings_color_enable);
+        title.setTextSize(15f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        texts.addView(title);
+        TextView sub = new TextView(this);
+        sub.setText(R.string.settings_color_enable_sum);
+        sub.setTextSize(11f);
+        sub.setTextColor(text2());
+        sub.setPadding(0, dp(3), 0, 0);
+        texts.addView(sub);
+        switchRow.addView(texts);
 
         final Switch colorSwitch = new Switch(this);
         colorSwitch.setChecked(ClockSecondsConfig.isHourColorEnabled(getContentResolver()));
+        styleSwitch(colorSwitch);
         switchRow.addView(colorSwitch);
-        root.addView(switchRow);
+        card.addView(switchRow);
 
-        addSubLabel(root, R.string.settings_color_enable_sum);
-        addSubLabel(root, R.string.settings_color_hint);
-
-        int current = ClockSecondsConfig.getHourColor(getContentResolver());
         final GridLayout grid = new GridLayout(this);
         grid.setColumnCount(5);
+        grid.setPadding(0, dp(14), 0, 0);
+        int current = ClockSecondsConfig.getHourColor(getContentResolver());
         for (int color : HOUR_COLORS) {
             grid.addView(makeSwatch(color, color == current, grid));
         }
-        root.addView(grid);
+        card.addView(grid);
         applySwatchEnabled(grid, colorSwitch.isChecked());
+
+        TextView hint = new TextView(this);
+        hint.setText(R.string.settings_color_hint);
+        hint.setTextSize(11f);
+        hint.setTextColor(text3());
+        hint.setPadding(0, dp(10), 0, 0);
+        card.addView(hint);
+        root.addView(card);
 
         final boolean[] reverting = {false};
         colorSwitch.setOnCheckedChangeListener((v, checked) -> {
@@ -229,8 +358,9 @@ public final class ModuleSettingsActivity extends Activity {
             applyConfig(ClockSecondsConfig.HOUR_COLOR_ENABLED_KEY, checked ? 1 : 0, intent, ok -> {
                 if (ok) {
                     applySwatchEnabled(grid, checked);
+                    refreshColorSummary();
+                    updatePreview();
                 } else {
-                    // 写入失败：回滚开关，避免"假成功"。
                     reverting[0] = true;
                     colorSwitch.setChecked(!checked);
                     reverting[0] = false;
@@ -240,34 +370,184 @@ public final class ModuleSettingsActivity extends Activity {
         });
     }
 
-    /** 关闭总开关时把色板置灰并禁用点击（颜色偏好仍保留，重新打开即恢复）。 */
-    private void applySwatchEnabled(GridLayout grid, boolean enabled) {
-        for (int i = 0; i < grid.getChildCount(); i++) {
-            View child = grid.getChildAt(i);
-            child.setAlpha(enabled ? 1f : 0.35f);
-            child.setClickable(enabled);
+    private void buildUpdateCard(LinearLayout root) {
+        LinearLayout card = card();
+        card.setPadding(dp(18), dp(6), dp(18), dp(6));
+
+        LinearLayout autoRow = new LinearLayout(this);
+        autoRow.setOrientation(LinearLayout.HORIZONTAL);
+        autoRow.setGravity(Gravity.CENTER_VERTICAL);
+        autoRow.setPadding(0, dp(12), 0, dp(12));
+
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView t1 = new TextView(this);
+        t1.setText(R.string.settings_update_auto);
+        t1.setTextSize(15f);
+        t1.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        t1.setTextColor(text());
+        texts.addView(t1);
+        TextView t2 = new TextView(this);
+        t2.setText(R.string.settings_update_auto_sum);
+        t2.setTextSize(11f);
+        t2.setTextColor(text2());
+        t2.setPadding(0, dp(3), 0, 0);
+        texts.addView(t2);
+        autoRow.addView(texts);
+
+        Switch autoSwitch = new Switch(this);
+        autoSwitch.setChecked(prefs().getBoolean(KEY_AUTO_UPDATE, true));
+        styleSwitch(autoSwitch);
+        autoSwitch.setOnCheckedChangeListener((v, checked) -> {
+            prefs().edit().putBoolean(KEY_AUTO_UPDATE, checked).apply();
+            if (checked) {
+                runUpdateCheck(true);
+            }
+        });
+        autoRow.addView(autoSwitch);
+        card.addView(autoRow);
+
+        card.addView(divider());
+        card.addView(linkRow(R.string.settings_update_check, null,
+                v -> runUpdateCheck(true)));
+        card.addView(divider());
+        card.addView(linkRow(R.string.settings_update_open, R.string.settings_update_open_sum,
+                v -> openUrl(RELEASES_URL)));
+        root.addView(card);
+    }
+
+    private void buildAboutCard(LinearLayout root) {
+        LinearLayout card = card();
+        card.setPadding(dp(18), dp(6), dp(18), dp(6));
+
+        card.addView(valueRow(getString(R.string.settings_about_version,
+                BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE), null));
+        card.addView(divider());
+        card.addView(linkRow(R.string.settings_about_github, R.string.settings_about_github_sum,
+                v -> openUrl(REPO_URL)));
+        card.addView(divider());
+        card.addView(linkRow(R.string.settings_about_licenses,
+                R.string.settings_about_licenses_sum, v -> showLicensesDialog()));
+        root.addView(card);
+    }
+
+    private void buildPrimaryButton(LinearLayout root) {
+        TextView button = new TextView(this);
+        button.setText(R.string.settings_update_check);
+        button.setTextSize(15f);
+        button.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        button.setTextColor(0xFFFFFFFF);
+        button.setGravity(Gravity.CENTER);
+        button.setPadding(0, dp(14), 0, dp(14));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(999));
+        bg.setColor(accent());
+        button.setBackground(bg);
+        button.setElevation(dp(2));
+        button.setOnClickListener(v -> runUpdateCheck(true));
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(4);
+        button.setLayoutParams(lp);
+        root.addView(button);
+    }
+
+    private void buildFooter(LinearLayout root) {
+        TextView footer = new TextView(this);
+        footer.setText(R.string.settings_hint);
+        footer.setTextSize(11f);
+        footer.setTextColor(text3());
+        footer.setPadding(dp(4), dp(14), dp(4), 0);
+        root.addView(footer);
+    }
+
+    // ==================================================================
+    // 预览与状态
+    // ==================================================================
+
+    /** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色。 */
+    private void updatePreview() {
+        if (previewView == null) {
+            return;
+        }
+        boolean seconds = ClockSecondsConfig.isEnabled(getContentResolver());
+        String text = new java.text.SimpleDateFormat(
+                seconds ? "HH:mm:ss" : "HH:mm", Locale.US)
+                .format(new java.util.Date());
+        SpannableStringBuilder sb = new SpannableStringBuilder(text);
+        if (ClockSecondsConfig.isHourColorEnabled(getContentResolver())
+                && sb.length() >= 2
+                && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
+            sb.setSpan(new ForegroundColorSpan(ClockSecondsConfig.getHourColor(
+                    getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        previewView.setText(sb);
+    }
+
+    private void refreshStatus() {
+        if (chipView == null) {
+            return;
+        }
+        chipView.setText(ClockSecondsConfig.isEnabled(getContentResolver())
+                ? R.string.settings_enabled : R.string.settings_disabled);
+        updatePreview();
+    }
+
+    private void refreshColorSummary() {
+        int color = ClockSecondsConfig.getHourColor(getContentResolver());
+        boolean enabled = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
+        if (colorDotView != null) {
+            GradientDrawable dot = new GradientDrawable();
+            dot.setShape(GradientDrawable.OVAL);
+            dot.setColor(color);
+            dot.setStroke(dp(1), 0x22000000);
+            colorDotView.setBackground(dot);
+            colorDotView.setAlpha(enabled ? 1f : 0.35f);
+        }
+        if (colorValueView != null) {
+            colorValueView.setText(String.format(Locale.US, "#%06X", color & 0xFFFFFF));
+            colorValueView.setAlpha(enabled ? 1f : 0.45f);
         }
     }
+
+    // ==================================================================
+    // 小时颜色
+    // ==================================================================
 
     private View makeSwatch(int color, boolean selected, GridLayout grid) {
         View swatch = new View(this);
         GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-        lp.width = dp(40);
-        lp.height = dp(40);
-        lp.setMargins(dp(6), dp(6), dp(6), dp(6));
+        lp.width = dp(42);
+        lp.height = dp(42);
+        lp.setMargins(dp(5), dp(5), dp(5), dp(5));
         swatch.setLayoutParams(lp);
         swatch.setBackground(swatchDrawable(color, selected));
         swatch.setOnClickListener(v -> selectHourColor(color, grid));
         return swatch;
     }
 
-    /** 圆形色块；选中项加一圈蓝色描边。 */
     private GradientDrawable swatchDrawable(int color, boolean selected) {
         GradientDrawable d = new GradientDrawable();
         d.setShape(GradientDrawable.OVAL);
         d.setColor(color);
-        d.setStroke(selected ? dp(3) : dp(1), selected ? 0xFF2196F3 : 0x33000000);
+        if (selected) {
+            d.setStroke(dp(3), accent());
+        } else {
+            d.setStroke(dp(1), night ? 0x33FFFFFF : 0x1F000000);
+        }
         return d;
+    }
+
+    private void applySwatchEnabled(GridLayout grid, boolean enabled) {
+        for (int i = 0; i < grid.getChildCount(); i++) {
+            View child = grid.getChildAt(i);
+            child.setAlpha(enabled ? 1f : 0.3f);
+            child.setClickable(enabled);
+        }
     }
 
     private void selectHourColor(final int color, final GridLayout grid) {
@@ -279,81 +559,198 @@ public final class ModuleSettingsActivity extends Activity {
                     grid.getChildAt(i).setBackground(
                             swatchDrawable(HOUR_COLORS[i], HOUR_COLORS[i] == color));
                 }
+                refreshColorSummary();
+                updatePreview();
             } else {
                 toastWriteFailed();
             }
         });
     }
 
-    // ---------- 更新 ----------
+    private void showGestureDialog(TextView gestureValue) {
+        final int current = ClockSecondsConfig.getGesture(getContentResolver());
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_gesture_title)
+                .setSingleChoiceItems(new CharSequence[]{
+                        getString(R.string.settings_gesture_click),
+                        getString(R.string.settings_gesture_long_press)},
+                        current == ClockSecondsConfig.GESTURE_LONG_PRESS ? 1 : 0,
+                        (dialog, which) -> {
+                            dialog.dismiss();
+                            int gesture = which == 1
+                                    ? ClockSecondsConfig.GESTURE_LONG_PRESS
+                                    : ClockSecondsConfig.GESTURE_CLICK;
+                            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GESTURE)
+                                    .putExtra(ClockSecondsConfig.EXTRA_GESTURE, gesture);
+                            applyConfig(ClockSecondsConfig.TOGGLE_GESTURE_KEY, gesture, intent,
+                                    ok -> {
+                                        if (ok) {
+                                            gestureValue.setText(gesture
+                                                    == ClockSecondsConfig.GESTURE_LONG_PRESS
+                                                    ? R.string.settings_gesture_long_press
+                                                    : R.string.settings_gesture_click);
+                                        } else {
+                                            toastWriteFailed();
+                                        }
+                                    });
+                        })
+                .show();
+    }
 
-    private void buildUpdateSection(LinearLayout root) {
-        addSectionLabel(root, R.string.settings_section_general);
+    // ==================================================================
+    // 视图工具
+    // ==================================================================
 
-        // 自动检查更新（开关 + 副标题，整体一行：左文字右开关）
-        LinearLayout switchRow = new LinearLayout(this);
-        switchRow.setOrientation(LinearLayout.HORIZONTAL);
-        switchRow.setGravity(Gravity.CENTER_VERTICAL);
-        switchRow.setPadding(dp(12), dp(12), dp(12), 0);
+    private LinearLayout card() {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(24));
+        bg.setColor(night ? DARK_CARD : LIGHT_CARD);
+        card.setBackground(bg);
+        card.setElevation(dp(3));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(12);
+        card.setLayoutParams(lp);
+        return card;
+    }
 
-        TextView autoLabel = new TextView(this);
-        autoLabel.setText(R.string.settings_update_auto);
-        autoLabel.setTextSize(16f);
-        autoLabel.setLayoutParams(new LinearLayout.LayoutParams(
+    private LinearLayout statCard() {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(16), dp(14), dp(16), dp(14));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(20));
+        bg.setColor(night ? DARK_CARD : LIGHT_CARD);
+        card.setBackground(bg);
+        card.setElevation(dp(2));
+        card.setClickable(true);
+        return card;
+    }
+
+    private TextView statLabel(int textRes) {
+        TextView t = new TextView(this);
+        t.setText(textRes);
+        t.setTextSize(11f);
+        t.setTextColor(text2());
+        return t;
+    }
+
+    private View divider() {
+        View v = new View(this);
+        v.setBackgroundColor(night ? DARK_DIVIDER : LIGHT_DIVIDER);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, dp(1)));
+        v.setLayoutParams(lp);
+        return v;
+    }
+
+    /** 可点击行：标题 + 可选副标题 + 右侧箭头。 */
+    private LinearLayout linkRow(int titleRes, Integer subtitleRes, View.OnClickListener l) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(13), 0, dp(13));
+        row.setClickable(true);
+        row.setFocusable(true);
+
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        switchRow.addView(autoLabel);
 
-        Switch autoSwitch = new Switch(this);
-        autoSwitch.setChecked(prefs().getBoolean(KEY_AUTO_UPDATE, true));
-        autoSwitch.setOnCheckedChangeListener((v, checked) -> {
-            prefs().edit().putBoolean(KEY_AUTO_UPDATE, checked).apply();
-            if (checked) {
-                // 刚打开自动检查：立即给出一次反馈（有新版弹窗 / 否则提示已最新）。
-                runUpdateCheck(true);
-            }
-        });
-        switchRow.addView(autoSwitch);
-        root.addView(switchRow);
-
-        addSubLabel(root, R.string.settings_update_auto_sum);
-
-        Button check = new Button(this);
-        check.setText(R.string.settings_update_check);
-        check.setOnClickListener(v -> runUpdateCheck(true));
-        root.addView(check);
-
-        addRow(root, R.string.settings_update_open, R.string.settings_update_open_sum,
-                v -> openUrl(RELEASES_URL));
-    }
-
-    private void buildAboutSection(LinearLayout root) {
-        addSectionLabel(root, R.string.settings_section_about);
-
-        LinearLayout versionRow = addRow(root, getString(R.string.settings_about_version,
-                BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE), null, null);
-        if (BuildConfig.DEBUG) {
-            // 仅供真机验证「发现新版本」弹窗与跳转链路（release 构建自动排除）。
-            versionRow.setOnLongClickListener(v -> {
-                showUpdateDialog("9.9.9");
-                return true;
-            });
+        TextView t = new TextView(this);
+        t.setText(titleRes);
+        t.setTextSize(14f);
+        t.setTextColor(text());
+        texts.addView(t);
+        if (subtitleRes != null) {
+            TextView s = new TextView(this);
+            s.setText(subtitleRes);
+            s.setTextSize(11f);
+            s.setTextColor(text2());
+            s.setPadding(0, dp(3), 0, 0);
+            texts.addView(s);
         }
-        addRow(root, R.string.settings_about_github, R.string.settings_about_github_sum,
-                v -> openUrl(REPO_URL));
-        addRow(root, R.string.settings_about_licenses, R.string.settings_about_licenses_sum,
-                v -> showLicensesDialog());
+        row.addView(texts);
+
+        TextView arrow = new TextView(this);
+        arrow.setText("›");
+        arrow.setTextSize(18f);
+        arrow.setTextColor(text3());
+        row.addView(arrow);
+        row.setOnClickListener(l);
+        return row;
     }
 
-    /** 打开设置页时按偏好自动检查一次（静默：无新版不打扰）。 */
+    /** 只读行：标题 + 可选右侧值。 */
+    private LinearLayout valueRow(CharSequence title, String value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(13), 0, dp(13));
+
+        TextView t = new TextView(this);
+        t.setText(title);
+        t.setTextSize(14f);
+        t.setTextColor(text());
+        t.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(t);
+
+        if (value != null) {
+            TextView v = new TextView(this);
+            v.setText(value);
+            v.setTextSize(13f);
+            v.setTextColor(text2());
+            row.addView(v);
+        }
+        return row;
+    }
+
+    private void styleSwitch(Switch sw) {
+        int[][] states = new int[][]{
+                new int[]{android.R.attr.state_checked},
+                new int[]{},
+        };
+        sw.setThumbTintList(new ColorStateList(states,
+                new int[]{accent(), night ? 0xFF6A6187 : 0xFFD9D3E8}));
+        sw.setTrackTintList(new ColorStateList(states,
+                new int[]{withAlpha(accent(), 0x66), night ? 0xFF3A3352 : 0xFFE4DFF0}));
+    }
+
+    private static int withAlpha(int color, int alpha) {
+        return (color & 0x00FFFFFF) | (alpha << 24);
+    }
+
+    private int accent() {
+        return night ? ACCENT_DARK : ACCENT_LIGHT;
+    }
+
+    private int text() {
+        return night ? DARK_TEXT : LIGHT_TEXT;
+    }
+
+    private int text2() {
+        return night ? DARK_TEXT_2 : LIGHT_TEXT_2;
+    }
+
+    private int text3() {
+        return night ? DARK_TEXT_3 : LIGHT_TEXT_3;
+    }
+
+    // ==================================================================
+    // 更新检查
+    // ==================================================================
+
     private void maybeAutoCheckUpdate() {
         if (prefs().getBoolean(KEY_AUTO_UPDATE, true)) {
             runUpdateCheck(false);
         }
     }
 
-    /**
-     * @param manual true = 用户手动触发，需要 Toast 反馈；false = 自动触发，无新版不打扰
-     */
     private void runUpdateCheck(final boolean manual) {
         if (manual) {
             Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
@@ -364,8 +761,7 @@ public final class ModuleSettingsActivity extends Activity {
             }
             if (failed) {
                 if (manual) {
-                    Toast.makeText(this, R.string.update_failed,
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.update_failed, Toast.LENGTH_LONG).show();
                 }
                 return;
             }
@@ -374,8 +770,7 @@ public final class ModuleSettingsActivity extends Activity {
                     BuildConfig.VERSION_NAME) > 0) {
                 showUpdateDialog(remoteVersion);
             } else if (manual) {
-                Toast.makeText(this, R.string.update_latest,
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.update_latest, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -385,8 +780,7 @@ public final class ModuleSettingsActivity extends Activity {
                 .setTitle(R.string.update_dialog_title)
                 .setMessage(getString(R.string.update_dialog_msg,
                         remoteVersion, BuildConfig.VERSION_NAME))
-                .setPositiveButton(R.string.update_go,
-                        (d, w) -> openUrl(RELEASES_URL))
+                .setPositiveButton(R.string.update_go, (d, w) -> openUrl(RELEASES_URL))
                 .setNegativeButton(R.string.update_later, null)
                 .show();
     }
@@ -411,20 +805,10 @@ public final class ModuleSettingsActivity extends Activity {
         return getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
     }
 
-    // ---------- 原有逻辑 ----------
+    // ==================================================================
+    // 配置写入（无权限时由 SystemUI 代写）
+    // ==================================================================
 
-    private void refreshStatus() {
-        boolean enabled = ClockSecondsConfig.isEnabled(getContentResolver());
-        statusView.setText(enabled
-                ? R.string.settings_enabled
-                : R.string.settings_disabled);
-    }
-
-    /**
-     * 写 Secure 配置：优先直接写；普通应用进程没有 WRITE_SECURE_SETTINGS 时，
-     * 发广播交给 SystemUI 内的模块代写（SystemUI 是系统应用，天然具备该权限）。
-     * 广播路径是异步的，稍后读回校验再把结果回调出去。
-     */
     private void applyConfig(final String key, final int value, final Intent broadcast,
                              final java.util.function.Consumer<Boolean> onResult) {
         try {
@@ -432,7 +816,7 @@ public final class ModuleSettingsActivity extends Activity {
             onResult.accept(true);
             return;
         } catch (SecurityException ignored) {
-            // 无 WRITE_SECURE_SETTINGS：走下面的广播路径
+            // 无 WRITE_SECURE_SETTINGS：走广播路径
         }
         try {
             broadcast.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
@@ -444,7 +828,6 @@ public final class ModuleSettingsActivity extends Activity {
         verifyWrite(key, value, 0, onResult);
     }
 
-    /** 广播路径是异步的：最多轮询约 2.4 秒确认值已落地（SystemUI 忙时可能晚几拍）。 */
     private void verifyWrite(final String key, final int value, final int attempt,
                              final java.util.function.Consumer<Boolean> onResult) {
         if (isFinishing() || isDestroyed()) {
@@ -470,76 +853,6 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void toastWriteFailed() {
         Toast.makeText(this, R.string.settings_write_failed, Toast.LENGTH_LONG).show();
-    }
-
-    // ---------- 视图小工具 ----------
-
-    private void addSectionLabel(LinearLayout parent, int textRes) {
-        TextView t = new TextView(this);
-        t.setText(textRes);
-        t.setTextSize(16f);
-        t.setTypeface(t.getTypeface(), android.graphics.Typeface.BOLD);
-        t.setPadding(0, dp(24), 0, dp(8));
-        parent.addView(t);
-    }
-
-    private void addSubLabel(LinearLayout parent, int textRes) {
-        TextView t = new TextView(this);
-        t.setText(textRes);
-        t.setTextSize(13f);
-        t.setPadding(dp(12), 0, dp(12), dp(4));
-        t.setTextColor(secondaryTextColor());
-        parent.addView(t);
-    }
-
-    /**
-     * 列表行（字符串资源版）：主标题 + 可选副标题，可点击（带系统 selectable 反馈）。
-     * listener 为 null 时纯展示（如版本号）。返回行视图便于附加监听。
-     */
-    private LinearLayout addRow(LinearLayout parent, int titleRes,
-                        Integer subtitleRes, View.OnClickListener listener) {
-        return addRow(parent, getText(titleRes), subtitleRes, listener);
-    }
-
-    private LinearLayout addRow(LinearLayout parent, CharSequence title,
-                        Integer subtitleRes, View.OnClickListener listener) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(dp(12), dp(12), dp(12), dp(12));
-        if (listener != null) {
-            TypedValue tv = new TypedValue();
-            getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
-            if (tv.resourceId != 0) {
-                row.setBackgroundResource(tv.resourceId);
-            }
-            row.setClickable(true);
-            row.setFocusable(true);
-            row.setOnClickListener(listener);
-        }
-
-        TextView t = new TextView(this);
-        t.setText(title);
-        t.setTextSize(16f);
-        row.addView(t);
-
-        if (subtitleRes != null) {
-            TextView s = new TextView(this);
-            s.setText(subtitleRes);
-            s.setTextSize(13f);
-            s.setTextColor(secondaryTextColor());
-            row.addView(s);
-        }
-        parent.addView(row);
-        return row;
-    }
-
-    private int secondaryTextColor() {
-        TypedValue tv = new TypedValue();
-        getTheme().resolveAttribute(android.R.attr.textColorSecondary, tv, true);
-        if (tv.resourceId != 0) {
-            return getResources().getColor(tv.resourceId, getTheme());
-        }
-        return tv.data;
     }
 
     private int dp(int value) {
