@@ -36,4 +36,6 @@
     <string name="settings_color_title">時の色</string>
     <string name="settings_color_hint">色をタップするとすぐに反映されます</string>
     <string name="settings_write_failed">書き込みに失敗しました。モジュールが SystemUI で有効か確認するか、adb で WRITE_SECURE_SETTINGS を付与してください</string>
+    <string name="settings_color_enable">時の色を有効化</string>
+    <string name="settings_color_enable_sum">オフにするとシステム標準の表示に戻ります</string>
 </resources>

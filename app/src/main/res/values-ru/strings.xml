@@ -36,4 +36,6 @@
     <string name="settings_color_title">Цвет часа</string>
     <string name="settings_color_hint">Нажмите на цвет, чтобы сменить — применяется сразу</string>
     <string name="settings_write_failed">Не удалось записать. Убедитесь, что модуль активен в SystemUI, или выдайте WRITE_SECURE_SETTINGS через adb</string>
+    <string name="settings_color_enable">Включить цвет часа</string>
+    <string name="settings_color_enable_sum">При выключении вернётся стандартный вид системы</string>
 </resources>

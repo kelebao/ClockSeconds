@@ -36,4 +36,6 @@
     <string name="settings_color_title">Χρώμα ώρας</string>
     <string name="settings_color_hint">Πατήστε ένα χρώμα για αλλαγή — εφαρμόζεται αμέσως</string>
     <string name="settings_write_failed">Αποτυχία εγγραφής. Βεβαιωθείτε ότι η μονάδα είναι ενεργή στο SystemUI ή δώστε WRITE_SECURE_SETTINGS μέσω adb</string>
+    <string name="settings_color_enable">Ενεργοποίηση χρώματος ώρας</string>
+    <string name="settings_color_enable_sum">Αν το απενεργοποιήσετε, επιστρέφει η προεπιλεγμένη εμφάνιση</string>
 </resources>

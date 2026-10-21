@@ -37,6 +37,10 @@ public final class ClockSecondsConfig {
     public static final String HOUR_COLOR_KEY = "coloros_clock_seconds_hour_color";
     public static final int HOUR_COLOR_DEFAULT = 0xFFF44336;
 
+    /** 小时颜色总开关（1 = 启用，0 = 关闭并恢复系统默认样式）。默认启用。 */
+    public static final String HOUR_COLOR_ENABLED_KEY =
+            "coloros_clock_seconds_hour_color_enabled";
+
     /**
      * 设置页 → SystemUI 的配置广播。
      *
@@ -48,8 +52,11 @@ public final class ClockSecondsConfig {
             "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR";
     public static final String ACTION_SET_GESTURE =
             "io.github.kelebao.colorosclockseconds.action.SET_GESTURE";
+    public static final String ACTION_SET_HOUR_COLOR_ENABLED =
+            "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR_ENABLED";
     public static final String EXTRA_COLOR = "color";
     public static final String EXTRA_GESTURE = "gesture";
+    public static final String EXTRA_ENABLED = "enabled";
 
     /** 开关「开启」取值。 */
     public static final int MODE_ENABLED = 1;
@@ -88,5 +95,15 @@ public final class ClockSecondsConfig {
     /** 写入小时十位数字颜色（ARGB）。 */
     public static void setHourColor(ContentResolver resolver, int color) {
         Settings.Secure.putInt(resolver, HOUR_COLOR_KEY, color);
+    }
+
+    /** 小时颜色开关是否启用（默认启用）。关闭后时钟恢复系统默认样式。 */
+    public static boolean isHourColorEnabled(ContentResolver resolver) {
+        return Settings.Secure.getInt(resolver, HOUR_COLOR_ENABLED_KEY, 1) == 1;
+    }
+
+    /** 写入小时颜色开关。 */
+    public static void setHourColorEnabled(ContentResolver resolver, boolean enabled) {
+        Settings.Secure.putInt(resolver, HOUR_COLOR_ENABLED_KEY, enabled ? 1 : 0);
     }
 }

@@ -188,15 +188,65 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void buildColorSection(LinearLayout root) {
         addSectionLabel(root, R.string.settings_color_title);
+
+        // 总开关：关闭后恢复系统默认样式（时钟不加任何着色），默认开启。
+        LinearLayout switchRow = new LinearLayout(this);
+        switchRow.setOrientation(LinearLayout.HORIZONTAL);
+        switchRow.setGravity(Gravity.CENTER_VERTICAL);
+        switchRow.setPadding(dp(12), dp(12), dp(12), 0);
+
+        TextView label = new TextView(this);
+        label.setText(R.string.settings_color_enable);
+        label.setTextSize(16f);
+        label.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        switchRow.addView(label);
+
+        final Switch colorSwitch = new Switch(this);
+        colorSwitch.setChecked(ClockSecondsConfig.isHourColorEnabled(getContentResolver()));
+        switchRow.addView(colorSwitch);
+        root.addView(switchRow);
+
+        addSubLabel(root, R.string.settings_color_enable_sum);
         addSubLabel(root, R.string.settings_color_hint);
 
         int current = ClockSecondsConfig.getHourColor(getContentResolver());
-        GridLayout grid = new GridLayout(this);
+        final GridLayout grid = new GridLayout(this);
         grid.setColumnCount(5);
         for (int color : HOUR_COLORS) {
             grid.addView(makeSwatch(color, color == current, grid));
         }
         root.addView(grid);
+        applySwatchEnabled(grid, colorSwitch.isChecked());
+
+        final boolean[] reverting = {false};
+        colorSwitch.setOnCheckedChangeListener((v, checked) -> {
+            if (reverting[0]) {
+                return;
+            }
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
+            applyConfig(ClockSecondsConfig.HOUR_COLOR_ENABLED_KEY, checked ? 1 : 0, intent, ok -> {
+                if (ok) {
+                    applySwatchEnabled(grid, checked);
+                } else {
+                    // 写入失败：回滚开关，避免"假成功"。
+                    reverting[0] = true;
+                    colorSwitch.setChecked(!checked);
+                    reverting[0] = false;
+                    toastWriteFailed();
+                }
+            });
+        });
+    }
+
+    /** 关闭总开关时把色板置灰并禁用点击（颜色偏好仍保留，重新打开即恢复）。 */
+    private void applySwatchEnabled(GridLayout grid, boolean enabled) {
+        for (int i = 0; i < grid.getChildCount(); i++) {
+            View child = grid.getChildAt(i);
+            child.setAlpha(enabled ? 1f : 0.35f);
+            child.setClickable(enabled);
+        }
     }
 
     private View makeSwatch(int color, boolean selected, GridLayout grid) {

@@ -36,4 +36,6 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_color_title">Màu giờ</string>
     <string name="settings_color_hint">Nhấn vào màu để đổi — áp dụng ngay</string>
     <string name="settings_write_failed">Ghi thất bại. Hãy chắc mô-đun đang hoạt động trong SystemUI hoặc cấp WRITE_SECURE_SETTINGS qua adb</string>
+    <string name="settings_color_enable">Bật màu giờ</string>
+    <string name="settings_color_enable_sum">Tắt để trở về kiểu mặc định của hệ thống</string>
 </resources>

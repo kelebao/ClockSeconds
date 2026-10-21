@@ -36,4 +36,6 @@
     <string name="settings_color_title">สีของชั่วโมง</string>
     <string name="settings_color_hint">แตะสีเพื่อเปลี่ยน มีผลทันที</string>
     <string name="settings_write_failed">เขียนไม่สำเร็จ โปรดตรวจสอบว่าโมดูลทำงานใน SystemUI แล้ว หรือให้สิทธิ์ WRITE_SECURE_SETTINGS ผ่าน adb</string>
+    <string name="settings_color_enable">เปิดใช้สีของชั่วโมง</string>
+    <string name="settings_color_enable_sum">ปิดเพื่อกลับไปใช้สไตล์เริ่มต้นของระบบ</string>
 </resources>

@@ -36,4 +36,6 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_color_title">Saat rengi</string>
     <string name="settings_color_hint">Değiştirmek için bir renge dokunun — hemen uygulanır</string>
     <string name="settings_write_failed">Yazma başarısız. Modülün SystemUI\'de etkin olduğundan emin olun veya adb ile WRITE_SECURE_SETTINGS verin</string>
+    <string name="settings_color_enable">Saat rengini etkinleştir</string>
+    <string name="settings_color_enable_sum">Kapatınca sistem varsayılan görünümüne döner</string>
 </resources>

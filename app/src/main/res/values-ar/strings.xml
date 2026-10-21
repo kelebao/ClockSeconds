@@ -36,4 +36,6 @@
     <string name="settings_color_title">لون الساعة</string>
     <string name="settings_color_hint">انقر على لون لتغييره — يُطبَّق فوراً</string>
     <string name="settings_write_failed">فشل الكتابة. تأكد من أن الوحدة نشطة في SystemUI أو امنح WRITE_SECURE_SETTINGS عبر adb</string>
+    <string name="settings_color_enable">تفعيل لون الساعة</string>
+    <string name="settings_color_enable_sum">إيقاف التشغيل يعيد المظهر الافتراضي للنظام</string>
 </resources>

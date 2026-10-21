@@ -36,4 +36,6 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_color_title">Color de la hora</string>
     <string name="settings_color_hint">Toca un color para cambiarlo — se aplica al instante</string>
     <string name="settings_write_failed">Error al escribir. Comprueba que el módulo esté activo en SystemUI o concede WRITE_SECURE_SETTINGS por adb</string>
+    <string name="settings_color_enable">Activar color de la hora</string>
+    <string name="settings_color_enable_sum">Al desactivarlo vuelve al estilo predeterminado del sistema</string>
 </resources>

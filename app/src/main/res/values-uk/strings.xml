@@ -36,4 +36,6 @@
     <string name="settings_color_title">Колір години</string>
     <string name="settings_color_hint">Торкніться кольору, щоб змінити — застосовується одразу</string>
     <string name="settings_write_failed">Не вдалося записати. Переконайтеся, що модуль активний у SystemUI, або надайте WRITE_SECURE_SETTINGS через adb</string>
+    <string name="settings_color_enable">Увімкнути колір години</string>
+    <string name="settings_color_enable_sum">Вимкнення поверне стандартний вигляд системи</string>
 </resources>

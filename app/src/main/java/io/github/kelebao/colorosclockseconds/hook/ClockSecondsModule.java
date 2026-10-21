@@ -417,6 +417,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 因此把过亮的颜色压暗，保证在浅色状态栏上仍然清晰。</p>
      */
     private static void applyHourTensRed(SpannableStringBuilder sb, TextView view, int color) {
+        if (!hourColorEnabled(view)) {
+            // 总开关关闭：恢复系统默认样式，不加任何 Span。
+            return;
+        }
         int colon = -1;
         for (int i = 0; i < sb.length(); i++) {
             char c = sb.charAt(i);
@@ -456,6 +460,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             return ClockSecondsConfig.getHourColor(view.getContext().getContentResolver());
         } catch (Throwable t) {
             return HOUR_COLOR_FALLBACK;
+        }
+    }
+
+    /** 小时颜色总开关（默认启用）；读取失败按启用处理，保持原有观感。 */
+    private static boolean hourColorEnabled(TextView view) {
+        try {
+            return ClockSecondsConfig.isHourColorEnabled(view.getContext().getContentResolver());
+        } catch (Throwable t) {
+            return true;
         }
     }
 
@@ -668,6 +681,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             try {
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 BroadcastReceiver receiver = new BroadcastReceiver() {
                     @Override
@@ -678,15 +692,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
                                 ClockSecondsConfig.setHourColor(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));
-                                // 立即重绘：秒关闭时系统每分钟才更新一次时钟，不主动刷新要等一分钟才看到新颜色。
-                                TextView clock = sClockView;
-                                if (clock != null) {
-                                    if (sSecondsEnabled) {
-                                        writeTime(clock);
-                                    } else {
-                                        writeMinuteOnly(clock);
-                                    }
-                                }
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED.equals(action)) {
+                                ClockSecondsConfig.setHourColorEnabled(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
+                                refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
                                 ClockSecondsConfig.setGesture(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_GESTURE,
@@ -707,6 +717,26 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             } catch (Throwable ignored) {
                 // 注册失败只影响"未用 adb 授权时的设置写入"，不影响显秒与点击切换
             }
+        }
+    }
+
+    /**
+     * 立即重绘缓存的时钟：秒关闭时系统每分钟才更新一次，改颜色/开关后不主动刷新
+     * 最长要等一分钟才能看到变化。
+     */
+    private static void refreshClockNow() {
+        TextView clock = sClockView;
+        if (clock == null) {
+            return;
+        }
+        try {
+            if (sSecondsEnabled) {
+                writeTime(clock);
+            } else {
+                writeMinuteOnly(clock);
+            }
+        } catch (Throwable ignored) {
+            // 重绘失败不影响系统时钟自身的刷新
         }
     }
 }

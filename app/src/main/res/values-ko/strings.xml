@@ -36,4 +36,6 @@
     <string name="settings_color_title">시간 색상</string>
     <string name="settings_color_hint">색상을 탭하면 즉시 적용됩니다</string>
     <string name="settings_write_failed">쓰기 실패: 모듈이 시스템 UI에서 활성화되어 있는지 확인하거나 adb로 WRITE_SECURE_SETTINGS를 부여하세요</string>
+    <string name="settings_color_enable">시간 색상 사용</string>
+    <string name="settings_color_enable_sum">끄면 시스템 기본 스타일로 돌아갑니다</string>
 </resources>
