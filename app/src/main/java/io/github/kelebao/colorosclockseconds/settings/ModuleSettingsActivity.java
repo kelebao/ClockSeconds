@@ -87,6 +87,7 @@ public final class ModuleSettingsActivity extends Activity {
     private TextView chipView;
     private TextView previewView;
     private TextView netTimeView;
+    private TextView previewHintView;
     private TextView syncView;
     private TextView colorValueView;
     private View colorDotView;
@@ -102,6 +103,22 @@ public final class ModuleSettingsActivity extends Activity {
             ticker.postDelayed(this, 1000L);
         }
     };
+
+    /** 点击预览时钟后显示提示，3 秒后自动收起。 */
+    private final Runnable hideHint = () -> {
+        if (previewHintView != null) {
+            previewHintView.setVisibility(View.GONE);
+        }
+    };
+
+    private void showPreviewHint() {
+        if (previewHintView == null) {
+            return;
+        }
+        ticker.removeCallbacks(hideHint);
+        previewHintView.setVisibility(View.VISIBLE);
+        ticker.postDelayed(hideHint, 3000L);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,6 +146,7 @@ public final class ModuleSettingsActivity extends Activity {
     protected void onPause() {
         super.onPause();
         ticker.removeCallbacks(tick);
+        ticker.removeCallbacks(hideHint);
     }
 
     private void applyStatusBarAppearance() {
@@ -228,16 +246,18 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         previewView.setTextColor(text());
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
+        previewView.setOnClickListener(v -> showPreviewHint());
         card.addView(previewView);
 
-        // 提示用户：要点状态栏的时钟，不是点这里。
-        TextView previewHint = new TextView(this);
-        previewHint.setText(R.string.settings_preview_hint);
-        previewHint.setTextSize(11f);
-        previewHint.setTextColor(text3());
-        previewHint.setGravity(Gravity.CENTER_HORIZONTAL);
-        previewHint.setPadding(0, dp(6), 0, 0);
-        card.addView(previewHint);
+        // 提示用户：要点状态栏的时钟，不是点这里。点击预览后才出现，3 秒后自动收起。
+        previewHintView = new TextView(this);
+        previewHintView.setText(R.string.settings_preview_hint);
+        previewHintView.setTextSize(11f);
+        previewHintView.setTextColor(text3());
+        previewHintView.setGravity(Gravity.CENTER_HORIZONTAL);
+        previewHintView.setPadding(0, dp(6), 0, 0);
+        previewHintView.setVisibility(View.GONE);
+        card.addView(previewHintView);
 
         // 网络时间对比：点一下重新获取（HTTP Date 头，按 RTT 折半校正）。
         LinearLayout netRow = new LinearLayout(this);
