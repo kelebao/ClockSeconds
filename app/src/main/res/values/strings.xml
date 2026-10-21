@@ -33,4 +33,6 @@
     <string name="update_later">稍后再说</string>
     <string name="licenses_text">Xposed API（de.robv.android.xposed:api:82）：Apache License 2.0
 本模块源码：MIT © kelebao</string>
+    <string name="settings_color_title">小时颜色</string>
+    <string name="settings_color_hint">点击色块切换，立即生效</string>
 </resources>

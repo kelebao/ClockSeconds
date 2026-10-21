@@ -33,4 +33,6 @@
     <string name="update_later">Später</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Quellcode dieses Moduls: MIT © kelebao</string>
+    <string name="settings_color_title">Stundenfarbe</string>
+    <string name="settings_color_hint">Tippe auf eine Farbe — sofort wirksam</string>
 </resources>

@@ -33,4 +33,6 @@
     <string name="update_later">ภายหลัง</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 ซอร์สโค้ดของโมดูลนี้: MIT © kelebao</string>
+    <string name="settings_color_title">สีของชั่วโมง</string>
+    <string name="settings_color_hint">แตะสีเพื่อเปลี่ยน มีผลทันที</string>
 </resources>

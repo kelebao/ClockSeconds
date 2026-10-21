@@ -57,8 +57,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final String SYSTEM_UI = "com.android.systemui";
     private static final String LOG_PREFIX = "ColorOSClockSeconds: ";
 
-    /** 小时十位数标红颜色（Material Red 500）。 */
-    private static final int HOUR_RED_COLOR = 0xFFF44336;
+    /** 小时十位数颜色：可在设置页自定义，默认 Material Red 500（见 ClockSecondsConfig）。 */
+    private static final int HOUR_COLOR_FALLBACK = ClockSecondsConfig.HOUR_COLOR_DEFAULT;
 
     /** 进程内缓存的显秒开关（默认开启）；点击切换与首次遇到时钟时刷新。 */
     private static volatile boolean sSecondsEnabled;
@@ -381,7 +381,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
         sb.append(ss);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
-        applyHourTensRed(sb);
+        applyHourTensRed(sb, hourColor(view));
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
                     + (base instanceof android.text.Spannable));
@@ -398,11 +398,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
-     * 仅把「小时十位数」标红，其余文字（分钟、秒）保持系统原色。
-     * 小时在文本开头、冒号之前；当其为两位数字（如 13、05）时，第一位即十位数，标红；
-     * 无前导零的单位数小时（如 9:45）没有十位，不标红。
+     * 仅把「小时十位数」着色，其余文字（分钟、秒）保持系统原色。颜色来自设置页（默认红色）。
+     * 小时在文本开头、冒号之前；当其为两位数字（如 13、05）时，第一位即十位数，着色；
+     * 无前导零的单位数小时（如 9:45）没有十位，不着色。
      */
-    private static void applyHourTensRed(SpannableStringBuilder sb) {
+    private static void applyHourTensRed(SpannableStringBuilder sb, int color) {
         int colon = -1;
         for (int i = 0; i < sb.length(); i++) {
             char c = sb.charAt(i);
@@ -411,9 +411,18 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 break;
             }
         }
-        // 小时部分 = [0, colon)；有且仅有两位数字（含十位）时才标红第一位。
+        // 小时部分 = [0, colon)；有且仅有两位数字（含十位）时才着色第一位。
         if (colon >= 2 && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
-            sb.setSpan(new ForegroundColorSpan(HOUR_RED_COLOR), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new ForegroundColorSpan(color), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+    }
+
+    /** 读取用户配置的小时颜色；任何异常都退回默认红色，绝不影响时钟显示。 */
+    private static int hourColor(TextView view) {
+        try {
+            return ClockSecondsConfig.getHourColor(view.getContext().getContentResolver());
+        } catch (Throwable t) {
+            return HOUR_COLOR_FALLBACK;
         }
     }
 
@@ -424,7 +433,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             base = view.getText();
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
-        applyHourTensRed(sb);
+        applyHourTensRed(sb, hourColor(view));
         WRITING_CLOCK.set(true);
         try {
             view.setText(sb);
@@ -440,7 +449,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             base = view.getText();
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
-        applyHourTensRed(sb);
+        applyHourTensRed(sb, hourColor(view));
         WRITING_CLOCK.set(true);
         try {
             view.setText(sb);

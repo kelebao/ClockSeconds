@@ -33,4 +33,6 @@
     <string name="update_later">لاحقاً</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 الكود المصدري لهذه الوحدة: MIT © kelebao</string>
+    <string name="settings_color_title">لون الساعة</string>
+    <string name="settings_color_hint">انقر على لون لتغييره — يُطبَّق فوراً</string>
 </resources>

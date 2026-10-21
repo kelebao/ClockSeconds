@@ -33,6 +33,10 @@ public final class ClockSecondsConfig {
     public static final int GESTURE_CLICK = 0;
     public static final int GESTURE_LONG_PRESS = 1;
 
+    /** 小时十位数字颜色（ARGB）。默认 Material Red 500。 */
+    public static final String HOUR_COLOR_KEY = "coloros_clock_seconds_hour_color";
+    public static final int HOUR_COLOR_DEFAULT = 0xFFF44336;
+
     /** 开关「开启」取值。 */
     public static final int MODE_ENABLED = 1;
 
@@ -60,5 +64,15 @@ public final class ClockSecondsConfig {
     /** 写入切换手势偏好。 */
     public static void setGesture(ContentResolver resolver, int gesture) {
         Settings.Secure.putInt(resolver, TOGGLE_GESTURE_KEY, gesture);
+    }
+
+    /** 读取小时十位数字颜色（默认红色）。 */
+    public static int getHourColor(ContentResolver resolver) {
+        return Settings.Secure.getInt(resolver, HOUR_COLOR_KEY, HOUR_COLOR_DEFAULT);
+    }
+
+    /** 写入小时十位数字颜色（ARGB）。 */
+    public static void setHourColor(ContentResolver resolver, int color) {
+        Settings.Secure.putInt(resolver, HOUR_COLOR_KEY, color);
     }
 }

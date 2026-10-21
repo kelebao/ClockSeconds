@@ -33,4 +33,6 @@
     <string name="update_later">بعداً</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 کد منبع این ماژول: MIT © kelebao</string>
+    <string name="settings_color_title">رنگ ساعت</string>
+    <string name="settings_color_hint">برای تغییر روی یک رنگ بزنید — فوراً اعمال می‌شود</string>
 </resources>

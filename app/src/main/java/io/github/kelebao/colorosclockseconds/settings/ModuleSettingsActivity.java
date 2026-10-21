@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -13,6 +14,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -45,6 +47,20 @@ public final class ModuleSettingsActivity extends Activity {
 
     private static final String PREFS_NAME = "clock_seconds_settings";
     private static final String KEY_AUTO_UPDATE = "auto_update";
+
+    /** 小时十位数字可选颜色（第一项为默认红）。 */
+    private static final int[] HOUR_COLORS = {
+            0xFFF44336, // 红（默认）
+            0xFFFF9800, // 橙
+            0xFFFFC107, // 黄
+            0xFF4CAF50, // 绿
+            0xFF00BCD4, // 青
+            0xFF2196F3, // 蓝
+            0xFF9C27B0, // 紫
+            0xFFE91E63, // 粉
+            0xFFFFFFFF, // 白
+            0xFF9E9E9E, // 灰
+    };
 
     private TextView statusView;
 
@@ -132,6 +148,7 @@ public final class ModuleSettingsActivity extends Activity {
         hint.setPadding(0, dp(24), 0, 0);
         root.addView(hint);
 
+        buildColorSection(root);
         buildUpdateSection(root);
         buildAboutSection(root);
 
@@ -139,6 +156,56 @@ public final class ModuleSettingsActivity extends Activity {
         scroll.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return scroll;
+    }
+
+    // ---------- 小时颜色 ----------
+
+    private void buildColorSection(LinearLayout root) {
+        addSectionLabel(root, R.string.settings_color_title);
+        addSubLabel(root, R.string.settings_color_hint);
+
+        int current = ClockSecondsConfig.getHourColor(getContentResolver());
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(5);
+        for (int color : HOUR_COLORS) {
+            grid.addView(makeSwatch(color, color == current, grid));
+        }
+        root.addView(grid);
+    }
+
+    private View makeSwatch(int color, boolean selected, GridLayout grid) {
+        View swatch = new View(this);
+        GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
+        lp.width = dp(40);
+        lp.height = dp(40);
+        lp.setMargins(dp(6), dp(6), dp(6), dp(6));
+        swatch.setLayoutParams(lp);
+        swatch.setBackground(swatchDrawable(color, selected));
+        swatch.setOnClickListener(v -> selectHourColor(color, grid));
+        return swatch;
+    }
+
+    /** 圆形色块；选中项加一圈蓝色描边。 */
+    private GradientDrawable swatchDrawable(int color, boolean selected) {
+        GradientDrawable d = new GradientDrawable();
+        d.setShape(GradientDrawable.OVAL);
+        d.setColor(color);
+        d.setStroke(selected ? dp(3) : dp(1), selected ? 0xFF2196F3 : 0x33000000);
+        return d;
+    }
+
+    private void selectHourColor(int color, GridLayout grid) {
+        try {
+            ClockSecondsConfig.setHourColor(getContentResolver(), color);
+        } catch (SecurityException e) {
+            Toast.makeText(this, "无写入权限，需通过 adb 授予 WRITE_SECURE_SETTINGS",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        for (int i = 0; i < grid.getChildCount() && i < HOUR_COLORS.length; i++) {
+            grid.getChildAt(i).setBackground(
+                    swatchDrawable(HOUR_COLORS[i], HOUR_COLORS[i] == color));
+        }
     }
 
     // ---------- 更新 ----------

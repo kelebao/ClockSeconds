@@ -33,4 +33,6 @@
     <string name="update_later">Più tardi</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Codice sorgente di questo modulo: MIT © kelebao</string>
+    <string name="settings_color_title">Colore dell\'ora</string>
+    <string name="settings_color_hint">Tocca un colore per cambiarlo — effetto immediato</string>
 </resources>

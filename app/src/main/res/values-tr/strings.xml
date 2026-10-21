@@ -33,4 +33,6 @@
     <string name="update_later">Sonra</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Bu modülün kaynak kodu: MIT © kelebao</string>
+    <string name="settings_color_title">Saat rengi</string>
+    <string name="settings_color_hint">Değiştirmek için bir renge dokunun — hemen uygulanır</string>
 </resources>

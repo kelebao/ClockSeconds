@@ -33,4 +33,6 @@
     <string name="update_later">Αργότερα</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Πηγαίος κώδικας αυτής της μονάδας: MIT © kelebao</string>
+    <string name="settings_color_title">Χρώμα ώρας</string>
+    <string name="settings_color_hint">Πατήστε ένα χρώμα για αλλαγή — εφαρμόζεται αμέσως</string>
 </resources>

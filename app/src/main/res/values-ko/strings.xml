@@ -33,4 +33,6 @@
     <string name="update_later">나중에</string>
     <string name="licenses_text">Xposed API(de.robv.android.xposed:api:82): Apache License 2.0
 이 모듈의 소스 코드: MIT © kelebao</string>
+    <string name="settings_color_title">시간 색상</string>
+    <string name="settings_color_hint">색상을 탭하면 즉시 적용됩니다</string>
 </resources>

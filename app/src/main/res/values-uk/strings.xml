@@ -33,4 +33,6 @@
     <string name="update_later">Пізніше</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Вихідний код цього модуля: MIT © kelebao</string>
+    <string name="settings_color_title">Колір години</string>
+    <string name="settings_color_hint">Торкніться кольору, щоб змінити — застосовується одразу</string>
 </resources>

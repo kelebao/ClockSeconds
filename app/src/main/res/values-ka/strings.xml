@@ -33,4 +33,6 @@
     <string name="update_later">მოგვიანებით</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 ამ მოდულის საწყისი კოდი: MIT © kelebao</string>
+    <string name="settings_color_title">საათის ფერი</string>
+    <string name="settings_color_hint">შესაცვლელად შეეხეთ ფერს — დაუყოვნებლივ მოქმედებს</string>
 </resources>

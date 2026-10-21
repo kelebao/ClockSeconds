@@ -33,4 +33,6 @@
     <string name="update_later">Để sau</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Mã nguồn của mô-đun này: MIT © kelebao</string>
+    <string name="settings_color_title">Màu giờ</string>
+    <string name="settings_color_hint">Nhấn vào màu để đổi — áp dụng ngay</string>
 </resources>
