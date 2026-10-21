@@ -35,4 +35,5 @@
 Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_color_title">Kolor godziny</string>
     <string name="settings_color_hint">Dotknij koloru, aby zmienić — działa od razu</string>
+    <string name="settings_write_failed">Zapis nie powiódł się. Sprawdź, czy moduł działa w SystemUI, lub przyznaj WRITE_SECURE_SETTINGS przez adb</string>
 </resources>

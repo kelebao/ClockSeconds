@@ -9,6 +9,9 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -130,14 +133,18 @@ public final class ModuleSettingsActivity extends Activity {
             int gesture = checkedId == 2
                     ? ClockSecondsConfig.GESTURE_LONG_PRESS
                     : ClockSecondsConfig.GESTURE_CLICK;
-            if (writeGesture(resolver, gesture)) {
-                lastChecked[0] = checkedId;
-            } else {
-                // 写入失败（缺 WRITE_SECURE_SETTINGS）：回滚选中项，避免"假成功"。
-                reverting[0] = true;
-                g.check(lastChecked[0]);
-                reverting[0] = false;
-            }
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GESTURE)
+                    .putExtra(ClockSecondsConfig.EXTRA_GESTURE, gesture);
+            applyConfig(ClockSecondsConfig.TOGGLE_GESTURE_KEY, gesture, intent, ok -> {
+                if (ok) {
+                    lastChecked[0] = checkedId;
+                } else {
+                    // 写入失败：回滚选中项，避免"假成功"。
+                    reverting[0] = true;
+                    g.check(lastChecked[0]);
+                    reverting[0] = false;
+                }
+            });
         });
         root.addView(group);
 
@@ -194,18 +201,19 @@ public final class ModuleSettingsActivity extends Activity {
         return d;
     }
 
-    private void selectHourColor(int color, GridLayout grid) {
-        try {
-            ClockSecondsConfig.setHourColor(getContentResolver(), color);
-        } catch (SecurityException e) {
-            Toast.makeText(this, "无写入权限，需通过 adb 授予 WRITE_SECURE_SETTINGS",
-                    Toast.LENGTH_LONG).show();
-            return;
-        }
-        for (int i = 0; i < grid.getChildCount() && i < HOUR_COLORS.length; i++) {
-            grid.getChildAt(i).setBackground(
-                    swatchDrawable(HOUR_COLORS[i], HOUR_COLORS[i] == color));
-        }
+    private void selectHourColor(final int color, final GridLayout grid) {
+        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_HOUR_COLOR)
+                .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
+        applyConfig(ClockSecondsConfig.HOUR_COLOR_KEY, color, intent, ok -> {
+            if (ok) {
+                for (int i = 0; i < grid.getChildCount() && i < HOUR_COLORS.length; i++) {
+                    grid.getChildAt(i).setBackground(
+                            swatchDrawable(HOUR_COLORS[i], HOUR_COLORS[i] == color));
+                }
+            } else {
+                toastWriteFailed();
+            }
+        });
     }
 
     // ---------- 更新 ----------
@@ -343,15 +351,43 @@ public final class ModuleSettingsActivity extends Activity {
                 : R.string.settings_disabled);
     }
 
-    private boolean writeGesture(ContentResolver resolver, int gesture) {
+    /**
+     * 写 Secure 配置：优先直接写；普通应用进程没有 WRITE_SECURE_SETTINGS 时，
+     * 发广播交给 SystemUI 内的模块代写（SystemUI 是系统应用，天然具备该权限）。
+     * 广播路径是异步的，稍后读回校验再把结果回调出去。
+     */
+    private void applyConfig(final String key, final int value, final Intent broadcast,
+                             final java.util.function.Consumer<Boolean> onResult) {
         try {
-            ClockSecondsConfig.setGesture(resolver, gesture);
-            Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
-            return true;
-        } catch (SecurityException e) {
-            Toast.makeText(this, "无写入权限，需通过 adb 授予 WRITE_SECURE_SETTINGS", Toast.LENGTH_LONG).show();
-            return false;
+            Settings.Secure.putInt(getContentResolver(), key, value);
+            onResult.accept(true);
+            return;
+        } catch (SecurityException ignored) {
+            // 无 WRITE_SECURE_SETTINGS：走下面的广播路径
         }
+        try {
+            broadcast.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            sendBroadcast(broadcast);
+        } catch (Throwable t) {
+            onResult.accept(false);
+            return;
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+            int actual = Integer.MIN_VALUE;
+            try {
+                actual = Settings.Secure.getInt(getContentResolver(), key, Integer.MIN_VALUE);
+            } catch (Throwable ignored) {
+                // 读取失败按未生效处理
+            }
+            onResult.accept(actual == value);
+        }, 400);
+    }
+
+    private void toastWriteFailed() {
+        Toast.makeText(this, R.string.settings_write_failed, Toast.LENGTH_LONG).show();
     }
 
     // ---------- 视图小工具 ----------

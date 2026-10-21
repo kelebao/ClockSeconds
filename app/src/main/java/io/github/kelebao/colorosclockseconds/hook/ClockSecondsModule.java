@@ -1,7 +1,10 @@
 package io.github.kelebao.colorosclockseconds.hook;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.SystemClock;
@@ -63,6 +66,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 进程内缓存的显秒开关（默认开启）；点击切换与首次遇到时钟时刷新。 */
     private static volatile boolean sSecondsEnabled;
     private static volatile boolean sStateLoaded;
+    /** 配置广播接收器是否已注册（只注册一次）。 */
+    private static volatile boolean sConfigReceiverRegistered;
 
     /** 正在接管刷新的时钟视图 -> 其 1 秒定时器（弱键，视图回收后自动消失）。 */
     private static final Map<TextView, ClockTicker> ACTIVE =
@@ -197,6 +202,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
 
         ensureStateLoaded(view);
+        registerConfigReceiver(view.getContext());
 
         // 固定占位宽度，避免秒数变化把旁边的日期/图标推动（沿用 betterclock 的稳宽做法）。
         //
@@ -616,5 +622,49 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String vendor = (Build.MANUFACTURER + " " + Build.BRAND).toLowerCase(Locale.ROOT);
         return vendor.contains("oneplus") || vendor.contains("oppo")
                 || vendor.contains("realme") || vendor.contains("oplus");
+    }
+
+    // ==================================================================
+    // 配置写入：设置页（普通应用进程）没有 WRITE_SECURE_SETTINGS，
+    // 由 SystemUI 进程（系统应用，天然具备该权限）代写。
+    // ==================================================================
+
+    /** 只注册一次：接收设置页发来的改色 / 改手势广播，并在 SystemUI 进程内写 Secure。 */
+    private static void registerConfigReceiver(final Context context) {
+        if (sConfigReceiverRegistered) {
+            return;
+        }
+        sConfigReceiverRegistered = true;
+        try {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
+            filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context ctx, Intent intent) {
+                    try {
+                        String action = intent.getAction();
+                        ContentResolver cr = ctx.getContentResolver();
+                        if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
+                            ClockSecondsConfig.setHourColor(cr, intent.getIntExtra(
+                                    ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));
+                        } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
+                            ClockSecondsConfig.setGesture(cr, intent.getIntExtra(
+                                    ClockSecondsConfig.EXTRA_GESTURE,
+                                    ClockSecondsConfig.GESTURE_CLICK));
+                        }
+                    } catch (Throwable ignored) {
+                        // 写入失败不影响系统界面
+                    }
+                }
+            };
+            if (Build.VERSION.SDK_INT >= 33) {
+                context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+            } else {
+                context.registerReceiver(receiver, filter);
+            }
+        } catch (Throwable ignored) {
+            // 注册失败只影响"未用 adb 授权时的设置写入"，不影响显秒与点击切换
+        }
     }
 }

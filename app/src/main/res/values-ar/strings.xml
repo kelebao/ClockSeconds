@@ -35,4 +35,5 @@
 الكود المصدري لهذه الوحدة: MIT © kelebao</string>
     <string name="settings_color_title">لون الساعة</string>
     <string name="settings_color_hint">انقر على لون لتغييره — يُطبَّق فوراً</string>
+    <string name="settings_write_failed">فشل الكتابة. تأكد من أن الوحدة نشطة في SystemUI أو امنح WRITE_SECURE_SETTINGS عبر adb</string>
 </resources>

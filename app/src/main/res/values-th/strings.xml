@@ -35,4 +35,5 @@
 ซอร์สโค้ดของโมดูลนี้: MIT © kelebao</string>
     <string name="settings_color_title">สีของชั่วโมง</string>
     <string name="settings_color_hint">แตะสีเพื่อเปลี่ยน มีผลทันที</string>
+    <string name="settings_write_failed">เขียนไม่สำเร็จ โปรดตรวจสอบว่าโมดูลทำงานใน SystemUI แล้ว หรือให้สิทธิ์ WRITE_SECURE_SETTINGS ผ่าน adb</string>
 </resources>

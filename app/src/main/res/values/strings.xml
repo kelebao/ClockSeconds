@@ -35,4 +35,5 @@
 本模块源码：MIT © kelebao</string>
     <string name="settings_color_title">小时颜色</string>
     <string name="settings_color_hint">点击色块切换，立即生效</string>
+    <string name="settings_write_failed">写入失败：请确认模块已在系统界面中生效，或用 adb 授予 WRITE_SECURE_SETTINGS</string>
 </resources>

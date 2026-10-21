@@ -35,4 +35,5 @@
 Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_color_title">Stundenfarbe</string>
     <string name="settings_color_hint">Tippe auf eine Farbe — sofort wirksam</string>
+    <string name="settings_write_failed">Schreiben fehlgeschlagen. Prüfe, ob das Modul in SystemUI aktiv ist, oder erteile WRITE_SECURE_SETTINGS per adb</string>
 </resources>

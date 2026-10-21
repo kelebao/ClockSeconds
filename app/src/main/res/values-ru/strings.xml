@@ -35,4 +35,5 @@
 Исходный код этого модуля: MIT © kelebao</string>
     <string name="settings_color_title">Цвет часа</string>
     <string name="settings_color_hint">Нажмите на цвет, чтобы сменить — применяется сразу</string>
+    <string name="settings_write_failed">Не удалось записать. Убедитесь, что модуль активен в SystemUI, или выдайте WRITE_SECURE_SETTINGS через adb</string>
 </resources>

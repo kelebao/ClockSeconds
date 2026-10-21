@@ -35,4 +35,5 @@
 Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_color_title">Warna jam</string>
     <string name="settings_color_hint">Ketuk warna untuk mengubah — langsung berlaku</string>
+    <string name="settings_write_failed">Gagal menulis. Pastikan modul aktif di SystemUI atau berikan WRITE_SECURE_SETTINGS lewat adb</string>
 </resources>

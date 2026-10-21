@@ -35,4 +35,5 @@
 Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_color_title">Colore dell\'ora</string>
     <string name="settings_color_hint">Tocca un colore per cambiarlo — effetto immediato</string>
+    <string name="settings_write_failed">Scrittura non riuscita. Verifica che il modulo sia attivo in SystemUI o concedi WRITE_SECURE_SETTINGS via adb</string>
 </resources>

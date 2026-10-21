@@ -37,6 +37,20 @@ public final class ClockSecondsConfig {
     public static final String HOUR_COLOR_KEY = "coloros_clock_seconds_hour_color";
     public static final int HOUR_COLOR_DEFAULT = 0xFFF44336;
 
+    /**
+     * 设置页 → SystemUI 的配置广播。
+     *
+     * <p>设置页运行在普通应用进程，没有 {@code WRITE_SECURE_SETTINGS}；而模块在 SystemUI
+     * 进程内天然具备该权限（点击切换显秒就是在这里写的）。所以设置页写入失败时改发广播，
+     * 由 SystemUI 内的接收器完成写入——用户无需 adb 授权。</p>
+     */
+    public static final String ACTION_SET_HOUR_COLOR =
+            "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR";
+    public static final String ACTION_SET_GESTURE =
+            "io.github.kelebao.colorosclockseconds.action.SET_GESTURE";
+    public static final String EXTRA_COLOR = "color";
+    public static final String EXTRA_GESTURE = "gesture";
+
     /** 开关「开启」取值。 */
     public static final int MODE_ENABLED = 1;
 

@@ -35,4 +35,5 @@
 Вихідний код цього модуля: MIT © kelebao</string>
     <string name="settings_color_title">Колір години</string>
     <string name="settings_color_hint">Торкніться кольору, щоб змінити — застосовується одразу</string>
+    <string name="settings_write_failed">Не вдалося записати. Переконайтеся, що модуль активний у SystemUI, або надайте WRITE_SECURE_SETTINGS через adb</string>
 </resources>

@@ -35,4 +35,5 @@
 ამ მოდულის საწყისი კოდი: MIT © kelebao</string>
     <string name="settings_color_title">საათის ფერი</string>
     <string name="settings_color_hint">შესაცვლელად შეეხეთ ფერს — დაუყოვნებლივ მოქმედებს</string>
+    <string name="settings_write_failed">ჩაწერა ვერ მოხერხდა. დარწმუნდით, რომ მოდული SystemUI-ში აქტიურია, ან მიანიჭეთ WRITE_SECURE_SETTINGS adb-ით</string>
 </resources>

@@ -35,4 +35,5 @@
 کد منبع این ماژول: MIT © kelebao</string>
     <string name="settings_color_title">رنگ ساعت</string>
     <string name="settings_color_hint">برای تغییر روی یک رنگ بزنید — فوراً اعمال می‌شود</string>
+    <string name="settings_write_failed">نوشتن ناموفق بود. مطمئن شوید ماژول در SystemUI فعال است یا دسترسی WRITE_SECURE_SETTINGS را با adb بدهید</string>
 </resources>

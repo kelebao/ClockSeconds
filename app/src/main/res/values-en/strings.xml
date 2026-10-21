@@ -35,4 +35,5 @@
 Source code of this module: MIT © kelebao</string>
     <string name="settings_color_title">Hour color</string>
     <string name="settings_color_hint">Tap a swatch to change it — takes effect immediately</string>
+    <string name="settings_write_failed">Write failed. Make sure the module is active in SystemUI, or grant WRITE_SECURE_SETTINGS via adb</string>
 </resources>

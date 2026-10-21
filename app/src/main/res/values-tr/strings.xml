@@ -35,4 +35,5 @@
 Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_color_title">Saat rengi</string>
     <string name="settings_color_hint">Değiştirmek için bir renge dokunun — hemen uygulanır</string>
+    <string name="settings_write_failed">Yazma başarısız. Modülün SystemUI\'de etkin olduğundan emin olun veya adb ile WRITE_SECURE_SETTINGS verin</string>
 </resources>
