@@ -7,7 +7,7 @@
     <string name="settings_status_title">Status saat ini</string>
     <string name="settings_enabled">Detik: Aktif</string>
     <string name="settings_disabled">Detik: Nonaktif</string>
-    <string name="settings_gesture_title">Gestur beralih</string>
+    <string name="settings_gesture_title">Gerakan ubah tampilan detik</string>
     <string name="settings_gesture_click">Ketuk jam</string>
     <string name="settings_gesture_long_press">Tekan lama jam</string>
     <string name="settings_hint">Catatan: pengaturan langsung berlaku. Jika tidak, mulai ulang SystemUI atau perangkat. Jika ketuk bentrok dengan menarik panel notifikasi, gunakan tekan lama.</string>
@@ -43,4 +43,6 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_gesture_double_tap">Ketuk jam dua kali</string>
     <string name="settings_network_time">Waktu jaringan %1$s (lokal %2$s)</string>
     <string name="settings_network_time_fail">Gagal mengambil waktu jaringan — ketuk untuk coba lagi</string>
+    <string name="settings_sync_time">Sinkronkan</string>
+    <string name="settings_sync_requested">Waktu otomatis aktif — akan disinkronkan sebentar lagi</string>
 </resources>

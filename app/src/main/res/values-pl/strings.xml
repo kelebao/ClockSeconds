@@ -7,7 +7,7 @@
     <string name="settings_status_title">Aktualny stan</string>
     <string name="settings_enabled">Sekundy: włączone</string>
     <string name="settings_disabled">Sekundy: wyłączone</string>
-    <string name="settings_gesture_title">Gest przełączania</string>
+    <string name="settings_gesture_title">Gest przełączania sekund</string>
     <string name="settings_gesture_click">Dotknij zegara</string>
     <string name="settings_gesture_long_press">Przytrzymaj zegar</string>
     <string name="settings_hint">Uwaga: ustawienia działają od razu. Jeśli nie, uruchom ponownie SystemUI lub urządzenie. Jeśli dotyk koliduje z otwieraniem panelu, użyj długiego naciśnięcia.</string>
@@ -43,4 +43,6 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_gesture_double_tap">Podwójne dotknięcie zegara</string>
     <string name="settings_network_time">Czas sieci %1$s (lokalny %2$s)</string>
     <string name="settings_network_time_fail">Nie udało się pobrać czasu sieci — dotknij, aby ponowić</string>
+    <string name="settings_sync_time">Synchronizuj</string>
+    <string name="settings_sync_requested">Automatyczny czas włączony — wkrótce się zsynchronizuje</string>
 </resources>

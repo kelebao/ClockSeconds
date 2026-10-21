@@ -7,7 +7,7 @@
     <string name="settings_status_title">الحالة الحالية</string>
     <string name="settings_enabled">الثواني: مفعّلة</string>
     <string name="settings_disabled">الثواني: معطّلة</string>
-    <string name="settings_gesture_title">إيماءة التبديل</string>
+    <string name="settings_gesture_title">حركة تبديل عرض الثواني</string>
     <string name="settings_gesture_click">النقر على الساعة</string>
     <string name="settings_gesture_long_press">الضغط المطوّل على الساعة</string>
     <string name="settings_hint">ملاحظة: تُطبَّق الإعدادات فوراً. إذا لم تعمل، أعد تشغيل SystemUI أو الجهاز. إذا تعارض النقر مع سحب لوحة الإشعارات، استخدم الضغط المطوّل.</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">نقر مزدوج على الساعة</string>
     <string name="settings_network_time">وقت الشبكة %1$s (المحلي %2$s)</string>
     <string name="settings_network_time_fail">تعذر جلب وقت الشبكة — انقر لإعادة المحاولة</string>
+    <string name="settings_sync_time">مزامنة</string>
+    <string name="settings_sync_requested">تم تفعيل الوقت التلقائي — ستتم المزامنة قريباً</string>
 </resources>

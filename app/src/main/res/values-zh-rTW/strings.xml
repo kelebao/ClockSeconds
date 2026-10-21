@@ -7,7 +7,7 @@
     <string name="settings_status_title">目前狀態</string>
     <string name="settings_enabled">顯秒：已開啟</string>
     <string name="settings_disabled">顯秒：已關閉</string>
-    <string name="settings_gesture_title">切換手勢</string>
+    <string name="settings_gesture_title">切換顯示秒數手勢</string>
     <string name="settings_gesture_click">點擊時鐘</string>
     <string name="settings_gesture_long_press">長按時鐘</string>
     <string name="settings_hint">提示：設定立即生效；若未生效可重新啟動 SystemUI 或重新開機。若點擊與下拉通知欄衝突，請改用長按手勢。</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">連點時鐘</string>
     <string name="settings_network_time">網路時間 %1$s（本地 %2$s）</string>
     <string name="settings_network_time_fail">網路時間取得失敗，點按重試</string>
+    <string name="settings_sync_time">同步</string>
+    <string name="settings_sync_requested">已開啟自動對時，系統將自動校正</string>
 </resources>

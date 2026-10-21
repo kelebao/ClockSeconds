@@ -7,7 +7,7 @@
     <string name="settings_status_title">Trạng thái hiện tại</string>
     <string name="settings_enabled">Giây: Bật</string>
     <string name="settings_disabled">Giây: Tắt</string>
-    <string name="settings_gesture_title">Cử chỉ chuyển</string>
+    <string name="settings_gesture_title">Thao tác bật/tắt giây</string>
     <string name="settings_gesture_click">Nhấn đồng hồ</string>
     <string name="settings_gesture_long_press">Nhấn giữ đồng hồ</string>
     <string name="settings_hint">Lưu ý: cài đặt áp dụng ngay. Nếu không có tác dụng, hãy khởi động lại SystemUI hoặc thiết bị. Nếu chạm bị xung đột với việc kéo thanh thông báo, hãy dùng nhấn giữ.</string>
@@ -43,4 +43,6 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_gesture_double_tap">Nhấn đúp đồng hồ</string>
     <string name="settings_network_time">Giờ mạng %1$s (máy %2$s)</string>
     <string name="settings_network_time_fail">Không lấy được giờ mạng — nhấn để thử lại</string>
+    <string name="settings_sync_time">Đồng bộ</string>
+    <string name="settings_sync_requested">Đã bật tự động chỉnh giờ, hệ thống sẽ đồng bộ ngay</string>
 </resources>

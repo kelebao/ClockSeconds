@@ -7,7 +7,7 @@
     <string name="settings_status_title">現在の状態</string>
     <string name="settings_enabled">秒表示：オン</string>
     <string name="settings_disabled">秒表示：オフ</string>
-    <string name="settings_gesture_title">切り替えジェスチャー</string>
+    <string name="settings_gesture_title">秒表示の切り替え操作</string>
     <string name="settings_gesture_click">時計をタップ</string>
     <string name="settings_gesture_long_press">時計を長押し</string>
     <string name="settings_hint">ヒント：設定はすぐに反映されます。反映されない場合は SystemUI または端末を再起動してください。タップが通知パネルの操作と競合する場合は長押しをお使いください。</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">時計をダブルタップ</string>
     <string name="settings_network_time">ネットワーク時刻 %1$s（端末 %2$s）</string>
     <string name="settings_network_time_fail">ネットワーク時刻を取得できません。タップで再試行</string>
+    <string name="settings_sync_time">同期</string>
+    <string name="settings_sync_requested">自動時刻合わせを有効にしました。まもなく同期します</string>
 </resources>

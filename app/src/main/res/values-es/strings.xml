@@ -7,7 +7,7 @@
     <string name="settings_status_title">Estado actual</string>
     <string name="settings_enabled">Segundos: activados</string>
     <string name="settings_disabled">Segundos: desactivados</string>
-    <string name="settings_gesture_title">Gesto de alternancia</string>
+    <string name="settings_gesture_title">Gesto para alternar segundos</string>
     <string name="settings_gesture_click">Tocar el reloj</string>
     <string name="settings_gesture_long_press">Mantener pulsado el reloj</string>
     <string name="settings_hint">Nota: los cambios se aplican al instante. Si no funcionan, reinicia SystemUI o el dispositivo. Si tocar entra en conflicto con desplegar el panel, usa pulsación larga.</string>
@@ -43,4 +43,6 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_gesture_double_tap">Doble toque en el reloj</string>
     <string name="settings_network_time">Hora de red %1$s (local %2$s)</string>
     <string name="settings_network_time_fail">No se pudo obtener la hora de red — toca para reintentar</string>
+    <string name="settings_sync_time">Sincronizar</string>
+    <string name="settings_sync_requested">Hora automática activada: se ajustará en breve</string>
 </resources>

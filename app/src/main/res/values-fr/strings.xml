@@ -7,7 +7,7 @@
     <string name="settings_status_title">État actuel</string>
     <string name="settings_enabled">Secondes : activées</string>
     <string name="settings_disabled">Secondes : désactivées</string>
-    <string name="settings_gesture_title">Geste de bascule</string>
+    <string name="settings_gesture_title">Geste pour basculer les secondes</string>
     <string name="settings_gesture_click">Toucher l\'horloge</string>
     <string name="settings_gesture_long_press">Appui long sur l\'horloge</string>
     <string name="settings_hint">Remarque : les réglages prennent effet immédiatement. Sinon, redémarrez SystemUI ou l\'appareil. Si le toucher gêne le déploiement du panneau, utilisez l\'appui long.</string>
@@ -43,4 +43,6 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_gesture_double_tap">Double appui sur l\'horloge</string>
     <string name="settings_network_time">Heure réseau %1$s (locale %2$s)</string>
     <string name="settings_network_time_fail">Heure réseau indisponible — touchez pour réessayer</string>
+    <string name="settings_sync_time">Synchroniser</string>
+    <string name="settings_sync_requested">Heure auto activée — synchronisation imminente</string>
 </resources>

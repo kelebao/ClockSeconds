@@ -7,7 +7,7 @@
     <string name="settings_status_title">მიმდინარე მდგომარეობა</string>
     <string name="settings_enabled">წამები: ჩართული</string>
     <string name="settings_disabled">წამები: გამორთული</string>
-    <string name="settings_gesture_title">გადართვის ჟესტი</string>
+    <string name="settings_gesture_title">წამების გადართვის ჟესტი</string>
     <string name="settings_gesture_click">დააჭირეთ საათს</string>
     <string name="settings_gesture_long_press">დააჭირეთ ხანგრძლივად საათს</string>
     <string name="settings_hint">შენიშვნა: პარამეტრები დაუყოვნებლივ მოქმედებს. თუ არ მუშაობს, გადატვირთეთ SystemUI ან მოწყობილობა. თუ შეხება ეწინააღმდეგება პანელის გახსნას, გამოიყენეთ ხანგრძლივი დაჭერა.</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">საათზე ორმაგი შეხება</string>
     <string name="settings_network_time">ქსელის დრო %1$s (ლოკალური %2$s)</string>
     <string name="settings_network_time_fail">ქსელის დროის მიღება ვერ მოხერხდა — შეეხეთ ხელახლა საცდელად</string>
+    <string name="settings_sync_time">სინქრონიზაცია</string>
+    <string name="settings_sync_requested">ავტომატური დრო ჩართულია — მალე სინქრონდება</string>
 </resources>

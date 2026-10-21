@@ -86,6 +86,7 @@ public final class ModuleSettingsActivity extends Activity {
     private TextView chipView;
     private TextView previewView;
     private TextView netTimeView;
+    private TextView syncView;
     private TextView colorValueView;
     private View colorDotView;
 
@@ -228,14 +229,37 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
         card.addView(previewView);
 
-        // 网络时间对比：点一下重新获取（HTTP Date 头，1 秒精度，够用来对时）。
+        // 网络时间对比：点一下重新获取（HTTP Date 头，按 RTT 折半校正）。
+        LinearLayout netRow = new LinearLayout(this);
+        netRow.setOrientation(LinearLayout.HORIZONTAL);
+        netRow.setGravity(Gravity.CENTER);
+        netRow.setPadding(0, dp(10), 0, 0);
+
         netTimeView = new TextView(this);
         netTimeView.setTextSize(12f);
         netTimeView.setTextColor(text2());
-        netTimeView.setGravity(Gravity.CENTER_HORIZONTAL);
-        netTimeView.setPadding(0, dp(10), 0, 0);
         netTimeView.setOnClickListener(v -> fetchNetworkTime());
-        card.addView(netTimeView);
+        netRow.addView(netTimeView);
+
+        // 与网络时间有明显误差时才出现「同步」按钮。
+        syncView = new TextView(this);
+        syncView.setText(R.string.settings_sync_time);
+        syncView.setTextSize(11f);
+        syncView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        syncView.setTextColor(accent());
+        syncView.setPadding(dp(10), dp(3), dp(10), dp(3));
+        GradientDrawable syncBg = new GradientDrawable();
+        syncBg.setCornerRadius(dp(999));
+        syncBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
+        syncView.setBackground(syncBg);
+        LinearLayout.LayoutParams syncLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        syncLp.leftMargin = dp(8);
+        syncView.setLayoutParams(syncLp);
+        syncView.setOnClickListener(v -> syncNetworkTime());
+        netRow.addView(syncView);
+
+        card.addView(netRow);
 
         root.addView(card);
         updatePreview();
@@ -296,15 +320,6 @@ public final class ModuleSettingsActivity extends Activity {
         row.addView(colorCard);
 
         root.addView(row);
-
-        // 说清楚这个手势是干什么用的，避免"切换手势"看不懂。
-        TextView gestureHint = new TextView(this);
-        gestureHint.setText(R.string.settings_gesture_hint);
-        gestureHint.setTextSize(11f);
-        gestureHint.setTextColor(text3());
-        gestureHint.setPadding(dp(4), 0, dp(4), dp(12));
-        root.addView(gestureHint);
-
         refreshColorSummary();
     }
 
@@ -515,6 +530,21 @@ public final class ModuleSettingsActivity extends Activity {
         netTimeView.setText(getString(R.string.settings_network_time, netText, diff));
     }
 
+    /**
+     * 一键对时：应用无权直接修改系统时钟（SET_TIME 是系统权限），
+     * 这里让 SystemUI 打开系统的「自动设置时间」，由系统自己向网络校准。
+     */
+    private void syncNetworkTime() {
+        try {
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SYNC_TIME);
+            intent.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            sendBroadcast(intent);
+            Toast.makeText(this, R.string.settings_sync_requested, Toast.LENGTH_LONG).show();
+        } catch (Throwable t) {
+            toastWriteFailed();
+        }
+    }
+
     /** 后台取一次网络时间（HTTP Date 头），按 RTT 折半校正请求延迟；点按可重新获取。 */
     private void fetchNetworkTime() {
         if (netTimeView == null) {
@@ -652,7 +682,6 @@ public final class ModuleSettingsActivity extends Activity {
         final int current = ClockSecondsConfig.getGesture(getContentResolver());
         new AlertDialog.Builder(this)
                 .setTitle(R.string.settings_gesture_title)
-                .setMessage(R.string.settings_gesture_hint)
                 .setSingleChoiceItems(new CharSequence[]{
                         getString(R.string.settings_gesture_click),
                         getString(R.string.settings_gesture_long_press),

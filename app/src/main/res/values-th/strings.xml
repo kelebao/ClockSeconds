@@ -7,7 +7,7 @@
     <string name="settings_status_title">สถานะปัจจุบัน</string>
     <string name="settings_enabled">วินาที: เปิด</string>
     <string name="settings_disabled">วินาที: ปิด</string>
-    <string name="settings_gesture_title">ท่าทางสลับ</string>
+    <string name="settings_gesture_title">ท่าทางสลับการแสดงวินาที</string>
     <string name="settings_gesture_click">แตะนาฬิกา</string>
     <string name="settings_gesture_long_press">กดนาฬิกาค้าง</string>
     <string name="settings_hint">หมายเหตุ: การตั้งค่ามีผลทันที หากไม่ทำงานให้รีสตาร์ท SystemUI หรืออุปกรณ์ หากการแตะขัดกับการดึงแถบแจ้งเตือน ให้ใช้การกดค้าง</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">แตะนาฬิกาสองครั้ง</string>
     <string name="settings_network_time">เวลาจากเครือข่าย %1$s (เครื่อง %2$s)</string>
     <string name="settings_network_time_fail">ดึงเวลาจากเครือข่ายไม่สำเร็จ แตะเพื่อลองใหม่</string>
+    <string name="settings_sync_time">ซิงค์</string>
+    <string name="settings_sync_requested">เปิดตั้งเวลาอัตโนมัติแล้ว ระบบจะซิงค์ในไม่ช้า</string>
 </resources>

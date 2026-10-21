@@ -7,7 +7,7 @@
     <string name="settings_status_title">Stato attuale</string>
     <string name="settings_enabled">Secondi: attivi</string>
     <string name="settings_disabled">Secondi: disattivati</string>
-    <string name="settings_gesture_title">Gesto di commutazione</string>
+    <string name="settings_gesture_title">Gesto per attivare i secondi</string>
     <string name="settings_gesture_click">Tocca l\'orologio</string>
     <string name="settings_gesture_long_press">Tieni premuto l\'orologio</string>
     <string name="settings_hint">Nota: le modifiche hanno effetto immediato. Se non funzionano, riavvia SystemUI o il dispositivo. Se il tocco interferisce con l\'apertura del pannello, usa la pressione prolungata.</string>
@@ -43,4 +43,6 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_gesture_double_tap">Doppio tocco sull\'orologio</string>
     <string name="settings_network_time">Ora di rete %1$s (locale %2$s)</string>
     <string name="settings_network_time_fail">Impossibile ottenere l\'ora di rete — tocca per riprovare</string>
+    <string name="settings_sync_time">Sincronizza</string>
+    <string name="settings_sync_requested">Ora automatica attiva — sincronizzazione a breve</string>
 </resources>

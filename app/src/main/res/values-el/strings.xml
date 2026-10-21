@@ -7,7 +7,7 @@
     <string name="settings_status_title">Τρέχουσα κατάσταση</string>
     <string name="settings_enabled">Δευτερόλεπτα: ενεργά</string>
     <string name="settings_disabled">Δευτερόλεπτα: ανενεργά</string>
-    <string name="settings_gesture_title">Χείρος εναλλαγής</string>
+    <string name="settings_gesture_title">Χειρονομία εναλλαγής δευτερολέπτων</string>
     <string name="settings_gesture_click">Πατήστε το ρολόι</string>
     <string name="settings_gesture_long_press">Πατήστε παρατεταμένα το ρολόι</string>
     <string name="settings_hint">Σημείωση: οι ρυθμίσεις εφαρμόζονται αμέσως. Αν δεν λειτουργούν, επανεκκινήστε το SystemUI ή τη συσκευή. Αν το πάτημα συγκρούεται με το άνοιγμα του πίνακα, χρησιμοποιήστε παρατεταμένο πάτημα.</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">Διπλό πάτημα στο ρολόι</string>
     <string name="settings_network_time">Ώρα δικτύου %1$s (τοπική %2$s)</string>
     <string name="settings_network_time_fail">Δεν ήταν δυνατή η λήψη ώρας δικτύου — πατήστε για επανάληψη</string>
+    <string name="settings_sync_time">Συγχρονισμός</string>
+    <string name="settings_sync_requested">Ενεργοποιήθηκε η αυτόματη ώρα — σύντομα θα συγχρονιστεί</string>
 </resources>

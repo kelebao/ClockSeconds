@@ -55,6 +55,9 @@ public final class ClockSecondsConfig {
             "io.github.kelebao.colorosclockseconds.action.SET_GESTURE";
     public static final String ACTION_SET_HOUR_COLOR_ENABLED =
             "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR_ENABLED";
+    /** 一键对时：让 SystemUI 打开系统「自动设置时间」。 */
+    public static final String ACTION_SYNC_TIME =
+            "io.github.kelebao.colorosclockseconds.action.SYNC_TIME";
     public static final String EXTRA_COLOR = "color";
     public static final String EXTRA_GESTURE = "gesture";
     public static final String EXTRA_ENABLED = "enabled";

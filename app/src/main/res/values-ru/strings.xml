@@ -7,7 +7,7 @@
     <string name="settings_status_title">Текущее состояние</string>
     <string name="settings_enabled">Секунды: включены</string>
     <string name="settings_disabled">Секунды: выключены</string>
-    <string name="settings_gesture_title">Жест переключения</string>
+    <string name="settings_gesture_title">Жест переключения секунд</string>
     <string name="settings_gesture_click">Нажатие на часы</string>
     <string name="settings_gesture_long_press">Долгое нажатие</string>
     <string name="settings_hint">Примечание: настройки применяются сразу. Если не работает, перезапустите SystemUI или устройство. Если нажатие мешает открытию шторки, используйте долгое нажатие.</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">Двойное нажатие на часы</string>
     <string name="settings_network_time">Сетевое время %1$s (локальное %2$s)</string>
     <string name="settings_network_time_fail">Не удалось получить сетевое время — нажмите для повтора</string>
+    <string name="settings_sync_time">Синхр.</string>
+    <string name="settings_sync_requested">Автовремя включено — синхронизация скоро произойдёт</string>
 </resources>

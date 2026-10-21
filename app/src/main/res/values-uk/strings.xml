@@ -7,7 +7,7 @@
     <string name="settings_status_title">Поточний стан</string>
     <string name="settings_enabled">Секунди: увімкнено</string>
     <string name="settings_disabled">Секунди: вимкнено</string>
-    <string name="settings_gesture_title">Жест перемикання</string>
+    <string name="settings_gesture_title">Жест перемикання секунд</string>
     <string name="settings_gesture_click">Торкнутися годинника</string>
     <string name="settings_gesture_long_press">Утримувати годинник</string>
     <string name="settings_hint">Примітка: налаштування застосовуються одразу. Якщо не працює, перезапустіть SystemUI або пристрій. Якщо торкання заважає відкриттю панелі, використовуйте довге натискання.</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">Подвійне натискання на годинник</string>
     <string name="settings_network_time">Мережевий час %1$s (локальний %2$s)</string>
     <string name="settings_network_time_fail">Не вдалося отримати мережевий час — торкніться для повтору</string>
+    <string name="settings_sync_time">Синхр.</string>
+    <string name="settings_sync_requested">Авточас увімкнено — синхронізація скоро відбудеться</string>
 </resources>

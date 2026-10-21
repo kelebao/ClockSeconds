@@ -699,6 +699,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
+                filter.addAction(ClockSecondsConfig.ACTION_SYNC_TIME);
                 BroadcastReceiver receiver = new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context ctx, Intent intent) {
@@ -717,6 +718,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 ClockSecondsConfig.setGesture(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_GESTURE,
                                         ClockSecondsConfig.GESTURE_CLICK));
+                            } else if (ClockSecondsConfig.ACTION_SYNC_TIME.equals(action)) {
+                                // 应用无权直接改系统时钟（SET_TIME 是系统权限），
+                                // 打开系统「自动设置时间」让系统自己向网络校准。
+                                android.provider.Settings.Global.putInt(
+                                        cr, android.provider.Settings.Global.AUTO_TIME, 1);
                             }
                         } catch (Throwable ignored) {
                             // 写入失败不影响系统界面

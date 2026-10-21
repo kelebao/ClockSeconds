@@ -7,7 +7,7 @@
     <string name="settings_status_title">현재 상태</string>
     <string name="settings_enabled">초 표시: 켜짐</string>
     <string name="settings_disabled">초 표시: 꺼짐</string>
-    <string name="settings_gesture_title">전환 제스처</string>
+    <string name="settings_gesture_title">초 표시 전환 동작</string>
     <string name="settings_gesture_click">시계 탭</string>
     <string name="settings_gesture_long_press">시계 길게 누르기</string>
     <string name="settings_hint">안내: 설정은 즉시 적용됩니다. 적용되지 않으면 SystemUI 또는 기기를 다시 시작하세요. 탭이 알림 패널 내리기와 충돌하면 길게 누르기를 사용하세요.</string>
@@ -43,4 +43,6 @@
     <string name="settings_gesture_double_tap">시계 두 번 탭</string>
     <string name="settings_network_time">네트워크 시간 %1$s (기기 %2$s)</string>
     <string name="settings_network_time_fail">네트워크 시간을 가져오지 못했습니다. 탭하여 다시 시도</string>
+    <string name="settings_sync_time">동기화</string>
+    <string name="settings_sync_requested">자동 시간 설정을 켰습니다. 곧 동기화됩니다</string>
 </resources>
