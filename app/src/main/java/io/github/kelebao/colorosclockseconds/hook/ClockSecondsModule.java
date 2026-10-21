@@ -69,6 +69,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static volatile boolean sStateLoaded;
     /** 配置广播接收器是否已注册（只注册一次）。 */
     private static volatile boolean sConfigReceiverRegistered;
+    private static final Object CONFIG_RECEIVER_LOCK = new Object();
 
     /** 正在接管刷新的时钟视图 -> 其 1 秒定时器（弱键，视图回收后自动消失）。 */
     private static final Map<TextView, ClockTicker> ACTIVE =
@@ -128,6 +129,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     return;
                 }
                 TextView view = (TextView) param.thisObject;
+                // 配置写入通道与"是否识别到时钟"解耦：任意 TextView 触发时注册一次，
+                // 这样即使某些厂商的时钟 id 没被识别，设置页改颜色/手势也能写进去。
+                registerConfigReceiver(view.getContext());
                 // 缓存系统原始文本（追加的秒继承系统时钟文字色），供 writeTime 在其后追加秒。
                 if (isStatusBarClock(view) && param.args != null && param.args.length > 0
                         && param.args[0] instanceof CharSequence) {
@@ -203,7 +207,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
 
         ensureStateLoaded(view);
-        registerConfigReceiver(view.getContext());
 
         // 固定占位宽度，避免秒数变化把旁边的日期/图标推动（沿用 betterclock 的稳宽做法）。
         //
@@ -658,46 +661,52 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (sConfigReceiverRegistered) {
             return;
         }
-        sConfigReceiverRegistered = true;
-        try {
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
-            filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
-            BroadcastReceiver receiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context ctx, Intent intent) {
-                    try {
-                        String action = intent.getAction();
-                        ContentResolver cr = ctx.getContentResolver();
-                        if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
-                            ClockSecondsConfig.setHourColor(cr, intent.getIntExtra(
-                                    ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));
-                            // 立即重绘：秒关闭时系统每分钟才更新一次时钟，不主动刷新要等一分钟才看到新颜色。
-                            TextView clock = sClockView;
-                            if (clock != null) {
-                                if (sSecondsEnabled) {
-                                    writeTime(clock);
-                                } else {
-                                    writeMinuteOnly(clock);
-                                }
-                            }
-                        } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
-                            ClockSecondsConfig.setGesture(cr, intent.getIntExtra(
-                                    ClockSecondsConfig.EXTRA_GESTURE,
-                                    ClockSecondsConfig.GESTURE_CLICK));
-                        }
-                    } catch (Throwable ignored) {
-                        // 写入失败不影响系统界面
-                    }
-                }
-            };
-            if (Build.VERSION.SDK_INT >= 33) {
-                context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
-            } else {
-                context.registerReceiver(receiver, filter);
+        synchronized (CONFIG_RECEIVER_LOCK) {
+            if (sConfigReceiverRegistered) {
+                return;
             }
-        } catch (Throwable ignored) {
-            // 注册失败只影响"未用 adb 授权时的设置写入"，不影响显秒与点击切换
+            try {
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
+                BroadcastReceiver receiver = new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context ctx, Intent intent) {
+                        try {
+                            String action = intent.getAction();
+                            ContentResolver cr = ctx.getContentResolver();
+                            if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
+                                ClockSecondsConfig.setHourColor(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));
+                                // 立即重绘：秒关闭时系统每分钟才更新一次时钟，不主动刷新要等一分钟才看到新颜色。
+                                TextView clock = sClockView;
+                                if (clock != null) {
+                                    if (sSecondsEnabled) {
+                                        writeTime(clock);
+                                    } else {
+                                        writeMinuteOnly(clock);
+                                    }
+                                }
+                            } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
+                                ClockSecondsConfig.setGesture(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_GESTURE,
+                                        ClockSecondsConfig.GESTURE_CLICK));
+                            }
+                        } catch (Throwable ignored) {
+                            // 写入失败不影响系统界面
+                        }
+                    }
+                };
+                if (Build.VERSION.SDK_INT >= 33) {
+                    context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+                } else {
+                    context.registerReceiver(receiver, filter);
+                }
+                // 注册成功后才置位：万一首次注册抛异常，下次还有机会重试。
+                sConfigReceiverRegistered = true;
+            } catch (Throwable ignored) {
+                // 注册失败只影响"未用 adb 授权时的设置写入"，不影响显秒与点击切换
+            }
         }
     }
 }
