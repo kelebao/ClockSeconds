@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
@@ -387,7 +388,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
         sb.append(ss);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
-        applyHourTensRed(sb, hourColor(view));
+        applyHourTensRed(sb, view, hourColor(view));
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
                     + (base instanceof android.text.Spannable));
@@ -407,8 +408,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 仅把「小时十位数」着色，其余文字（分钟、秒）保持系统原色。颜色来自设置页（默认红色）。
      * 小时在文本开头、冒号之前；当其为两位数字（如 13、05）时，第一位即十位数，着色；
      * 无前导零的单位数小时（如 9:45）没有十位，不着色。
+     *
+     * <p>可读性适配：状态栏背景会随应用切换明暗（系统时钟文字色随之变黑/变白）。
+     * 背景为浅色（系统文字为深色）而所选颜色又很亮时（如白色、黄色），直接上色会看不见，
+     * 因此把过亮的颜色压暗，保证在浅色状态栏上仍然清晰。</p>
      */
-    private static void applyHourTensRed(SpannableStringBuilder sb, int color) {
+    private static void applyHourTensRed(SpannableStringBuilder sb, TextView view, int color) {
         int colon = -1;
         for (int i = 0; i < sb.length(); i++) {
             char c = sb.charAt(i);
@@ -419,8 +424,27 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         // 小时部分 = [0, colon)；有且仅有两位数字（含十位）时才着色第一位。
         if (colon >= 2 && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
-            sb.setSpan(new ForegroundColorSpan(color), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            int adapted = adaptColorForBackground(color, view.getCurrentTextColor());
+            sb.setSpan(new ForegroundColorSpan(adapted), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
+    }
+
+    /**
+     * 按状态栏明暗适配颜色：系统文字为深色 ⇒ 背景浅，此时把过亮的颜色压暗（保持色相），
+     * 避免白色/黄色在浅色状态栏上"消失"；深色背景则原样使用。
+     */
+    private static int adaptColorForBackground(int color, int systemTextColor) {
+        boolean lightBackground = Color.luminance(systemTextColor) < 0.5f;
+        if (!lightBackground) {
+            return color;
+        }
+        if (Color.luminance(color) <= 0.55f) {
+            return color;
+        }
+        return Color.rgb(
+                (int) (Color.red(color) * 0.42f),
+                (int) (Color.green(color) * 0.42f),
+                (int) (Color.blue(color) * 0.42f));
     }
 
     /** 读取用户配置的小时颜色；任何异常都退回默认红色，绝不影响时钟显示。 */
@@ -439,7 +463,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             base = view.getText();
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
-        applyHourTensRed(sb, hourColor(view));
+        applyHourTensRed(sb, view, hourColor(view));
         WRITING_CLOCK.set(true);
         try {
             view.setText(sb);
@@ -455,7 +479,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             base = view.getText();
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
-        applyHourTensRed(sb, hourColor(view));
+        applyHourTensRed(sb, view, hourColor(view));
         WRITING_CLOCK.set(true);
         try {
             view.setText(sb);
@@ -648,6 +672,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
                             ClockSecondsConfig.setHourColor(cr, intent.getIntExtra(
                                     ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));
+                            // 立即重绘：秒关闭时系统每分钟才更新一次时钟，不主动刷新要等一分钟才看到新颜色。
+                            TextView clock = sClockView;
+                            if (clock != null) {
+                                if (sSecondsEnabled) {
+                                    writeTime(clock);
+                                } else {
+                                    writeMinuteOnly(clock);
+                                }
+                            }
                         } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
                             ClockSecondsConfig.setGesture(cr, intent.getIntExtra(
                                     ClockSecondsConfig.EXTRA_GESTURE,

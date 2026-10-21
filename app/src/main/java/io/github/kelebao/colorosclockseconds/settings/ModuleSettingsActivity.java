@@ -72,8 +72,27 @@ public final class ModuleSettingsActivity extends Activity {
         super.onCreate(savedInstanceState);
         setTitle(R.string.settings_title);
         setContentView(buildContentView());
+        applyStatusBarAppearance();
         refreshStatus();
         maybeAutoCheckUpdate();
+    }
+
+    /**
+     * 浅色主题下把状态栏文字/图标切成深色：设置页背景是浅色，若系统仍画白色时钟会看不清
+     * （模块的小时颜色也会被"浅色背景压暗"规则误判成深色背景）。
+     */
+    private void applyStatusBarAppearance() {
+        boolean night = (getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        View decor = getWindow().getDecorView();
+        int flags = decor.getSystemUiVisibility();
+        if (night) {
+            flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        } else {
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        }
+        decor.setSystemUiVisibility(flags);
     }
 
     @Override
@@ -372,18 +391,31 @@ public final class ModuleSettingsActivity extends Activity {
             onResult.accept(false);
             return;
         }
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (isFinishing() || isDestroyed()) {
-                return;
-            }
-            int actual = Integer.MIN_VALUE;
-            try {
-                actual = Settings.Secure.getInt(getContentResolver(), key, Integer.MIN_VALUE);
-            } catch (Throwable ignored) {
-                // 读取失败按未生效处理
-            }
-            onResult.accept(actual == value);
-        }, 400);
+        verifyWrite(key, value, 0, onResult);
+    }
+
+    /** 广播路径是异步的：最多轮询约 2.4 秒确认值已落地（SystemUI 忙时可能晚几拍）。 */
+    private void verifyWrite(final String key, final int value, final int attempt,
+                             final java.util.function.Consumer<Boolean> onResult) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        int actual = Integer.MIN_VALUE;
+        try {
+            actual = Settings.Secure.getInt(getContentResolver(), key, Integer.MIN_VALUE);
+        } catch (Throwable ignored) {
+            // 读取失败按未生效处理
+        }
+        if (actual == value) {
+            onResult.accept(true);
+            return;
+        }
+        if (attempt >= 6) {
+            onResult.accept(false);
+            return;
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(
+                () -> verifyWrite(key, value, attempt + 1, onResult), 400);
     }
 
     private void toastWriteFailed() {
