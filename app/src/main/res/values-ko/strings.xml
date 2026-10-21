@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">끄면 시스템 기본 스타일로 돌아갑니다</string>
     <string name="settings_gesture_hint">상태 표시줄 시계에서 이 동작으로 초 표시를 전환합니다</string>
     <string name="settings_gesture_applied">%1$s(으)로 전환했습니다. 즉시 적용됩니다. 적용되지 않으면 SystemUI를 다시 시작하세요</string>
+    <string name="settings_gesture_double_tap">시계 두 번 탭</string>
+    <string name="settings_network_time">네트워크 시간 %1$s (기기 %2$s)</string>
+    <string name="settings_network_time_fail">네트워크 시간을 가져오지 못했습니다. 탭하여 다시 시도</string>
 </resources>

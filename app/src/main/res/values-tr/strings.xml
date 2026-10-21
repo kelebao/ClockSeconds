@@ -40,4 +40,7 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_color_enable_sum">Kapatınca sistem varsayılan görünümüne döner</string>
     <string name="settings_gesture_hint">Saniyeleri açıp kapatmak için durum çubuğu saatinde bu hareketi kullanın</string>
     <string name="settings_gesture_applied">%1$s olarak değiştirildi — hemen geçerli olur. Geçerli olmazsa SystemUI\'yi yeniden başlatın</string>
+    <string name="settings_gesture_double_tap">Saate çift dokun</string>
+    <string name="settings_network_time">Ağ saati %1$s (yerel %2$s)</string>
+    <string name="settings_network_time_fail">Ağ saati alınamadı — yeniden denemek için dokunun</string>
 </resources>

@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">Αν το απενεργοποιήσετε, επιστρέφει η προεπιλεγμένη εμφάνιση</string>
     <string name="settings_gesture_hint">Χρησιμοποιήστε αυτή τη χειρονομία στο ρολόι της γραμμής κατάστασης για εναλλαγή δευτερολέπτων</string>
     <string name="settings_gesture_applied">Άλλαξε σε %1$s — εφαρμόζεται αμέσως. Αν δεν λειτουργεί, επανεκκινήστε το SystemUI</string>
+    <string name="settings_gesture_double_tap">Διπλό πάτημα στο ρολόι</string>
+    <string name="settings_network_time">Ώρα δικτύου %1$s (τοπική %2$s)</string>
+    <string name="settings_network_time_fail">Δεν ήταν δυνατή η λήψη ώρας δικτύου — πατήστε για επανάληψη</string>
 </resources>

@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">При выключении вернётся стандартный вид системы</string>
     <string name="settings_gesture_hint">Используйте этот жест на часах в строке состояния, чтобы включить или выключить секунды</string>
     <string name="settings_gesture_applied">Переключено на «%1$s» — применяется сразу. Если не работает, перезапустите SystemUI</string>
+    <string name="settings_gesture_double_tap">Двойное нажатие на часы</string>
+    <string name="settings_network_time">Сетевое время %1$s (локальное %2$s)</string>
+    <string name="settings_network_time_fail">Не удалось получить сетевое время — нажмите для повтора</string>
 </resources>

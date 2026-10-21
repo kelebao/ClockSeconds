@@ -40,4 +40,7 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_color_enable_sum">Tắt để trở về kiểu mặc định của hệ thống</string>
     <string name="settings_gesture_hint">Dùng thao tác này trên đồng hồ thanh trạng thái để bật/tắt giây</string>
     <string name="settings_gesture_applied">Đã chuyển sang %1$s — áp dụng ngay. Nếu không có tác dụng, hãy khởi động lại SystemUI</string>
+    <string name="settings_gesture_double_tap">Nhấn đúp đồng hồ</string>
+    <string name="settings_network_time">Giờ mạng %1$s (máy %2$s)</string>
+    <string name="settings_network_time_fail">Không lấy được giờ mạng — nhấn để thử lại</string>
 </resources>

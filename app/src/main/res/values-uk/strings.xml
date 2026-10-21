@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">Вимкнення поверне стандартний вигляд системи</string>
     <string name="settings_gesture_hint">Використовуйте цей жест на годиннику в рядку стану, щоб увімкнути або вимкнути секунди</string>
     <string name="settings_gesture_applied">Перемкнено на «%1$s» — застосовується одразу. Якщо не працює, перезапустіть SystemUI</string>
+    <string name="settings_gesture_double_tap">Подвійне натискання на годинник</string>
+    <string name="settings_network_time">Мережевий час %1$s (локальний %2$s)</string>
+    <string name="settings_network_time_fail">Не вдалося отримати мережевий час — торкніться для повтору</string>
 </resources>

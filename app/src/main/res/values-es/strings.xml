@@ -40,4 +40,7 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_color_enable_sum">Al desactivarlo vuelve al estilo predeterminado del sistema</string>
     <string name="settings_gesture_hint">Usa este gesto en el reloj de la barra de estado para activar o desactivar los segundos</string>
     <string name="settings_gesture_applied">Cambiado a %1$s — se aplica al instante. Si no funciona, reinicia SystemUI</string>
+    <string name="settings_gesture_double_tap">Doble toque en el reloj</string>
+    <string name="settings_network_time">Hora de red %1$s (local %2$s)</string>
+    <string name="settings_network_time_fail">No se pudo obtener la hora de red — toca para reintentar</string>
 </resources>

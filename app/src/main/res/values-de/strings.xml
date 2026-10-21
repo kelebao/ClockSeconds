@@ -40,4 +40,7 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_color_enable_sum">Ausschalten stellt die Systemdarstellung wieder her</string>
     <string name="settings_gesture_hint">Mit dieser Geste auf der Statusleisten-Uhr schaltest du die Sekunden um</string>
     <string name="settings_gesture_applied">Auf %1$s umgestellt — sofort wirksam. Falls nicht, starte SystemUI neu</string>
+    <string name="settings_gesture_double_tap">Doppeltippen auf die Uhr</string>
+    <string name="settings_network_time">Netzwerkzeit %1$s (lokal %2$s)</string>
+    <string name="settings_network_time_fail">Netzwerkzeit nicht verfügbar — zum Wiederholen tippen</string>
 </resources>

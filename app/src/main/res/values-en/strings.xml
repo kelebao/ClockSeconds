@@ -40,4 +40,7 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_color_enable_sum">Turn off to restore the system default look</string>
     <string name="settings_gesture_hint">Use this gesture on the status bar clock to toggle seconds</string>
     <string name="settings_gesture_applied">Switched to %1$s — takes effect immediately. If not, restart SystemUI</string>
+    <string name="settings_gesture_double_tap">Double tap clock</string>
+    <string name="settings_network_time">Network %1$s (local %2$s)</string>
+    <string name="settings_network_time_fail">Could not get network time — tap to retry</string>
 </resources>

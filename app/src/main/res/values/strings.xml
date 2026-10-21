@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">关闭后恢复系统默认样式</string>
     <string name="settings_gesture_hint">在状态栏时钟上用此手势开关显秒</string>
     <string name="settings_gesture_applied">已切换为%1$s，立即生效；若未生效可重启 SystemUI</string>
+    <string name="settings_gesture_double_tap">双击时钟</string>
+    <string name="settings_network_time">网络时间 %1$s（本地 %2$s）</string>
+    <string name="settings_network_time_fail">网络时间获取失败，点按重试</string>
 </resources>

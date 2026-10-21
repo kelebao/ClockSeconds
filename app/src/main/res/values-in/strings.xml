@@ -40,4 +40,7 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_color_enable_sum">Matikan untuk kembali ke tampilan bawaan sistem</string>
     <string name="settings_gesture_hint">Gunakan gerakan ini pada jam bilah status untuk menyalakan atau mematikan detik</string>
     <string name="settings_gesture_applied">Beralih ke %1$s — langsung berlaku. Jika tidak, mulai ulang SystemUI</string>
+    <string name="settings_gesture_double_tap">Ketuk jam dua kali</string>
+    <string name="settings_network_time">Waktu jaringan %1$s (lokal %2$s)</string>
+    <string name="settings_network_time_fail">Gagal mengambil waktu jaringan — ketuk untuk coba lagi</string>
 </resources>

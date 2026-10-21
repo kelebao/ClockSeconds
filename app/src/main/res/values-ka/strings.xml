@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">გამორთვისას სისტემის ნაგულისხმევი იერი ბრუნდება</string>
     <string name="settings_gesture_hint">გამოიყენეთ ეს ჟესტი სტატუსის ზოლის საათზე წამების ჩასართავად/გამოსართავად</string>
     <string name="settings_gesture_applied">გადაერთო %1$s-ზე — დაუყოვნებლივ მოქმედებს. თუ არ მუშაობს, გადატვირთეთ SystemUI</string>
+    <string name="settings_gesture_double_tap">საათზე ორმაგი შეხება</string>
+    <string name="settings_network_time">ქსელის დრო %1$s (ლოკალური %2$s)</string>
+    <string name="settings_network_time_fail">ქსელის დროის მიღება ვერ მოხერხდა — შეეხეთ ხელახლა საცდელად</string>
 </resources>

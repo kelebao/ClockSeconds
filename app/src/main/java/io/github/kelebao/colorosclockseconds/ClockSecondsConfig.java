@@ -28,10 +28,11 @@ public final class ClockSecondsConfig {
      */
     public static final String MODULE_SECONDS_KEY = "coloros_clock_seconds_enabled";
 
-    /** 切换手势：0 = 单击时钟，1 = 长按时钟。 */
+    /** 切换手势：0 = 单击时钟，1 = 长按时钟，2 = 双击时钟。 */
     public static final String TOGGLE_GESTURE_KEY = "coloros_clock_seconds_gesture";
     public static final int GESTURE_CLICK = 0;
     public static final int GESTURE_LONG_PRESS = 1;
+    public static final int GESTURE_DOUBLE_TAP = 2;
 
     /** 小时十位数字颜色（ARGB）。默认 Material Red 500。 */
     public static final String HOUR_COLOR_KEY = "coloros_clock_seconds_hour_color";

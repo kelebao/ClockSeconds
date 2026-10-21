@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">オフにするとシステム標準の表示に戻ります</string>
     <string name="settings_gesture_hint">ステータスバーの時計でこの操作をすると秒表示を切り替えます</string>
     <string name="settings_gesture_applied">%1$sに切り替えました。すぐに反映されます。反映されない場合は SystemUI を再起動してください</string>
+    <string name="settings_gesture_double_tap">時計をダブルタップ</string>
+    <string name="settings_network_time">ネットワーク時刻 %1$s（端末 %2$s）</string>
+    <string name="settings_network_time_fail">ネットワーク時刻を取得できません。タップで再試行</string>
 </resources>

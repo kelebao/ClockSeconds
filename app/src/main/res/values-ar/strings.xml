@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">إيقاف التشغيل يعيد المظهر الافتراضي للنظام</string>
     <string name="settings_gesture_hint">استخدم هذه الحركة على ساعة شريط الحالة لتبديل عرض الثواني</string>
     <string name="settings_gesture_applied">تم التبديل إلى %1$s — يُطبَّق فوراً. إذا لم يعمل، أعد تشغيل SystemUI</string>
+    <string name="settings_gesture_double_tap">نقر مزدوج على الساعة</string>
+    <string name="settings_network_time">وقت الشبكة %1$s (المحلي %2$s)</string>
+    <string name="settings_network_time_fail">تعذر جلب وقت الشبكة — انقر لإعادة المحاولة</string>
 </resources>

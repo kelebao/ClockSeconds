@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">ปิดเพื่อกลับไปใช้สไตล์เริ่มต้นของระบบ</string>
     <string name="settings_gesture_hint">ใช้ท่าทางนี้บนนาฬิกาแถบสถานะเพื่อเปิด/ปิดการแสดงวินาที</string>
     <string name="settings_gesture_applied">เปลี่ยนเป็น %1$s แล้ว มีผลทันที หากไม่ทำงานให้รีสตาร์ท SystemUI</string>
+    <string name="settings_gesture_double_tap">แตะนาฬิกาสองครั้ง</string>
+    <string name="settings_network_time">เวลาจากเครือข่าย %1$s (เครื่อง %2$s)</string>
+    <string name="settings_network_time_fail">ดึงเวลาจากเครือข่ายไม่สำเร็จ แตะเพื่อลองใหม่</string>
 </resources>

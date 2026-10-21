@@ -85,8 +85,12 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean night;
     private TextView chipView;
     private TextView previewView;
+    private TextView netTimeView;
     private TextView colorValueView;
     private View colorDotView;
+
+    /** 网络时间相对本地的偏移（毫秒，网络 - 本地）；Long.MIN_VALUE 表示还没取到。 */
+    private long netDriftMs = Long.MIN_VALUE;
 
     private final Handler ticker = new Handler(Looper.getMainLooper());
     private final Runnable tick = new Runnable() {
@@ -221,9 +225,21 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setTextSize(44f);
         previewView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         previewView.setTextColor(text());
+        previewView.setGravity(Gravity.CENTER_HORIZONTAL);
         card.addView(previewView);
+
+        // 网络时间对比：点一下重新获取（HTTP Date 头，1 秒精度，够用来对时）。
+        netTimeView = new TextView(this);
+        netTimeView.setTextSize(12f);
+        netTimeView.setTextColor(text2());
+        netTimeView.setGravity(Gravity.CENTER_HORIZONTAL);
+        netTimeView.setPadding(0, dp(10), 0, 0);
+        netTimeView.setOnClickListener(v -> fetchNetworkTime());
+        card.addView(netTimeView);
+
         root.addView(card);
         updatePreview();
+        fetchNetworkTime();
     }
 
     /** 两张并排小卡：切换手势 / 小时颜色。 */
@@ -243,9 +259,8 @@ public final class ModuleSettingsActivity extends Activity {
         TextView gestureLabel = statLabel(R.string.settings_gesture_title);
         gestureCard.addView(gestureLabel);
         TextView gestureValue = new TextView(this);
-        gestureValue.setText(ClockSecondsConfig.getGesture(getContentResolver())
-                == ClockSecondsConfig.GESTURE_LONG_PRESS
-                ? R.string.settings_gesture_long_press : R.string.settings_gesture_click);
+        gestureValue.setText(gestureNameRes(
+                ClockSecondsConfig.getGesture(getContentResolver())));
         gestureValue.setTextSize(19f);
         gestureValue.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         gestureValue.setTextColor(text());
@@ -459,7 +474,7 @@ public final class ModuleSettingsActivity extends Activity {
     // 预览与状态
     // ==================================================================
 
-    /** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色。 */
+    /** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色；同时刷新状态胶囊。 */
     private void updatePreview() {
         if (previewView == null) {
             return;
@@ -476,14 +491,90 @@ public final class ModuleSettingsActivity extends Activity {
                     getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         previewView.setText(sb);
+
+        // 状态胶囊也每秒跟随：用户在状态栏点击切换后，页面能立刻反映真实状态。
+        if (chipView != null) {
+            chipView.setText(seconds
+                    ? R.string.settings_enabled : R.string.settings_disabled);
+        }
+        updateNetworkTimeLine();
+    }
+
+    /** 网络时间 = 本地时间 + 采样得到的偏移，每秒跟着走。 */
+    private void updateNetworkTimeLine() {
+        if (netTimeView == null || netDriftMs == Long.MIN_VALUE) {
+            return;
+        }
+        long localNow = System.currentTimeMillis();
+        long netNow = localNow + netDriftMs;
+        String netText = new java.text.SimpleDateFormat("HH:mm:ss", Locale.US)
+                .format(new java.util.Date(netNow));
+        // 用「本地 快/慢」的直观含义：正值 = 本地比网络快。
+        long diffSec = Math.round((localNow - netNow) / 1000.0);
+        String diff = (diffSec > 0 ? "+" : "") + diffSec + "s";
+        netTimeView.setText(getString(R.string.settings_network_time, netText, diff));
+    }
+
+    /** 后台取一次网络时间（HTTP Date 头），按 RTT 折半校正请求延迟；点按可重新获取。 */
+    private void fetchNetworkTime() {
+        if (netTimeView == null) {
+            return;
+        }
+        new Thread(() -> {
+            long bestDrift = Long.MIN_VALUE;
+            long bestRtt = Long.MAX_VALUE;
+            for (String url : new String[]{"https://api.github.com", "https://www.baidu.com"}) {
+                long t0 = System.currentTimeMillis();
+                Long date = headDate(url);
+                long t1 = System.currentTimeMillis();
+                if (date == null) {
+                    continue;
+                }
+                long rtt = t1 - t0;
+                // 服务器时间 ≈ 收到时刻 - RTT/2
+                long drift = date + rtt / 2 - t1;
+                if (rtt < bestRtt) {
+                    bestRtt = rtt;
+                    bestDrift = drift;
+                }
+            }
+            final long drift = bestDrift;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed() || netTimeView == null) {
+                    return;
+                }
+                if (drift == Long.MIN_VALUE) {
+                    netDriftMs = Long.MIN_VALUE;
+                    netTimeView.setText(R.string.settings_network_time_fail);
+                    return;
+                }
+                netDriftMs = drift;
+                updateNetworkTimeLine();
+            });
+        }).start();
+    }
+
+    private Long headDate(String urlStr) {
+        java.net.HttpURLConnection conn = null;
+        try {
+            java.net.URL url = new java.net.URL(urlStr);
+            conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            conn.setRequestMethod("HEAD");
+            conn.setRequestProperty("User-Agent", "ClockSeconds-Module");
+            long t = conn.getHeaderFieldDate("Date", 0L);
+            return t > 0L ? t : null;
+        } catch (Throwable t) {
+            return null;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
     }
 
     private void refreshStatus() {
-        if (chipView == null) {
-            return;
-        }
-        chipView.setText(ClockSecondsConfig.isEnabled(getContentResolver())
-                ? R.string.settings_enabled : R.string.settings_disabled);
         updatePreview();
     }
 
@@ -564,22 +655,18 @@ public final class ModuleSettingsActivity extends Activity {
                 .setMessage(R.string.settings_gesture_hint)
                 .setSingleChoiceItems(new CharSequence[]{
                         getString(R.string.settings_gesture_click),
-                        getString(R.string.settings_gesture_long_press)},
-                        current == ClockSecondsConfig.GESTURE_LONG_PRESS ? 1 : 0,
+                        getString(R.string.settings_gesture_long_press),
+                        getString(R.string.settings_gesture_double_tap)},
+                        current,
                         (dialog, which) -> {
                             dialog.dismiss();
-                            int gesture = which == 1
-                                    ? ClockSecondsConfig.GESTURE_LONG_PRESS
-                                    : ClockSecondsConfig.GESTURE_CLICK;
+                            final int gesture = which;
                             Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GESTURE)
                                     .putExtra(ClockSecondsConfig.EXTRA_GESTURE, gesture);
                             applyConfig(ClockSecondsConfig.TOGGLE_GESTURE_KEY, gesture, intent,
                                     ok -> {
                                         if (ok) {
-                                            int nameRes = gesture
-                                                    == ClockSecondsConfig.GESTURE_LONG_PRESS
-                                                    ? R.string.settings_gesture_long_press
-                                                    : R.string.settings_gesture_click;
+                                            int nameRes = gestureNameRes(gesture);
                                             gestureValue.setText(nameRes);
                                             Toast.makeText(this, getString(
                                                     R.string.settings_gesture_applied,
@@ -591,6 +678,17 @@ public final class ModuleSettingsActivity extends Activity {
                                     });
                         })
                 .show();
+    }
+
+    private int gestureNameRes(int gesture) {
+        switch (gesture) {
+            case ClockSecondsConfig.GESTURE_LONG_PRESS:
+                return R.string.settings_gesture_long_press;
+            case ClockSecondsConfig.GESTURE_DOUBLE_TAP:
+                return R.string.settings_gesture_double_tap;
+            default:
+                return R.string.settings_gesture_click;
+        }
     }
 
     // ==================================================================

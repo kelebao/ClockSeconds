@@ -40,4 +40,7 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_color_enable_sum">Désactivez pour revenir au style par défaut du système</string>
     <string name="settings_gesture_hint">Utilisez ce geste sur l\'horloge de la barre d\'état pour activer ou désactiver les secondes</string>
     <string name="settings_gesture_applied">Passé à %1$s — effet immédiat. Si cela ne fonctionne pas, redémarrez SystemUI</string>
+    <string name="settings_gesture_double_tap">Double appui sur l\'horloge</string>
+    <string name="settings_network_time">Heure réseau %1$s (locale %2$s)</string>
+    <string name="settings_network_time_fail">Heure réseau indisponible — touchez pour réessayer</string>
 </resources>

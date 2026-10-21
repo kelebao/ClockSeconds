@@ -40,4 +40,7 @@
     <string name="settings_color_enable_sum">با خاموش کردن، ظاهر پیش‌فرض سیستم برمی‌گردد</string>
     <string name="settings_gesture_hint">برای روشن/خاموش کردن ثانیه‌ها، این حرکت را روی ساعت نوار وضعیت انجام دهید</string>
     <string name="settings_gesture_applied">به %1$s تغییر کرد — فوراً اعمال می‌شود. اگر اعمال نشد، SystemUI را دوباره راه‌اندازی کنید</string>
+    <string name="settings_gesture_double_tap">دو ضربه روی ساعت</string>
+    <string name="settings_network_time">زمان شبکه %1$s (محلی %2$s)</string>
+    <string name="settings_network_time_fail">زمان شبکه دریافت نشد — برای تلاش دوباره ضربه بزنید</string>
 </resources>

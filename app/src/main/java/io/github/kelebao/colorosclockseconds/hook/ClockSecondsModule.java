@@ -96,6 +96,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 点击/长按检测状态（全局单次手势，避免重复触发）。 */
     private static volatile boolean sPendingTap;
     private static long sDownTime;
+    /** 双击手势：上一次点击的时间戳（0 = 无待配对点击）。 */
+    private static long sLastTapTime;
     private static float sDownX, sDownY;
     private static android.os.Handler sTouchHandler;
     private static Runnable sLongPressTask;
@@ -319,6 +321,20 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         float dy = Math.abs(ev.getRawY() - sDownY);
                         if (dt < 400 && dx < 16 && dy < 16) {
                             toggleSeconds(sClockView);
+                        }
+                    } else if (gesture == ClockSecondsConfig.GESTURE_DOUBLE_TAP) {
+                        long dt = ev.getEventTime() - sDownTime;
+                        float dx = Math.abs(ev.getRawX() - sDownX);
+                        float dy = Math.abs(ev.getRawY() - sDownY);
+                        if (dt < 400 && dx < 16 && dy < 16) {
+                            // 350ms 内第二次点击才算双击；第一次只记录时间。
+                            long now = ev.getEventTime();
+                            if (now - sLastTapTime <= 350) {
+                                sLastTapTime = 0;
+                                toggleSeconds(sClockView);
+                            } else {
+                                sLastTapTime = now;
+                            }
                         }
                     }
                 }

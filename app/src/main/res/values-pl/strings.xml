@@ -40,4 +40,7 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_color_enable_sum">Wyłączenie przywraca domyślny wygląd systemu</string>
     <string name="settings_gesture_hint">Użyj tego gestu na zegarze paska stanu, aby włączyć lub wyłączyć sekundy</string>
     <string name="settings_gesture_applied">Przełączono na %1$s — działa od razu. Jeśli nie, uruchom ponownie SystemUI</string>
+    <string name="settings_gesture_double_tap">Podwójne dotknięcie zegara</string>
+    <string name="settings_network_time">Czas sieci %1$s (lokalny %2$s)</string>
+    <string name="settings_network_time_fail">Nie udało się pobrać czasu sieci — dotknij, aby ponowić</string>
 </resources>
