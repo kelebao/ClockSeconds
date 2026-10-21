@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Toggle gesture</string>
     <string name="settings_gesture_click">Tap clock</string>
     <string name="settings_gesture_long_press">Long-press clock</string>
-    <string name="settings_hint">Note: restart SystemUI or reboot the device for changes to take effect. If tapping conflicts with pulling down the notification shade, switch to the long-press gesture.</string>
+    <string name="settings_hint">Note: changes take effect immediately. If they do not, restart SystemUI or the device. If tapping conflicts with pulling down the shade, use long press instead.</string>
     <string name="settings_refresh">Refresh state</string>
     <string name="settings_section_general">General</string>
     <string name="settings_update_auto">Check for updates automatically</string>
@@ -38,4 +38,6 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_write_failed">Write failed. Make sure the module is active in SystemUI, or grant WRITE_SECURE_SETTINGS via adb</string>
     <string name="settings_color_enable">Enable hour color</string>
     <string name="settings_color_enable_sum">Turn off to restore the system default look</string>
+    <string name="settings_gesture_hint">Use this gesture on the status bar clock to toggle seconds</string>
+    <string name="settings_gesture_applied">Switched to %1$s — takes effect immediately. If not, restart SystemUI</string>
 </resources>

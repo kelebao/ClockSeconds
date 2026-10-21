@@ -222,21 +222,6 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         previewView.setTextColor(text());
         card.addView(previewView);
-
-        LinearLayout foot = new LinearLayout(this);
-        foot.setOrientation(LinearLayout.HORIZONTAL);
-        foot.setGravity(Gravity.CENTER_VERTICAL);
-        foot.setPadding(0, dp(12), 0, 0);
-
-        View spacer = new View(this);
-        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, dp(1), 1f));
-        foot.addView(spacer);
-        TextView ver = new TextView(this);
-        ver.setText("v" + BuildConfig.VERSION_NAME);
-        ver.setTextSize(12f);
-        ver.setTextColor(text3());
-        foot.addView(ver);
-        card.addView(foot);
         root.addView(card);
         updatePreview();
     }
@@ -296,6 +281,15 @@ public final class ModuleSettingsActivity extends Activity {
         row.addView(colorCard);
 
         root.addView(row);
+
+        // 说清楚这个手势是干什么用的，避免"切换手势"看不懂。
+        TextView gestureHint = new TextView(this);
+        gestureHint.setText(R.string.settings_gesture_hint);
+        gestureHint.setTextSize(11f);
+        gestureHint.setTextColor(text3());
+        gestureHint.setPadding(dp(4), 0, dp(4), dp(12));
+        root.addView(gestureHint);
+
         refreshColorSummary();
     }
 
@@ -408,10 +402,6 @@ public final class ModuleSettingsActivity extends Activity {
         });
         autoRow.addView(autoSwitch);
         card.addView(autoRow);
-
-        card.addView(divider());
-        card.addView(linkRow(R.string.settings_update_check, null,
-                v -> runUpdateCheck(true)));
         card.addView(divider());
         card.addView(linkRow(R.string.settings_update_open, R.string.settings_update_open_sum,
                 v -> openUrl(RELEASES_URL)));
@@ -571,6 +561,7 @@ public final class ModuleSettingsActivity extends Activity {
         final int current = ClockSecondsConfig.getGesture(getContentResolver());
         new AlertDialog.Builder(this)
                 .setTitle(R.string.settings_gesture_title)
+                .setMessage(R.string.settings_gesture_hint)
                 .setSingleChoiceItems(new CharSequence[]{
                         getString(R.string.settings_gesture_click),
                         getString(R.string.settings_gesture_long_press)},
@@ -585,10 +576,15 @@ public final class ModuleSettingsActivity extends Activity {
                             applyConfig(ClockSecondsConfig.TOGGLE_GESTURE_KEY, gesture, intent,
                                     ok -> {
                                         if (ok) {
-                                            gestureValue.setText(gesture
+                                            int nameRes = gesture
                                                     == ClockSecondsConfig.GESTURE_LONG_PRESS
                                                     ? R.string.settings_gesture_long_press
-                                                    : R.string.settings_gesture_click);
+                                                    : R.string.settings_gesture_click;
+                                            gestureValue.setText(nameRes);
+                                            Toast.makeText(this, getString(
+                                                    R.string.settings_gesture_applied,
+                                                    getString(nameRes)),
+                                                    Toast.LENGTH_LONG).show();
                                         } else {
                                             toastWriteFailed();
                                         }

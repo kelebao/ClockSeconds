@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Umschalt-Geste</string>
     <string name="settings_gesture_click">Uhr antippen</string>
     <string name="settings_gesture_long_press">Uhr gedrückt halten</string>
-    <string name="settings_hint">Hinweis: Starte SystemUI neu oder starte das Gerät neu, damit Änderungen wirksam werden. Falls das Antippen mit dem Herunterziehen der Statusleiste kollidiert, wechsle zur Langdruck-Geste.</string>
+    <string name="settings_hint">Hinweis: Änderungen wirken sofort. Falls nicht, starte SystemUI oder das Gerät neu. Wenn Tippen mit dem Herunterziehen der Benachrichtigungen kollidiert, nutze langes Drücken.</string>
     <string name="settings_refresh">Status aktualisieren</string>
     <string name="settings_section_general">Allgemein</string>
     <string name="settings_update_auto">Automatisch nach Updates suchen</string>
@@ -38,4 +38,6 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_write_failed">Schreiben fehlgeschlagen. Prüfe, ob das Modul in SystemUI aktiv ist, oder erteile WRITE_SECURE_SETTINGS per adb</string>
     <string name="settings_color_enable">Stundenfarbe aktivieren</string>
     <string name="settings_color_enable_sum">Ausschalten stellt die Systemdarstellung wieder her</string>
+    <string name="settings_gesture_hint">Mit dieser Geste auf der Statusleisten-Uhr schaltest du die Sekunden um</string>
+    <string name="settings_gesture_applied">Auf %1$s umgestellt — sofort wirksam. Falls nicht, starte SystemUI neu</string>
 </resources>

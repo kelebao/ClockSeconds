@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">إيماءة التبديل</string>
     <string name="settings_gesture_click">النقر على الساعة</string>
     <string name="settings_gesture_long_press">الضغط المطوّل على الساعة</string>
-    <string name="settings_hint">ملاحظة: أعد تشغيل SystemUI أو الجهاز لتصبح التغييرات سارية. إذا تعارض النقر مع سحب لوحة الإشعارات، فانتقل إلى إيماءة الضغط المطوّل.</string>
+    <string name="settings_hint">ملاحظة: تُطبَّق الإعدادات فوراً. إذا لم تعمل، أعد تشغيل SystemUI أو الجهاز. إذا تعارض النقر مع سحب لوحة الإشعارات، استخدم الضغط المطوّل.</string>
     <string name="settings_refresh">تحديث الحالة</string>
     <string name="settings_section_general">عام</string>
     <string name="settings_update_auto">التحقق التلقائي من التحديثات</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">فشل الكتابة. تأكد من أن الوحدة نشطة في SystemUI أو امنح WRITE_SECURE_SETTINGS عبر adb</string>
     <string name="settings_color_enable">تفعيل لون الساعة</string>
     <string name="settings_color_enable_sum">إيقاف التشغيل يعيد المظهر الافتراضي للنظام</string>
+    <string name="settings_gesture_hint">استخدم هذه الحركة على ساعة شريط الحالة لتبديل عرض الثواني</string>
+    <string name="settings_gesture_applied">تم التبديل إلى %1$s — يُطبَّق فوراً. إذا لم يعمل، أعد تشغيل SystemUI</string>
 </resources>

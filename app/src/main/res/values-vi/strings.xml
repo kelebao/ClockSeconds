@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Cử chỉ chuyển</string>
     <string name="settings_gesture_click">Nhấn đồng hồ</string>
     <string name="settings_gesture_long_press">Nhấn giữ đồng hồ</string>
-    <string name="settings_hint">Lưu ý: hãy khởi động lại SystemUI hoặc khởi động lại thiết bị để thay đổi có hiệu lực. Nếu nhấn xung đột với kéo xuống thanh thông báo, hãy chuyển sang cử chỉ nhấn giữ.</string>
+    <string name="settings_hint">Lưu ý: cài đặt áp dụng ngay. Nếu không có tác dụng, hãy khởi động lại SystemUI hoặc thiết bị. Nếu chạm bị xung đột với việc kéo thanh thông báo, hãy dùng nhấn giữ.</string>
     <string name="settings_refresh">Làm mới trạng thái</string>
     <string name="settings_section_general">Chung</string>
     <string name="settings_update_auto">Tự động kiểm tra cập nhật</string>
@@ -38,4 +38,6 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_write_failed">Ghi thất bại. Hãy chắc mô-đun đang hoạt động trong SystemUI hoặc cấp WRITE_SECURE_SETTINGS qua adb</string>
     <string name="settings_color_enable">Bật màu giờ</string>
     <string name="settings_color_enable_sum">Tắt để trở về kiểu mặc định của hệ thống</string>
+    <string name="settings_gesture_hint">Dùng thao tác này trên đồng hồ thanh trạng thái để bật/tắt giây</string>
+    <string name="settings_gesture_applied">Đã chuyển sang %1$s — áp dụng ngay. Nếu không có tác dụng, hãy khởi động lại SystemUI</string>
 </resources>

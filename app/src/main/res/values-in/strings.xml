@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Gestur beralih</string>
     <string name="settings_gesture_click">Ketuk jam</string>
     <string name="settings_gesture_long_press">Tekan lama jam</string>
-    <string name="settings_hint">Catatan: mulai ulang SystemUI atau perangkat agar perubahan berlaku. Jika ketukan bertentangan dengan menarik panel notifikasi, beralihlah ke gestur tekan lama.</string>
+    <string name="settings_hint">Catatan: pengaturan langsung berlaku. Jika tidak, mulai ulang SystemUI atau perangkat. Jika ketuk bentrok dengan menarik panel notifikasi, gunakan tekan lama.</string>
     <string name="settings_refresh">Segarkan status</string>
     <string name="settings_section_general">Umum</string>
     <string name="settings_update_auto">Periksa pembaruan otomatis</string>
@@ -38,4 +38,6 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_write_failed">Gagal menulis. Pastikan modul aktif di SystemUI atau berikan WRITE_SECURE_SETTINGS lewat adb</string>
     <string name="settings_color_enable">Aktifkan warna jam</string>
     <string name="settings_color_enable_sum">Matikan untuk kembali ke tampilan bawaan sistem</string>
+    <string name="settings_gesture_hint">Gunakan gerakan ini pada jam bilah status untuk menyalakan atau mematikan detik</string>
+    <string name="settings_gesture_applied">Beralih ke %1$s — langsung berlaku. Jika tidak, mulai ulang SystemUI</string>
 </resources>

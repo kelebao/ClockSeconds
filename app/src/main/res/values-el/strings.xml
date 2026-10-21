@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Χείρος εναλλαγής</string>
     <string name="settings_gesture_click">Πατήστε το ρολόι</string>
     <string name="settings_gesture_long_press">Πατήστε παρατεταμένα το ρολόι</string>
-    <string name="settings_hint">Σημείωση: επανεκκινήστε το SystemUI ή τη συσκευή για να εφαρμοστούν οι αλλαγές. Αν το πάτημα συγκρούεται με το κατέβασμα του πάνελ ειδοποιήσεων, χρησιμοποιήστε το χείρος παρατεταμένου πατήματος.</string>
+    <string name="settings_hint">Σημείωση: οι ρυθμίσεις εφαρμόζονται αμέσως. Αν δεν λειτουργούν, επανεκκινήστε το SystemUI ή τη συσκευή. Αν το πάτημα συγκρούεται με το άνοιγμα του πίνακα, χρησιμοποιήστε παρατεταμένο πάτημα.</string>
     <string name="settings_refresh">Ανανέωση κατάστασης</string>
     <string name="settings_section_general">Γενικά</string>
     <string name="settings_update_auto">Αυτόματος έλεγχος ενημερώσεων</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">Αποτυχία εγγραφής. Βεβαιωθείτε ότι η μονάδα είναι ενεργή στο SystemUI ή δώστε WRITE_SECURE_SETTINGS μέσω adb</string>
     <string name="settings_color_enable">Ενεργοποίηση χρώματος ώρας</string>
     <string name="settings_color_enable_sum">Αν το απενεργοποιήσετε, επιστρέφει η προεπιλεγμένη εμφάνιση</string>
+    <string name="settings_gesture_hint">Χρησιμοποιήστε αυτή τη χειρονομία στο ρολόι της γραμμής κατάστασης για εναλλαγή δευτερολέπτων</string>
+    <string name="settings_gesture_applied">Άλλαξε σε %1$s — εφαρμόζεται αμέσως. Αν δεν λειτουργεί, επανεκκινήστε το SystemUI</string>
 </resources>

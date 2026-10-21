@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Gesto di commutazione</string>
     <string name="settings_gesture_click">Tocca l\'orologio</string>
     <string name="settings_gesture_long_press">Tieni premuto l\'orologio</string>
-    <string name="settings_hint">Nota: riavvia SystemUI o il dispositivo per applicare le modifiche. Se il tocco entra in conflitto con il pannello delle notifiche, passa al gesto di pressione prolungata.</string>
+    <string name="settings_hint">Nota: le modifiche hanno effetto immediato. Se non funzionano, riavvia SystemUI o il dispositivo. Se il tocco interferisce con l\'apertura del pannello, usa la pressione prolungata.</string>
     <string name="settings_refresh">Aggiorna stato</string>
     <string name="settings_section_general">Generale</string>
     <string name="settings_update_auto">Controlla aggiornamenti automaticamente</string>
@@ -38,4 +38,6 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_write_failed">Scrittura non riuscita. Verifica che il modulo sia attivo in SystemUI o concedi WRITE_SECURE_SETTINGS via adb</string>
     <string name="settings_color_enable">Attiva colore dell\'ora</string>
     <string name="settings_color_enable_sum">Disattiva per tornare allo stile predefinito del sistema</string>
+    <string name="settings_gesture_hint">Usa questo gesto sull\'orologio della barra di stato per attivare o disattivare i secondi</string>
+    <string name="settings_gesture_applied">Passato a %1$s — effetto immediato. Se non funziona, riavvia SystemUI</string>
 </resources>

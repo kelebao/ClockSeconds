@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">切り替えジェスチャー</string>
     <string name="settings_gesture_click">時計をタップ</string>
     <string name="settings_gesture_long_press">時計を長押し</string>
-    <string name="settings_hint">注意：変更を反映するには SystemUI を再起動するか端末を再起動してください。タップが通知欄のプルダウンと競合する場合は、長押しジェスチャーに変更してください。</string>
+    <string name="settings_hint">ヒント：設定はすぐに反映されます。反映されない場合は SystemUI または端末を再起動してください。タップが通知パネルの操作と競合する場合は長押しをお使いください。</string>
     <string name="settings_refresh">状態を更新</string>
     <string name="settings_section_general">一般</string>
     <string name="settings_update_auto">更新を自動チェック</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">書き込みに失敗しました。モジュールが SystemUI で有効か確認するか、adb で WRITE_SECURE_SETTINGS を付与してください</string>
     <string name="settings_color_enable">時の色を有効化</string>
     <string name="settings_color_enable_sum">オフにするとシステム標準の表示に戻ります</string>
+    <string name="settings_gesture_hint">ステータスバーの時計でこの操作をすると秒表示を切り替えます</string>
+    <string name="settings_gesture_applied">%1$sに切り替えました。すぐに反映されます。反映されない場合は SystemUI を再起動してください</string>
 </resources>

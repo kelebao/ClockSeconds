@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Жест перемикання</string>
     <string name="settings_gesture_click">Торкнутися годинника</string>
     <string name="settings_gesture_long_press">Утримувати годинник</string>
-    <string name="settings_hint">Примітка: перезапустіть SystemUI або перезавантажте пристрій, щоб зміни набули чинності. Якщо торкання конфліктує з відкриттям панелі сповіщень, використовуйте жест утримання.</string>
+    <string name="settings_hint">Примітка: налаштування застосовуються одразу. Якщо не працює, перезапустіть SystemUI або пристрій. Якщо торкання заважає відкриттю панелі, використовуйте довге натискання.</string>
     <string name="settings_refresh">Оновити стан</string>
     <string name="settings_section_general">Загальне</string>
     <string name="settings_update_auto">Автоперевірка оновлень</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">Не вдалося записати. Переконайтеся, що модуль активний у SystemUI, або надайте WRITE_SECURE_SETTINGS через adb</string>
     <string name="settings_color_enable">Увімкнути колір години</string>
     <string name="settings_color_enable_sum">Вимкнення поверне стандартний вигляд системи</string>
+    <string name="settings_gesture_hint">Використовуйте цей жест на годиннику в рядку стану, щоб увімкнути або вимкнути секунди</string>
+    <string name="settings_gesture_applied">Перемкнено на «%1$s» — застосовується одразу. Якщо не працює, перезапустіть SystemUI</string>
 </resources>

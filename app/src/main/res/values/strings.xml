@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">切换手势</string>
     <string name="settings_gesture_click">单击时钟</string>
     <string name="settings_gesture_long_press">长按时钟</string>
-    <string name="settings_hint">提示：修改后需重启 SystemUI 或重启设备生效。若单击与下拉通知栏冲突，请改用长按手势。</string>
+    <string name="settings_hint">提示：设置立即生效；若未生效可重启 SystemUI 或重启设备。若单击与下拉通知栏冲突，请改用长按手势。</string>
     <string name="settings_refresh">刷新状态</string>
     <string name="settings_section_general">常规</string>
     <string name="settings_update_auto">自动检查更新</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">写入失败：请确认模块已在系统界面中生效，或用 adb 授予 WRITE_SECURE_SETTINGS</string>
     <string name="settings_color_enable">启用小时颜色</string>
     <string name="settings_color_enable_sum">关闭后恢复系统默认样式</string>
+    <string name="settings_gesture_hint">在状态栏时钟上用此手势开关显秒</string>
+    <string name="settings_gesture_applied">已切换为%1$s，立即生效；若未生效可重启 SystemUI</string>
 </resources>

@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">切換手勢</string>
     <string name="settings_gesture_click">點擊時鐘</string>
     <string name="settings_gesture_long_press">長按時鐘</string>
-    <string name="settings_hint">提示：修改後需重新啟動 SystemUI 或重新開機才會生效。若點擊與下拉通知欄衝突，請改用長按手勢。</string>
+    <string name="settings_hint">提示：設定立即生效；若未生效可重新啟動 SystemUI 或重新開機。若點擊與下拉通知欄衝突，請改用長按手勢。</string>
     <string name="settings_refresh">重新整理狀態</string>
     <string name="settings_section_general">常規</string>
     <string name="settings_update_auto">自動檢查更新</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">寫入失敗：請確認模組已在系統介面中生效，或用 adb 授予 WRITE_SECURE_SETTINGS</string>
     <string name="settings_color_enable">啟用小時顏色</string>
     <string name="settings_color_enable_sum">關閉後恢復系統預設樣式</string>
+    <string name="settings_gesture_hint">在狀態欄時鐘上用此手勢開關顯秒</string>
+    <string name="settings_gesture_applied">已切換為%1$s，立即生效；若未生效可重新啟動 SystemUI</string>
 </resources>

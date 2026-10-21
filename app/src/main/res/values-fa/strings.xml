@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">حرکت تغییر</string>
     <string name="settings_gesture_click">ضربه زدن روی ساعت</string>
     <string name="settings_gesture_long_press">نگه داشتن ساعت</string>
-    <string name="settings_hint">نکته: برای اعمال تغییرات، SystemUI را دوباره راه‌اندازی کنید یا دستگاه را ری‌استارت کنید. اگر ضربه زدن با کشیدن نوار اعلان‌ها تداخل دارد، از حرکت نگه داشتن استفاده کنید.</string>
+    <string name="settings_hint">نکته: تنظیمات فوراً اعمال می‌شوند. اگر اعمال نشدند، SystemUI یا دستگاه را دوباره راه‌اندازی کنید. اگر ضربه با باز کردن پنل اعلان‌ها تداخل داشت، از فشار طولانی استفاده کنید.</string>
     <string name="settings_refresh">به‌روزرسانی وضعیت</string>
     <string name="settings_section_general">عمومی</string>
     <string name="settings_update_auto">بررسی خودکار به‌روزرسانی</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">نوشتن ناموفق بود. مطمئن شوید ماژول در SystemUI فعال است یا دسترسی WRITE_SECURE_SETTINGS را با adb بدهید</string>
     <string name="settings_color_enable">فعال‌سازی رنگ ساعت</string>
     <string name="settings_color_enable_sum">با خاموش کردن، ظاهر پیش‌فرض سیستم برمی‌گردد</string>
+    <string name="settings_gesture_hint">برای روشن/خاموش کردن ثانیه‌ها، این حرکت را روی ساعت نوار وضعیت انجام دهید</string>
+    <string name="settings_gesture_applied">به %1$s تغییر کرد — فوراً اعمال می‌شود. اگر اعمال نشد، SystemUI را دوباره راه‌اندازی کنید</string>
 </resources>

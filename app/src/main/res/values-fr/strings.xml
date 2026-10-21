@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Geste de bascule</string>
     <string name="settings_gesture_click">Toucher l\'horloge</string>
     <string name="settings_gesture_long_press">Appui long sur l\'horloge</string>
-    <string name="settings_hint">Remarque : redémarrez SystemUI ou l\'appareil pour appliquer les modifications. Si le touche entre en conflit avec le déroulement du panneau de notifications, passez au geste d\'appui long.</string>
+    <string name="settings_hint">Remarque : les réglages prennent effet immédiatement. Sinon, redémarrez SystemUI ou l\'appareil. Si le toucher gêne le déploiement du panneau, utilisez l\'appui long.</string>
     <string name="settings_refresh">Actualiser l\'état</string>
     <string name="settings_section_general">Général</string>
     <string name="settings_update_auto">Vérifier les mises à jour automatiquement</string>
@@ -38,4 +38,6 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_write_failed">Échec de l\'écriture. Vérifiez que le module est actif dans SystemUI ou accordez WRITE_SECURE_SETTINGS via adb</string>
     <string name="settings_color_enable">Activer la couleur de l\'heure</string>
     <string name="settings_color_enable_sum">Désactivez pour revenir au style par défaut du système</string>
+    <string name="settings_gesture_hint">Utilisez ce geste sur l\'horloge de la barre d\'état pour activer ou désactiver les secondes</string>
+    <string name="settings_gesture_applied">Passé à %1$s — effet immédiat. Si cela ne fonctionne pas, redémarrez SystemUI</string>
 </resources>

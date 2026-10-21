@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">전환 제스처</string>
     <string name="settings_gesture_click">시계 탭</string>
     <string name="settings_gesture_long_press">시계 길게 누르기</string>
-    <string name="settings_hint">참고: 변경 사항을 적용하려면 SystemUI를 다시 시작하거나 기기를 재부팅하세요. 탭이 알림 창 내리기와 충돌하면 길게 누르기 제스처로 변경하세요.</string>
+    <string name="settings_hint">안내: 설정은 즉시 적용됩니다. 적용되지 않으면 SystemUI 또는 기기를 다시 시작하세요. 탭이 알림 패널 내리기와 충돌하면 길게 누르기를 사용하세요.</string>
     <string name="settings_refresh">상태 새로고침</string>
     <string name="settings_section_general">일반</string>
     <string name="settings_update_auto">업데이트 자동 확인</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">쓰기 실패: 모듈이 시스템 UI에서 활성화되어 있는지 확인하거나 adb로 WRITE_SECURE_SETTINGS를 부여하세요</string>
     <string name="settings_color_enable">시간 색상 사용</string>
     <string name="settings_color_enable_sum">끄면 시스템 기본 스타일로 돌아갑니다</string>
+    <string name="settings_gesture_hint">상태 표시줄 시계에서 이 동작으로 초 표시를 전환합니다</string>
+    <string name="settings_gesture_applied">%1$s(으)로 전환했습니다. 즉시 적용됩니다. 적용되지 않으면 SystemUI를 다시 시작하세요</string>
 </resources>

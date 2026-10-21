@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">გადართვის ჟესტი</string>
     <string name="settings_gesture_click">დააჭირეთ საათს</string>
     <string name="settings_gesture_long_press">დააჭირეთ ხანგრძლივად საათს</string>
-    <string name="settings_hint">შენიშვნა: ცვლილებების მისაღებად გადატვირთეთ SystemUI ან მოწყობილობა. თუ დაჭერა კონფლიქტშია შეტყობინებების პანელის ჩამოწევასთან, გამოიყენეთ ხანგრძლივი დაჭერის ჟესტი.</string>
+    <string name="settings_hint">შენიშვნა: პარამეტრები დაუყოვნებლივ მოქმედებს. თუ არ მუშაობს, გადატვირთეთ SystemUI ან მოწყობილობა. თუ შეხება ეწინააღმდეგება პანელის გახსნას, გამოიყენეთ ხანგრძლივი დაჭერა.</string>
     <string name="settings_refresh">სტატუსის განახლება</string>
     <string name="settings_section_general">ზოგადი</string>
     <string name="settings_update_auto">განახლებების ავტომატური შემოწმება</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">ჩაწერა ვერ მოხერხდა. დარწმუნდით, რომ მოდული SystemUI-ში აქტიურია, ან მიანიჭეთ WRITE_SECURE_SETTINGS adb-ით</string>
     <string name="settings_color_enable">საათის ფერის ჩართვა</string>
     <string name="settings_color_enable_sum">გამორთვისას სისტემის ნაგულისხმევი იერი ბრუნდება</string>
+    <string name="settings_gesture_hint">გამოიყენეთ ეს ჟესტი სტატუსის ზოლის საათზე წამების ჩასართავად/გამოსართავად</string>
+    <string name="settings_gesture_applied">გადაერთო %1$s-ზე — დაუყოვნებლივ მოქმედებს. თუ არ მუშაობს, გადატვირთეთ SystemUI</string>
 </resources>

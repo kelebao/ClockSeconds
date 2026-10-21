@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Жест переключения</string>
     <string name="settings_gesture_click">Нажатие на часы</string>
     <string name="settings_gesture_long_press">Долгое нажатие</string>
-    <string name="settings_hint">Примечание: для применения изменений перезапустите SystemUI или перезагрузите устройство. Если нажатие конфликтует с открытием шторки уведомлений, используйте жест долгого нажатия.</string>
+    <string name="settings_hint">Примечание: настройки применяются сразу. Если не работает, перезапустите SystemUI или устройство. Если нажатие мешает открытию шторки, используйте долгое нажатие.</string>
     <string name="settings_refresh">Обновить состояние</string>
     <string name="settings_section_general">Общее</string>
     <string name="settings_update_auto">Автопроверка обновлений</string>
@@ -38,4 +38,6 @@
     <string name="settings_write_failed">Не удалось записать. Убедитесь, что модуль активен в SystemUI, или выдайте WRITE_SECURE_SETTINGS через adb</string>
     <string name="settings_color_enable">Включить цвет часа</string>
     <string name="settings_color_enable_sum">При выключении вернётся стандартный вид системы</string>
+    <string name="settings_gesture_hint">Используйте этот жест на часах в строке состояния, чтобы включить или выключить секунды</string>
+    <string name="settings_gesture_applied">Переключено на «%1$s» — применяется сразу. Если не работает, перезапустите SystemUI</string>
 </resources>

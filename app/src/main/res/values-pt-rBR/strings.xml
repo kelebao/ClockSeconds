@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Gesto de alternância</string>
     <string name="settings_gesture_click">Tocar no relógio</string>
     <string name="settings_gesture_long_press">Pressionar o relógio</string>
-    <string name="settings_hint">Nota: reinicie o SystemUI ou o dispositivo para que as alterações tenham efeito. Se o toque conflitar com a rolagem do painel de notificações, use o gesto de pressionamento longo.</string>
+    <string name="settings_hint">Observação: as alterações valem na hora. Se não funcionarem, reinicie o SystemUI ou o aparelho. Se o toque conflitar com abrir o painel, use toque longo.</string>
     <string name="settings_refresh">Atualizar estado</string>
     <string name="settings_section_general">Geral</string>
     <string name="settings_update_auto">Verificar atualizações automaticamente</string>
@@ -38,4 +38,6 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_write_failed">Falha ao gravar. Verifique se o módulo está ativo no SystemUI ou conceda WRITE_SECURE_SETTINGS via adb</string>
     <string name="settings_color_enable">Ativar cor da hora</string>
     <string name="settings_color_enable_sum">Desative para voltar ao estilo padrão do sistema</string>
+    <string name="settings_gesture_hint">Use este gesto no relógio da barra de status para ativar ou desativar os segundos</string>
+    <string name="settings_gesture_applied">Alterado para %1$s — aplica na hora. Se não funcionar, reinicie o SystemUI</string>
 </resources>

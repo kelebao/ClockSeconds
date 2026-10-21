@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Gest przełączania</string>
     <string name="settings_gesture_click">Dotknij zegara</string>
     <string name="settings_gesture_long_press">Przytrzymaj zegar</string>
-    <string name="settings_hint">Uwaga: uruchom ponownie SystemUI lub zrestartuj urządzenie, aby zmiany zostały zastosowane. Jeśli dotykanie koliduje z rozwijaniem panelu powiadomień, przełącz na gest przytrzymania.</string>
+    <string name="settings_hint">Uwaga: ustawienia działają od razu. Jeśli nie, uruchom ponownie SystemUI lub urządzenie. Jeśli dotyk koliduje z otwieraniem panelu, użyj długiego naciśnięcia.</string>
     <string name="settings_refresh">Odśwież stan</string>
     <string name="settings_section_general">Ogólne</string>
     <string name="settings_update_auto">Automatycznie sprawdzaj aktualizacje</string>
@@ -38,4 +38,6 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_write_failed">Zapis nie powiódł się. Sprawdź, czy moduł działa w SystemUI, lub przyznaj WRITE_SECURE_SETTINGS przez adb</string>
     <string name="settings_color_enable">Włącz kolor godziny</string>
     <string name="settings_color_enable_sum">Wyłączenie przywraca domyślny wygląd systemu</string>
+    <string name="settings_gesture_hint">Użyj tego gestu na zegarze paska stanu, aby włączyć lub wyłączyć sekundy</string>
+    <string name="settings_gesture_applied">Przełączono na %1$s — działa od razu. Jeśli nie, uruchom ponownie SystemUI</string>
 </resources>
