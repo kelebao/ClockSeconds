@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="module_name">Secondes à l\'horloge</string>
     <string name="module_description">Affiche les secondes sur l\'horloge de la barre d\'état. Touchez l\'horloge pour activer/désactiver les secondes ; les dizaines de l\'heure sont colorées en rouge.</string>
@@ -45,4 +45,5 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_network_time_fail">Heure réseau indisponible — touchez pour réessayer</string>
     <string name="settings_sync_time">Synchroniser</string>
     <string name="settings_sync_requested">Heure auto activée — synchronisation imminente</string>
+    <string name="settings_preview_hint">Astuce : appuyez sur l\'horloge de la barre d\'état pour afficher/masquer les secondes</string>
 </resources>

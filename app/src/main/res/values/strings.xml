@@ -45,4 +45,5 @@
     <string name="settings_network_time_fail">网络时间获取失败，点按重试</string>
     <string name="settings_sync_time">同步</string>
     <string name="settings_sync_requested">已开启自动对时，系统将自动校准</string>
+    <string name="settings_preview_hint">提示：点击状态栏时钟即可显示或关闭秒数</string>
 </resources>

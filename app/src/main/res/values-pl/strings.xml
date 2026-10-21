@@ -45,4 +45,5 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_network_time_fail">Nie udało się pobrać czasu sieci — dotknij, aby ponowić</string>
     <string name="settings_sync_time">Synchronizuj</string>
     <string name="settings_sync_requested">Automatyczny czas włączony — wkrótce się zsynchronizuje</string>
+    <string name="settings_preview_hint">Wskazówka: dotknij zegara na pasku stanu, aby pokazać/ukryć sekundy</string>
 </resources>

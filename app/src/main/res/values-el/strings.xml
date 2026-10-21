@@ -45,4 +45,5 @@
     <string name="settings_network_time_fail">Δεν ήταν δυνατή η λήψη ώρας δικτύου — πατήστε για επανάληψη</string>
     <string name="settings_sync_time">Συγχρονισμός</string>
     <string name="settings_sync_requested">Ενεργοποιήθηκε η αυτόματη ώρα — σύντομα θα συγχρονιστεί</string>
+    <string name="settings_preview_hint">Συμβουλή: Πατήστε το ρολόι της γραμμής κατάστασης για εμφάνιση/απόκρυψη δευτερολέπτων</string>
 </resources>

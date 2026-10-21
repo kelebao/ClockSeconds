@@ -45,4 +45,5 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_network_time_fail">Impossibile ottenere l\'ora di rete — tocca per riprovare</string>
     <string name="settings_sync_time">Sincronizza</string>
     <string name="settings_sync_requested">Ora automatica attiva — sincronizzazione a breve</string>
+    <string name="settings_preview_hint">Suggerimento: tocca l\'orologio della barra di stato per mostrare/nascondere i secondi</string>
 </resources>

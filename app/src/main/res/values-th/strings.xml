@@ -45,4 +45,5 @@
     <string name="settings_network_time_fail">ดึงเวลาจากเครือข่ายไม่สำเร็จ แตะเพื่อลองใหม่</string>
     <string name="settings_sync_time">ซิงค์</string>
     <string name="settings_sync_requested">เปิดตั้งเวลาอัตโนมัติแล้ว ระบบจะซิงค์ในไม่ช้า</string>
+    <string name="settings_preview_hint">เคล็ดลับ: แตะนาฬิกาแถบสถานะเพื่อแสดง/ซ่อนวินาที</string>
 </resources>

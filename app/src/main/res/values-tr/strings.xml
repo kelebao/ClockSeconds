@@ -45,4 +45,5 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_network_time_fail">Ağ saati alınamadı — yeniden denemek için dokunun</string>
     <string name="settings_sync_time">Eşitle</string>
     <string name="settings_sync_requested">Otomatik saat açıldı — kısa süre içinde eşitlenir</string>
+    <string name="settings_preview_hint">İpucu: saniyeleri göstermek/gizlemek için durum çubuğu saatine dokunun</string>
 </resources>

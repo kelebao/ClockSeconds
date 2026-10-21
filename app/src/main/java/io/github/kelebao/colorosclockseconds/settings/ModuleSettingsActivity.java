@@ -17,6 +17,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -228,6 +229,15 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setTextColor(text());
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
         card.addView(previewView);
+
+        // 提示用户：要点状态栏的时钟，不是点这里。
+        TextView previewHint = new TextView(this);
+        previewHint.setText(R.string.settings_preview_hint);
+        previewHint.setTextSize(11f);
+        previewHint.setTextColor(text3());
+        previewHint.setGravity(Gravity.CENTER_HORIZONTAL);
+        previewHint.setPadding(0, dp(6), 0, 0);
+        card.addView(previewHint);
 
         // 网络时间对比：点一下重新获取（HTTP Date 头，按 RTT 折半校正）。
         LinearLayout netRow = new LinearLayout(this);
@@ -678,14 +688,27 @@ public final class ModuleSettingsActivity extends Activity {
         });
     }
 
+    private CharSequence makeGestureItem(int titleRes, String hint) {
+        String title = getString(titleRes);
+        SpannableStringBuilder sb = new SpannableStringBuilder(title);
+        sb.append("\n");
+        int start = sb.length();
+        sb.append(hint);
+        int end = sb.length();
+        sb.setSpan(new AbsoluteSizeSpan(11, true), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.setSpan(new ForegroundColorSpan(text3()), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return sb;
+    }
+
     private void showGestureDialog(TextView gestureValue) {
         final int current = ClockSecondsConfig.getGesture(getContentResolver());
+        final String hint = getString(R.string.settings_gesture_hint);
         new AlertDialog.Builder(this)
                 .setTitle(R.string.settings_gesture_title)
                 .setSingleChoiceItems(new CharSequence[]{
-                        getString(R.string.settings_gesture_click),
-                        getString(R.string.settings_gesture_long_press),
-                        getString(R.string.settings_gesture_double_tap)},
+                        makeGestureItem(R.string.settings_gesture_click, hint),
+                        makeGestureItem(R.string.settings_gesture_long_press, hint),
+                        makeGestureItem(R.string.settings_gesture_double_tap, hint)},
                         current,
                         (dialog, which) -> {
                             dialog.dismiss();

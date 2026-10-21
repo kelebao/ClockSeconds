@@ -45,4 +45,5 @@
     <string name="settings_network_time_fail">زمان شبکه دریافت نشد — برای تلاش دوباره ضربه بزنید</string>
     <string name="settings_sync_time">همگام‌سازی</string>
     <string name="settings_sync_requested">زمان خودکار فعال شد — به‌زودی همگام می‌شود</string>
+    <string name="settings_preview_hint">راهنما: برای نمایش یا مخفی کردن ثانیه، روی ساعت نوار وضعیت ضربه بزنید</string>
 </resources>

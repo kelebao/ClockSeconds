@@ -45,4 +45,5 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_network_time_fail">Gagal mengambil waktu jaringan — ketuk untuk coba lagi</string>
     <string name="settings_sync_time">Sinkronkan</string>
     <string name="settings_sync_requested">Waktu otomatis aktif — akan disinkronkan sebentar lagi</string>
+    <string name="settings_preview_hint">Tips: ketuk jam bilah status untuk menampilkan atau menyembunyikan detik</string>
 </resources>
