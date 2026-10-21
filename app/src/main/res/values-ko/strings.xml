@@ -45,5 +45,5 @@
     <string name="settings_network_time_fail">네트워크 시간을 가져오지 못했습니다. 탭하여 다시 시도</string>
     <string name="settings_sync_time">동기화</string>
     <string name="settings_sync_requested">자동 시간 설정을 켰습니다. 곧 동기화됩니다</string>
-    <string name="settings_preview_hint">팁: 상태 표시줄 시계를 탭하여 초를 표시하거나 숨깁니다</string>
+    <string name="settings_preview_hint">팁: 상태 표시줄 시계(왼쪽 위)를 탭하여 초를 표시하거나 숨깁니다</string>
 </resources>

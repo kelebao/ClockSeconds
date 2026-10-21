@@ -45,5 +45,5 @@
     <string name="settings_network_time_fail">ネットワーク時刻を取得できません。タップで再試行</string>
     <string name="settings_sync_time">同期</string>
     <string name="settings_sync_requested">自動時刻合わせを有効にしました。まもなく同期します</string>
-    <string name="settings_preview_hint">ヒント: ステータスバーの時計をタップして秒表示を切り替えます</string>
+    <string name="settings_preview_hint">ヒント: ステータスバーの時計（左上）をタップして秒表示を切り替えます</string>
 </resources>

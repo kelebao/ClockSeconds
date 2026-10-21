@@ -45,5 +45,5 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_network_time_fail">Não foi possível obter a hora da rede — toque para tentar de novo</string>
     <string name="settings_sync_time">Sincronizar</string>
     <string name="settings_sync_requested">Hora automática ativada — sincroniza em instantes</string>
-    <string name="settings_preview_hint">Dica: toque no relógio da barra de status para mostrar/ocultar segundos</string>
+    <string name="settings_preview_hint">Dica: toque no relógio da barra de status (canto superior esquerdo) para mostrar/ocultar segundos</string>
 </resources>

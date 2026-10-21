@@ -45,5 +45,5 @@
     <string name="settings_network_time_fail">Не вдалося отримати мережевий час — торкніться для повтору</string>
     <string name="settings_sync_time">Синхр.</string>
     <string name="settings_sync_requested">Авточас увімкнено — синхронізація скоро відбудеться</string>
-    <string name="settings_preview_hint">Підказка: торкніться годинника в рядку стану, щоб показати/сховати секунди</string>
+    <string name="settings_preview_hint">Підказка: торкніться годинника в рядку стану (зверху зліва), щоб показати/сховати секунди</string>
 </resources>

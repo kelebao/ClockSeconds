@@ -45,5 +45,5 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_network_time_fail">Netzwerkzeit nicht verfügbar — zum Wiederholen tippen</string>
     <string name="settings_sync_time">Sync</string>
     <string name="settings_sync_requested">Automatische Zeit aktiviert — wird gleich abgeglichen</string>
-    <string name="settings_preview_hint">Tipp: Tippe auf die Statusleistenuhr, um Sekunden ein-/auszublenden</string>
+    <string name="settings_preview_hint">Tipp: Tippe auf die Statusleistenuhr (oben links), um Sekunden ein-/auszublenden</string>
 </resources>

@@ -28,10 +28,15 @@ public final class ClockSecondsConfig {
      */
     public static final String MODULE_SECONDS_KEY = "coloros_clock_seconds_enabled";
 
-    /** 切换手势：0 = 单击时钟，1 = 长按时钟，2 = 双击时钟。 */
+    /**
+     * 切换手势：0 = 单击时钟，2 = 双击时钟。长按固定用于弹出浮窗预览时钟，不再作为切换手势。
+     * 历史值 1（旧版「长按切换」）读取时归一为单击。
+     */
     public static final String TOGGLE_GESTURE_KEY = "coloros_clock_seconds_gesture";
     public static final int GESTURE_CLICK = 0;
-    public static final int GESTURE_LONG_PRESS = 1;
+    /** @deprecated 旧版长按切换手势，已废弃；读取时归一为 {@link #GESTURE_CLICK}。 */
+    @Deprecated
+    public static final int GESTURE_LONG_PRESS_LEGACY = 1;
     public static final int GESTURE_DOUBLE_TAP = 2;
 
     /** 小时十位数字颜色（ARGB）。默认 Material Red 500。 */
@@ -81,9 +86,10 @@ public final class ClockSecondsConfig {
         Settings.Secure.putInt(resolver, MODULE_SECONDS_KEY, enabled ? MODE_ENABLED : 0);
     }
 
-    /** 读取切换手势偏好（默认单击）。 */
+    /** 读取切换手势偏好（默认单击；旧版「长按切换」值归一为单击）。 */
     public static int getGesture(ContentResolver resolver) {
-        return Settings.Secure.getInt(resolver, TOGGLE_GESTURE_KEY, GESTURE_CLICK);
+        int g = Settings.Secure.getInt(resolver, TOGGLE_GESTURE_KEY, GESTURE_CLICK);
+        return (g == GESTURE_DOUBLE_TAP) ? GESTURE_DOUBLE_TAP : GESTURE_CLICK;
     }
 
     /** 写入切换手势偏好。 */

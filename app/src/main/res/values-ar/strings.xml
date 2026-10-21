@@ -45,5 +45,5 @@
     <string name="settings_network_time_fail">تعذر جلب وقت الشبكة — انقر لإعادة المحاولة</string>
     <string name="settings_sync_time">مزامنة</string>
     <string name="settings_sync_requested">تم تفعيل الوقت التلقائي — ستتم المزامنة قريباً</string>
-    <string name="settings_preview_hint">تلميح: انقر على ساعة شريط الحالة لإظهار أو إخفاء الثواني</string>
+    <string name="settings_preview_hint">تلميح: انقر على ساعة شريط الحالة (أعلى اليسار) لإظهار أو إخفاء الثواني</string>
 </resources>

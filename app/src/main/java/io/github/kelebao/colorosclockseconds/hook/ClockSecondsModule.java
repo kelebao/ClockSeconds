@@ -7,18 +7,25 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
@@ -101,6 +108,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static float sDownX, sDownY;
     private static android.os.Handler sTouchHandler;
     private static Runnable sLongPressTask;
+
+    /** 长按弹出的预览浮窗（非空表示正在显示）。 */
+    private static TextView sFloatView;
+    private static Runnable sFloatTicker;
 
     /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
     private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
@@ -262,7 +273,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /**
      * 全局触摸监听（由 {@code View.dispatchTouchEvent} 触发）。判断按下点是否落在状态栏时钟边界内，
-     * 识别「点击（几乎无位移）」或「长按（按住 500ms）」切换显秒；滑动（下拉）不触发，且不消费事件。
+     * 按设置的手势（单击 / 双击）切换显秒；长按固定弹出实时预览浮窗。滑动（下拉）不触发，且不消费事件。
      */
     private static void handleClockTouch(MotionEvent ev) {
         try {
@@ -285,16 +296,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     sDownTime = ev.getEventTime();
                     sDownX = x;
                     sDownY = y;
-                    if (gesture == ClockSecondsConfig.GESTURE_LONG_PRESS) {
-                        final Runnable task = () -> {
-                            if (sPendingTap) {
-                                sPendingTap = false;
-                                toggleSeconds(sClockView);
-                            }
-                        };
-                        sLongPressTask = task;
-                        sTouchHandler.postDelayed(task, 500);
-                    }
+                    // 长按固定用于弹出浮窗预览时钟（与切换手势无关）。
+                    final Runnable task = () -> {
+                        if (sPendingTap) {
+                            sPendingTap = false;
+                            showFloatPreview(sClockView);
+                        }
+                    };
+                    sLongPressTask = task;
+                    sTouchHandler.postDelayed(task, 500);
                 }
             } else if (action == MotionEvent.ACTION_MOVE) {
                 if (sPendingTap) {
@@ -348,6 +358,154 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } catch (Throwable ignored) {
             // 触摸识别异常绝不应影响系统
         }
+    }
+
+    /**
+     * 长按状态栏时钟：在时钟下方弹出实时预览浮窗（HH:mm:ss，小时十位跟随设置的颜色），
+     * 每秒刷新，3 秒后自动消失，点一下浮窗立即关闭。全程 try/catch，绝不影响系统。
+     */
+    private static void showFloatPreview(View clockView) {
+        try {
+            if (clockView == null || clockView.getContext() == null) {
+                return;
+            }
+            final Context context = clockView.getContext();
+            if (sTouchHandler == null) {
+                sTouchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            }
+            sTouchHandler.post(() -> {
+                try {
+                    WindowManager wm = (WindowManager) context.getSystemService(
+                            Context.WINDOW_SERVICE);
+                    if (wm == null) {
+                        return;
+                    }
+                    dismissFloatPreview(); // 重复长按先关掉旧的，重置 3 秒计时
+
+                    final TextView tv = new TextView(context);
+                    tv.setTextSize(34f);
+                    tv.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                    tv.setTextColor(0xFFFFFFFF);
+                    tv.setGravity(Gravity.CENTER);
+                    int padH = floatDp(context, 16);
+                    int padV = floatDp(context, 10);
+                    tv.setPadding(padH, padV, padH, padV);
+                    GradientDrawable bg = new GradientDrawable();
+                    bg.setCornerRadius(floatDp(context, 14));
+                    bg.setColor(0xE6111118);
+                    tv.setBackground(bg);
+
+                    WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                            WindowManager.LayoutParams.WRAP_CONTENT,
+                            WindowManager.LayoutParams.WRAP_CONTENT,
+                            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                            PixelFormat.TRANSLUCENT);
+                    lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                    lp.y = floatAnchorY(context, clockView);
+
+                    wm.addView(tv, lp);
+                    sFloatView = tv;
+                    updateFloatText(tv, context);
+                    tv.setOnClickListener(v -> dismissFloatPreview());
+
+                    final Runnable tickerTask = new Runnable() {
+                        private int ticks = 0;
+
+                        @Override
+                        public void run() {
+                            if (sFloatView != tv) {
+                                return;
+                            }
+                            if (++ticks >= 3) {
+                                dismissFloatPreview();
+                                return;
+                            }
+                            updateFloatText(tv, context);
+                            sTouchHandler.postDelayed(this, 1000L);
+                        }
+                    };
+                    sFloatTicker = tickerTask;
+                    sTouchHandler.postDelayed(tickerTask, 1000L);
+                } catch (Throwable ignored) {
+                    // 浮窗失败不应影响系统
+                }
+            });
+        } catch (Throwable ignored) {
+            // 浮窗失败不应影响系统
+        }
+    }
+
+    /** 关闭预览浮窗（若有）并停掉刷新。 */
+    private static void dismissFloatPreview() {
+        try {
+            if (sTouchHandler != null && sFloatTicker != null) {
+                sTouchHandler.removeCallbacks(sFloatTicker);
+            }
+            sFloatTicker = null;
+            if (sFloatView != null) {
+                try {
+                    WindowManager wm = (WindowManager) sFloatView.getContext()
+                            .getSystemService(Context.WINDOW_SERVICE);
+                    if (wm != null) {
+                        wm.removeViewImmediate(sFloatView);
+                    }
+                } catch (Throwable ignored) {
+                    // view 已不在窗口上时静默
+                }
+                sFloatView = null;
+            }
+        } catch (Throwable ignored) {
+            // 关闭失败静默
+        }
+    }
+
+    /** 浮窗文本：HH:mm:ss，小时十位用设置的小时颜色（若启用）。 */
+    private static void updateFloatText(TextView tv, Context context) {
+        try {
+            String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date());
+            SpannableStringBuilder sb = new SpannableStringBuilder(text);
+            if (ClockSecondsConfig.isHourColorEnabled(context.getContentResolver())
+                    && sb.length() >= 2
+                    && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
+                sb.setSpan(new ForegroundColorSpan(ClockSecondsConfig.getHourColor(
+                        context.getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            tv.setText(sb);
+        } catch (Throwable ignored) {
+            // 文本刷新失败静默
+        }
+    }
+
+    /** 浮窗锚点 Y：时钟下沿 + 4dp，至少不低于状态栏底部。 */
+    private static int floatAnchorY(Context context, View clockView) {
+        try {
+            int[] loc = new int[2];
+            clockView.getLocationOnScreen(loc);
+            int below = loc[1] + clockView.getHeight() + floatDp(context, 4);
+            int barBottom = statusBarHeight(context) + floatDp(context, 4);
+            return Math.max(below, barBottom);
+        } catch (Throwable ignored) {
+            return statusBarHeight(context) + floatDp(context, 8);
+        }
+    }
+
+    private static int statusBarHeight(Context context) {
+        try {
+            int id = context.getResources().getIdentifier(
+                    "status_bar_height", "dimen", "android");
+            if (id > 0) {
+                return context.getResources().getDimensionPixelSize(id);
+            }
+        } catch (Throwable ignored) {
+            // 取不到就用默认值
+        }
+        return floatDp(context, 24);
+    }
+
+    private static int floatDp(Context context, int dp) {
+        return (int) (dp * context.getResources().getDisplayMetrics().density + 0.5f);
     }
 
     /** 进程内首次需要判断显秒状态时，读一次 {@code Settings.Secure} 并缓存（之后不再每次读）。 */

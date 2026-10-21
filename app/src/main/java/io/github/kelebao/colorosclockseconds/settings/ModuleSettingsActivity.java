@@ -723,16 +723,20 @@ public final class ModuleSettingsActivity extends Activity {
     private void showGestureDialog(TextView gestureValue) {
         final int current = ClockSecondsConfig.getGesture(getContentResolver());
         final String hint = getString(R.string.settings_gesture_hint);
+        // 列表只有两项：index 0 = 单击，1 = 双击。
+        final int checkedIndex = current == ClockSecondsConfig.GESTURE_DOUBLE_TAP ? 1 : 0;
         new AlertDialog.Builder(this)
                 .setTitle(R.string.settings_gesture_title)
                 .setSingleChoiceItems(new CharSequence[]{
                         makeGestureItem(R.string.settings_gesture_click, hint),
-                        makeGestureItem(R.string.settings_gesture_long_press, hint),
                         makeGestureItem(R.string.settings_gesture_double_tap, hint)},
-                        current,
+                        checkedIndex,
                         (dialog, which) -> {
                             dialog.dismiss();
-                            final int gesture = which;
+                            // 列表只有两项：0 = 单击，1 = 双击。
+                            final int gesture = which == 1
+                                    ? ClockSecondsConfig.GESTURE_DOUBLE_TAP
+                                    : ClockSecondsConfig.GESTURE_CLICK;
                             Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GESTURE)
                                     .putExtra(ClockSecondsConfig.EXTRA_GESTURE, gesture);
                             applyConfig(ClockSecondsConfig.TOGGLE_GESTURE_KEY, gesture, intent,
@@ -754,8 +758,6 @@ public final class ModuleSettingsActivity extends Activity {
 
     private int gestureNameRes(int gesture) {
         switch (gesture) {
-            case ClockSecondsConfig.GESTURE_LONG_PRESS:
-                return R.string.settings_gesture_long_press;
             case ClockSecondsConfig.GESTURE_DOUBLE_TAP:
                 return R.string.settings_gesture_double_tap;
             default:

@@ -45,5 +45,5 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_network_time_fail">Heure réseau indisponible — touchez pour réessayer</string>
     <string name="settings_sync_time">Synchroniser</string>
     <string name="settings_sync_requested">Heure auto activée — synchronisation imminente</string>
-    <string name="settings_preview_hint">Astuce : appuyez sur l\'horloge de la barre d\'état pour afficher/masquer les secondes</string>
+    <string name="settings_preview_hint">Astuce : appuyez sur l\'horloge de la barre d\'état (en haut à gauche) pour afficher/masquer les secondes</string>
 </resources>

@@ -45,5 +45,5 @@
     <string name="settings_network_time_fail">Не удалось получить сетевое время — нажмите для повтора</string>
     <string name="settings_sync_time">Синхр.</string>
     <string name="settings_sync_requested">Автовремя включено — синхронизация скоро произойдёт</string>
-    <string name="settings_preview_hint">Подсказка: нажмите на часы в строке состояния, чтобы показать или скрыть секунды</string>
+    <string name="settings_preview_hint">Подсказка: нажмите на часы в строке состояния (вверху слева), чтобы показать или скрыть секунды</string>
 </resources>

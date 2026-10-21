@@ -45,5 +45,5 @@
     <string name="settings_network_time_fail">網路時間取得失敗，點按重試</string>
     <string name="settings_sync_time">同步</string>
     <string name="settings_sync_requested">已開啟自動對時，系統將自動校正</string>
-    <string name="settings_preview_hint">提示：點擊狀態欄時鐘即可顯示或關閉秒數</string>
+    <string name="settings_preview_hint">提示：點擊狀態欄(左上角)時鐘即可顯示或關閉秒數</string>
 </resources>
