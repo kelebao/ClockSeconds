@@ -449,8 +449,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     });
 
                     final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                            WindowManager.LayoutParams.WRAP_CONTENT,
-                            WindowManager.LayoutParams.WRAP_CONTENT,
+                            // 默认尺寸用 dp，各分辨率/密度机型观感一致（约 160×64dp）。
+                            floatDp(context, 160),
+                            floatDp(context, 64),
                             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -495,8 +496,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     }
                                     float dx = ev.getRawX() - downRawX;
                                     float dy = ev.getRawY() - downRawY;
+                                    int screenW = context.getResources()
+                                            .getDisplayMetrics().widthPixels;
+                                    // 尺寸上限同时考虑 dp 值和屏幕宽度（适配小屏机型）。
                                     int minW = floatDp(context, 70);
-                                    int maxW = floatDp(context, 400);
+                                    int maxW = Math.min(floatDp(context, 400),
+                                            (int) (screenW * 0.9f));
                                     int minH = floatDp(context, 36);
                                     int maxH = floatDp(context, 200);
                                     // 右缘固定：width = startW - dx；左缘跟随：x = startX + dx
@@ -785,9 +790,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 自适应字号：取宽高允许的较小值，保证 "HH:mm:ss" 完整放进窗口。
             try {
                 float density = context.getResources().getDisplayMetrics().density;
-                int availW = (tv.getWidth() > 0 ? tv.getWidth() : 240)
+                int availW = (tv.getWidth() > 0 ? tv.getWidth() : floatDp(context, 88))
                         - tv.getPaddingLeft() - tv.getPaddingRight();
-                int availH = (tv.getHeight() > 0 ? tv.getHeight() : 110)
+                int availH = (tv.getHeight() > 0 ? tv.getHeight() : floatDp(context, 40))
                         - tv.getPaddingTop() - tv.getPaddingBottom();
                 if (lp != null && lp.width > 0) {
                     availW = lp.width - tv.getPaddingLeft() - tv.getPaddingRight();
