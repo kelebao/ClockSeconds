@@ -3,10 +3,10 @@
 
 TEXTS = {
     'id': {
-        'title': 'Detik di Jam (Clock Seconds)',
+        'title': 'Detik pada Waktu（Show Seconds in Time）',
         'tagline': (
-            'Tampilkan **detik** pada jam bilah status, alihkan dengan sekali sentuh, '
-            'dan buat **puluhan jam tetap merah**.<br>'
+            'Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, '
+            'dan buat **puluhan waktu tetap merah**.<br>'
             'Tanpa kelas privat vendor mana pun. Terverifikasi di perangkat nyata dengan '
             'ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, dan vendor besar lainnya.'
         ),
@@ -15,13 +15,25 @@ TEXTS = {
         'th_desc': 'Keterangan',
         'rows': [
             ('Tampilan detik',
-             'Jam bilah status menampilkan hingga detik (`HH:mm:ss` / `h:mm:ss a`, mengikuti setelan 12/24 jam sistem)'),
+             'Waktu bilah status menampilkan hingga detik (`HH:mm:ss` / `h:mm:ss a`, mengikuti setelan 12/24 jam sistem)'),
             ('Sentuh untuk alih',
-             '**Mengetuk** jam bilah status akan mengubah tampilan detik on/off; gestur **tekan lama** juga tersedia di halaman setelan'),
-            ('Puluhan jam merah',
-             '**Puluhan jam** diwarnai merah (angka `1` pada `13`, angka `0` pada `05`); '
-             'menit dan detik tetap berwarna sistem. Jam satu angka (mis. `9:45`) tidak '
-             'punya puluhan sehingga tidak tersentuh. Berfungsi di semua vendor'),
+             '**Mengetuk** waktu bilah status akan mengubah tampilan detik on/off; gestur **ketuk dua kali** juga tersedia di halaman setelan'),
+            ('Warna puluhan waktu',
+             'Warna **puluhan waktu** dapat **disesuaikan** (palet 8 warna) atau **dimatikan** '
+             'untuk kembali ke warna sistem; waktu satu angka (mis. `9:45`) tidak punya puluhan '
+             'sehingga tidak tersentuh. Berfungsi di semua vendor'),
+            ('Pratinjau tekan lama',
+             '**Menekan lama** waktu bilah status memunculkan **jendela mengambang kaca buram** '
+             'yang menampilkan **waktu jaringan** secara real time; bisa digeser, diubah '
+             'ukurannya dengan ◣ (kiri bawah), ketuk waktu untuk memunculkan tombol **tutup** '
+             '(✕ kanan atas) / **ubah ukuran**; ukuran teks menyesuaikan jendela'),
+            ('Waktu jaringan',
+             'Halaman setelan membandingkan jam Anda dengan **waktu standar jaringan** secara '
+             'real time; jika selisih besar, ketuk **Sinkron** untuk menyalakan pengaturan waktu '
+             'otomatis sistem'),
+            ('Tanpa adb',
+             'Setelan ditulis ke `Settings.Secure`; tanpa izin `WRITE_SECURE_SETTINGS` modul '
+             'beralih ke broadcast yang diproses SystemUI — **tidak perlu izin adb**'),
             ('Bahasa antarmuka',
              'Antarmuka aplikasi diterjemahkan ke **21 bahasa** (otomatis mengikuti bahasa sistem): '
              '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
@@ -46,20 +58,20 @@ TEXTS = {
             'menulis ke `Settings.Secure`:'
         ),
         'note2': (
-            'Tanpa izin itu Anda tetap bisa mengalihkan dengan mengetuk jam bilah status '
+            'Tanpa izin itu Anda tetap bisa mengalihkan dengan mengetuk waktu bilah status '
             '(aksi itu berjalan di dalam proses SystemUI yang memang sudah punya izin).'
         ),
         'h_usage': 'Cara pakai',
         'usage': [
-            '**Ketuk jam bilah status**: mengalihkan tampilan detik on/off (gestur bawaan).',
+            '**Ketuk waktu bilah status**: mengalihkan tampilan detik on/off (gestur bawaan).',
             'Pengalihan diimplementasikan dengan uji sentuh global, jadi **tidak pernah bertabrakan '
             'dengan "menarik panel notifikasi ke bawah"**—— ketukan murni mengalihkan, tarikan tetap '
             'menarik panel ke bawah. Bila lebih suka, Anda bisa mengganti gestur menjadi '
-            '**tekan lama** di halaman setelan.',
+            '**ketuk dua kali** di halaman setelan.',
             'Halaman setelan menampilkan status saat ini, gestur yang dipilih, dan tombol segarkan.',
         ],
         'h_demo': 'Pratinjau',
-        'cap_off': 'Detik mati: `15:06` — puluhan jam `1` tetap merah',
+        'cap_off': 'Detik mati: `15:06` — puluhan waktu `1` tetap merah',
         'cap_on': 'Detik hidup: `15:06:03` — menit dan detik mempertahankan warna sistem',
         'h_how': 'Cara kerja',
         'how_intro': [
@@ -69,26 +81,26 @@ TEXTS = {
         ],
         'how': [
             '**Detik**: hook `TextView.setText` (after) yang stabil untuk menyimpan mentahan teks '
-            'yang sistem berikan pada jam bilah status,\n'
+            'yang sistem berikan pada waktu bilah status,\n'
             'lalu hook `TextView.onDraw` (before) untuk menimpa tampilan dengan `mentahanTeks:ss` '
             'setelah sistem selesai mengatur teks,\n'
-            'didorong `Handler` 1 detik. Detik yang ditambahkan mewarisi warna teks jam itu sendiri '
+            'didorong `Handler` 1 detik. Detik yang ditambahkan mewarisi warna teks waktu itu sendiri '
             '(terukur `#ccffffff`).\n'
-            'Selain itu "puluhan jam" diwarnai merah (sebuah `ForegroundColorSpan` merah pada satu '
+            'Selain itu "puluhan waktu" diwarnai merah (sebuah `ForegroundColorSpan` merah pada satu '
             'karakter itu), baik tampilan detik dinyalakan maupun dimatikan;\n'
-            'menit dan detik tidak pernah merah; jam satu angka tidak punya puluhan sehingga tidak tersentuh.',
+            'menit dan detik tidak pernah merah; waktu satu angka tidak punya puluhan sehingga tidak tersentuh.',
             '**Alihkan**: panel notifikasi ColorOS mencegat sentuh di wilayah bilah status, sehingga '
-            '`OnTouchListener` jam itu sendiri tidak pernah menerima peristiwa.\n'
+            '`OnTouchListener` waktu itu sendiri tidak pernah menerima peristiwa.\n'
             'Modul karena itu meng-hook `View.dispatchTouchEvent` global dan hanya membalik sakelar '
             '`Settings.Secure` ketika titik tekan jatuh di dalam\n'
-            'batas layar jam yang terdeteksi dan hampir tidak bergerak (ketuk) atau ditahan 500 ms '
-            '(tekan lama). Modul **tidak mengonsumsi**\n'
+            'batas layar waktu yang terdeteksi dan hampir tidak bergerak (ketuk) atau ketukan kedua dalam 350 ms '
+            '(ketuk dua kali). Modul **tidak mengonsumsi**\n'
             'peristiwa sentuh apa pun, sehingga menarik panel notifikasi ke bawah bekerja seperti biasa.',
         ],
         'h_power': 'Catatan hemat daya',
         'power': [
             '**Detik NYALA**: modul memerlukan pewaktu 1 detik untuk mendorong penyegaran '
-            '(ini adalah biaya melekat dari "menampilkan detik", sekitar 60 penggambaran ulang jam per menit).',
+            '(ini adalah biaya melekat dari "menampilkan detik", sekitar 60 penggambaran ulang waktu per menit).',
             '**Detik MATI**: modul **segera menghentikan pewaktu itu** (`stopTicker`)—— '
             'sama sekali tidak ada kebangunan tiap detik dan tidak ada pembacaan antar proses.\n'
             'Ia kembali ke ritme asli sistem "menyegarkan sekali per menit", jadi mematikan tampilan '
@@ -148,7 +160,7 @@ TEXTS = {
             ]),
             ('b', 'Bila tidak berefek di perangkat non-ColorOS: pasang build debug dan lihat baris '
                   '`candidate:` / `CONFIG CLOCK:` di log\n'
-                  'untuk memastikan nama sumber / nama kelas jam bilah status perangkat Anda sudah '
+                  'untuk memastikan nama sumber / nama kelas waktu bilah status perangkat Anda sudah '
                   'tercakup oleh aturan pengenalan; jika belum, cukup tambah satu baris aturan.'),
         ],
         'h_feedback': 'Umpan Balik',

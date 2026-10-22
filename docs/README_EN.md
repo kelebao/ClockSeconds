@@ -10,7 +10,7 @@
 
 Show **seconds** in the status bar time, toggle with a single tap, and keep the **hour tens digit in red**.<br>No vendor-private classes involved. Verified on ColorOS 15, and designed to cover Xiaomi, OnePlus, Honor, vivo and other major vendors.
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@ Show **seconds** in the status bar time, toggle with a single tap, and keep the 
 |------|------|
 | Seconds | The status bar time shows seconds (`HH:mm:ss` / `h:mm:ss a`, follows the system 12/24-hour setting) |
 | Tap to toggle | **Tap** the status bar time to toggle seconds on/off; double-tap gesture also available |
-| Red hour digit | The hour **tens digit** is colored red (the `1` in `13`, the `0` in `05`); minutes and seconds keep the system color. Single-digit hours (e.g. `9:45`) have no tens digit and stay untouched. Effective on all vendors |
+| Hour color | The hour **tens digit** color is **customizable** (8-color palette) or **disabled** to restore the system color; single-digit hours (e.g. `9:45`) have no tens digit and stay untouched. Effective on all vendors |
+| Long-press preview | **Long-press** the status bar time to pop up a **frosted-glass floating window** showing **network time** in real time; draggable, resizable via the ◣ handle (bottom-left), tap the time to reveal **close** (✕ top-right) / **resize** buttons; text size auto-adapts to the window |
+| Network time | The settings page compares your clock against **network standard time** in real time; tap **Sync** to turn on system automatic time setting when the drift is large |
+| No adb needed | Settings are written to `Settings.Secure` when permitted; without `WRITE_SECURE_SETTINGS` the module automatically falls back to a broadcast handled by SystemUI — **no adb grant required** |
 | UI languages | The app UI is localized into **21 languages** (follows the system language automatically): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistence | State is stored in `Settings.Secure`, shared across processes, survives SystemUI restarts |
 | Compatibility | Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box on other rooted vendors such as Xiaomi / Honor / Redmi. No vendor-private classes, so LSPosed safe mode will not be triggered. Minimum Android 10 |

@@ -10,7 +10,7 @@
 
 Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, và giữ **hàng chục của giờ luôn màu đỏ**.<br>Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo và các hãng lớn khác.
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@ Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng
 |------|------|
 | Hiển thị giây | Thời gian thanh trạng thái hiển thị đến giây (`HH:mm:ss` / `h:mm:ss a`, theo cài đặt 12/24 giờ của hệ thống) |
 | Chạm để bật/tắt | **Chạm** vào thời gian thanh trạng thái để bật/tắt hiển thị giây; cũng có thể đổi thành **nhấn đúp** trong trang cài đặt |
-| Chữ số giờ màu đỏ | **Hàng chục của giờ** được tô màu đỏ (chữ `1` trong `13`, chữ `0` trong `05`); phút và giây giữ nguyên màu hệ thống. Giờ một chữ số (ví dụ `9:45`) không có hàng chục nên không bị đổi. Có hiệu lực trên mọi nhà sản xuất |
+| Màu chữ số giờ | Màu **hàng chục của giờ** có thể **tùy chỉnh** (8 màu) hoặc **tắt** để trở lại màu hệ thống; giờ một chữ số (ví dụ `9:45`) không có hàng chục nên không bị đổi. Có hiệu lực trên mọi nhà sản xuất |
+| Xem trước khi nhấn giữ | **Nhấn giữ** thời gian thanh trạng thái để hiện **cửa sổ nổi mờ** hiển thị **giờ mạng** thời gian thực; kéo để di chuyển, kéo ◣ góc dưới trái để đổi kích thước, nhấn vào thời gian để hiện nút **đóng** (✕ góc phải) / **kéo giãn**; cỡ chữ tự theo cửa sổ |
+| Giờ mạng | Trang cài đặt so sánh đồng hồ với **giờ chuẩn mạng** theo thời gian thực; nếu lệch lớn hãy nhấn **Đồng bộ** để bật tự động đặt giờ hệ thống |
+| Không cần adb | Cài đặt ghi vào `Settings.Secure`; nếu không có quyền `WRITE_SECURE_SETTINGS`, module tự chuyển sang broadcast do SystemUI xử lý — **không cần cấp quyền adb** |
 | Ngôn ngữ giao diện | Giao diện ứng dụng đã hỗ trợ **21 ngôn ngữ** (tự động theo ngôn ngữ hệ thống): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Lưu trữ bền vững | Trạng thái lưu trong `Settings.Secure`, dùng chung giữa các tiến trình, giữ nguyên sau khi khởi động lại SystemUI |
 | Phạm vi tương thích | Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay trên các hãng đã root khác như Xiaomi / Honor / Redmi. Không dùng lớp私有 của hãng nên không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10 |

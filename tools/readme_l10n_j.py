@@ -3,9 +3,9 @@
 
 TEXTS = {
     'de': {
-        'title': 'Sekundenanzeige (Clock Seconds)',
+        'title': 'Sekundenanzeige（Show Seconds in Time）',
         'tagline': (
-            'Zeigt **Sekunden** in der Statusleisten-Uhr an, Umschalten mit einmaligem Tippen, '
+            'Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippen, '
             'und die **Zehnerstelle der Stunde bleibt rot**.<br>'
             'Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit '
             'ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo und '
@@ -16,13 +16,26 @@ TEXTS = {
         'th_desc': 'Beschreibung',
         'rows': [
             ('Sekundenanzeige',
-             'Die Statusleisten-Uhr zeigt Sekunden an (`HH:mm:ss` / `h:mm:ss a`, folgt der 12/24-Stunden-Einstellung des Systems)'),
+             'Die Statusleisten-Zeit zeigt Sekunden an (`HH:mm:ss` / `h:mm:ss a`, folgt der 12/24-Stunden-Einstellung des Systems)'),
             ('Tippen zum Umschalten',
-             '**Tippen** auf die Statusleisten-Uhr schaltet die Sekundenanzeige ein/aus; im Einstellungsbereich auch **langes Drücken** möglich'),
-            ('Rote Stundenziffer',
-             'Die **Zehnerstelle der Stunde** wird rot gefärbt (die `1` in `13`, die `0` in `05`); '
-             'Minuten und Sekunden behalten die Systemfarbe. Einstellige Stunden (z. B. `9:45`) haben '
+             '**Tippen** auf die Statusleisten-Zeit schaltet die Sekundenanzeige ein/aus; im Einstellungsbereich auch **doppeltes Tippen** möglich'),
+            ('Farbe der Stundenziffer',
+             'Die Farbe der **Zehnerstelle der Stunde** ist **anpassbar** (8-Farben-Palette) oder '
+             '**abschaltbar** für die Systemfarbe; einstellige Stunden (z. B. `9:45`) haben '
              'keine Zehnerstelle und bleiben unberührt. Wirkt bei allen Herstellern'),
+            ('Vorschau bei langem Drücken',
+             '**Langes Drücken** auf die Statusleisten-Zeit öffnet ein **milchglasartiges '
+             'schwebendes Fenster** mit **Netzzeit** in Echtzeit; per Drag verschiebbar, '
+             'über ◣ unten links skalierbar, Tippen auf die Zeit zeigt **Schließen** '
+             '(✕ oben rechts) / **Skalieren**; Schriftgröße passt sich dem Fenster an'),
+            ('Netzzeit',
+             'Die Einstellungsseite vergleicht die Uhr in Echtzeit mit der **Netz-Standardzeit**; '
+             'bei großer Abweichung **Synchronisieren** tippen, um die automatische '
+             'Zeiteinstellung zu aktivieren'),
+            ('Kein adb nötig',
+             'Einstellungen werden in `Settings.Secure` geschrieben; ohne `WRITE_SECURE_SETTINGS` '
+             'weicht das Modul automatisch auf einen Broadcast aus, den SystemUI verarbeitet — '
+             '**keine adb-Freigabe nötig**'),
             ('Oberflächensprachen',
              'Die App-Oberfläche ist in **21 Sprachen** übersetzt (folgt automatisch der Systemsprache): '
              '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
@@ -48,16 +61,16 @@ TEXTS = {
             '`Settings.Secure` zu erteilen:'
         ),
         'note2': (
-            'Ohne die Berechtigung können Sie weiterhin durch Tippen auf die Statusleisten-Uhr '
+            'Ohne die Berechtigung können Sie weiterhin durch Tippen auf die Statusleisten-Zeit '
             'umschalten (diese Aktion läuft im SystemUI-Prozess und hat das Recht von Haus aus).'
         ),
         'h_usage': 'Verwendung',
         'usage': [
-            '**Auf die Statusleisten-Uhr tippen**: schaltet die Sekundenanzeige ein/aus (Standardgeste).',
+            '**Auf die Statusleisten-Zeit tippen**: schaltet die Sekundenanzeige ein/aus (Standardgeste).',
             'Das Umschalten wird über eine globale Touch-Trefferprüfung realisiert und **konfligiert '
             'niemals mit dem „Herunterziehen des Benachrichtigungsfelds“**—— reines Tippen schaltet um, '
             'Wischen zieht das Benachrichtigungsfeld weiterhin herunter. Wer es lieber mag, kann die '
-            'Geste im Einstellungsbereich auf **langes Drücken** umstellen.',
+            'Geste im Einstellungsbereich auf **doppeltes Tippen** umstellen.',
             'Die Einstellungsseite zeigt den aktuellen Zustand, die gewählte Geste und eine Aktualisieren-Schaltfläche.',
         ],
         'h_demo': 'Vorschau',
@@ -71,28 +84,28 @@ TEXTS = {
         ],
         'how': [
             '**Sekunden**: Hook des stabilen `TextView.setText` (after) cached den Rohtext, den das '
-            'System auf die Statusleisten-Uhr schreibt,\n'
+            'System auf die Statusleisten-Zeit schreibt,\n'
             'dann Hook von `TextView.onDraw` (before), um die Anzeige mit `Rohtext:ss` zu '
             'überschreiben, nachdem das System den Text gesetzt hat,\n'
             'angetrieben von einem 1-Sekunden-`Handler`. Die angehängten Sekunden übernehmen die '
-            'eigene Textfarbe der Uhr (gemessen `#ccffffff`).\n'
+            'eigene Textfarbe der Zeit (gemessen `#ccffffff`).\n'
             'Zusätzlich wird die Zehnerstelle der Stunde rot gefärbt (ein roter `ForegroundColorSpan` '
             'auf diesem einen Zeichen), unabhängig davon, ob Sekunden angezeigt werden;\n'
             'Minuten und Sekunden werden nie rot; einstellige Stunden haben keine Zehnerstelle und '
             'bleiben unberührt.',
             '**Umschalten**: Das Benachrichtigungsfeld von ColorOS fängt Touches im Bereich der '
-            'Statusleiste ab, daher erhält der eigene `OnTouchListener` der Uhr keine Ereignisse.\n'
+            'Statusleiste ab, daher erhält der eigene `OnTouchListener` der Zeit keine Ereignisse.\n'
             'Das Modul hookt deshalb das globale `View.dispatchTouchEvent` und dreht den '
             '`Settings.Secure`-Schalter nur, wenn der Druckpunkt\n'
-            'innerhalb der Bildschirmgrenzen der erkannten Uhr liegt und sich fast nicht bewegt '
-            '(Tippen) oder 500 ms gehalten wird (langes Drücken). Das Modul **verbraucht**\n'
+            'innerhalb der Bildschirmgrenzen der erkannten Zeit liegt und sich fast nicht bewegt '
+            '(Tippen) oder innerhalb 350 ms ein zweites Tippen erfolgt (doppeltes Tippen). Das Modul **verbraucht**\n'
             'kein Touch-Ereignis, das Herunterziehen des Benachrichtigungsfelds funktioniert wie gewohnt.',
         ],
         'h_power': 'Hinweise zum Stromverbrauch',
         'power': [
             '**Sekundenanzeige AN**: Das Modul braucht einen 1-Sekunden-Timer für die '
             'Aktualisierungen (die inhärente Kosten des Sekundenanzeigens, rund 60 Neuzeichnungen '
-            'der Uhr pro Minute).',
+            'der Zeit pro Minute).',
             '**Sekundenanzeige AUS**: Das Modul **stoppt diesen Timer sofort** (`stopTicker`)—— '
             'überhaupt keine Aufwachvorgänge pro Sekunde mehr und keine prozessübergreifenden Lesevorgänge.\n'
             'Es kehrt zum ursprünglichen Rhythmus des Systems „einmal pro Minute aktualisieren“ zurück, '
@@ -151,7 +164,7 @@ TEXTS = {
             ]),
             ('b', 'Falls es auf einem Nicht-ColorOS-Gerät nicht wirkt: Installieren Sie den '
                   'Debug-Build und sehen Sie sich die Zeilen `candidate:` / `CONFIG CLOCK:` im Log an,\n'
-                  'um zu prüfen, ob Ressourcenname / Klassenname der Statusleisten-Uhr Ihres Geräts '
+                  'um zu prüfen, ob Ressourcenname / Klassenname der Statusleisten-Zeit Ihres Geräts '
                   'von den Erkennungsregeln abgedeckt sind; wenn nicht, genügt eine zusätzliche Regelzeile.'),
         ],
         'h_feedback': 'Feedback',

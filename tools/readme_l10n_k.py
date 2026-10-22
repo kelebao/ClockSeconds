@@ -3,9 +3,9 @@
 
 TEXTS = {
     'es': {
-        'title': 'Segundos en el reloj (Clock Seconds)',
+        'title': 'Segundos en la hora（Show Seconds in Time）',
         'tagline': (
-            'Muestra los **segundos** en el reloj de la barra de estado, alterna con un solo toque '
+            'Muestra los **segundos** en la hora de la barra de estado, alterna con un solo toque '
             'y mantén la **decena de la hora en rojo**.<br>'
             'Sin clases privadas de fabricante. Verificado en dispositivo real con ColorOS 15; '
             'también cubre Xiaomi, OnePlus, Honor, vivo y otros fabricantes importantes.'
@@ -15,20 +15,32 @@ TEXTS = {
         'th_desc': 'Descripción',
         'rows': [
             ('Segundos',
-             'El reloj de la barra de estado muestra los segundos (`HH:mm:ss` / `h:mm:ss a`, sigue el ajuste de 12/24 horas del sistema)'),
+             'El hora de la barra de estado muestra los segundos (`HH:mm:ss` / `h:mm:ss a`, sigue el ajuste de 12/24 horas del sistema)'),
             ('Tocar para alternar',
-             '**Tocar** el reloj de la barra de estado alterna la visualización de segundos; también se puede cambiar a **pulsación larga** en la página de ajustes'),
-            ('Decena de la hora en rojo',
-             'La **decena de la hora** se tiñe de rojo (el `1` del `13`, el `0` del `05`); '
-             'los minutos y segundos mantienen el color del sistema. Las horas de un solo dígito '
+             '**Tocar** la hora de la barra de estado alterna la visualización de segundos; también se puede cambiar a **doble toque** en la página de ajustes'),
+            ('Color de la decena',
+             'El color de la **decena de la hora** es **personalizable** (paleta de 8 colores) o '
+             '**desactivable** para volver al color del sistema; las horas de un solo dígito '
              '(p. ej. `9:45`) no tienen decena y quedan intactas. Efectivo en todos los fabricantes'),
+            ('Vista al mantener pulsado',
+             '**Mantener pulsada** la hora de la barra de estado abre una **ventana flotante de '
+             'cristal esmerilado** con la **hora de red** en tiempo real; arrastrable, '
+             'redimensionable con ◣ (abajo a la izquierda), toca la hora para ver **cerrar** '
+             '(✕ arriba a la derecha) / **redimensionar**; el tamaño del texto se adapta a la ventana'),
+            ('Hora de red',
+             'La página de ajustes compara tu reloj con la **hora estándar de red** en tiempo real; '
+             'si la desviación es grande, toca **Sincronizar** para activar la hora automática del sistema'),
+            ('Sin adb',
+             'Los ajustes se escriben en `Settings.Secure`; sin el permiso `WRITE_SECURE_SETTINGS` '
+             'el módulo usa automáticamente un broadcast que procesa SystemUI — '
+             '**no se necesita adb**'),
             ('Idiomas de la interfaz',
              'La interfaz de la app está traducida a **21 idiomas** (sigue automáticamente el idioma del sistema): '
              '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
              'Deutsch, Español, Français, Українська, Polski, Português (Brasil), '
              'فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული'),
             ('Persistencia',
-             'El estado se guarda en `Settings.Secure`, se comparte entre procesos y sobrevive a los reinicios de SystemUI'),
+             'El estado es un segundo toque guarda en `Settings.Secure`, se comparte entre procesos y sobrevive a los reinicios de SystemUI'),
             ('Compatibilidad',
              'Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual '
              'en otros fabricantes con root como Xiaomi / Honor / Redmi. Sin clases privadas de '
@@ -39,23 +51,23 @@ TEXTS = {
             'Descarga el APK más reciente de la página [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
             'Activa el módulo en **LSPosed**, ámbito: **Interfaz del sistema (`com.android.systemui`)**',
             'Reinicia el proceso SystemUI o reinicia el dispositivo',
-            'Abre la página de configuración desde el **administrador de LSPosed** (no se crea icono en el lanzador)',
+            'Abre la página de configuración desde el **administrador de LSPosed** (no es un segundo toque crea icono en el lanzador)',
         ],
         'note1': (
             'Requiere root (LSPosed). Para conceder `WRITE_SECURE_SETTINGS` y poder escribir '
             'en `Settings.Secure`:'
         ),
         'note2': (
-            'Sin ella todavía puedes alternar tocando el reloj de la barra de estado '
+            'Sin ella todavía puedes alternar tocando la hora de la barra de estado '
             '(esa acción se ejecuta dentro del proceso SystemUI, que ya tiene el permiso de fábrica).'
         ),
         'h_usage': 'Uso',
         'usage': [
-            '**Toca el reloj de la barra de estado**: alterna la visualización de segundos (gesto predeterminado).',
-            'El alternado se implementa con una prueba de acierto de toque global, así que **nunca '
+            '**Toca la hora de la barra de estado**: alterna la visualización de segundos (gesto predeterminado).',
+            'El alternado es un segundo toque implementa con una prueba de acierto de toque global, así que **nunca '
             'entra en conflicto con "deslizar hacia abajo el panel de notificaciones"**—— un toque puro '
             'alterna, un deslizamiento sigue bajando el panel. Si lo prefieres, puedes cambiar el '
-            'gesto a **pulsación larga** en la página de configuración.',
+            'gesto a **doble toque** en la página de configuración.',
             'La página de configuración muestra el estado actual, el gesto elegido y un botón de actualización.',
         ],
         'h_demo': 'Vista previa',
@@ -69,21 +81,21 @@ TEXTS = {
         ],
         'how': [
             '**Segundos**: engancha el estable `TextView.setText` (after) para cachear el texto '
-            'en crudo que el sistema pone en el reloj de la barra de estado,\n'
+            'en crudo que el sistema pone en la hora de la barra de estado,\n'
             'luego engancha `TextView.onDraw` (before) para sobrescribir la visualización con '
             '`textoCrudo:ss` después de que el sistema lo haya fijado,\n'
             'impulsado por un `Handler` de 1 segundo. Los segundos añadidos heredan el color de '
-            'texto propio del reloj (medido `#ccffffff`).\n'
+            'texto propio de la hora (medido `#ccffffff`).\n'
             'Además, la decena de la hora se tiñe de rojo (un `ForegroundColorSpan` rojo sobre ese '
             'único carácter), tanto si los segundos se muestran como si no;\n'
             'los minutos y los segundos nunca se tiñen; las horas de un solo dígito no tienen decena '
             'y quedan intactas.',
             '**Alternar**: El panel de notificaciones de ColorOS intercepta los toques en la zona '
-            'de la barra de estado, así que el `OnTouchListener` propio del reloj nunca recibe eventos.\n'
+            'de la barra de estado, así que el `OnTouchListener` propio de la hora nunca recibe eventos.\n'
             'Por eso el módulo engancha el `View.dispatchTouchEvent` global y solo gira el '
             'interruptor `Settings.Secure` cuando la pulsación cae dentro\n'
-            'de los límites en pantalla del reloj reconocido y apenas se mueve (toque) o se '
-            'mantiene 500 ms (pulsación larga). El módulo **no consume**\n'
+            'de los límites en pantalla de la hora reconocido y apenas se mueve (toque) o es un segundo toque '
+            'dentro de 350 ms (doble toque). El módulo **no consume**\n'
             'ningún evento de toque, de modo que deslizar hacia abajo el panel de notificaciones '
             'funciona como siempre.',
         ],
@@ -91,14 +103,14 @@ TEXTS = {
         'power': [
             '**Segundos ACTIVADOS**: el módulo necesita un temporizador de 1 segundo para las '
             'actualizaciones (el coste inherente de mostrar segundos, unas 60 repintados del '
-            'reloj por minuto).',
+            'hora por minuto).',
             '**Segundos DESACTIVADOS**: el módulo **detiene ese temporizador de inmediato** '
             '(`stopTicker`)—— sin ningún despertar por segundo y sin lecturas entre procesos.\n'
             'Vuelve al ritmo original del sistema de "actualizar una vez por minuto", así que '
             'desactivar los segundos ahorra energía de verdad.',
-            'El estado se almacena en **caché dentro del proceso** (`sSecondsEnabled`), así que el '
+            'El estado es un segundo toque almacena en **caché dentro del proceso** (`sSecondsEnabled`), así que el '
             'temporizador no lee `Settings.Secure` cada segundo (se evita un IPC por segundo).',
-            'No se construye ningún formateador de tiempo: el módulo reutiliza el texto en crudo '
+            'No es un segundo toque construye ningún formateador de tiempo: el módulo reutiliza el texto en crudo '
             'del sistema y solo añade `:ss`, así que no hay sobrecoste de formateo.',
             'El temporizador solo guarda una **referencia débil** a la vista y solo continúa '
             'mientras la vista esté `isAttachedToWindow()`; cuando la vista se destruye, sale automáticamente.',
@@ -151,7 +163,7 @@ TEXTS = {
             ]),
             ('b', 'Si no surte efecto en un dispositivo que no sea ColorOS: instala la compilación '
                   'debug y mira las líneas `candidate:` / `CONFIG CLOCK:` del registro\n'
-                  'para ver si el nombre de recurso / nombre de clase del reloj de la barra de '
+                  'para ver si el nombre de recurso / nombre de clase de la hora de la barra de '
                   'estado de tu dispositivo está cubierto por las reglas de reconocimiento; '
                   'si no lo está, basta con añadir una línea de regla.'),
         ],

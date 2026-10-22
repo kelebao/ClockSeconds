@@ -10,7 +10,7 @@
 
 Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo e outros grandes fabricantes.
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@ Mostre os **segundos** na hora da barra de status, alterne com um único toque e
 |------|------|
 | Segundos | A hora da barra de status mostra os segundos (`HH:mm:ss` / `h:mm:ss a`, segue a configuração de 12/24 horas do sistema) |
 | Toque para alternar | **Tocar** na hora da barra de status alterna a exibição dos segundos; também é possível usar **toque duplo** na página de configurações |
-| Dezena da hora em vermelho | A **dezena da hora** é pintada de vermelho (o `1` em `13`, o `0` em `05`); minutos e segundos mantêm a cor do sistema. Horas de um único dígito (ex. `9:45`) não têm dezena e ficam intactas. Efetivo em todos os fabricantes |
+| Cor da dezena | A cor da **dezena da hora** é **personalizável** (paleta de 8 cores) ou **desativável** para voltar à cor do sistema; horas de um único dígito (ex. `9:45`) não têm dezena e ficam intactas. Efetivo em todos os fabricantes |
+| Prévia ao pressionar | **Pressionar** a hora da barra de status abre uma **janela flutuante de vidro fosco** com a **hora da rede** em tempo real; arrastável, redimensionável pelo ◣ (canto inferior esquerdo), toque na hora para ver **fechar** (✕ canto superior) / **redimensionar**; o tamanho do texto se adapta à janela |
+| Hora da rede | A página de configurações compara seu relógio com a **hora padrão da rede** em tempo real; se a diferença for grande, toque em **Sincronizar** para ligar o horário automático do sistema |
+| Sem adb | As configurações vão para `Settings.Secure`; sem a permissão `WRITE_SECURE_SETTINGS` o módulo usa um broadcast tratado pelo SystemUI — **não precisa de adb** |
 | Idiomas da interface | A interface do app está traduzida em **21 idiomas** (segue o idioma do sistema automaticamente): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistência | O estado é salvo em `Settings.Secure`, compartilhado entre processos e mantido após reinícios do SystemUI |
 | Compatibilidade | Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto em outros fabricantes com root como Xiaomi / Honor / Redmi. Sem classes privadas de fabricante, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo |

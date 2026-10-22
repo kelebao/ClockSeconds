@@ -3,10 +3,10 @@
 
 TEXTS = {
     'tr': {
-        'title': 'Saniyeli Saat (Clock Seconds)',
+        'title': 'Saniyeli Zaman（Show Seconds in Time）',
         'tagline': (
-            'Durum çubuğu saatinde **saniyeleri** gösterin, tek dokunuşla açıp kapatın, '
-            'saatin **onlar basamağını kırmızı** tutun.<br>'
+            'Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, '
+            'zamanın **onlar basamağını kırmızı** tutun.<br>'
             'Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda '
             'doğrulandı; Xiaomi, OnePlus, Honor, vivo ve diğer büyük üreticileri de kapsar.'
         ),
@@ -15,13 +15,24 @@ TEXTS = {
         'th_desc': 'Açıklama',
         'rows': [
             ('Saniye gösterimi',
-             'Durum çubuğu saati saniyeye kadar gösterilir (`HH:mm:ss` / `h:mm:ss a`, sistemin 12/24 saat ayrını izler)'),
+             'Durum çubuğu zamanı saniyeye kadar gösterilir (`HH:mm:ss` / `h:mm:ss a`, sistemin 12/24 saat ayrını izler)'),
             ('Dokunarak aç/kapat',
-             'Durum çubuğu saatine **dokunmak** saniye gösterimini açar/kapatır; ayarlar sayfasından **uzun basma** hareketine geçilebilir'),
-            ('Kırmızı saat basamağı',
-             'Saatin **onlar basamağı** kırmızıyla gösterilir (`13`deki `1`, `05`teki `0`); '
-             'dakika ve saniye sistem rengini korur. Tek basamaklı saatlerde (ör. `9:45`) onlar basamağı yoktur, '
-             'dokunulmaz. Tüm üreticilerde etkilidir'),
+             'Durum çubuğu zamanına **dokunmak** saniye gösterimini açar/kapatır; ayarlar sayfasından **çift dokunuş** hareketine geçilebilir'),
+            ('Zaman basamağı rengi',
+             'Zamanın **onlar basamağı** rengi **özelleştirilebilir** (8 renk palet) veya '
+             '**kapatılıp** sistem rengine döndürülebilir; tek basamaklı zamanlarda (ör. `9:45`) '
+             'onlar basamağı yoktur, dokunulmaz. Tüm üreticilerde etkilidir'),
+            ('Uzun basma önizleme',
+             'Durum çubuğu zamanını **uzun basınca** **buzlu cam yarı saydam pencere** açılır ve '
+             '**ağ saati** gerçek zamanlı görünür; sürükleyerek taşınır, sol alttaki ◣ ile '
+             'boyutlandırılır, zamana dokununca **kapat** (sağ üst ✕) / **boyutlandır** '
+             'düğmeleri çıkar; yazı boyutu pencereye uyum sağlar'),
+            ('Ağ saati',
+             'Ayarlar sayfası **ağ standart saati** ile farkı gerçek zamanlı karşılaştırır; '
+             'sapma büyükse **Eşitle** ile sistem otomatik saat ayarını açın'),
+            ('adb gerekmez',
+             "Ayarlar `Settings.Secure`'e yazılır; `WRITE_SECURE_SETTINGS` izni yoksa "
+             "otomatik olarak SystemUI'nin işlediği yayına düşer — **adb izni gerekmez**"),
             ('Arayüz dilleri',
              'Uygulama arayüzü **21 dili** destekler (sistem dilini otomatik izler): '
              '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
@@ -46,19 +57,19 @@ TEXTS = {
             '`WRITE_SECURE_SETTINGS` izni verilmelidir:'
         ),
         'note2': (
-            'İzin verilmezse durum çubuğu saatine dokunarak yine de açıp kapatabilirsiniz '
+            'İzin verilmezse durum çubuğu zamanına dokunarak yine de açıp kapatabilirsiniz '
             '(bu işlem SystemUI işlemi içinde çalışır ve zaten izne sahiptir).'
         ),
         'h_usage': 'Kullanım',
         'usage': [
-            '**Durum çubuğu saatine dokunun**: saniye gösterimini açar/kapatır (varsayılan hareket).',
+            '**Durum çubuğu zamanına dokunun**: saniye gösterimini açar/kapatır (varsayılan hareket).',
             'Açma/kapatma genel dokunma isabet testiyle uygulanır, bu yüzden **"bildirim panelini aşağı çekmek" ile '
             'asla çakışmaz** — saf dokunuş açıp kapatır, kaydırma paneli her zamanki gibi aşağı çeker. '
-            'İsterseniz ayarlar sayfasından **uzun basma** hareketine geçebilirsiniz.',
+            'İsterseniz ayarlar sayfasından **çift dokunuş** hareketine geçebilirsiniz.',
             'Ayarlar sayfasında mevcut durumu, hareket ayarını görüntüleyebilir ve yenileyebilirsiniz.',
         ],
         'h_demo': 'Önizleme',
-        'cap_off': 'Saniye kapalı: `15:06` — saatin onlar basamağı `1` kırmızı kalır',
+        'cap_off': 'Saniye kapalı: `15:06` — zamanın onlar basamağı `1` kırmızı kalır',
         'cap_on': 'Saniye açık: `15:06:03` — dakika ve saniye sistem rengini korur',
         'h_how': 'Nasıl Çalışır',
         'how_intro': [
@@ -67,34 +78,34 @@ TEXTS = {
             'LSPosed güvenlik modunu tetiklemez:',
         ],
         'how': [
-            '**Saniyeler**: kararlı `TextView.setText` (after) hook ile sistemin durum çubuğu saatine '
+            '**Saniyeler**: kararlı `TextView.setText` (after) hook ile sistemin durum çubuğu zamanına '
             'yazdığı ham metni önbelleğe alın,\n'
             'ardından `TextView.onDraw` (before) hook ile sistem metni ayarladıktan sonra '
             'görüntüyü `hamMetin:ss` olarak üzerine yazın,\n'
-            '1 saniyelik bir `Handler` ile sürülür. Eklenen saniye saatin kendi metin rengini devralır '
+            '1 saniyelik bir `Handler` ile sürülür. Eklenen saniye zamanın kendi metin rengini devralır '
             '(ölçülen `#ccffffff`).\n'
-            'Ayrıca saatin onlar basamağı kırmızıyla gösterilir (o tek karaktere kırmızı bir '
+            'Ayrıca zamanın onlar basamağı kırmızıyla gösterilir (o tek karaktere kırmızı bir '
             '`ForegroundColorSpan` eklenir), saniye gösterimi açık veya kapalı olduğunda da kırmızı kalır;\n'
-            'dakika ve saniye kırmızı yapılmaz; tek basamaklı saatlerde onlar basamağı yoktur.',
+            'dakika ve saniye kırmızı yapılmaz; tek basamaklı zamanlarda onlar basamağı yoktur.',
             '**Açma/kapatma**: ColorOS bildirim paneli durum çubuğu alanındaki dokunmaları ele geçirir, '
-            'bu yüzden saatin kendi `OnTouchListener` olay almaz.\n'
+            'bu yüzden zamanın kendi `OnTouchListener` olay almaz.\n'
             'Modül bu nedenle genel `View.dispatchTouchEvent` hookunu kullanır ve yalnızca basılan nokta '
-            'tanınan saatin ekran sınırları içine düştüğünde,\n'
-            've neredeyse hiç hareket etmediğinde (dokunma) veya 500 ms basılı tutulduğunda (uzun basma) '
+            'tanınan zamanın ekran sınırları içine düştüğünde,\n'
+            've neredeyse hiç hareket etmediğinde (dokunma) veya 350 ms içinde ikinci dokunuş (çift dokunuş) '
             '`Settings.Secure` anahtarını çevirir. Modül hiçbir dokunma olayını\n'
             '**tüketmez**, böylece bildirim panelini aşağı çekmek her zamanki gibi çalışır.',
         ],
         'h_power': 'Güç Tasarrufu',
         'power': [
             '**Saniye AÇIK**: modülün yenilemeleri sürmek için 1 saniyelik bir zamanlayıcıya '
-            'ihtiyacı vardır (saniye göstermekle gelen kaçınılmaz maliyet, dakikada ~60 saat yeniden çizimi).',
+            'ihtiyacı vardır (saniye göstermekle gelen kaçınılmaz maliyet, dakikada ~60 zaman yeniden çizimi).',
             '**Saniye KAPALI**: modül bu zamanlayıcıyı **anında durdurur** (`stopTicker`) — '
             'saniyede bir uyandırma, işlemler arası okuma hiç kalmaz.\n'
             'Sistemin özgün "dakikada bir yenile" ritmine döner, bu nedenle saniye gösterimini '
             'kapatmak gerçekten daha tasarrufludur.',
             'Durum **işlem içi önbellekte** (`sSecondsEnabled`) tutulur, zamanlayıcı her saniye '
             '`Settings.Secure` okumaz (saniyede bir IPC önlenir).',
-            'Hiçbir saat biçimlendirici oluşturulmaz: modül sistemin ham metnini yeniden kullanır ve '
+            'Hiçbir zaman biçimlendirici oluşturulmaz: modül sistemin ham metnini yeniden kullanır ve '
             'yalnızca `:ss` ekler, bu nedenle biçimlendirici maliyeti sıfırdır.',
             'Zamanlayıcı görünümün yalnızca **zayıf referansını** tutar ve yalnızca görünüm '
             '`isAttachedToWindow()` olduğu sürece devam eder, görünüm yok edildiğinde otomatik çıkar.',
@@ -145,7 +156,7 @@ TEXTS = {
             ]),
             ('b', 'ColorOS olmayan bir cihazda çalışmıyorsa: debug derlemesini kurun ve günlükteki '
                   '`candidate:` / `CONFIG CLOCK:` çıktılarına bakın\n'
-                  'cihazınızın durum çubuğu saati kaynak adının / sınıf adının tanıma kurallarında '
+                  'cihazınızın durum çubuğu zamanı kaynak adının / sınıf adının tanıma kurallarında '
                   'olup olmadığını görün; değilse tek bir kural satırı eklemek yeterlidir.'),
         ],
         'h_feedback': 'Geri Bildirim',

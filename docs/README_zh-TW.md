@@ -10,7 +10,7 @@
 
 讓狀態欄時間顯示**秒**，單擊即切換，小時十位數**常駐標紅**。<br>不依賴任何廠商私有類，已在 ColorOS 15 真機驗證，同時覆蓋小米、一加、榮耀、vivo 等主流廠商。
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@
 |------|------|
 | 狀態欄顯秒 | 狀態欄時間顯示到秒（`HH:mm:ss` / `h:mm:ss a`，跟隨系統 12/24 小時制） |
 | 點擊切換 | **單擊**狀態欄時間即切換顯秒開/關；也可在設定頁改為**雙擊** |
-| 小時紅色 | 把小時「十位數」標紅（如 `13` 的 `1`、`05` 的 `0`），分鐘與秒保持系統原色；單位數小時（如 `9:45`）無十位不標紅。所有廠商機型均生效 |
+| 小時顏色 | 小時「十位數」顏色可**自訂**（8 色色板）或**關閉**恢復系統原色；單位數小時（如 `9:45`）無十位不標紅。所有廠商機型均生效 |
+| 長按預覽浮窗 | **長按**狀態欄時間彈出**毛玻璃半透明浮窗**，即時顯示**網路時間**；可整體拖動、按左下角 ◣ 拉伸縮放、點一下時間浮現按鈕，**關閉**（右上 ✕）/ **拉伸**（左下 ◣）；字級隨視窗大小自适应 |
+| 網路時間對比 | 設定頁即時對比**網路標準時間**與本地時間偏差；偏差較大時點**同步**，即可開啟系統「自動設定時間」向網路校準 |
+| 免 adb 授權 | 所有設定寫入優先走 `Settings.Secure`，無 `WRITE_SECURE_SETTINGS` 權限時自動改走廣播由 SystemUI 代寫——**無需 adb 授權**即可正常使用全部功能 |
 | 介面語言 | 應用內介面已適應 **21 種語言**（跟隨系統語言自動切換）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 持久化 | 狀態存於 `Settings.Secure`，跨程序共享，重啟 SystemUI 後保持 |
 | 適應範圍 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真機驗證；小米 / 榮耀 / 紅米 等有 root 的其它廠商同步生效。不依賴任何廠商私有類，避免觸發 LSPosed 安全模式。最低支援 Android 10 |

@@ -3,9 +3,9 @@
 
 TEXTS = {
     'it': {
-        'title': "Secondi sull'orologio (Clock Seconds)",
+        'title': "Secondi sull'ora（Show Seconds in Time）",
         'tagline': (
-            "Mostra i **secondi** sull'orologio della barra di stato, attiva/disattiva con un "
+            "Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un "
             "solo tocco e tieni la **decina dell'ora sempre rossa**.<br>"
             "Nessuna classe privata del produttore. Verificato su dispositivo reale con "
             "ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo e gli altri grandi produttori."
@@ -15,13 +15,27 @@ TEXTS = {
         'th_desc': 'Descrizione',
         'rows': [
             ('Secondi',
-             "L'orologio della barra di stato mostra i secondi (`HH:mm:ss` / `h:mm:ss a`, segue l'impostazione 12/24 ore del sistema)"),
+             "L'ora della barra di stato mostra i secondi (`HH:mm:ss` / `h:mm:ss a`, segue l'impostazione 12/24 ore del sistema)"),
             ('Tocca per attivare',
-             "**Toccare** l'orologio della barra di stato attiva/disattiva i secondi; nella pagina delle impostazioni è disponibile anche il **tocco prolungato**"),
-            ("Decina dell'ora in rosso",
-             "La **decina dell'ora** viene colorata di rosso (l'`1` in `13`, lo `0` in `05`); "
-             "minuti e secondi mantengono il colore di sistema. Le ore a una sola cifra "
+             "**Toccare** l'ora della barra di stato attiva/disattiva i secondi; nella pagina delle impostazioni è disponibile anche il **doppio tocco**"),
+            ('Colore della decina',
+             "Il colore della **decina dell'ora** è **personalizzabile** (tavolozza di 8 colori) "
+             "o **disattivabile** per tornare al colore di sistema; le ore a una sola cifra "
              "(ad es. `9:45`) non hanno decina e restano intatte. Efficace su tutti i produttori"),
+            ('Anteprima a pressione prolungata',
+             "La **pressione prolungata** sull'ora della barra di stato apre una **finestra "
+             "flottante satinata** con l'**ora di rete** in tempo reale; trascinabile, "
+             "ridimensionabile con ◣ (in basso a sinistra), un tocco sull'ora mostra **chiudi** "
+             "(✕ in alto a destra) / **ridimensiona**; la dimensione del testo si adatta "
+             "alla finestra"),
+            ('Ora di rete',
+             "La pagina delle impostazioni confronta l'orologio con l'**ora standard di rete** "
+             "in tempo reale; se lo scarto è grande tocca **Sincronizza** per attivare l'ora "
+             "automatica di sistema"),
+            ('Senza adb',
+             "Le impostazioni vengono scritte in `Settings.Secure`; senza il permesso "
+             "`WRITE_SECURE_SETTINGS` il modulo passa automaticamente a un broadcast gestito da "
+             "SystemUI — **nessuna autorizzazione adb**"),
             ("Lingue dell'interfaccia",
              "L'interfaccia dell'app è tradotta in **21 lingue** (segue automaticamente la lingua di sistema): "
              "简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, "
@@ -47,16 +61,16 @@ TEXTS = {
             "in `Settings.Secure`:"
         ),
         'note2': (
-            "Senza quel permesso puoi comunque attivare/disattivare toccando l'orologio della "
+            "Senza quel permesso puoi comunque attivare/disattivare toccando l'ora della "
             "barra di stato (quell'azione gira dentro il processo SystemUI, che ha già il diritto per natura)."
         ),
         'h_usage': 'Utilizzo',
         'usage': [
-            "**Tocca l'orologio della barra di stato**: attiva/disattiva i secondi (gesto predefinito).",
+            "**Tocca l'ora della barra di stato**: attiva/disattiva i secondi (gesto predefinito).",
             "L'attivazione è implementata con un test di tocco globale, quindi **non entra mai in "
             "conflitto con il «trascinamento del pannello notifiche»**—— un tocco puro attiva/disattiva, "
             "uno striscia continua a tirare giù il pannello. Se preferisci, puoi passare al gesto "
-            "**tocco prolungato** nella pagina delle impostazioni.",
+            "**doppio tocco** nella pagina delle impostazioni.",
             "La pagina delle impostazioni mostra lo stato attuale, il gesto scelto e un pulsante di aggiornamento.",
         ],
         'h_demo': 'Anteprima',
@@ -70,27 +84,27 @@ TEXTS = {
         ],
         'how': [
             "**Secondi**: aggancia lo stabile `TextView.setText` (after) per mettere in cache il "
-            "testo grezzo che il sistema mette sull'orologio della barra di stato,\n"
+            "testo grezzo che il sistema mette sull'ora della barra di stato,\n"
             "poi aggancia `TextView.onDraw` (before) per sovrascrivere la visualizzazione con "
             "`testoGrezzo:ss` dopo che il sistema ha impostato il testo,\n"
             "pilotato da un `Handler` da 1 secondo. I secondi aggiunti ereditano il colore del "
-            "testo proprio dell'orologio (misurato `#ccffffff`).\n"
+            "testo proprio dell'ora (misurato `#ccffffff`).\n"
             "La decina dell'ora viene inoltre colorata di rosso (un `ForegroundColorSpan` rosso su "
             "quell'unico carattere), sia che i secondi siano mostrati sia che non lo siano;\n"
             "minuti e secondi non sono mai rossi; le ore a una sola cifra non hanno decina e restano intatte.",
             "**Attivazione**: il pannello notifiche di ColorOS intercetta i tocchi nell'area della "
-            "barra di stato, quindi l'`OnTouchListener` proprio dell'orologio non riceve mai eventi.\n"
+            "barra di stato, quindi l'`OnTouchListener` proprio dell'ora non riceve mai eventi.\n"
             "Il modulo aggancia perciò il `View.dispatchTouchEvent` globale e capovolge "
             "l'interruttore `Settings.Secure` solo quando la pressione cade dentro\n"
-            "i limiti su schermo dell'orologio riconosciuto e non si muove quasi (tocco) oppure "
-            "viene tenuta per 500 ms (tocco prolungato). Il modulo **non consuma**\n"
+            "i limiti su schermo dell'ora riconosciuto e non si muove quasi (tocco) oppure "
+            "è un secondo tocco entro 350 ms (doppio tocco). Il modulo **non consuma**\n"
             "nessun evento di tocco, quindi il trascinamento del pannello notifiche funziona come al solito.",
         ],
         'h_power': "Nota sul risparmio energetico",
         'power': [
             "**Secondi ATTIVI**: il modulo ha bisogno di un timer da 1 secondo per pilotare gli "
             "aggiornamenti (il costo insito nel mostrare i secondi, circa 60 ridisegni "
-            "dell'orologio al minuto).",
+            "dell'ora al minuto).",
             "**Secondi DISATTIVI**: il modulo **ferma subito quel timer** (`stopTicker`)—— "
             "nessun risveglio ogni secondo e nessuna lettura tra processi.\n"
             "Torna al ritmo originale del sistema «aggiorna una volta al minuto», quindi "
@@ -150,7 +164,7 @@ TEXTS = {
             ]),
             ('b', 'Se non ha effetto su un dispositivo non ColorOS: installa la build debug '
                   'e guarda le righe `candidate:` / `CONFIG CLOCK:` nel log\n'
-                  "per vedere se il nome della risorsa / il nome della classe dell'orologio della "
+                  "per vedere se il nome della risorsa / il nome della classe dell'ora della "
                   "barra di stato del tuo dispositivo è coperto dalle regole di riconoscimento; "
                   "se non lo è, basta una riga di regola in più."),
         ],

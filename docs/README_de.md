@@ -10,7 +10,7 @@
 
 Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippen, und die **Zehnerstelle der Stunde bleibt rot**.<br>Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo und andere große Hersteller ab.
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@ Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippe
 |------|------|
 | Sekundenanzeige | Die Statusleisten-Zeit zeigt Sekunden an (`HH:mm:ss` / `h:mm:ss a`, folgt der 12/24-Stunden-Einstellung des Systems) |
 | Tippen zum Umschalten | **Tippen** auf die Statusleisten-Zeit schaltet die Sekundenanzeige ein/aus; im Einstellungsbereich auch **doppeltes Tippen** möglich |
-| Rote Stundenziffer | Die **Zehnerstelle der Stunde** wird rot gefärbt (die `1` in `13`, die `0` in `05`); Minuten und Sekunden behalten die Systemfarbe. Einstellige Stunden (z. B. `9:45`) haben keine Zehnerstelle und bleiben unberührt. Wirkt bei allen Herstellern |
+| Farbe der Stundenziffer | Die Farbe der **Zehnerstelle der Stunde** ist **anpassbar** (8-Farben-Palette) oder **abschaltbar** für die Systemfarbe; einstellige Stunden (z. B. `9:45`) haben keine Zehnerstelle und bleiben unberührt. Wirkt bei allen Herstellern |
+| Vorschau bei langem Drücken | **Langes Drücken** auf die Statusleisten-Zeit öffnet ein **milchglasartiges schwebendes Fenster** mit **Netzzeit** in Echtzeit; per Drag verschiebbar, über ◣ unten links skalierbar, Tippen auf die Zeit zeigt **Schließen** (✕ oben rechts) / **Skalieren**; Schriftgröße passt sich dem Fenster an |
+| Netzzeit | Die Einstellungsseite vergleicht die Uhr in Echtzeit mit der **Netz-Standardzeit**; bei großer Abweichung **Synchronisieren** tippen, um die automatische Zeiteinstellung zu aktivieren |
+| Kein adb nötig | Einstellungen werden in `Settings.Secure` geschrieben; ohne `WRITE_SECURE_SETTINGS` weicht das Modul automatisch auf einen Broadcast aus, den SystemUI verarbeitet — **keine adb-Freigabe nötig** |
 | Oberflächensprachen | Die App-Oberfläche ist in **21 Sprachen** übersetzt (folgt automatisch der Systemsprache): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistenz | Der Zustand liegt in `Settings.Secure`, ist prozessübergreifend gemeinsam genutzt und überlebt SystemUI-Neustarts |
 | Kompatibilität | Auf ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) auf echtem Gerät verifiziert; funktioniert auch auf anderen gerooteten Herstellern wie Xiaomi / Honor / Redmi. Keine herstellereigenen privaten Klassen, daher wird der LSPosed-Sicherheitsmodus nicht ausgelöst. Mindestens Android 10 |

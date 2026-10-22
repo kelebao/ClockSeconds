@@ -3,9 +3,9 @@
 
 TEXTS = {
     'vi': {
-        'title': 'Hiển thị giây (Clock Seconds)',
+        'title': 'Hiển thị giây（Show Seconds in Time）',
         'tagline': (
-            'Hiển thị **giây** trên đồng hồ thanh trạng thái, bật/tắt bằng một lần chạm, '
+            'Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, '
             'và giữ **hàng chục của giờ luôn màu đỏ**.<br>'
             'Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật '
             'ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo và các hãng lớn khác.'
@@ -15,13 +15,24 @@ TEXTS = {
         'th_desc': 'Mô tả',
         'rows': [
             ('Hiển thị giây',
-             'Đồng hồ thanh trạng thái hiển thị đến giây (`HH:mm:ss` / `h:mm:ss a`, theo cài đặt 12/24 giờ của hệ thống)'),
+             'Thời gian thanh trạng thái hiển thị đến giây (`HH:mm:ss` / `h:mm:ss a`, theo cài đặt 12/24 giờ của hệ thống)'),
             ('Chạm để bật/tắt',
-             '**Chạm** vào đồng hồ thanh trạng thái để bật/tắt hiển thị giây; cũng có thể đổi thành **nhấn giữ** trong trang cài đặt'),
-            ('Chữ số giờ màu đỏ',
-             '**Hàng chục của giờ** được tô màu đỏ (chữ `1` trong `13`, chữ `0` trong `05`); '
-             'phút và giây giữ nguyên màu hệ thống. Giờ một chữ số (ví dụ `9:45`) không có hàng chục nên không bị đổi. '
+             '**Chạm** vào thời gian thanh trạng thái để bật/tắt hiển thị giây; cũng có thể đổi thành **nhấn đúp** trong trang cài đặt'),
+            ('Màu chữ số giờ',
+             'Màu **hàng chục của giờ** có thể **tùy chỉnh** (8 màu) hoặc **tắt** để trở lại màu '
+             'hệ thống; giờ một chữ số (ví dụ `9:45`) không có hàng chục nên không bị đổi. '
              'Có hiệu lực trên mọi nhà sản xuất'),
+            ('Xem trước khi nhấn giữ',
+             '**Nhấn giữ** thời gian thanh trạng thái để hiện **cửa sổ nổi mờ** hiển thị '
+             '**giờ mạng** thời gian thực; kéo để di chuyển, kéo ◣ góc dưới trái để đổi kích thước, '
+             'nhấn vào thời gian để hiện nút **đóng** (✕ góc phải) / **kéo giãn**; '
+             'cỡ chữ tự theo cửa sổ'),
+            ('Giờ mạng',
+             'Trang cài đặt so sánh đồng hồ với **giờ chuẩn mạng** theo thời gian thực; '
+             'nếu lệch lớn hãy nhấn **Đồng bộ** để bật tự động đặt giờ hệ thống'),
+            ('Không cần adb',
+             'Cài đặt ghi vào `Settings.Secure`; nếu không có quyền `WRITE_SECURE_SETTINGS`, '
+             'module tự chuyển sang broadcast do SystemUI xử lý — **không cần cấp quyền adb**'),
             ('Ngôn ngữ giao diện',
              'Giao diện ứng dụng đã hỗ trợ **21 ngôn ngữ** (tự động theo ngôn ngữ hệ thống): '
              '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
@@ -46,15 +57,15 @@ TEXTS = {
             '`WRITE_SECURE_SETTINGS`:'
         ),
         'note2': (
-            'Khi chưa cấp quyền vẫn có thể bật/tắt bằng cách chạm vào đồng hồ thanh trạng thái '
+            'Khi chưa cấp quyền vẫn có thể bật/tắt bằng cách chạm vào thời gian thanh trạng thái '
             '(thao tác này chạy bên trong tiến trình SystemUI, vốn đã có quyền sẵn).'
         ),
         'h_usage': 'Cách dùng',
         'usage': [
-            '**Chạm vào đồng hồ thanh trạng thái**: bật/tắt hiển thị giây (cử chỉ mặc định).',
+            '**Chạm vào thời gian thanh trạng thái**: bật/tắt hiển thị giây (cử chỉ mặc định).',
             'Việc bật/tắt được thực hiện bằng phép kiểm tra chạm toàn cục, nên **không bao giờ xung đột '
             'với "kéo xuống thanh thông báo"** — chạm thuần túy thì bật/tắt, vuốt vẫn kéo thanh thông báo '
-            'như thường. Nếu quen hơn, bạn có thể đổi cử chỉ thành **nhấn giữ** trong trang cài đặt.',
+            'như thường. Nếu quen hơn, bạn có thể đổi cử chỉ thành **nhấn đúp** trong trang cài đặt.',
             'Trang cài đặt cho xem trạng thái hiện tại, cử chỉ đang dùng và làm mới trạng thái.',
         ],
         'h_demo': 'Xem trước',
@@ -68,26 +79,26 @@ TEXTS = {
         ],
         'how': [
             '**Hiển thị giây**: hook `TextView.setText` (after) ổn định để lưu văn bản gốc mà hệ thống '
-            'đặt lên đồng hồ thanh trạng thái,\n'
+            'đặt lên thời gian thanh trạng thái,\n'
             'sau đó hook `TextView.onDraw` (before) để ghi đè hiển thị thành `văn bản gốc:ss` '
             'ngay sau khi hệ thống đã đặt xong văn bản,\n'
-            'với `Handler` chu kỳ 1 giây điều khiển. Giây được thêm vào giữ nguyên màu chữ của đồng hồ '
+            'với `Handler` chu kỳ 1 giây điều khiển. Giây được thêm vào giữ nguyên màu chữ của thời gian '
             'hệ thống (đo thực tế là `#ccffffff`).\n'
             'Đồng thời tô đỏ "hàng chục của giờ" (thêm một đoạn `ForegroundColorSpan` màu đỏ cho ký tự đó), '
             'dù bật hay tắt hiển thị giây đều giữ màu đỏ;\n'
             'phút và giây không bị tô đỏ; giờ một chữ số không có hàng chục nên không bị đổi.',
             '**Bật/tắt**: Bảng điều khiển thông báo của ColorOS chặn sự kiện chạm ở vùng thanh trạng thái, '
-            'nên `OnTouchListener` của chính đồng hồ không nhận được sự kiện.\n'
+            'nên `OnTouchListener` của chính thời gian không nhận được sự kiện.\n'
             'Vì vậy module chuyển sang hook `View.dispatchTouchEvent` toàn cục, chỉ lật công tắc '
             '`Settings.Secure` khi điểm nhấn rơi trong biên màn hình\n'
-            'của đồng hồ đã nhận diện và gần như không dịch chuyển (chạm) hoặc được giữ 500ms (nhấn giữ). '
+            'của thời gian đã nhận diện và gần như không dịch chuyển (chạm) hoặc là lần chạm thứ hai trong 350ms (nhấn đúp). '
             'Module **không tiêu thụ**\n'
             'bất kỳ sự kiện chạm nào, nên việc kéo xuống thanh thông báo vẫn như thường.',
         ],
         'h_power': 'Giải thích về tiết kiệm điện',
         'power': [
             '**Khi bật hiển thị giây**: module cần bộ đếm thời gian chu kỳ 1 giây để làm mới '
-            '(đây là chi phí cố hữu của việc "hiện giây", khoảng 60 lần vẽ lại đồng hồ mỗi phút).',
+            '(đây là chi phí cố hữu của việc "hiện giây", khoảng 60 lần vẽ lại thời gian mỗi phút).',
             '**Khi tắt hiển thị giây**: module **dừng ngay bộ đếm thời gian đó** (`stopTicker`), '
             'không còn bất kỳ lần đánh thức mỗi giây, cũng không còn đọc liên tiến trình,\n'
             'trở về nhịp "làm mới mỗi phút một lần" vốn có của hệ thống, nên tắt hiển thị giây '
@@ -144,7 +155,7 @@ TEXTS = {
             ]),
             ('b', 'Nếu không có tác dụng trên máy không phải ColorOS: cài bản debug xem log ở dòng '
                   '`candidate:` / `CONFIG CLOCK:`,\n'
-                  'xác nhận tên tài nguyên / tên lớp của đồng hồ thanh trạng thái trên máy đó có nằm '
+                  'xác nhận tên tài nguyên / tên lớp của thời gian thanh trạng thái trên máy đó có nằm '
                   'trong quy tắc nhận diện không; nếu không thì chỉ cần bổ sung một dòng quy tắc.'),
         ],
         'h_feedback': 'Phản hồi',

@@ -10,7 +10,7 @@
 
 Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo i innych dużych producentów.
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@ Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzy
 |------|------|
 | Sekundy | Czas paska stanu pokazuje sekundy (`HH:mm:ss` / `h:mm:ss a`, zgodnie z ustawieniem 12/24-godzinnym systemu) |
 | Dotknięcie przełącza | **Dotknięcie** czasu paska stanu przełącza wyświetlanie sekund; na stronie ustawień dostępny jest też gest **podwójnego dotknięcia** |
-| Czerwona dziesiątka godziny | **Dziesiątka godziny** jest kolorowana na czerwono (`1` w `13`, `0` w `05`); minuty i sekundy zachowują kolor systemowy. Godziny jednocyfrowe (np. `9:45`) nie mają dziesiątki i pozostają nietknięte. Działa u wszystkich producentów |
+| Kolor dziesiątki godziny | Kolor **dziesiątki godziny** można **dostosować** (paleta 8 kolorów) lub **wyłączyć**, wracając do koloru systemowego; godziny jednocyfrowe (np. `9:45`) nie mają dziesiątki i pozostają nietknięte. Działa u wszystkich producentów |
+| Podgląd po długim naciśnięciu | **Długie naciśnięcie** czasu paska stanu otwiera **półprzezroczyste matowe okno** z **czasem sieciowym** w czasie rzeczywistym; przeciąganie, zmiana rozmiaru za ◣ (lewy dolny róg), dotknięcie czasu pokazuje **zamknij** (✕ prawy górny) / **rozciągnij**; rozmiar czcionki dopasowuje się do okna |
+| Czas sieciowy | Strona ustawień porównuje zegar z **czasem standardowym sieci** w czasie rzeczywistym; przy dużym rozbieżności dotknij **Synchronizuj**, aby włączyć automatyczne ustawianie czasu |
+| Bez adb | Ustawienia zapisują się w `Settings.Secure`; bez uprawnienia `WRITE_SECURE_SETTINGS` moduł automatycznie przechodzi na broadcast obsługiwany przez SystemUI — **bez uprawnień adb** |
 | Języki interfejsu | Interfejs aplikacji jest przetłumaczony na **21 języków** (automatycznie podąża za językiem systemu): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Trwałość | Stan zapisywany jest w `Settings.Secure`, współdzielony między procesami i przetrwa restarty SystemUI |
 | Zgodność | Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi. Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. Minimum Android 10 |

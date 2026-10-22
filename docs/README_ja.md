@@ -10,7 +10,7 @@
 
 ステータスバーの時刻に**秒**を表示。ワンタップで切り替え、時の十の位は**常に赤**。<br>ベンダー固有クラスには一切依存せず、ColorOS 15 の実機で検証済み。Xiaomi・OnePlus・Honor・vivo など主要メーカーにも対応。
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@
 |------|------|
 | 秒表示 | ステータスバーの時刻が秒まで表示（`HH:mm:ss` / `h:mm:ss a`、システムの 12/24 時間制に追随） |
 | タップで切替 | ステータスバーの時刻を**タップ**するだけで秒表示の ON/OFF を切替。設定ページで**ダブルタップ**にも変更可能 |
-| 時の桁を赤に | 時の「十の位」を赤くします（`13` の `1`、`05` の `0`）。分と秒はシステム本来の色のまま。一桁の時（`9:45` など）は十の位がないため非対象。全メーカーで有効 |
+| 時の桁の色 | 時の「十の位」の色は**カスタマイズ可能**（8 色パレット）または**オフ**でシステム本来の色に戻せます。一桁の時（`9:45` など）は十の位がないため非対象。全メーカーで有効 |
+| 長押しプレビュー | **長押し**でステータスバーの時刻から**すりガラス風の浮動ウィンドウ**が開き、**ネットワーク時刻**をリアルタイム表示。ドラッグで移動、左下 ◣ でリサイズ、時刻をタップすると**閉じる**（右上 ✕）/ **リサイズ**（左下 ◣）ボタンが表示されます。文字サイズはウィンドウに自動追従 |
+| ネットワーク時刻 | 設定ページで**ネットワーク標準時刻**との偏差をリアルタイム比較。偏差が大きい場合は**同期**をタップするとシステムの「時刻自動設定」がオンになります |
+| adb 不要 | 設定は `Settings.Secure` へ書き込み。`WRITE_SECURE_SETTINGS` がない場合は自動的にブロードキャストにフォールバックし SystemUI が代行——**adb 承認は不要**です |
 | UI 言語 | アプリ UI は **21 言語**に対応（システム言語に自動追従）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 永続化 | 状態は `Settings.Secure` に保存。プロセス間で共有され、SystemUI 再起動後も維持 |
 | 対応範囲 | ColorOS 15 / 16 / 17（OPPO / OnePlus / realme）は実機検証済み。Xiaomi / Honor / Redmi など root 取得済みの他メーカーでもそのまま動作。ベンダー固有クラスに依存しないため LSPosed セーフモードは誘発しません。最低 Android 10 |

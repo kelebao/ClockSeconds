@@ -3,9 +3,9 @@
 
 TEXTS = {
     'pl': {
-        'title': 'Sekundy w zegarze (Clock Seconds)',
+        'title': 'Sekundy w czasie（Show Seconds in Time）',
         'tagline': (
-            'Pokaż **sekundy** na zegarze paska stanu, przełączaj jednym dotknięciem '
+            'Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem '
             'i trzymaj **dziesiątkę godziny na czerwono**.<br>'
             'Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu '
             'z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo i innych dużych producentów.'
@@ -15,13 +15,26 @@ TEXTS = {
         'th_desc': 'Opis',
         'rows': [
             ('Sekundy',
-             'Zegar paska stanu pokazuje sekundy (`HH:mm:ss` / `h:mm:ss a`, zgodnie z ustawieniem 12/24-godzinnym systemu)'),
+             'Czas paska stanu pokazuje sekundy (`HH:mm:ss` / `h:mm:ss a`, zgodnie z ustawieniem 12/24-godzinnym systemu)'),
             ('Dotknięcie przełącza',
-             '**Dotknięcie** zegara paska stanu przełącza wyświetlanie sekund; na stronie ustawień dostępny jest też gest **długiego naciśnięcia**'),
-            ('Czerwona dziesiątka godziny',
-             '**Dziesiątka godziny** jest kolorowana na czerwono (`1` w `13`, `0` w `05`); '
-             'minuty i sekundy zachowują kolor systemowy. Godziny jednocyfrowe (np. `9:45`) '
+             '**Dotknięcie** czasu paska stanu przełącza wyświetlanie sekund; na stronie ustawień dostępny jest też gest **podwójnego dotknięcia**'),
+            ('Kolor dziesiątki godziny',
+             'Kolor **dziesiątki godziny** można **dostosować** (paleta 8 kolorów) lub '
+             '**wyłączyć**, wracając do koloru systemowego; godziny jednocyfrowe (np. `9:45`) '
              'nie mają dziesiątki i pozostają nietknięte. Działa u wszystkich producentów'),
+            ('Podgląd po długim naciśnięciu',
+             '**Długie naciśnięcie** czasu paska stanu otwiera **półprzezroczyste matowe okno** '
+             'z **czasem sieciowym** w czasie rzeczywistym; przeciąganie, zmiana rozmiaru za ◣ '
+             '(lewy dolny róg), dotknięcie czasu pokazuje **zamknij** (✕ prawy górny) / '
+             '**rozciągnij**; rozmiar czcionki dopasowuje się do okna'),
+            ('Czas sieciowy',
+             'Strona ustawień porównuje zegar z **czasem standardowym sieci** w czasie '
+             'rzeczywistym; przy dużym rozbieżności dotknij **Synchronizuj**, aby włączyć '
+             'automatyczne ustawianie czasu'),
+            ('Bez adb',
+             'Ustawienia zapisują się w `Settings.Secure`; bez uprawnienia '
+             '`WRITE_SECURE_SETTINGS` moduł automatycznie przechodzi na broadcast obsługiwany '
+             'przez SystemUI — **bez uprawnień adb**'),
             ('Języki interfejsu',
              'Interfejs aplikacji jest przetłumaczony na **21 języków** (automatycznie podąża za językiem systemu): '
              '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
@@ -47,15 +60,15 @@ TEXTS = {
             'w `Settings.Secure`:'
         ),
         'note2': (
-            'Bez niego nadal możesz przełączać, dotykając zegara paska stanu '
+            'Bez niego nadal możesz przełączać, dotykając czasu paska stanu '
             '(ta akcja działa wewnątrz procesu SystemUI, który z natury ma uprawnienie).'
         ),
         'h_usage': 'Użytkowanie',
         'usage': [
-            '**Dotknij zegara paska stanu**: przełącza wyświetlanie sekund (gest domyślny).',
+            '**Dotknij czasu paska stanu**: przełącza wyświetlanie sekund (gest domyślny).',
             'Przełączanie realizowane jest przez globalne trafienie dotyku, więc **nigdy nie '
             'koliduje z „zejściem panelu powiadomień”**—— czyste dotknięcie przełącza, przeciągnięcie '
-            'nadal rozwija panel. Jeśli wolisz, możesz zmienić gest na **długie naciśnięcie** '
+            'nadal rozwija panel. Jeśli wolisz, możesz zmienić gest na **podwójne dotknięcie** '
             'na stronie ustawień.',
             'Strona ustawień pokazuje aktualny stan, wybrany gest i przycisk odświeżenia.',
         ],
@@ -70,27 +83,27 @@ TEXTS = {
         ],
         'how': [
             '**Sekundy**: hak stabilnego `TextView.setText` (after) buforuje surowy tekst, który '
-            'system kładzie na zegar paska stanu,\n'
+            'system kładzie na czas paska stanu,\n'
             'potem hak `TextView.onDraw` (before) nadpisuje wyświetlanie wartością `surowyTekst:ss` '
             'po tym, jak system ustawił tekst,\n'
             'napędzany `Handler`em 1-sekundowym. Doklejone sekundy przejmują własny kolor tekstu '
-            'zegara (zmierzony `#ccffffff`).\n'
+            'czasu (zmierzony `#ccffffff`).\n'
             'Dodatkowo dziesiątka godziny jest kolorowana na czerwono (czerwony `ForegroundColorSpan` '
             'na tym jednym znaku), niezależnie od tego, czy sekundy są wyświetlane;\n'
             'minuty i sekundy nigdy nie są czerwone; godziny jednocyfrowe nie mają dziesiątki '
             'i pozostają nietknięte.',
             '**Przełączanie**: panel powiadomień ColorOS przechwytuje dotyki w obszarze paska '
-            'stanu, więc własny `OnTouchListener` zegara nigdy nie otrzymuje zdarzeń.\n'
+            'stanu, więc własny `OnTouchListener` czasu nigdy nie otrzymuje zdarzeń.\n'
             'Moduł dlatego hakuje globalny `View.dispatchTouchEvent` i przewraca przełącznik '
             '`Settings.Secure` tylko wtedy, gdy naciśnięcie trafia\n'
-            'w granice rozpoznanego zegara na ekranie i prawie się nie przesuwa (dotknięcie) albo '
-            'jest trzymane 500 ms (długie naciśnięcie). Moduł **nie zużywa**\n'
+            'w granice rozpoznanego czasu na ekranie i prawie się nie przesuwa (dotknięcie) albo '
+            'jest drugie dotknięcie w ciągu 350 ms (podwójne dotknięcie). Moduł **nie zużywa**\n'
             'żadnego zdarzenia dotyku, więc przeciąganie panelu powiadomień działa jak zwykle.',
         ],
         'h_power': 'Uwaga o oszczędności energii',
         'power': [
             '**Sekundy WŁĄCZONE**: moduł potrzebuje 1-sekundowego licznika do napędzania '
-            'odświeżania (nieodłączny koszt pokazywania sekund, około 60 przemalowań zegara na minutę).',
+            'odświeżania (nieodłączny koszt pokazywania sekund, około 60 przemalowań czasu na minutę).',
             '**Sekundy WYŁĄCZONE**: moduł **natychmiast zatrzymuje ten licznik** (`stopTicker`)—— '
             'żadnych budzeń co sekundę i żadnych odczytów międzyprocesowych.\n'
             'Wraca do pierwotnego rytmu systemu „odświeżaj raz na minutę”, więc wyłączenie sekund '
@@ -149,7 +162,7 @@ TEXTS = {
             ]),
             ('b', 'Jeśli nie działa na urządzeniu innym niż ColorOS: zainstaluj build debug '
                   'i spójrz na linie `candidate:` / `CONFIG CLOCK:` w logu,\n'
-                  'aby sprawdzić, czy nazwa zasobu / nazwa klasy zegara paska stanu twojego '
+                  'aby sprawdzić, czy nazwa zasobu / nazwa klasy czasu paska stanu twojego '
                   'urządzenia jest objęta regułami rozpoznawania; jeśli nie, wystarczy dodać '
                   'jedną linię reguły.'),
         ],

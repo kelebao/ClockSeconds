@@ -10,7 +10,7 @@
 
 상태 표시줄 시간에 **초**를 표시합니다. 한 번 탑으로 전환하고,시간 십의 자리는 **항상 빨강**.<br>제조사私有 클래스에 전혀 의존하지 않으며 ColorOS 15 실기기에서 검증되었습니다.샤오미·원플러스·아너·vivo 등 주요 제조사도 지원합니다.
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@
 |------|------|
 | 초 표시 | 상태 표시줄 시간가 초까지 표시（`HH:mm:ss` / `h:mm:ss a`, 시스템 12/24시간제 따름） |
 | 탭하여 전환 | 상태 표시줄 시간를 **탭**하기만 하면 초 표시 켜기/끄기 전환. 설정 페이지에서 **두 번 탭**로 변경 가능 |
-| 빨간 시간 자릿수 | 시간의 「십의 자릿수」를 빨간색으로 표시（`13`의 `1`, `05`의 `0`）.분과 초는 시스템 원래 색상을 유지. 한 자릿수 시간（`9:45` 등）은 십의 자리가 없어 미적용. 모든 제조사에서 유효 |
+| 시간 자릿수 색상 | 시간의 「십의 자릿수」 색상을 **사용자 지정**（8색 팔레트）하거나 **끄고** 시스템 원래 색상으로 되돌릴 수 있습니다. 한 자릿수 시간（`9:45` 등）은 십의 자리가 없어 미적용. 모든 제조사에서 유효 |
+| 길게 누르기 미리보기 | 상태 표시줄 시간을 **길게 누르면** **반투명 프로스트 글라스 플로팅 창**이 뜨며 **네트워크 시간**이 실시간으로 표시됩니다. 드래그로 이동, 왼쪽 하단 ◣ 로 크기 조절, 시간을 탭하면 **닫기**(오른쪽 위 ✕) / **크기 조절** 버튼이 나타납니다. 글자 크기는 창 크기에 맞춰 자동 조절 |
+| 네트워크 시간 | 설정 페이지에서 **네트워크 표준 시간**과의 오차를 실시간 비교. 오차가 크면 **동기화** 를 탭해 시스템 자동 시간 설정을 켜세요 |
+| adb 불필요 | 설정은 `Settings.Secure` 에 저장. `WRITE_SECURE_SETTINGS` 권한이 없으면 브로드캐스트로 자동 전환되어 SystemUI 가 대신 처리 — **adb 인증 불필요** |
 | UI 언어 | 앱 UI가 **21개 언어**를 지원（시스템 언어 자동 전환）: 简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 영속성 | 상태는 `Settings.Secure`에 저장. 프로세스 간 공유되며 SystemUI 재시작 후에도 유지 |
 | 지원 범위 | ColorOS 15 / 16 / 17（OPPO / 원플러스 / 리얼미） 실기기 검증 완료. 샤오미 / 아너 / 레드미 등 루팅된 다른 제조사에서도 그대로 동작. 제조사私有 클래스에 의존하지 않아 LSPosed 안전 모드가 발동하지 않음. 최소 Android 10 |

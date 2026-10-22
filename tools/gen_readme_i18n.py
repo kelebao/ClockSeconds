@@ -71,7 +71,7 @@ RAW = 'https://raw.githubusercontent.com/kelebao/ClockSeconds/main/'
 
 # Badges are wrapped in links so they are clickable:/n#   version -> Releases, lsposed -> module repo, stars -> stargazers, license -> LICENSE
 BADGES = (
-    '[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)]({repo}/releases/latest)\n'
+    '[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)]({repo}/releases/latest)\n'
     '![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)\n'
     '[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)]({mod}/releases)\n'
     '![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)\n'

@@ -10,7 +10,7 @@
 
 Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, zamanın **onlar basamağını kırmızı** tutun.<br>Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda doğrulandı; Xiaomi, OnePlus, Honor, vivo ve diğer büyük üreticileri de kapsar.
 
-[![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -27,7 +27,10 @@ Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapat�
 |------|------|
 | Saniye gösterimi | Durum çubuğu zamanı saniyeye kadar gösterilir (`HH:mm:ss` / `h:mm:ss a`, sistemin 12/24 saat ayrını izler) |
 | Dokunarak aç/kapat | Durum çubuğu zamanına **dokunmak** saniye gösterimini açar/kapatır; ayarlar sayfasından **çift dokunuş** hareketine geçilebilir |
-| Kırmızı zaman basamağı | Zamanın **onlar basamağı** kırmızıyla gösterilir (`13`deki `1`, `05`teki `0`); dakika ve saniye sistem rengini korur. Tek basamaklı zamanlarda (ör. `9:45`) onlar basamağı yoktur, dokunulmaz. Tüm üreticilerde etkilidir |
+| Zaman basamağı rengi | Zamanın **onlar basamağı** rengi **özelleştirilebilir** (8 renk palet) veya **kapatılıp** sistem rengine döndürülebilir; tek basamaklı zamanlarda (ör. `9:45`) onlar basamağı yoktur, dokunulmaz. Tüm üreticilerde etkilidir |
+| Uzun basma önizleme | Durum çubuğu zamanını **uzun basınca** **buzlu cam yarı saydam pencere** açılır ve **ağ saati** gerçek zamanlı görünür; sürükleyerek taşınır, sol alttaki ◣ ile boyutlandırılır, zamana dokununca **kapat** (sağ üst ✕) / **boyutlandır** düğmeleri çıkar; yazı boyutu pencereye uyum sağlar |
+| Ağ saati | Ayarlar sayfası **ağ standart saati** ile farkı gerçek zamanlı karşılaştırır; sapma büyükse **Eşitle** ile sistem otomatik saat ayarını açın |
+| adb gerekmez | Ayarlar `Settings.Secure`'e yazılır; `WRITE_SECURE_SETTINGS` izni yoksa otomatik olarak SystemUI'nin işlediği yayına düşer — **adb izni gerekmez** |
 | Arayüz dilleri | Uygulama arayüzü **21 dili** destekler (sistem dilini otomatik izler): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Kalıcılık | Durum `Settings.Secure` içinde saklanır, işlemler arası paylaşılır, SystemUI yeniden başlatıldıktan sonra korunur |
 | Uyumluluk | ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; Xiaomi / Honor / Redmi gibi rootlu diğer üreticilerde de olduğu gibi çalışır. Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10 |
