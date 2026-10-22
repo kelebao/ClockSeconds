@@ -61,4 +61,6 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Saat bulunamadı. Önce durum çubuğu saatine dokunun veya SystemUI\'yi yeniden başlatıp tekrar deneyin.</string>
     <string name="settings_rule_current">Şu anki: %1$s</string>
     <string name="settings_rule_builtin">yerleşik</string>
+    <string name="settings_rule_detected_builtin">Durum çubuğu saati tanındı. Yerleşik kurallar aktif — ek kurulum gerekmez.</string>
+    <string name="settings_rule_detected_custom">Durum çubuğu saati tanındı. Yapılandırma kaydedildi. Uygulamak için SystemUI\'yi yeniden başlatın.</string>
 </resources>

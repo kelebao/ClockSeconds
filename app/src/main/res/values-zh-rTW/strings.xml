@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">未偵測到時鐘，請先點按狀態列時間，或重啟 SystemUI 後再試</string>
     <string name="settings_rule_current">目前：%1$s</string>
     <string name="settings_rule_builtin">內建規則</string>
+    <string name="settings_rule_detected_builtin">識別狀態列時間成功，已使用內建規則，無需額外設定</string>
+    <string name="settings_rule_detected_custom">識別狀態列時間成功，已自動設定，重啟 SystemUI 後生效</string>
 </resources>

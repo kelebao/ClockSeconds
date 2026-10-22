@@ -61,4 +61,6 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Aucune horloge trouvée. Touchez d\'abord l\'horloge de la barre d\'état, ou redémarrez SystemUI et réessayez.</string>
     <string name="settings_rule_current">Actuel : %1$s</string>
     <string name="settings_rule_builtin">intégré</string>
+    <string name="settings_rule_detected_builtin">Horloge de la barre d\'état reconnue. Règles intégrées actives — aucune configuration supplémentaire requise.</string>
+    <string name="settings_rule_detected_custom">Horloge de la barre d\'état reconnue. Configuration enregistrée. Redémarrez SystemUI pour appliquer.</string>
 </resources>

@@ -61,4 +61,6 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Keine Uhr gefunden. Tippe zuerst auf die Uhr in der Statusleiste oder starte SystemUI neu und versuche es erneut.</string>
     <string name="settings_rule_current">Aktuell: %1$s</string>
     <string name="settings_rule_builtin">eingebaut</string>
+    <string name="settings_rule_detected_builtin">Statusleisten-Uhr erkannt. Eingebaute Regeln aktiv — keine zusätzliche Einrichtung nötig.</string>
+    <string name="settings_rule_detected_custom">Statusleisten-Uhr erkannt. Konfiguration gespeichert. SystemUI neu starten, um anzuwenden.</string>
 </resources>

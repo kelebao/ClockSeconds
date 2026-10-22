@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">საათი ვერ მოიძებნა. ჯერ შეეხეთ სტატუსის ზოლის საათს ან გადატვირთეთ SystemUI და სცადეთ თავიდან.</string>
     <string name="settings_rule_current">მიმდინარე: %1$s</string>
     <string name="settings_rule_builtin">ჩაშენებული</string>
+    <string name="settings_rule_detected_builtin">სტატუსის ზოლის საათი ამოცნობილია. ჩაშენებული წესები აქტიურია — დამატებითი კონფიგურაცია არ არის საჭირო.</string>
+    <string name="settings_rule_detected_custom">სტატუსის ზოლის საათი ამოცნობილია. კონფიგურაცია შენახულია. გადატვირთეთ SystemUI გამოსაყენებლად.</string>
 </resources>

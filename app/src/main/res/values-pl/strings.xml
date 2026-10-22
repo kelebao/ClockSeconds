@@ -61,4 +61,6 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Nie znaleziono zegara. Najpierw dotknij zegara na pasku stanu lub zrestartuj SystemUI i spróbuj ponownie.</string>
     <string name="settings_rule_current">Obecny: %1$s</string>
     <string name="settings_rule_builtin">wbudowane</string>
+    <string name="settings_rule_detected_builtin">Rozpoznano zegar na pasku stanu. Reguły wbudowane aktywne — nie wymaga dodatkowej konfiguracji.</string>
+    <string name="settings_rule_detected_custom">Rozpoznano zegar na pasku stanu. Konfiguracja zapisana. Zrestartuj SystemUI, aby zastosować.</string>
 </resources>

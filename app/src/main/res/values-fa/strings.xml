@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">ساعت پیدا نشد. ابتدا روی ساعت نوار وضعیت ضربه بزنید یا SystemUI را راه‌اندازی مجدد کنید و دوباره تلاش نمایید.</string>
     <string name="settings_rule_current">فعلی: %1$s</string>
     <string name="settings_rule_builtin">داخلی</string>
+    <string name="settings_rule_detected_builtin">ساعت نوار وضعیت شناسایی شد. قوانین داخلی فعال — نیازی به تنظیم اضافی نیست.</string>
+    <string name="settings_rule_detected_custom">ساعت نوار وضعیت شناسایی شد. تنظیمات ذخیره شد. برای اعمال SystemUI را راه‌اندازی مجدد کنید.</string>
 </resources>

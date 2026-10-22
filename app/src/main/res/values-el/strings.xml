@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">Δεν βρέθηκε ρολόι. Πατήστε πρώτα το ρολόι της γραμμής κατάστασης ή επανεκκινήστε το SystemUI και δοκιμάστε ξανά.</string>
     <string name="settings_rule_current">Τρέχον: %1$s</string>
     <string name="settings_rule_builtin">ενσωματωμένος</string>
+    <string name="settings_rule_detected_builtin">Το ρολόι της γραμμής κατάστασης αναγνωρίστηκε. Ενσωματωμένοι κανόνες ενεργοί — δεν απαιτείται επιπλέον ρύθμιση.</string>
+    <string name="settings_rule_detected_custom">Το ρολόι της γραμμής κατάστασης αναγνωρίστηκε. Η ρύθμιση αποθηκεύτηκε. Επανεκκινήστε το SystemUI για εφαρμογή.</string>
 </resources>

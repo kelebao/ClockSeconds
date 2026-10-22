@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">Часы не найдены. Сначала нажмите на часы в строке состояния или перезапустите SystemUI и повторите.</string>
     <string name="settings_rule_current">Текущее: %1$s</string>
     <string name="settings_rule_builtin">встроенные</string>
+    <string name="settings_rule_detected_builtin">Часы в строке состояния распознаны. Встроенные правила активны — дополнительная настройка не требуется.</string>
+    <string name="settings_rule_detected_custom">Часы в строке состояния распознаны. Настройка сохранена. Перезапустите SystemUI для применения.</string>
 </resources>

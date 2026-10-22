@@ -61,4 +61,6 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">No clock found. Tap the status-bar clock first, or restart SystemUI and retry.</string>
     <string name="settings_rule_current">Current: %1$s</string>
     <string name="settings_rule_builtin">built-in</string>
+    <string name="settings_rule_detected_builtin">Status-bar clock recognized. Built-in rules active — no extra setup needed.</string>
+    <string name="settings_rule_detected_custom">Status-bar clock recognized. Config saved. Restart SystemUI to apply.</string>
 </resources>

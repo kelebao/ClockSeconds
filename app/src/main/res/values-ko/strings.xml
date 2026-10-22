@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">시계를 찾지 못했습니다. 먼저 상태표시줄 시계를 탭한 후, 또는 SystemUI를 재시작하고 다시 시도하세요.</string>
     <string name="settings_rule_current">현재: %1$s</string>
     <string name="settings_rule_builtin">내장 규칙</string>
+    <string name="settings_rule_detected_builtin">상태표시줄 시계 인식 성공. 내장 규칙 사용 중 — 추가 설정 불필요.</string>
+    <string name="settings_rule_detected_custom">상태표시줄 시계 인식 성공. 설정이 저장되었습니다. SystemUI 재시작 후 적용됩니다.</string>
 </resources>

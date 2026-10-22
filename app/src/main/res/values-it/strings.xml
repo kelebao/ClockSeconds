@@ -61,4 +61,6 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Orologio non trovato. Tocca prima l\'orologio della barra di stato, oppure riavvia SystemUI e riprova.</string>
     <string name="settings_rule_current">Attuale: %1$s</string>
     <string name="settings_rule_builtin">integrato</string>
+    <string name="settings_rule_detected_builtin">Orologio della barra di stato riconosciuto. Regole integrate attive — nessuna configurazione aggiuntiva necessaria.</string>
+    <string name="settings_rule_detected_custom">Orologio della barra di stato riconosciuto. Configurazione salvata. Riavvia SystemUI per applicare.</string>
 </resources>

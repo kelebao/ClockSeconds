@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">未检测到时钟，请先点按状态栏时间，或重启 SystemUI 后再试</string>
     <string name="settings_rule_current">当前：%1$s</string>
     <string name="settings_rule_builtin">内置规则</string>
+    <string name="settings_rule_detected_builtin">识别状态栏时间成功，已使用内置规则，无需额外设置</string>
+    <string name="settings_rule_detected_custom">识别状态栏时间成功，已自动配置，重启 SystemUI 后生效</string>
 </resources>

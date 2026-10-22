@@ -576,15 +576,21 @@ public final class ModuleSettingsActivity extends Activity {
                 public void onReceive(android.content.Context ctx, Intent intent) {
                     mDetecting.set(false);
                     String detected = intent.getStringExtra(ClockSecondsConfig.EXTRA_DETECTED_RULE);
+                    boolean builtin = intent.getBooleanExtra(
+                            ClockSecondsConfig.EXTRA_DETECTED_BUILTIN, false);
                     unregisterDetectReceiver();
                     refreshRuleSummary();
                     if (detected == null || detected.isEmpty()) {
                         Toast.makeText(ModuleSettingsActivity.this,
                                 R.string.settings_rule_detect_fail, Toast.LENGTH_LONG).show();
-                    } else {
+                    } else if (builtin) {
+                        // 内置规则已识别：立即生效，无需重启。
                         Toast.makeText(ModuleSettingsActivity.this,
-                                getString(R.string.settings_rule_detected, detected),
-                                Toast.LENGTH_LONG).show();
+                                R.string.settings_rule_detected_builtin, Toast.LENGTH_LONG).show();
+                    } else {
+                        // 自定义识别名已写入：需重启 SystemUI 生效。
+                        Toast.makeText(ModuleSettingsActivity.this,
+                                R.string.settings_rule_detected_custom, Toast.LENGTH_LONG).show();
                     }
                 }
             };

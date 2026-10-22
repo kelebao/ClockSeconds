@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">Годинник не знайдено. Спочатку торкніться годинника у смужці стану або перезапустіть SystemUI і спробуйте знову.</string>
     <string name="settings_rule_current">Поточний: %1$s</string>
     <string name="settings_rule_builtin">вбудовані</string>
+    <string name="settings_rule_detected_builtin">Годинник у смужці стану розпізнано. Вбудовані правила активні — додаткове налаштування не потрібне.</string>
+    <string name="settings_rule_detected_custom">Годинник у смужці стану розпізнано. Налаштування збережено. Перезапустіть SystemUI для застосування.</string>
 </resources>

@@ -61,4 +61,6 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Relógio não encontrado. Toque primeiro no relógio da barra de estado ou reinicie o SystemUI e tente novamente.</string>
     <string name="settings_rule_current">Atual: %1$s</string>
     <string name="settings_rule_builtin">interno</string>
+    <string name="settings_rule_detected_builtin">Relógio da barra de estado reconhecido. Regras internas ativas — não é necessária configuração adicional.</string>
+    <string name="settings_rule_detected_custom">Relógio da barra de estado reconhecido. Configuração salva. Reinicie o SystemUI para aplicar.</string>
 </resources>

@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">لم يتم العثور على الساعة. انقر أولاً على ساعة شريط الحالة، أو أعد تشغيل SystemUI وحاول مرة أخرى.</string>
     <string name="settings_rule_current">الحالي: %1$s</string>
     <string name="settings_rule_builtin">مدمج</string>
+    <string name="settings_rule_detected_builtin">تم التعرف على ساعة شريط الحالة. القواعد المدمجة نشطة — لا حاجة إلى إعداد إضافي.</string>
+    <string name="settings_rule_detected_custom">تم التعرف على ساعة شريط الحالة. تم حفظ الإعدادات. أعد تشغيل SystemUI للتطبيق.</string>
 </resources>

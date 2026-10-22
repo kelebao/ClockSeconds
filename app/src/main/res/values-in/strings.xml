@@ -61,4 +61,6 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Jam tidak ditemukan. Ketuk dulu jam status bar, atau mulai ulang SystemUI lalu coba lagi.</string>
     <string name="settings_rule_current">Saat ini: %1$s</string>
     <string name="settings_rule_builtin">bawaan</string>
+    <string name="settings_rule_detected_builtin">Jam status bar dikenali. Aturan bawaan aktif — tidak perlu pengaturan tambahan.</string>
+    <string name="settings_rule_detected_custom">Jam status bar dikenali. Pengaturan disimpan. Mulai ulang SystemUI untuk menerapkan.</string>
 </resources>

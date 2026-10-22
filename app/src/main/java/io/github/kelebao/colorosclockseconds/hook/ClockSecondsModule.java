@@ -1550,12 +1550,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     refreshClockNow();
                                     reported = best;
                                 }
-                                // 回传结果给设置页（显示检测到的时钟资源名）。
+                                // 回传结果给设置页。
                                 try {
                                     Intent res = new Intent(
                                             ClockSecondsConfig.ACTION_DETECT_CLOCK_RESULT);
                                     res.setPackage(ClockSecondsConfig.MODULE_PACKAGE);
                                     res.putExtra(ClockSecondsConfig.EXTRA_DETECTED_RULE, reported);
+                                    res.putExtra(ClockSecondsConfig.EXTRA_DETECTED_BUILTIN,
+                                            !builtinName.isEmpty());
                                     ctx.sendBroadcast(res);
                                 } catch (Throwable ignored) {
                                     // 回传失败不影响已写入的规则

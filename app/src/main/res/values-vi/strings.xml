@@ -61,4 +61,6 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_rule_detect_fail">Không tìm thấy đồng hồ. Hãy nhấn vào đồng hồ thanh trạng thái trước, hoặc khởi động lại SystemUI rồi thử lại.</string>
     <string name="settings_rule_current">Hiện tại: %1$s</string>
     <string name="settings_rule_builtin">tích hợp</string>
+    <string name="settings_rule_detected_builtin">Đã nhận diện đồng hồ thanh trạng thái. Quy tắc tích hợp đang hoạt động — không cần thiết lập thêm.</string>
+    <string name="settings_rule_detected_custom">Đã nhận diện đồng hồ thanh trạng thái. Đã lưu cấu hình. Khởi động lại SystemUI để áp dụng.</string>
 </resources>

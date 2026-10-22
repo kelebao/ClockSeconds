@@ -103,8 +103,10 @@ public final class ClockSecondsConfig {
     /** SystemUI → 设置页：回传自动检测到的时钟识别名（可能为空串，表示检测失败）。 */
     public static final String ACTION_DETECT_CLOCK_RESULT =
             "io.github.kelebao.colorosclockseconds.action.DETECT_CLOCK_RESULT";
-    /** String extra：检测到的时钟资源名（空 = 检测失败 / 命中内置规则）。 */
+    /** String extra：检测到的时钟资源名（空 = 检测失败）。 */
     public static final String EXTRA_DETECTED_RULE = "detected_rule";
+    /** boolean extra：true = 命中内置规则（无需自定义，立即生效）；false = 写入自定义识别名（需重启 SystemUI）。 */
+    public static final String EXTRA_DETECTED_BUILTIN = "detected_builtin";
 
     /** 设置页 → SystemUI 写入小时颜色。 */
     public static final String ACTION_SET_HOUR_COLOR =

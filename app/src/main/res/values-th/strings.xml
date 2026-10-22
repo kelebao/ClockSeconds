@@ -61,4 +61,6 @@
     <string name="settings_rule_detect_fail">ไม่พบนาฬิกา ลองแตะนาฬิกาแถบสถานะก่อน หรือเริ่ม SystemUI ใหม่แล้วลองอีกครั้ง</string>
     <string name="settings_rule_current">ปัจจุบัน: %1$s</string>
     <string name="settings_rule_builtin">ในตัว</string>
+    <string name="settings_rule_detected_builtin">ตรวจพบนาฬิกาแถบสถานะสำเร็จ ใช้กฎในตัว — ไม่ต้องตั้งค่าเพิ่ม</string>
+    <string name="settings_rule_detected_custom">ตรวจพบนาฬิกาแถบสถานะสำเร็จ บันทึกการตั้งค่าแล้ว เริ่ม SystemUI ใหม่เพื่อใช้งาน</string>
 </resources>
