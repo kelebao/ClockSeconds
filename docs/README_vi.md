@@ -34,6 +34,10 @@ Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng
 | Ngôn ngữ giao diện | Giao diện ứng dụng đã hỗ trợ **21 ngôn ngữ** (tự động theo ngôn ngữ hệ thống): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Lưu trữ bền vững | Trạng thái lưu trong `Settings.Secure`, dùng chung giữa các tiến trình, giữ nguyên sau khi khởi động lại SystemUI |
 | Phạm vi tương thích | Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Không dùng lớp私有 của hãng nên không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10 |
+| Ô vuông nhanh | Thêm ô "Hiện giây" vào bảng thông báo, bật/tắt bằng một chạm |
+| Cải tiến float | Vị trí & kích thước float được **nhớ**; hiển thị **ngày**; **nhấn đúp** thời gian cũng bật/tắt giây |
+| Tiết kiệm pin | Bật tiết kiệm pin thì tạm dừng làm mới từng giây (giây đông cứng), tắt thì phục hồi ngay |
+| Nhận diện cấu hình | Nếu đồng hồ không tự nhận diện, nhập tên tài nguyên (vd clock) trong Cài đặt. Trống = quy tắc mặc định |
 
 ## Cài đặt
 

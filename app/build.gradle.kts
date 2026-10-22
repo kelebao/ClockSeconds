@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.kelebao.colorosclockseconds"
         minSdk = 29
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 8
+        versionName = "1.0.7"
     }
 
     signingConfigs {
@@ -65,4 +65,6 @@ android {
 dependencies {
     // 改用 legacy Xposed API（与 betterclock 一致，已在 ColorOS 15 真机验证不崩溃）
     compileOnly("de.robv.android.xposed:api:82")
+    // 单元测试（纯函数测试，不依赖 Android 运行时）
+    testImplementation("junit:junit:4.13.2")
 }

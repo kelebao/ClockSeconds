@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">Ενεργοποιήθηκε η αυτόματη ώρα — σύντομα θα συγχρονιστεί</string>
     <string name="settings_preview_hint">Συμβουλή: Πατήστε την ώρα της γραμμής κατάστασης (πάνω αριστερά) για εμφάνιση/απόκρυψη δευτερολέπτων</string>
     <string name="settings_float_hint">Παρατεταμένο πάτημα στην ώρα πάνω αριστερά για την αιωρούμενη ώρα</string>
+    <string name="tile_label">Εμφάνιση δευτερολέπτων</string>
+    <string name="settings_rule_title">Όνομα ρολογιού</string>
+    <string name="settings_rule_sum">Αν το ρολόι δεν εντοπίζεται, εισάγετε το όνομα πόρου</string>
+    <string name="settings_rule_set">Ρύθμιση</string>
+    <string name="settings_rule_msg">Αν το ρολόι της γραμμής κατάστασης δεν εντοπίζεται σε άλλη συσκευή, εισάγετε το όνομα πόρου (π.χ. clock). Κενό = ενσωματωμένοι κανόνες. Επανεκκινήστε το SystemUI μετά.</string>
+    <string name="settings_rule_apply">Εφαρμογή</string>
+    <string name="settings_rule_reset">Επαναφορά</string>
+    <string name="settings_rule_applied">Ο κανόνας αποθηκεύτηκε. Επανεκκινήστε το SystemUI.</string>
 </resources>

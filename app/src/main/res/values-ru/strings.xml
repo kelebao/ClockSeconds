@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">Автовремя включено — синхронизация скоро произойдёт</string>
     <string name="settings_preview_hint">Подсказка: нажмите на время в строке состояния (вверху слева), чтобы показать или скрыть секунды</string>
     <string name="settings_float_hint">Долгое нажатие на время вверху слева покажет плавающее время</string>
+    <string name="tile_label">Показывать секунды</string>
+    <string name="settings_rule_title">Имя часов в строке состояния</string>
+    <string name="settings_rule_sum">Если часы не определяются на другом устройстве, введите имя ресурса</string>
+    <string name="settings_rule_set">Настроить</string>
+    <string name="settings_rule_msg">Если часы в строке состояния не определяются на другом устройстве, введите имя ресурса (напр. clock). Пусто — встроенные правила. После изменения перезапустите SystemUI.</string>
+    <string name="settings_rule_apply">Применить</string>
+    <string name="settings_rule_reset">Сбросить</string>
+    <string name="settings_rule_applied">Правило сохранено. Перезапустите SystemUI.</string>
 </resources>

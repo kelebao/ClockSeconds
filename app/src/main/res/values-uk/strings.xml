@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">Авточас увімкнено — синхронізація скоро відбудеться</string>
     <string name="settings_preview_hint">Підказка: торкніться часу в рядку стану (зверху зліва), щоб показати/сховати секунди</string>
     <string name="settings_float_hint">Довге натискання на час зверху зліва покаже плаваючий час</string>
+    <string name="tile_label">Показувати секунди</string>
+    <string name="settings_rule_title">Назва годинника</string>
+    <string name="settings_rule_sum">Якщо годинник не визначається, введіть ім\'я ресурсу</string>
+    <string name="settings_rule_set">Налаштувати</string>
+    <string name="settings_rule_msg">Якщо годинник у смужці стану не визначається на іншому пристрої, введіть ім\'я ресурсу (напр. clock). Порожньо — вбудовані правила. Після зміни перезапустіть SystemUI.</string>
+    <string name="settings_rule_apply">Застосувати</string>
+    <string name="settings_rule_reset">Скинути</string>
+    <string name="settings_rule_applied">Правило збережено. Перезапустіть SystemUI.</string>
 </resources>

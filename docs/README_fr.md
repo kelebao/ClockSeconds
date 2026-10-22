@@ -34,6 +34,10 @@ Affichez les **secondes** sur l'heure de la barre d'état, basculez d'un simple 
 | Langues de l'interface | L'interface de l'application est traduite en **21 langues** (suit automatiquement la langue du système) : 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistance | L'état est stocké dans `Settings.Secure`, partagé entre les processus et conservé après un redémarrage de SystemUI |
 | Compatibilité | Vérifié sur ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) ; fonctionne aussi tel quel sur d'autres fabricants rootés comme Xiaomi / Honor / Redmi / Samsung. Aucune classe privée de fabricant, donc le mode sans échec de LSPosed n'est pas déclenché. Android 10 minimum |
+| Tuile rapide | Ajoutez une tuile "Afficher les secondes" au panneau, basculez d'un tap |
+| Flottant amélioré | Position et taille du flottant **mémorisées**; affiche la **date**; **double-tap** sur l'heure bascule aussi |
+| Économie d'énergie | En mode économie, l'actualisation par seconde se met en pause (secondes figées), reprend à la sortie |
+| Détection configurable | Si l'horloge n'est pas détectée, saisissez son nom de ressource (ex. clock) dans les réglages. Vide = règles intégrées |
 
 ## Installation
 

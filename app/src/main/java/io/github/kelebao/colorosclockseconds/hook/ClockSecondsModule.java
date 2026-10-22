@@ -11,6 +11,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.SpannableStringBuilder;
@@ -116,11 +117,23 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /** 长按弹出的预览浮窗（非空表示正在显示）。 */
     private static View sFloatView;
+    private static WindowManager.LayoutParams sFloatLp;
     private static Runnable sFloatTicker;
     /** 浮窗用的小时颜色缓存（广播更新，避免每秒跨进程读 Secure）。 */
     private static volatile int sFloatHourColor = ClockSecondsConfig.HOUR_COLOR_DEFAULT;
     private static volatile boolean sFloatHourColorEnabled = true;
     private static volatile boolean sFloatColorLoaded;
+
+    /** 自定义状态栏时钟识别名（设置页填写，空 = 内置规则）；广播更新。 */
+    private static volatile String sCustomRule = "";
+    private static volatile boolean sCustomRuleLoaded;
+
+    /** 模块自保护：hook 抛异常计数；短时间过量则自动停用本模块逻辑，避免把 SystemUI 拖崩触发安全模式。 */
+    private static final long SELF_PROTECT_WINDOW_MS = 60_000L;
+    private static final int SELF_PROTECT_MAX_ERRORS = 60;
+    private static volatile boolean sSelfDisabled;
+    private static long sErrorWindowStart;
+    private static int sErrorCount;
 
     /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
     private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
@@ -147,29 +160,34 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         XposedBridge.hookAllMethods(TextView.class, "setText", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
-                if (WRITING_CLOCK.get() || !(param.thisObject instanceof TextView)) {
+                if (sSelfDisabled || WRITING_CLOCK.get()
+                        || !(param.thisObject instanceof TextView)) {
                     return;
                 }
-                TextView view = (TextView) param.thisObject;
-                // 配置写入通道与"是否识别到时钟"解耦：任意 TextView 触发时注册一次，
-                // 这样即使某些厂商的时钟 id 没被识别，设置页改颜色/手势也能写进去。
-                registerConfigReceiver(view.getContext());
-                // 缓存系统原始文本（追加的秒继承系统时钟文字色），供 writeTime 在其后追加秒。
-                if (isStatusBarClock(view) && param.args != null && param.args.length > 0
-                        && param.args[0] instanceof CharSequence) {
-                    BASE_TEXT.put(view, (CharSequence) param.args[0]);
-                }
-                logCandidate(view);
-                if (!isStatusBarClock(view)) {
-                    return;
-                }
-                configureClockView(view);
-                if (sSecondsEnabled) {
-                    installTicker(view);
-                    refreshClock(view);
-                } else {
-                    // 不显秒时也要保持小时十位数红色样式（系统每分钟更新 HH:mm 时拦截标红）。
-                    applyRedToBaseText(view);
+                try {
+                    TextView view = (TextView) param.thisObject;
+                    // 配置写入通道与"是否识别到时钟"解耦：任意 TextView 触发时注册一次，
+                    // 这样即使某些厂商的时钟 id 没被识别，设置页改颜色/手势也能写进去。
+                    registerConfigReceiver(view.getContext());
+                    // 缓存系统原始文本（追加的秒继承系统时钟文字色），供 writeTime 在其后追加秒。
+                    if (isStatusBarClock(view) && param.args != null && param.args.length > 0
+                            && param.args[0] instanceof CharSequence) {
+                        BASE_TEXT.put(view, (CharSequence) param.args[0]);
+                    }
+                    logCandidate(view);
+                    if (!isStatusBarClock(view)) {
+                        return;
+                    }
+                    configureClockView(view);
+                    if (sSecondsEnabled) {
+                        installTicker(view);
+                        refreshClock(view);
+                    } else {
+                        // 不显秒时也要保持小时十位数红色样式（系统每分钟更新 HH:mm 时拦截标红）。
+                        applyRedToBaseText(view);
+                    }
+                } catch (Throwable t) {
+                    noteHookError(t);
                 }
             }
         });
@@ -177,13 +195,18 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         XposedBridge.hookAllMethods(TextView.class, "onDraw", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-                if (WRITING_CLOCK.get() || !(param.thisObject instanceof TextView)) {
+                if (sSelfDisabled || WRITING_CLOCK.get()
+                        || !(param.thisObject instanceof TextView)) {
                     return;
                 }
-                TextView view = (TextView) param.thisObject;
-                // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
-                if (isStatusBarClock(view) && sSecondsEnabled) {
-                    refreshClock(view);
+                try {
+                    TextView view = (TextView) param.thisObject;
+                    // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
+                    if (isStatusBarClock(view) && sSecondsEnabled) {
+                        refreshClock(view);
+                    }
+                } catch (Throwable t) {
+                    noteHookError(t);
                 }
             }
         });
@@ -194,7 +217,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         XposedBridge.hookAllMethods(android.view.View.class, "dispatchTouchEvent", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-                if (sClockView == null || !(param.args != null && param.args.length > 0
+                if (sSelfDisabled || sClockView == null
+                        || !(param.args != null && param.args.length > 0
                         && param.args[0] instanceof MotionEvent)) {
                     return;
                 }
@@ -435,6 +459,20 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT));
 
+                    // 日期行：浮窗底部居中显示当前日期（跟随系统语言）。
+                    final TextView dateTv = new TextView(context);
+                    dateTv.setTextSize(10f);
+                    dateTv.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+                    dateTv.setTextColor(0xB3FFFFFF);
+                    dateTv.setGravity(Gravity.CENTER);
+                    dateTv.setIncludeFontPadding(false);
+                    FrameLayout.LayoutParams dateLp = new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+                    dateLp.bottomMargin = floatDp(context, 4);
+                    box.addView(dateTv, dateLp);
+
                     // 关闭按钮：右上角，默认隐藏。
                     final TextView close = new TextView(context);
                     close.setText("✕");
@@ -466,11 +504,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             Gravity.BOTTOM | Gravity.START);
                     box.addView(resize, resizeLp);
 
-                    // 点击时间：显示 / 隐藏按钮。
+                    // 单击时间：显示 / 隐藏按钮；双击时间：切换状态栏显秒开关。
+                    final long[] lastTap = {0L};
                     tv.setOnClickListener(v -> {
-                        boolean show = close.getVisibility() != View.VISIBLE;
-                        close.setVisibility(show ? View.VISIBLE : View.GONE);
-                        resize.setVisibility(show ? View.VISIBLE : View.GONE);
+                        long now = SystemClock.uptimeMillis();
+                        if (now - lastTap[0] <= 300) {
+                            // 双击：切换状态栏时钟的显秒开关（与点击状态栏时间一致）。
+                            lastTap[0] = 0;
+                            if (sClockView != null) {
+                                toggleSeconds(sClockView);
+                            }
+                        } else {
+                            lastTap[0] = now;
+                            boolean show = close.getVisibility() != View.VISIBLE;
+                            close.setVisibility(show ? View.VISIBLE : View.GONE);
+                            resize.setVisibility(show ? View.VISIBLE : View.GONE);
+                        }
                     });
 
                     final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
@@ -493,6 +542,28 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     } catch (Throwable ignored) {
                         // 不支持模糊时保持半透明
                     }
+                    // 浮窗几何记忆：若用户此前拖动/拉伸保存过位置与尺寸则恢复；否则用默认并自动靠右上角。
+                    final boolean[] restored = {false};
+                    try {
+                        int savedW = ClockSecondsConfig.getFloatW(context.getContentResolver());
+                        int savedH = ClockSecondsConfig.getFloatH(context.getContentResolver());
+                        int savedX = ClockSecondsConfig.getFloatX(context.getContentResolver());
+                        int savedY = ClockSecondsConfig.getFloatY(context.getContentResolver());
+                        int screenW = context.getResources().getDisplayMetrics().widthPixels;
+                        int screenH = context.getResources().getDisplayMetrics().heightPixels;
+                        if (savedW > 0 && savedH > 0 && savedX >= 0 && savedY >= 0
+                                && savedW <= screenW && savedH <= screenH
+                                && savedX + savedW <= screenW && savedY + savedH <= screenH) {
+                            lp.width = savedW;
+                            lp.height = savedH;
+                            lp.x = savedX;
+                            lp.y = savedY;
+                            restored[0] = true;
+                        }
+                    } catch (Throwable ignored) {
+                        restored[0] = false;
+                    }
+                    sFloatLp = lp;
                     box.attach(wm, lp);
                     box.markInteractive(close);
                     box.markInteractive(resize);
@@ -544,7 +615,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     lp.height = newH;
                                     // 文字大小交给 updateFloatText 按窗口宽高自适应。
                                     box.requestLayout();
-                                    updateFloatText(tv, context, offset[0], lp);
+                                    updateFloatText(tv, dateTv, context, offset[0], lp);
                                     try {
                                         wm.updateViewLayout(box, lp);
                                     } catch (Throwable ignored) {
@@ -560,11 +631,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
                     wm.addView(box, lp);
                     sFloatView = box;
-                    updateFloatText(tv, context, offset[0], lp);
-                    // 测量完后把窗口推到右上角（靠右留 12dp）。
+                    updateFloatText(tv, dateTv, context, offset[0], lp);
+                    // 测量完后把窗口推到右上角（靠右留 12dp）；已从记忆恢复位置则跳过。
                     box.post(() -> {
                         try {
                             if (sFloatView != box) {
+                                return;
+                            }
+                            if (restored[0]) {
                                 return;
                             }
                             int screenW = context.getResources()
@@ -593,7 +667,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             sTouchHandler.post(() -> {
                                 if (sFloatView == box) {
                                     offset[0] = drift;
-                                    updateFloatText(tv, context, offset[0], lp);
+                                    updateFloatText(tv, dateTv, context, offset[0], lp);
                                 }
                             });
                         }
@@ -606,7 +680,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             if (sFloatView != box) {
                                 return;
                             }
-                            updateFloatText(tv, context, offset[0], lp);
+                            updateFloatText(tv, dateTv, context, offset[0], lp);
                             sTouchHandler.postDelayed(this, 1000L);
                         }
                     };
@@ -769,7 +843,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 关闭预览浮窗（若有）并停掉刷新。 */
+    /** 关闭预览浮窗（若有）并停掉刷新；同时把最终位置与尺寸记忆下来。 */
     private static void dismissFloatPreview() {
         try {
             if (sTouchHandler != null && sFloatTicker != null) {
@@ -777,6 +851,18 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
             sFloatTicker = null;
             if (sFloatView != null) {
+                try {
+                    // 浮窗关闭前先记忆几何（左上角坐标 + 尺寸），下次长按按记忆恢复。
+                    if (sFloatLp != null && sFloatView.getWidth() > 0
+                            && sFloatView.getHeight() > 0) {
+                        ClockSecondsConfig.setFloatGeometry(
+                                sFloatView.getContext().getContentResolver(),
+                                sFloatLp.x, sFloatLp.y,
+                                sFloatView.getWidth(), sFloatView.getHeight());
+                    }
+                } catch (Throwable ignored) {
+                    // 记忆失败不影响关闭
+                }
                 try {
                     WindowManager wm = (WindowManager) sFloatView.getContext()
                             .getSystemService(Context.WINDOW_SERVICE);
@@ -787,6 +873,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // view 已不在窗口上时静默
                 }
                 sFloatView = null;
+                sFloatLp = null;
             }
         } catch (Throwable ignored) {
             // 关闭失败静默
@@ -800,11 +887,19 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * @param offsetMs 网络 - 系统的偏移（毫秒）
      * @param lp       浮窗窗口参数（取宽高算字号；可为 null）
      */
-    private static void updateFloatText(TextView tv, Context context, long offsetMs,
-                                        WindowManager.LayoutParams lp) {
+    private static void updateFloatText(TextView tv, TextView dateTv, Context context,
+                                        long offsetMs, WindowManager.LayoutParams lp) {
         try {
             long netNow = System.currentTimeMillis() + offsetMs;
             String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
+            if (dateTv != null) {
+                try {
+                    dateTv.setText(new SimpleDateFormat("yyyy-MM-dd EEE",
+                            Locale.getDefault()).format(new Date(netNow)));
+                } catch (Throwable ignored) {
+                    // 日期渲染失败不影响时间
+                }
+            }
             SpannableStringBuilder sb = new SpannableStringBuilder(text);
             // 小时颜色用进程内缓存（设置变更经广播更新），首次读取一次。
             if (!sFloatColorLoaded) {
@@ -883,9 +978,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         try {
             sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver());
+            if (!sCustomRuleLoaded) {
+                sCustomRule = ClockSecondsConfig.getClockRule(context.getContentResolver());
+                sCustomRuleLoaded = true;
+            }
             sStateLoaded = true;
             if (BuildConfig.DEBUG) {
-                XposedBridge.log(LOG_PREFIX + "STATE loaded enabled=" + sSecondsEnabled);
+                XposedBridge.log(LOG_PREFIX + "STATE loaded enabled=" + sSecondsEnabled
+                        + " rule=" + sCustomRule);
             }
         } catch (Throwable ignored) {
             // 读不到就保守保持默认（开启），下次再试
@@ -1105,6 +1205,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
 
             firstDetachedAt = 0L;
+            // 省电模式：暂停秒级刷新（让状态栏秒数冻结在最后一帧），省电结束自动恢复；
+            // 仍保持每秒轮询，以便退出省电的瞬间立即恢复走秒。
+            if (sSecondsEnabled && isPowerSaveMode(view.getContext())) {
+                view.postDelayed(this, 1000L);
+                return;
+            }
             if (sSecondsEnabled) {
                 refreshClock(view);
                 // 对齐到下一秒边界，避免每秒漂移。
@@ -1153,7 +1259,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 || name.contains("clock_text")
                 || className.contains("statusbar.policy.clock")
                 || className.contains("statclock");
-        return clockRelated;
+        if (clockRelated) {
+            return true;
+        }
+        // 用户自定义识别名（其它厂商机型）：资源名包含该串即视为状态栏时钟，但仍排除锁屏 / AOD / 日期。
+        return !sCustomRule.isEmpty() && !excluded && name.contains(sCustomRule);
     }
 
 
@@ -1203,6 +1313,44 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 || vendor.contains("realme") || vendor.contains("oplus");
     }
 
+    /** 是否处于系统省电模式（低电/省电时暂停秒刷新用）。 */
+    private static boolean isPowerSaveMode(Context context) {
+        try {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            return pm != null && Build.VERSION.SDK_INT >= 21 && pm.isPowerSaveMode();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * 模块自保护：记录一次 hook 异常。若在同一时间窗口内异常次数超过阈值，
+     * 自动停用本模块的全部 hook 逻辑（置 {@code sSelfDisabled}），避免把 SystemUI 反复拖崩、
+     * 触发 LSPosed 安全模式。恢复只需重启 SystemUI。
+     */
+    private static void noteHookError(Throwable t) {
+        if (sSelfDisabled) {
+            return;
+        }
+        long now = SystemClock.uptimeMillis();
+        if (now - sErrorWindowStart > SELF_PROTECT_WINDOW_MS) {
+            sErrorWindowStart = now;
+            sErrorCount = 0;
+        }
+        sErrorCount++;
+        if (sErrorCount >= SELF_PROTECT_MAX_ERRORS) {
+            sSelfDisabled = true;
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "SELF-DISABLED after " + sErrorCount
+                        + " hook errors in last " + SELF_PROTECT_WINDOW_MS + "ms: " + t);
+            } else {
+                XposedBridge.log(LOG_PREFIX + "SELF-DISABLED after repeated hook errors");
+            }
+        } else if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "hook error #" + sErrorCount + ": " + t);
+        }
+    }
+
     // ==================================================================
     // 配置写入：设置页（普通应用进程）没有 WRITE_SECURE_SETTINGS，
     // 由 SystemUI 进程（系统应用，天然具备该权限）代写。
@@ -1233,6 +1381,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
                 filter.addAction(ClockSecondsConfig.ACTION_SYNC_TIME);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_NET_OFFSET);
                 BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -1256,6 +1406,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 ClockSecondsConfig.setGesture(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_GESTURE,
                                         ClockSecondsConfig.GESTURE_CLICK));
+                            } else if (ClockSecondsConfig.ACTION_SET_ENABLED.equals(action)) {
+                                // 下拉磁贴 / 设置页：显式设置显秒开关（不再用「翻转」避免两端状态不一致）。
+                                boolean enabled = intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_ENABLED,
+                                        (ClockSecondsConfig.isEnabled(cr) ? 0 : 1)) == 1;
+                                applyEnabledState(cr, enabled);
+                            } else if (ClockSecondsConfig.ACTION_SET_CLOCK_RULE.equals(action)) {
+                                // 自定义状态栏时钟识别名（其它厂商机型）。
+                                String rule = intent.getStringExtra(ClockSecondsConfig.EXTRA_RULE);
+                                sCustomRule = (rule == null ? "" : rule.trim());
+                                ClockSecondsConfig.setClockRule(cr, sCustomRule);
                             } else if (ClockSecondsConfig.ACTION_SYNC_TIME.equals(action)) {
                                 // 应用无权直接改系统时钟（SET_TIME 是系统权限），
                                 // 打开系统「自动设置时间」让系统自己向网络校准。
@@ -1282,6 +1443,34 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 // 注册失败只影响"未用 adb 授权时的设置写入"，不影响显秒与点击切换
             }
         }
+    }
+
+    /**
+     * 由下拉磁贴 / 远程广播设置显秒开关：写入 Secure、更新内存态、立即重绘。
+     * 显式设值（而非翻转），避免磁贴与设置页两端状态不一致。
+     */
+    private static void applyEnabledState(ContentResolver cr, boolean enabled) {
+        ClockSecondsConfig.setEnabled(cr, enabled);
+        sSecondsEnabled = enabled;
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "seconds set -> " + enabled + " (tile/remote)");
+        }
+        TextView clock = sClockView;
+        if (clock != null) {
+            if (enabled) {
+                writeTime(clock);
+                installTicker(clock);
+            } else {
+                stopTicker(clock);
+                writeMinuteOnly(clock);
+            }
+        } else {
+            // 时钟尚未识别：仅更新内存态，下次配置/绘制时自然生效。
+            if (!enabled) {
+                // 关闭时无需续订，已在内存态标记。
+            }
+        }
+        refreshClockNow();
     }
 
     /**

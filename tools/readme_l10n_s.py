@@ -47,7 +47,15 @@ TEXTS = {
              "Verificato su ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); funziona anche così "
              "com'è su altri produttori con root come Xiaomi / Honor / Redmi / Samsung. Nessuna classe "
              "privata del produttore, quindi la modalità provvisoria di LSPosed non scatta. "
-             "Minimo Android 10"),
+             "Minimo Android 10"),            ('Tile rapida',
+             'Aggiungi una tile "Mostra secondi" al pannello, attiva con un tocco'),
+            ('Miglioramenti flottante',
+             "Posizione e dimensione del flottante **memorizzate**; mostra la **data**; **doppio tocco** sull'ora alterna"),
+            ('Risparmio energetico',
+             "Con il risparmio attivo, l'aggiornamento al secondo si mette in pausa (secondi fermi), riprende all'uscita"),
+            ('Rilevamento configurabile',
+             "Se l'orologio non viene rilevato, indica il nome della risorsa (es. clock) nelle Impostazioni. Vuoto = regole integrate"),
+
         ],
         'h_install': 'Installazione',
         'install': [

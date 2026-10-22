@@ -44,7 +44,15 @@ TEXTS = {
             ('Compatibility',
              'Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box '
              'on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. No vendor-private classes, '
-             'so LSPosed safe mode will not be triggered. Minimum Android 10'),
+             'so LSPosed safe mode will not be triggered. Minimum Android 10'),            ('Quick tile',
+             'Add a "Show Seconds" tile to the notification shade to toggle seconds in one tap'),
+            ('Float upgrade',
+             'Float window position & size are **remembered**; it now shows the **date**; **double-tap** the time to also toggle seconds'),
+            ('Power-save aware',
+             'When battery saver is on, per-second refresh pauses (seconds freeze); resumes instantly when off'),
+            ('Configurable detection',
+             'If the clock is not auto-detected on other devices, set its resource name (e.g. clock) in Settings; empty = built-in rules'),
+
         ],
         'h_install': 'Install',
         'install': [

@@ -47,4 +47,12 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_sync_requested">Ora automatica attiva — sincronizzazione a breve</string>
     <string name="settings_preview_hint">Suggerimento: tocca l\'ora della barra di stato (in alto a sinistra) per mostrare/nascondere i secondi</string>
     <string name="settings_float_hint">Premitura prolungata sull\'ora in alto a sinistra per mostrare l\'ora fluttuante</string>
+    <string name="tile_label">Mostra secondi</string>
+    <string name="settings_rule_title">Nome orologio</string>
+    <string name="settings_rule_sum">Se l\'orologio non viene rilevato, inserisci il nome della risorsa</string>
+    <string name="settings_rule_set">Imposta</string>
+    <string name="settings_rule_msg">Se l\'orologio della barra di stato non viene rilevato su altri dispositivi, inserisci il nome della risorsa (es. clock). Vuoto = regole integrate. Riavvia SystemUI dopo.</string>
+    <string name="settings_rule_apply">Applica</string>
+    <string name="settings_rule_reset">Ripristina</string>
+    <string name="settings_rule_applied">Regola salvata. Riavvia SystemUI.</string>
 </resources>

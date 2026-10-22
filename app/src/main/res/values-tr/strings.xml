@@ -47,4 +47,12 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_sync_requested">Otomatik zaman açıldı — kısa süre içinde eşitlenir</string>
     <string name="settings_preview_hint">İpucu: saniyeleri göstermek/gizlemek için durum çubuğu zamanına (sol üst) dokunun</string>
     <string name="settings_float_hint">Sol üstteki zamana uzun basarak kayan saati gösterin</string>
+    <string name="tile_label">Saniye Göster</string>
+    <string name="settings_rule_title">Durum çubuğu saat adı</string>
+    <string name="settings_rule_sum">Saat diğer cihazlarda algılanmazsa kaynak adını girin</string>
+    <string name="settings_rule_set">Ayarla</string>
+    <string name="settings_rule_msg">Saat diğer cihazlarda otomatik algılanmazsa kaynak adını (ör. clock) girin. Boş bırakırsanız yerleşik kurallar kullanılır. Değiştikten sonra SystemUI\'yi yeniden başlatın.</string>
+    <string name="settings_rule_apply">Uygula</string>
+    <string name="settings_rule_reset">Sıfırla</string>
+    <string name="settings_rule_applied">Kural kaydedildi. Uygulamak için SystemUI\'yi yeniden başlatın.</string>
 </resources>

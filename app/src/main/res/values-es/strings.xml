@@ -47,4 +47,12 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_sync_requested">Hora automática activada: se ajustará en breve</string>
     <string name="settings_preview_hint">Sugerencia: toca la hora de la barra de estado (arriba a la izquierda) para mostrar u ocultar segundos</string>
     <string name="settings_float_hint">Mantén pulsada la hora de arriba a la izquierda para mostrar la hora flotante</string>
+    <string name="tile_label">Mostrar segundos</string>
+    <string name="settings_rule_title">Nombre del reloj</string>
+    <string name="settings_rule_sum">Si el reloj no se detecta, introduce su nombre de recurso</string>
+    <string name="settings_rule_set">Configurar</string>
+    <string name="settings_rule_msg">Si el reloj de la barra de estado no se detecta en otros dispositivos, introduce su nombre de recurso (p. ej. clock). Vacío = reglas integradas. Reinicia SystemUI después.</string>
+    <string name="settings_rule_apply">Aplicar</string>
+    <string name="settings_rule_reset">Restablecer</string>
+    <string name="settings_rule_applied">Regla guardada. Reinicia SystemUI.</string>
 </resources>

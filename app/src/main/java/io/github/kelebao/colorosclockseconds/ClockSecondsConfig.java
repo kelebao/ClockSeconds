@@ -2,6 +2,7 @@ package io.github.kelebao.colorosclockseconds;
 
 import android.content.ContentResolver;
 import android.provider.Settings;
+import java.util.Locale;
 
 /**
  * 模块配置与状态读写。
@@ -54,12 +55,39 @@ public final class ClockSecondsConfig {
     public static final String NET_OFFSET_KEY = "coloros_clock_seconds_net_offset";
 
     /**
+     * 浮窗几何记忆（左上角坐标与尺寸），由 SystemUI 内浮窗读写（系统进程天然具备写入权限）。
+     * 缺省值为 -1，表示「未记忆」，浮窗按默认尺寸/位置显示。
+     */
+    public static final String FLOAT_X_KEY = "coloros_clock_seconds_float_x";
+    public static final String FLOAT_Y_KEY = "coloros_clock_seconds_float_y";
+    public static final String FLOAT_W_KEY = "coloros_clock_seconds_float_w";
+    public static final String FLOAT_H_KEY = "coloros_clock_seconds_float_h";
+    /** 浮窗几何记忆缺省值（未记忆）。 */
+    public static final int FLOAT_GEOMETRY_DEFAULT = -1;
+
+    /**
+     * 自定义状态栏时钟资源名（可选）。用户若在设置页填写，则任何资源名「包含」该字符串的
+     * TextView 都视为状态栏时钟（用于其它厂商机型未能被内置规则自动识别的情况）。
+     * 空字符串表示「使用内置规则」。
+     */
+    public static final String CLOCK_RULE_KEY = "coloros_clock_seconds_clock_rule";
+
+    /**
      * 设置页 → SystemUI 的配置广播。
      *
      * <p>设置页运行在普通应用进程，没有 {@code WRITE_SECURE_SETTINGS}；而模块在 SystemUI
      * 进程内天然具备该权限（点击切换显秒就是在这里写的）。所以设置页写入失败时改发广播，
      * 由 SystemUI 内的接收器完成写入——用户无需 adb 授权。</p>
      */
+    public static final String ACTION_SET_ENABLED =
+            "io.github.kelebao.colorosclockseconds.action.SET_ENABLED";
+    /** 设置页 → SystemUI 写入自定义时钟识别名（用于其它厂商机型）。 */
+    public static final String ACTION_SET_CLOCK_RULE =
+            "io.github.kelebao.colorosclockseconds.action.SET_CLOCK_RULE";
+    /** String extra：自定义时钟资源名（空 = 内置规则）。 */
+    public static final String EXTRA_RULE = "rule";
+
+    /** 设置页 → SystemUI 写入小时颜色。 */
     public static final String ACTION_SET_HOUR_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR";
     public static final String ACTION_SET_GESTURE =
@@ -137,5 +165,87 @@ public final class ClockSecondsConfig {
     /** 写入网络时间偏移（毫秒，网络 - 系统）。 */
     public static void setNetOffset(ContentResolver resolver, long offsetMs) {
         Settings.Secure.putLong(resolver, NET_OFFSET_KEY, offsetMs);
+    }
+
+    // ==================================================================
+    // 浮窗几何记忆（SystemUI 进程内读写；普通应用进程读不到也写不进，需经广播）
+    // ==================================================================
+
+    /** 读取浮窗左上角 X（px）。未记忆返回 {@link #FLOAT_GEOMETRY_DEFAULT}。 */
+    public static int getFloatX(ContentResolver resolver) {
+        return Settings.Secure.getInt(resolver, FLOAT_X_KEY, FLOAT_GEOMETRY_DEFAULT);
+    }
+
+    /** 读取浮窗左上角 Y（px）。 */
+    public static int getFloatY(ContentResolver resolver) {
+        return Settings.Secure.getInt(resolver, FLOAT_Y_KEY, FLOAT_GEOMETRY_DEFAULT);
+    }
+
+    /** 读取浮窗宽（px）。 */
+    public static int getFloatW(ContentResolver resolver) {
+        return Settings.Secure.getInt(resolver, FLOAT_W_KEY, FLOAT_GEOMETRY_DEFAULT);
+    }
+
+    /** 读取浮窗高（px）。 */
+    public static int getFloatH(ContentResolver resolver) {
+        return Settings.Secure.getInt(resolver, FLOAT_H_KEY, FLOAT_GEOMETRY_DEFAULT);
+    }
+
+    /** 写入浮窗几何记忆（仅在 SystemUI 进程内调用，具备写入权限）。 */
+    public static void setFloatGeometry(ContentResolver resolver,
+                                        int x, int y, int w, int h) {
+        Settings.Secure.putInt(resolver, FLOAT_X_KEY, x);
+        Settings.Secure.putInt(resolver, FLOAT_Y_KEY, y);
+        Settings.Secure.putInt(resolver, FLOAT_W_KEY, w);
+        Settings.Secure.putInt(resolver, FLOAT_H_KEY, h);
+    }
+
+    /** 清除浮窗几何记忆（恢复默认尺寸/位置）。 */
+    public static void clearFloatGeometry(ContentResolver resolver) {
+        Settings.Secure.putInt(resolver, FLOAT_X_KEY, FLOAT_GEOMETRY_DEFAULT);
+        Settings.Secure.putInt(resolver, FLOAT_Y_KEY, FLOAT_GEOMETRY_DEFAULT);
+        Settings.Secure.putInt(resolver, FLOAT_W_KEY, FLOAT_GEOMETRY_DEFAULT);
+        Settings.Secure.putInt(resolver, FLOAT_H_KEY, FLOAT_GEOMETRY_DEFAULT);
+    }
+
+    // ==================================================================
+    // 自定义时钟识别名（用于其它厂商机型）
+    // ==================================================================
+
+    /** 读取自定义时钟资源名；空字符串表示「使用内置规则」。 */
+    public static String getClockRule(ContentResolver resolver) {
+        String v = Settings.Secure.getString(resolver, CLOCK_RULE_KEY);
+        return v == null ? "" : v;
+    }
+
+    /** 写入自定义时钟资源名（空 = 内置规则）。 */
+    public static void setClockRule(ContentResolver resolver, String rule) {
+        Settings.Secure.putString(resolver, CLOCK_RULE_KEY, rule == null ? "" : rule);
+    }
+
+    // ==================================================================
+    // 纯函数（可单元测试，不依赖 Android 运行时）
+    // ==================================================================
+
+    /** 归一化切换手势：旧版「长按切换」(1) 与任何非法值统一归为单击 (0)。 */
+    public static int normalizeGesture(int gesture) {
+        return (gesture == GESTURE_DOUBLE_TAP) ? GESTURE_DOUBLE_TAP : GESTURE_CLICK;
+    }
+
+    /** 秒数补零后缀：例如 7 → ":07"；越界值按 0 处理。 */
+    public static String secondsSuffix(int second) {
+        int s = second;
+        if (s < 0 || s > 59) {
+            s = 0;
+        }
+        return String.format(Locale.US, ":%02d", s);
+    }
+
+    /** 文本开头是否为「两位数字」小时（用于仅标红十位，如 13 的 1、05 的 0）。 */
+    public static boolean hasTwoDigitHour(CharSequence text) {
+        if (text == null || text.length() < 2) {
+            return false;
+        }
+        return Character.isDigit(text.charAt(0)) && Character.isDigit(text.charAt(1));
     }
 }

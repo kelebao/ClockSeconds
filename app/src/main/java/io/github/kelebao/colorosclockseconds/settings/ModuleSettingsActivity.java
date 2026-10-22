@@ -207,6 +207,7 @@ public final class ModuleSettingsActivity extends Activity {
         buildPreviewCard(root);
         buildStatsRow(root);
         buildColorCard(root);
+        buildAdvancedCard(root);
         buildUpdateCard(root);
         buildAboutCard(root);
         buildPrimaryButton(root);
@@ -438,6 +439,85 @@ public final class ModuleSettingsActivity extends Activity {
                 }
             });
         });
+    }
+
+    private void buildAdvancedCard(LinearLayout root) {
+        LinearLayout card = card();
+        card.setPadding(dp(18), dp(16), dp(18), dp(16));
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView title = new TextView(this);
+        title.setText(R.string.settings_rule_title);
+        title.setTextSize(15f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        texts.addView(title);
+        TextView sub = new TextView(this);
+        sub.setText(R.string.settings_rule_sum);
+        sub.setTextSize(11f);
+        sub.setTextColor(text2());
+        sub.setPadding(0, dp(3), 0, 0);
+        texts.addView(sub);
+        row.addView(texts);
+
+        TextView btn = new TextView(this);
+        btn.setText(R.string.settings_rule_set);
+        btn.setTextSize(12f);
+        btn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        btn.setTextColor(accent());
+        btn.setPadding(dp(12), dp(6), dp(12), dp(6));
+        GradientDrawable btnBg = new GradientDrawable();
+        btnBg.setCornerRadius(dp(999));
+        btnBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
+        btn.setBackground(btnBg);
+        row.addView(btn);
+
+        card.addView(row);
+        btn.setOnClickListener(v -> showRuleDialog());
+        root.addView(card);
+    }
+
+    private void showRuleDialog() {
+        final android.widget.EditText input = new android.widget.EditText(this);
+        input.setSingleLine(true);
+        input.setText(ClockSecondsConfig.getClockRule(getContentResolver()));
+        input.setHint("clock");
+        input.setPadding(dp(8), dp(10), dp(8), dp(10));
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_rule_title)
+                .setMessage(R.string.settings_rule_msg)
+                .setView(input)
+                .setNegativeButton(R.string.settings_rule_reset, (d, w) -> applyRule(""))
+                .setPositiveButton(R.string.settings_rule_apply, (d, w) -> {
+                    String v = input.getText().toString().trim();
+                    applyRule(v);
+                })
+                .show();
+    }
+
+    /** 保存自定义时钟识别名：优先直接写 Secure，无权限改发广播由 SystemUI 代写。 */
+    private void applyRule(String rule) {
+        try {
+            ClockSecondsConfig.setClockRule(getContentResolver(), rule);
+        } catch (SecurityException ignored) {
+            // 无 WRITE_SECURE_SETTINGS：走广播路径
+        }
+        try {
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
+            intent.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            intent.putExtra(ClockSecondsConfig.EXTRA_RULE, rule);
+            sendBroadcast(intent);
+        } catch (Throwable ignored) {
+            // 发送失败不影响本地保存
+        }
+        Toast.makeText(this, R.string.settings_rule_applied, Toast.LENGTH_LONG).show();
     }
 
     private void buildUpdateCard(LinearLayout root) {

@@ -34,6 +34,10 @@ Muestra los **segundos** en la hora de la barra de estado, alterna con un solo t
 | Idiomas de la interfaz | La interfaz de la app está traducida a **21 idiomas** (sigue automáticamente el idioma del sistema): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistencia | El estado es un segundo toque guarda en `Settings.Secure`, se comparte entre procesos y sobrevive a los reinicios de SystemUI |
 | Compatibilidad | Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual en otros fabricantes con root como Xiaomi / Honor / Redmi / Samsung. Sin clases privadas de fabricante, así que no dispara el modo seguro de LSPosed. Mínimo Android 10 |
+| Mosaico rápido | Añade un mosaico "Mostrar segundos" en el panel, alterna con un toque |
+| Mejoras flotante | La posición y tamaño del flotante se **recuerdan**; muestra la **fecha**; **doble toque** en la hora también alterna |
+| Ahorro de batería | Con el ahorro de batería activo, la actualización por segundo se pausa (segundos se congelan), al desactivar se reanuda |
+| Detección configurable | Si el reloj no se detecta, indica su nombre de recurso (p. ej. clock) en Ajustes. Vacío = reglas integradas |
 
 ## Instalación
 

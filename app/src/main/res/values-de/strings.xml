@@ -47,4 +47,12 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_sync_requested">Automatische Zeit aktiviert — wird gleich abgeglichen</string>
     <string name="settings_preview_hint">Tipp: Tippe auf die Statusleistenuhr (oben links), um Sekunden ein-/auszublenden</string>
     <string name="settings_float_hint">Oben links lange auf die Zeit drücken, um die schwebende Zeit anzuzeigen</string>
+    <string name="tile_label">Sekunden anzeigen</string>
+    <string name="settings_rule_title">Statusleisten-Uhrname</string>
+    <string name="settings_rule_sum">Falls die Uhr auf anderen Geräten nicht erkannt wird, Ressourcennamen eingeben</string>
+    <string name="settings_rule_set">Einstellen</string>
+    <string name="settings_rule_msg">Wird die Uhr auf anderen Geräten nicht erkannt, gib den Ressourcennamen (z. B. clock) ein. Leer = eingebaute Regeln. Danach SystemUI neu starten.</string>
+    <string name="settings_rule_apply">Anwenden</string>
+    <string name="settings_rule_reset">Zurücksetzen</string>
+    <string name="settings_rule_applied">Regel gespeichert. SystemUI neu starten.</string>
 </resources>

@@ -34,6 +34,10 @@ Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapat�
 | Arayüz dilleri | Uygulama arayüzü **21 dili** destekler (sistem dilini otomatik izler): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Kalıcılık | Durum `Settings.Secure` içinde saklanır, işlemler arası paylaşılır, SystemUI yeniden başlatıldıktan sonra korunur |
 | Uyumluluk | ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; Xiaomi / Honor / Redmi / Samsung gibi rootlu diğer üreticilerde de olduğu gibi çalışır. Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10 |
+| Hızlı döşeme | Bildirim panelinde "Saniye Göster" döşemesi ekleyin, tek dokunuşla aç/kapat |
+| Kayan pencere | Kayan pencerenin konumu ve boyutu **hatırlanır**; **tarih** gösterilir; zamana **çift dokun** ile saniye aç/kapat |
+| Pil tasarrufu | Tasarruf modu açılınca saniye yenileme durur (saniyeler donar), kapayınca hemen devam eder |
+| Algılama yapılandırılabilir | Saat diğer cihazlarda algılanmazsa ayarlardan kaynak adını (ör. clock) girin. Boş = yerleşik kurallar |
 
 ## Kurulum
 

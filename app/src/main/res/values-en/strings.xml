@@ -47,4 +47,12 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_sync_requested">Auto time enabled — the system will sync shortly</string>
     <string name="settings_preview_hint">Tip: tap the status bar time (top left) to show or hide seconds</string>
     <string name="settings_float_hint">Long-press the top-left time to show the floating time</string>
+    <string name="tile_label">Show Seconds</string>
+    <string name="settings_rule_title">Status-bar clock name</string>
+    <string name="settings_rule_sum">If the clock is not auto-detected on other devices, enter its resource name here</string>
+    <string name="settings_rule_set">Set</string>
+    <string name="settings_rule_msg">If the status-bar clock is not auto-detected on other devices, enter its resource name (e.g. clock). Leave empty to use built-in rules. Restart SystemUI after changing.</string>
+    <string name="settings_rule_apply">Apply</string>
+    <string name="settings_rule_reset">Reset</string>
+    <string name="settings_rule_applied">Rule saved. Restart SystemUI to apply.</string>
 </resources>

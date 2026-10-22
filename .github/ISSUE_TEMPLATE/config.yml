@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用问题 / 安装帮助
+    url: https://github.com/kelebao/ClockSeconds/discussions
+    about: 不确定是不是 bug、或安装/使用上有疑问，优先到 Discussions 提问。
+  - name: 中文交流群（如有）
+    url: https://github.com/kelebao/ClockSeconds#readme
+    about: 见 README 顶部说明。

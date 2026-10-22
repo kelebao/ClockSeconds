@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">เปิดตั้งเวลาอัตโนมัติแล้ว ระบบจะซิงค์ในไม่ช้า</string>
     <string name="settings_preview_hint">เคล็ดลับ: แตะเวลาแถบสถานะ (มุมซ้ายบน) เพื่อแสดง/ซ่อนวินาที</string>
     <string name="settings_float_hint">กดค้างเวลาแถบซ้ายบนเพื่อแสดงเวลาแบบลอย</string>
+    <string name="tile_label">แสดงวินาที</string>
+    <string name="settings_rule_title">ชื่อนาฬิกาแถบสถานะ</string>
+    <string name="settings_rule_sum">หากนาฬิกาไม่ถูกจับคู่โดยอัตโนมัติ ให้ป้อนชื่อทรัพยากร</string>
+    <string name="settings_rule_set">ตั้งค่า</string>
+    <string name="settings_rule_msg">หากนาฬิกาแถบสถานะไม่ถูกจับคู่โดยอัตโนมัติบนอุปกรณ์อื่น ให้ป้อนชื่อทรัพยากร (เช่น clock) หากว่างจะใช้กฎในตัว เริ่ม SystemUI ใหม่หลังเปลี่ยน</string>
+    <string name="settings_rule_apply">ใช้</string>
+    <string name="settings_rule_reset">รีเซ็ต</string>
+    <string name="settings_rule_applied">บันทึกกฎแล้ว เริ่ม SystemUI ใหม่เพื่อใช้</string>
 </resources>

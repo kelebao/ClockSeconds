@@ -34,6 +34,10 @@ Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzy
 | Języki interfejsu | Interfejs aplikacji jest przetłumaczony na **21 języków** (automatycznie podąża za językiem systemu): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Trwałość | Stan zapisywany jest w `Settings.Secure`, współdzielony między procesami i przetrwa restarty SystemUI |
 | Zgodność | Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi / Samsung. Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. Minimum Android 10 |
+| Kafelek | Dodaj kafelek "Pokaż sekundy" do panelu, przełączaj jednym stuknięciem |
+| Ulepszony float | Pozycja i rozmiar okna są **zapamiętywane**; pokazuje **datę**; **podwójne stuknięcie** czasu też przełącza |
+| Oszczędzanie energii | W trybie oszczędzania odświeżanie co sekundę pauzuje (sekundy zamrożone), po wyłączeniu wznawia |
+| Wykrywanie konfigurowalne | Jeśli zegar nie jest wykrywany, wpisz nazwę zasobu (np. clock) w ustawieniach. Puste = reguły wbudowane |
 
 ## Instalacja
 

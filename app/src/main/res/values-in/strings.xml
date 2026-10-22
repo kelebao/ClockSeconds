@@ -47,4 +47,12 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_sync_requested">Waktu otomatis aktif — akan disinkronkan sebentar lagi</string>
     <string name="settings_preview_hint">Tips: ketuk waktu bilah status (kiri atas) untuk menampilkan atau menyembunyikan detik</string>
     <string name="settings_float_hint">Tekan lama waktu kiri atas untuk menampilkan waktu mengambang</string>
+    <string name="tile_label">Tampilkan detik</string>
+    <string name="settings_rule_title">Nama jam status bar</string>
+    <string name="settings_rule_sum">Jika jam tidak terdeteksi, masukkan nama sumber</string>
+    <string name="settings_rule_set">Atur</string>
+    <string name="settings_rule_msg">Jika jam status bar tidak terdeteksi di perangkat lain, masukkan nama sumber (mis. clock). Kosong = aturan bawaan. Mulai ulang SystemUI setelah mengubah.</string>
+    <string name="settings_rule_apply">Terapkan</string>
+    <string name="settings_rule_reset">Atur ulang</string>
+    <string name="settings_rule_applied">Aturan disimpan. Mulai ulang SystemUI.</string>
 </resources>

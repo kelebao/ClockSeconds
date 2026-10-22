@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">ავტომატური დრო ჩართულია — მალე სინქრონდება</string>
     <string name="settings_preview_hint">მინიშნება: დააჭირეთ სტატუს-ზოლის დროს (ზედა მარცხნივ) წამების ჩვენების/დამალვისთვის</string>
     <string name="settings_float_hint">ზედა მარცხნივ დროზე ხანგრძლივი დაჭერა მოძრავ დროს აჩვენებს</string>
+    <string name="tile_label">წამების ჩვენება</string>
+    <string name="settings_rule_title">სტატუსის ზოლის საათის სახელი</string>
+    <string name="settings_rule_sum">თუ საათი არ ჩანს, შეიყვანეთ რესურსის სახელი</string>
+    <string name="settings_rule_set">პარამეტრები</string>
+    <string name="settings_rule_msg">თუ სტატუსის ზოლის საათი სხვა მოწყობილობაზე ავტომატურად არ ჩანს, შეიყვანეთ რესურსის სახელი (მაგ. clock). ცარიელი = ჩაშენებული წესები. ცვლილების შემდეგ გადატვირთეთ SystemUI.</string>
+    <string name="settings_rule_apply">გამოყენება</string>
+    <string name="settings_rule_reset">გასუფთავება</string>
+    <string name="settings_rule_applied">წესი შესრულებულია. გადატვირთეთ SystemUI.</string>
 </resources>

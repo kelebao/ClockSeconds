@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">已開啟自動對時，系統將自動校正</string>
     <string name="settings_preview_hint">提示：點擊狀態欄(左上角)時間即可顯示或關閉秒數</string>
     <string name="settings_float_hint">長按左上角時間可顯示浮動時間</string>
+    <string name="tile_label">時間顯秒</string>
+    <string name="settings_rule_title">狀態列時鐘識別名</string>
+    <string name="settings_rule_sum">其它廠商機型未能自動識別時鐘時，可在此填寫其資源名</string>
+    <string name="settings_rule_set">設定</string>
+    <string name="settings_rule_msg">若其它廠商機型未能自動識別狀態列時鐘，可填寫時鐘控件的資源名（如 clock），留空則恢復內建規則。修改後請重啟 SystemUI。</string>
+    <string name="settings_rule_apply">套用</string>
+    <string name="settings_rule_reset">恢復預設</string>
+    <string name="settings_rule_applied">識別規則已儲存，重啟 SystemUI 後生效</string>
 </resources>

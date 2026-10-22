@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">تم تفعيل الوقت التلقائي — ستتم المزامنة قريباً</string>
     <string name="settings_preview_hint">تلميح: انقر على وقت شريط الحالة (أعلى اليسار) لإظهار أو إخفاء الثواني</string>
     <string name="settings_float_hint">اضغط مطولاً على الوقت في الأعلى يساراً لإظهار الوقت العائم</string>
+    <string name="tile_label">إظهار الثواني</string>
+    <string name="settings_rule_title">اسم ساعة شريط الحالة</string>
+    <string name="settings_rule_sum">إذا لم يتم التعرف على الساعة، أدخل اسم المورد</string>
+    <string name="settings_rule_set">إعداد</string>
+    <string name="settings_rule_msg">إذا لم يتم التعرف على ساعة شريط الحالة في جهاز آخر، أدخل اسم المورد (مثل clock). اتركه فارغاً للقواعد المدمجة. أعد تشغيل SystemUI بعد التغيير.</string>
+    <string name="settings_rule_apply">تطبيق</string>
+    <string name="settings_rule_reset">إعادة تعيين</string>
+    <string name="settings_rule_applied">تم حفظ القاعدة. أعد تشغيل SystemUI.</string>
 </resources>

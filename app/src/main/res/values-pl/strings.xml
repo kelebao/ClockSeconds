@@ -47,4 +47,12 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_sync_requested">Automatyczny czas włączony — wkrótce się zsynchronizuje</string>
     <string name="settings_preview_hint">Wskazówka: dotknij czasu na pasku stanu (lewy górny róg), aby pokazać/ukryć sekundy</string>
     <string name="settings_float_hint">Długie naciśnięcie czasu w lewym górnym rogu pokazuje płynący czas</string>
+    <string name="tile_label">Pokaż sekundy</string>
+    <string name="settings_rule_title">Nazwa zegara</string>
+    <string name="settings_rule_sum">Jeśli zegar nie jest wykrywany, wpisz nazwę zasobu</string>
+    <string name="settings_rule_set">Ustaw</string>
+    <string name="settings_rule_msg">Jeśli zegar na pasku stanu nie jest wykrywany na innych urządzeniach, wpisz nazwę zasobu (np. clock). Puste = reguły wbudowane. Po zmianie zrestartuj SystemUI.</string>
+    <string name="settings_rule_apply">Zastosuj</string>
+    <string name="settings_rule_reset">Zresetuj</string>
+    <string name="settings_rule_applied">Reguła zapisana. Zrestartuj SystemUI.</string>
 </resources>

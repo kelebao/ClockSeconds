@@ -34,6 +34,10 @@ Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan b
 | Bahasa antarmuka | Antarmuka aplikasi diterjemahkan ke **21 bahasa** (otomatis mengikuti bahasa sistem): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistensi | Status disimpan di `Settings.Secure`, dibagi antar proses, dan bertahan setelah SystemUI dimulai ulang |
 | Kompatibilitas | Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Tanpa kelas privat vendor, sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10 |
+| Tile cepat | Tambahkan tile "Tampilkan detik" ke panel, alihkan dengan satu ketuk |
+| Float ditingkatkan | Posisi & ukuran float **diingat**; menampilkan **tanggal**; **ketuk ganda** waktu juga mengalihkan |
+| Sadar hemat baterai | Saat mode hemat aktif, penyegaran per detik dijeda (detik membeku), saat mati langsung dilanjut |
+| Deteksi dapat diatur | Jika jam tidak terdeteksi, masukkan nama sumber (mis. clock) di Pengaturan. Kosong = aturan bawaan |
 
 ## Instalasi
 

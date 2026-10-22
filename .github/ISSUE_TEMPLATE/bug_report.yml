@@ -1,0 +1,77 @@
+name: 问题反馈（Bug Report）
+description: 报告模块运行异常、崩溃或功能不生效。请尽量附上 logcat。
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！填写前请先搜索是否已有同类 issue。本模块仅 hook `com.android.systemui`，
+        请提供真机信息以便定位。
+  - type: input
+    id: device
+    attributes:
+      label: 设备型号
+      description: 例如 一加 Ace 5 Pro / 小米 14 / OPPO Find X7
+      placeholder: 一加 Ace 5 Pro
+    validations:
+      required: true
+  - type: input
+    id: coloros
+    attributes:
+      label: 系统版本（ColorOS / HyperOS / 原生 Android 等）
+      description: 设置 → 关于本机 里的版本号，或系统大版本
+      placeholder: ColorOS 15 (Android 15)
+    validations:
+      required: true
+  - type: input
+    id: lsposed
+    attributes:
+      label: LSPosed / 框架版本
+      description: 例如 LSPosed v1.9.2 (7024)
+      placeholder: LSPosed v1.9.2
+    validations:
+      required: true
+  - type: input
+    id: module_ver
+    attributes:
+      label: 模块版本
+      description: 设置页「关于模块」里显示的版本（versionName）
+      placeholder: 1.0.7
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 问题描述
+      description: 发生了什么？状态栏时间是否显示秒、点击/长按/浮窗/磁贴哪个功能异常？
+      placeholder: 启用模块后状态栏时间没有显示秒数……
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 一步步说明如何触发问题
+      placeholder: |
+        1. 在 LSPosed 勾选 SystemUI 并重启
+        2. 打开状态栏
+        3. 发现……
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+      placeholder: 状态栏时间应显示 HH:mm:ss
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      placeholder: 仍显示 HH:mm，无秒数
+  - type: textarea
+    id: logcat
+    attributes:
+      label: Logcat（可选但强烈建议）
+      description: |
+        过滤 `ClockSeconds` 或 `Xposed` 的日志。可用：
+        `adb logcat | grep -i clockseconds`
+      render: shell

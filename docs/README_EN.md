@@ -34,6 +34,10 @@ Show **seconds** in the status bar time, toggle with a single tap, and keep the 
 | UI languages | The app UI is localized into **21 languages** (follows the system language automatically): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistence | State is stored in `Settings.Secure`, shared across processes, survives SystemUI restarts |
 | Compatibility | Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. No vendor-private classes, so LSPosed safe mode will not be triggered. Minimum Android 10 |
+| Quick tile | Add a "Show Seconds" tile to the notification shade to toggle seconds in one tap |
+| Float upgrade | Float window position & size are **remembered**; it now shows the **date**; **double-tap** the time to also toggle seconds |
+| Power-save aware | When battery saver is on, per-second refresh pauses (seconds freeze); resumes instantly when off |
+| Configurable detection | If the clock is not auto-detected on other devices, set its resource name (e.g. clock) in Settings; empty = built-in rules |
 
 ## Install
 

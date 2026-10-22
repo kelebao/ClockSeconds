@@ -47,4 +47,12 @@
     <string name="settings_sync_requested">已开启自动对时，系统将自动校准</string>
     <string name="settings_preview_hint">提示：点击状态栏(左上角)时间即可显示或关闭秒数</string>
     <string name="settings_float_hint">长按左上角时间可显示浮窗时间</string>
+    <string name="tile_label">时间显秒</string>
+    <string name="settings_rule_title">状态栏时钟识别名</string>
+    <string name="settings_rule_sum">其它厂商机型未能自动识别时钟时，可在此填写其资源名</string>
+    <string name="settings_rule_set">设置</string>
+    <string name="settings_rule_msg">若其它厂商机型未能自动识别状态栏时钟，可填写时钟控件的资源名（如 clock），留空则恢复内置规则。修改后请重启 SystemUI。</string>
+    <string name="settings_rule_apply">应用</string>
+    <string name="settings_rule_reset">恢复默认</string>
+    <string name="settings_rule_applied">识别规则已保存，重启 SystemUI 后生效</string>
 </resources>

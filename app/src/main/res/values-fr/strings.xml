@@ -47,4 +47,12 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_sync_requested">Heure auto activée — synchronisation imminente</string>
     <string name="settings_preview_hint">Astuce : appuyez sur l\'heure de la barre d\'état (en haut à gauche) pour afficher/masquer les secondes</string>
     <string name="settings_float_hint">Appui long sur l\'heure en haut à gauche pour afficher l\'heure flottante</string>
+    <string name="tile_label">Afficher les secondes</string>
+    <string name="settings_rule_title">Nom de l\'horloge</string>
+    <string name="settings_rule_sum">Si l\'horloge n\'est pas détectée, saisissez son nom de ressource</string>
+    <string name="settings_rule_set">Régler</string>
+    <string name="settings_rule_msg">Si l\'horloge de la barre d\'état n\'est pas détectée sur un autre appareil, saisissez son nom de ressource (ex. clock). Vide = règles intégrées. Redémarrez SystemUI après.</string>
+    <string name="settings_rule_apply">Appliquer</string>
+    <string name="settings_rule_reset">Réinitialiser</string>
+    <string name="settings_rule_applied">Règle enregistrée. Redémarrez SystemUI.</string>
 </resources>
