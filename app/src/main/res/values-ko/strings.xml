@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">시계 초 단위 표시</string>
-    <string name="module_description">상태 표시줄 시계에 초를 표시합니다. 시계를 탭하면 초 표시를 켜고 끌 수 있으며, 시간의 십의 자리는 빨간색으로 표시됩니다.</string>
+    <string name="module_name">시간 초 단위 표시</string>
+    <string name="module_description">상태 표시줄 시간에 초를 표시합니다. 시간을 탭하면 초 표시를 켜고 끌 수 있으며, 시간의 십의 자리는 빨간색으로 표시됩니다.</string>
 
-    <string name="settings_title">시계 초 단위 표시</string>
+    <string name="settings_title">시간 초 단위 표시</string>
     <string name="settings_status_title">현재 상태</string>
     <string name="settings_enabled">초 표시: 켜짐</string>
     <string name="settings_disabled">초 표시: 꺼짐</string>
     <string name="settings_gesture_title">초 표시 전환 동작</string>
-    <string name="settings_gesture_click">시계 탭</string>
-    <string name="settings_gesture_long_press">시계 길게 누르기</string>
-    <string name="settings_hint">안내: 설정은 즉시 적용됩니다. 적용되지 않으면 SystemUI 또는 기기를 다시 시작하세요. 탭이 알림 패널 내리기와 충돌하면 길게 누르기를 사용하세요.</string>
+    <string name="settings_gesture_click">시간 탭</string>
+    <string name="settings_gesture_long_press">시간 길게 누르기</string>
+    <string name="settings_hint">안내: 설정은 즉시 적용됩니다. 적용되지 않으면 SystemUI 또는 기기를 다시 시작하세요. 탭이 알림 패널 내리기와 충돌하면 두 번 탭을 사용하세요.</string>
     <string name="settings_refresh">상태 새로고침</string>
     <string name="settings_section_general">일반</string>
     <string name="settings_update_auto">업데이트 자동 확인</string>
@@ -38,12 +38,12 @@
     <string name="settings_write_failed">쓰기 실패: 모듈이 시스템 UI에서 활성화되어 있는지 확인하거나 adb로 WRITE_SECURE_SETTINGS를 부여하세요</string>
     <string name="settings_color_enable">시간 색상 사용</string>
     <string name="settings_color_enable_sum">끄면 시스템 기본 스타일로 돌아갑니다</string>
-    <string name="settings_gesture_hint">상태 표시줄 시계에서 이 동작으로 초 표시를 전환합니다</string>
+    <string name="settings_gesture_hint">상태 표시줄 시간에서 이 동작으로 초 표시를 전환합니다</string>
     <string name="settings_gesture_applied">%1$s(으)로 전환했습니다. 즉시 적용됩니다. 적용되지 않으면 SystemUI를 다시 시작하세요</string>
-    <string name="settings_gesture_double_tap">시계 두 번 탭</string>
+    <string name="settings_gesture_double_tap">시간 두 번 탭</string>
     <string name="settings_network_time">네트워크 시간 %1$s (기기 %2$s)</string>
     <string name="settings_network_time_fail">네트워크 시간을 가져오지 못했습니다. 탭하여 다시 시도</string>
     <string name="settings_sync_time">동기화</string>
     <string name="settings_sync_requested">자동 시간 설정을 켰습니다. 곧 동기화됩니다</string>
-    <string name="settings_preview_hint">팁: 상태 표시줄 시계(왼쪽 위)를 탭하여 초를 표시하거나 숨깁니다</string>
+    <string name="settings_preview_hint">팁: 상태 표시줄 시간(왼쪽 위)을 탭하여 초를 표시하거나 숨깁니다</string>
 </resources>

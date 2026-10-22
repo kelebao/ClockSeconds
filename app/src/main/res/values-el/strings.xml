@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Ρολόι με δευτερόλεπτα</string>
-    <string name="module_description">Εμφανίζει τα δευτερόλεπτα στο ρολόι της γραμμής κατάστασης. Πατήστε το ρολόι για εναλλαγή των δευτερολέπτων· οι δεκάδες της ώρας εμφανίζονται με κόκκινο χρώμα.</string>
+    <string name="module_description">Εμφανίζει τα δευτερόλεπτα στην ώρα της γραμμής κατάστασης. Πατήστε την ώρα για εναλλαγή των δευτερολέπτων· οι δεκάδες της ώρας εμφανίζονται με κόκκινο χρώμα.</string>
 
     <string name="settings_title">Ρολόι με δευτερόλεπτα</string>
     <string name="settings_status_title">Τρέχουσα κατάσταση</string>
     <string name="settings_enabled">Δευτερόλεπτα: ενεργά</string>
     <string name="settings_disabled">Δευτερόλεπτα: ανενεργά</string>
     <string name="settings_gesture_title">Χειρονομία εναλλαγής δευτερολέπτων</string>
-    <string name="settings_gesture_click">Πατήστε το ρολόι</string>
-    <string name="settings_gesture_long_press">Πατήστε παρατεταμένα το ρολόι</string>
-    <string name="settings_hint">Σημείωση: οι ρυθμίσεις εφαρμόζονται αμέσως. Αν δεν λειτουργούν, επανεκκινήστε το SystemUI ή τη συσκευή. Αν το πάτημα συγκρούεται με το άνοιγμα του πίνακα, χρησιμοποιήστε παρατεταμένο πάτημα.</string>
+    <string name="settings_gesture_click">Πατήστε την ώρα</string>
+    <string name="settings_gesture_long_press">Πατήστε παρατεταμένα την ώρα</string>
+    <string name="settings_hint">Σημείωση: οι ρυθμίσεις εφαρμόζονται αμέσως. Αν δεν λειτουργούν, επανεκκινήστε το SystemUI ή τη συσκευή. Αν το πάτημα συγκρούεται με το άνοιγμα του πίνακα, χρησιμοποιήστε διπλό πάτημα.</string>
     <string name="settings_refresh">Ανανέωση κατάστασης</string>
     <string name="settings_section_general">Γενικά</string>
     <string name="settings_update_auto">Αυτόματος έλεγχος ενημερώσεων</string>
@@ -38,12 +38,12 @@
     <string name="settings_write_failed">Αποτυχία εγγραφής. Βεβαιωθείτε ότι η μονάδα είναι ενεργή στο SystemUI ή δώστε WRITE_SECURE_SETTINGS μέσω adb</string>
     <string name="settings_color_enable">Ενεργοποίηση χρώματος ώρας</string>
     <string name="settings_color_enable_sum">Αν το απενεργοποιήσετε, επιστρέφει η προεπιλεγμένη εμφάνιση</string>
-    <string name="settings_gesture_hint">Χρησιμοποιήστε αυτή τη χειρονομία στο ρολόι της γραμμής κατάστασης για εναλλαγή δευτερολέπτων</string>
+    <string name="settings_gesture_hint">Χρησιμοποιήστε αυτή τη χειρονομία στην ώρα της γραμμής κατάστασης για εναλλαγή δευτερολέπτων</string>
     <string name="settings_gesture_applied">Άλλαξε σε %1$s — εφαρμόζεται αμέσως. Αν δεν λειτουργεί, επανεκκινήστε το SystemUI</string>
-    <string name="settings_gesture_double_tap">Διπλό πάτημα στο ρολόι</string>
+    <string name="settings_gesture_double_tap">Διπλό πάτημα στην ώρα</string>
     <string name="settings_network_time">Ώρα δικτύου %1$s (τοπική %2$s)</string>
     <string name="settings_network_time_fail">Δεν ήταν δυνατή η λήψη ώρας δικτύου — πατήστε για επανάληψη</string>
     <string name="settings_sync_time">Συγχρονισμός</string>
     <string name="settings_sync_requested">Ενεργοποιήθηκε η αυτόματη ώρα — σύντομα θα συγχρονιστεί</string>
-    <string name="settings_preview_hint">Συμβουλή: Πατήστε το ρολόι της γραμμής κατάστασης (πάνω αριστερά) για εμφάνιση/απόκρυψη δευτερολέπτων</string>
+    <string name="settings_preview_hint">Συμβουλή: Πατήστε την ώρα της γραμμής κατάστασης (πάνω αριστερά) για εμφάνιση/απόκρυψη δευτερολέπτων</string>
 </resources>

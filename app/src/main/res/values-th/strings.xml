@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">นาฬิกาแสดงวินาที</string>
-    <string name="module_description">แสดงวินาทีบนนาฬิกาแถบสถานะ แตะนาฬิกาเพื่อสลับการแสดงวินาที หลักสิบของชั่วโมงจะแสดงเป็นสีแดง</string>
+    <string name="module_name">เวลาแสดงวินาที</string>
+    <string name="module_description">แสดงวินาทีบนเวลาแถบสถานะ แตะเวลาเพื่อสลับการแสดงวินาที หลักสิบของชั่วโมงจะแสดงเป็นสีแดง</string>
 
-    <string name="settings_title">นาฬิกาแสดงวินาที</string>
+    <string name="settings_title">เวลาแสดงวินาที</string>
     <string name="settings_status_title">สถานะปัจจุบัน</string>
     <string name="settings_enabled">วินาที: เปิด</string>
     <string name="settings_disabled">วินาที: ปิด</string>
     <string name="settings_gesture_title">ท่าทางสลับการแสดงวินาที</string>
-    <string name="settings_gesture_click">แตะนาฬิกา</string>
-    <string name="settings_gesture_long_press">กดนาฬิกาค้าง</string>
-    <string name="settings_hint">หมายเหตุ: การตั้งค่ามีผลทันที หากไม่ทำงานให้รีสตาร์ท SystemUI หรืออุปกรณ์ หากการแตะขัดกับการดึงแถบแจ้งเตือน ให้ใช้การกดค้าง</string>
+    <string name="settings_gesture_click">แตะเวลา</string>
+    <string name="settings_gesture_long_press">กดเวลาค้าง</string>
+    <string name="settings_hint">หมายเหตุ: การตั้งค่ามีผลทันที หากไม่ทำงานให้รีสตาร์ท SystemUI หรืออุปกรณ์ หากการแตะขัดกับการดึงแถบแจ้งเตือน ให้ใช้การแตะสองครั้ง</string>
     <string name="settings_refresh">รีเฟรชสถานะ</string>
     <string name="settings_section_general">ทั่วไป</string>
     <string name="settings_update_auto">ตรวจสอบอัปเดตอัตโนมัติ</string>
@@ -38,12 +38,12 @@
     <string name="settings_write_failed">เขียนไม่สำเร็จ โปรดตรวจสอบว่าโมดูลทำงานใน SystemUI แล้ว หรือให้สิทธิ์ WRITE_SECURE_SETTINGS ผ่าน adb</string>
     <string name="settings_color_enable">เปิดใช้สีของชั่วโมง</string>
     <string name="settings_color_enable_sum">ปิดเพื่อกลับไปใช้สไตล์เริ่มต้นของระบบ</string>
-    <string name="settings_gesture_hint">ใช้ท่าทางนี้บนนาฬิกาแถบสถานะเพื่อเปิด/ปิดการแสดงวินาที</string>
+    <string name="settings_gesture_hint">ใช้ท่าทางนี้บนเวลาแถบสถานะเพื่อเปิด/ปิดการแสดงวินาที</string>
     <string name="settings_gesture_applied">เปลี่ยนเป็น %1$s แล้ว มีผลทันที หากไม่ทำงานให้รีสตาร์ท SystemUI</string>
-    <string name="settings_gesture_double_tap">แตะนาฬิกาสองครั้ง</string>
+    <string name="settings_gesture_double_tap">แตะเวลาสองครั้ง</string>
     <string name="settings_network_time">เวลาจากเครือข่าย %1$s (เครื่อง %2$s)</string>
     <string name="settings_network_time_fail">ดึงเวลาจากเครือข่ายไม่สำเร็จ แตะเพื่อลองใหม่</string>
     <string name="settings_sync_time">ซิงค์</string>
     <string name="settings_sync_requested">เปิดตั้งเวลาอัตโนมัติแล้ว ระบบจะซิงค์ในไม่ช้า</string>
-    <string name="settings_preview_hint">เคล็ดลับ: แตะนาฬิกาแถบสถานะ (มุมซ้ายบน) เพื่อแสดง/ซ่อนวินาที</string>
+    <string name="settings_preview_hint">เคล็ดลับ: แตะเวลาแถบสถานะ (มุมซ้ายบน) เพื่อแสดง/ซ่อนวินาที</string>
 </resources>

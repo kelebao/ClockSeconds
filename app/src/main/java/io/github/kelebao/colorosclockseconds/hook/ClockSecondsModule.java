@@ -361,7 +361,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
-     * 长按状态栏时钟：在时钟下方弹出实时预览浮窗（HH:mm:ss，小时十位跟随设置的颜色），
+     * 长按状态栏时间：在下方弹出浮窗显示**网络时间**（HH:mm:ss，小时十位跟随设置的颜色）。
+     * 弹出时立即用「系统时间 + 已记录的网络偏移」显示，同时后台向网络校准一次偏移并写回；
      * 每秒刷新，3 秒后自动消失，点一下浮窗立即关闭。全程 try/catch，绝不影响系统。
      */
     private static void showFloatPreview(View clockView) {
@@ -381,6 +382,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         return;
                     }
                     dismissFloatPreview(); // 重复长按先关掉旧的，重置 3 秒计时
+
+                    // 偏移在浮窗存活期间缓存，避免每秒跨进程读 Secure。
+                    final long[] offset = {ClockSecondsConfig.getNetOffset(
+                            context.getContentResolver())};
 
                     final TextView tv = new TextView(context);
                     tv.setTextSize(34f);
@@ -407,8 +412,30 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
                     wm.addView(tv, lp);
                     sFloatView = tv;
-                    updateFloatText(tv, context);
+                    updateFloatText(tv, context, offset[0]);
                     tv.setOnClickListener(v -> dismissFloatPreview());
+
+                    // 后台向网络校准一次偏移（HTTP Date 头，按 RTT 折半校正）。
+                    new Thread(() -> {
+                        long drift = measureNetDrift();
+                        if (drift == Long.MIN_VALUE) {
+                            return;
+                        }
+                        try {
+                            ClockSecondsConfig.setNetOffset(
+                                    context.getContentResolver(), drift);
+                        } catch (Throwable ignored) {
+                            return;
+                        }
+                        if (sTouchHandler != null) {
+                            sTouchHandler.post(() -> {
+                                if (sFloatView == tv) {
+                                    offset[0] = drift;
+                                    updateFloatText(tv, context, offset[0]);
+                                }
+                            });
+                        }
+                    }).start();
 
                     final Runnable tickerTask = new Runnable() {
                         private int ticks = 0;
@@ -422,7 +449,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 dismissFloatPreview();
                                 return;
                             }
-                            updateFloatText(tv, context);
+                            updateFloatText(tv, context, offset[0]);
                             sTouchHandler.postDelayed(this, 1000L);
                         }
                     };
@@ -434,6 +461,52 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             });
         } catch (Throwable ignored) {
             // 浮窗失败不应影响系统
+        }
+    }
+
+    /**
+     * 测量网络时间相对系统时间的偏移（毫秒，网络 - 系统）。
+     * 取 RTT 更小的样本；全部失败返回 {@link Long#MIN_VALUE}。
+     */
+    private static long measureNetDrift() {
+        long bestDrift = Long.MIN_VALUE;
+        long bestRtt = Long.MAX_VALUE;
+        for (String url : new String[]{"https://api.github.com", "https://www.baidu.com"}) {
+            long t0 = System.currentTimeMillis();
+            Long date = headDate(url);
+            long t1 = System.currentTimeMillis();
+            if (date == null) {
+                continue;
+            }
+            long rtt = t1 - t0;
+            // 服务器时间 ≈ 收到时刻 - RTT/2
+            long drift = date + rtt / 2 - t1;
+            if (rtt < bestRtt) {
+                bestRtt = rtt;
+                bestDrift = drift;
+            }
+        }
+        return bestDrift;
+    }
+
+    /** HEAD 请求取 HTTP Date 头（1 秒精度）；失败返回 null。 */
+    private static Long headDate(String urlStr) {
+        java.net.HttpURLConnection conn = null;
+        try {
+            java.net.URL url = new java.net.URL(urlStr);
+            conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(4000);
+            conn.setReadTimeout(4000);
+            conn.setRequestMethod("HEAD");
+            conn.setRequestProperty("User-Agent", "ClockSeconds-Module");
+            long t = conn.getHeaderFieldDate("Date", 0L);
+            return t > 0L ? t : null;
+        } catch (Throwable t) {
+            return null;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
@@ -461,10 +534,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 浮窗文本：HH:mm:ss，小时十位用设置的小时颜色（若启用）。 */
-    private static void updateFloatText(TextView tv, Context context) {
+    /**
+     * 浮窗文本：网络时间 HH:mm:ss（系统时间 + 网络偏移），小时十位用设置的小时颜色（若启用）。
+     *
+     * @param offsetMs 网络 - 系统的偏移（毫秒）
+     */
+    private static void updateFloatText(TextView tv, Context context, long offsetMs) {
         try {
-            String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date());
+            long netNow = System.currentTimeMillis() + offsetMs;
+            String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
             SpannableStringBuilder sb = new SpannableStringBuilder(text);
             if (ClockSecondsConfig.isHourColorEnabled(context.getContentResolver())
                     && sb.length() >= 2
@@ -858,6 +936,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SYNC_TIME);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_NET_OFFSET);
                 BroadcastReceiver receiver = new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context ctx, Intent intent) {
@@ -881,6 +960,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 // 打开系统「自动设置时间」让系统自己向网络校准。
                                 android.provider.Settings.Global.putInt(
                                         cr, android.provider.Settings.Global.AUTO_TIME, 1);
+                            } else if (ClockSecondsConfig.ACTION_SET_NET_OFFSET.equals(action)) {
+                                // 设置页测得的网络时间偏移（浮窗显示网络时间用）。
+                                ClockSecondsConfig.setNetOffset(cr, intent.getLongExtra(
+                                        ClockSecondsConfig.EXTRA_NET_OFFSET, 0L));
                             }
                         } catch (Throwable ignored) {
                             // 写入失败不影响系统界面

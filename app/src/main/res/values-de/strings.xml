@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">Uhr mit Sekunden</string>
-    <string name="module_description">Zeigt Sekunden in der Statusleistenuhr an. Tippe auf die Uhr, um die Sekundenanzeige umzuschalten; die Zehnerstelle der Stunde wird rot gefärbt.</string>
+    <string name="module_name">Zeit mit Sekunden</string>
+    <string name="module_description">Zeigt Sekunden in der Statusleistenzeit an. Tippe auf die Zeit, um die Sekundenanzeige umzuschalten; die Zehnerstelle der Stunde wird rot gefärbt.</string>
 
-    <string name="settings_title">Uhr mit Sekunden</string>
+    <string name="settings_title">Zeit mit Sekunden</string>
     <string name="settings_status_title">Aktueller Status</string>
     <string name="settings_enabled">Sekunden: Ein</string>
     <string name="settings_disabled">Sekunden: Aus</string>
     <string name="settings_gesture_title">Geste zum Umschalten der Sekunden</string>
-    <string name="settings_gesture_click">Uhr antippen</string>
-    <string name="settings_gesture_long_press">Uhr gedrückt halten</string>
-    <string name="settings_hint">Hinweis: Änderungen wirken sofort. Falls nicht, starte SystemUI oder das Gerät neu. Wenn Tippen mit dem Herunterziehen der Benachrichtigungen kollidiert, nutze langes Drücken.</string>
+    <string name="settings_gesture_click">Zeit antippen</string>
+    <string name="settings_gesture_long_press">Zeit gedrückt halten</string>
+    <string name="settings_hint">Hinweis: Änderungen wirken sofort. Falls nicht, starte SystemUI oder das Gerät neu. Wenn Tippen mit dem Herunterziehen der Benachrichtigungen kollidiert, nutze doppeltes Tippen.</string>
     <string name="settings_refresh">Status aktualisieren</string>
     <string name="settings_section_general">Allgemein</string>
     <string name="settings_update_auto">Automatisch nach Updates suchen</string>
@@ -38,9 +38,9 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_write_failed">Schreiben fehlgeschlagen. Prüfe, ob das Modul in SystemUI aktiv ist, oder erteile WRITE_SECURE_SETTINGS per adb</string>
     <string name="settings_color_enable">Stundenfarbe aktivieren</string>
     <string name="settings_color_enable_sum">Ausschalten stellt die Systemdarstellung wieder her</string>
-    <string name="settings_gesture_hint">Mit dieser Geste auf der Statusleisten-Uhr schaltest du die Sekunden um</string>
+    <string name="settings_gesture_hint">Mit dieser Geste auf der Statusleisten-Zeit schaltest du die Sekunden um</string>
     <string name="settings_gesture_applied">Auf %1$s umgestellt — sofort wirksam. Falls nicht, starte SystemUI neu</string>
-    <string name="settings_gesture_double_tap">Doppeltippen auf die Uhr</string>
+    <string name="settings_gesture_double_tap">Doppeltippen auf die Zeit</string>
     <string name="settings_network_time">Netzwerkzeit %1$s (lokal %2$s)</string>
     <string name="settings_network_time_fail">Netzwerkzeit nicht verfügbar — zum Wiederholen tippen</string>
     <string name="settings_sync_time">Sync</string>

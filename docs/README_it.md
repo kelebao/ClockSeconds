@@ -6,9 +6,9 @@
 
 <div align="center">
 
-# Secondi sull'orologio (Clock Seconds)
+# Secondi sull'ora（Show Seconds in Time）
 
-Mostra i **secondi** sull'orologio della barra di stato, attiva/disattiva con un solo tocco e tieni la **decina dell'ora sempre rossa**.<br>Nessuna classe privata del produttore. Verificato su dispositivo reale con ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo e gli altri grandi produttori.
+Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un solo tocco e tieni la **decina dell'ora sempre rossa**.<br>Nessuna classe privata del produttore. Verificato su dispositivo reale con ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo e gli altri grandi produttori.
 
 [![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -25,8 +25,8 @@ Mostra i **secondi** sull'orologio della barra di stato, attiva/disattiva con un
 
 | Funzione | Descrizione |
 |------|------|
-| Secondi | L'orologio della barra di stato mostra i secondi (`HH:mm:ss` / `h:mm:ss a`, segue l'impostazione 12/24 ore del sistema) |
-| Tocca per attivare | **Toccare** l'orologio della barra di stato attiva/disattiva i secondi; nella pagina delle impostazioni è disponibile anche il **tocco prolungato** |
+| Secondi | L'ora della barra di stato mostra i secondi (`HH:mm:ss` / `h:mm:ss a`, segue l'impostazione 12/24 ore del sistema) |
+| Tocca per attivare | **Toccare** l'ora della barra di stato attiva/disattiva i secondi; nella pagina delle impostazioni è disponibile anche il **doppio tocco** |
 | Decina dell'ora in rosso | La **decina dell'ora** viene colorata di rosso (l'`1` in `13`, lo `0` in `05`); minuti e secondi mantengono il colore di sistema. Le ore a una sola cifra (ad es. `9:45`) non hanno decina e restano intatte. Efficace su tutti i produttori |
 | Lingue dell'interfaccia | L'interfaccia dell'app è tradotta in **21 lingue** (segue automaticamente la lingua di sistema): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistenza | Lo stato è salvato in `Settings.Secure`, condiviso tra processi e conservato dopo il riavvio di SystemUI |
@@ -43,12 +43,12 @@ Mostra i **secondi** sull'orologio della barra di stato, attiva/disattiva con un
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> Senza quel permesso puoi comunque attivare/disattivare toccando l'orologio della barra di stato (quell'azione gira dentro il processo SystemUI, che ha già il diritto per natura).
+> Senza quel permesso puoi comunque attivare/disattivare toccando l'ora della barra di stato (quell'azione gira dentro il processo SystemUI, che ha già il diritto per natura).
 
 ## Utilizzo
 
-- **Tocca l'orologio della barra di stato**: attiva/disattiva i secondi (gesto predefinito).
-- L'attivazione è implementata con un test di tocco globale, quindi **non entra mai in conflitto con il «trascinamento del pannello notifiche»**—— un tocco puro attiva/disattiva, uno striscia continua a tirare giù il pannello. Se preferisci, puoi passare al gesto **tocco prolungato** nella pagina delle impostazioni.
+- **Tocca l'ora della barra di stato**: attiva/disattiva i secondi (gesto predefinito).
+- L'attivazione è implementata con un test di tocco globale, quindi **non entra mai in conflitto con il «trascinamento del pannello notifiche»**—— un tocco puro attiva/disattiva, uno striscia continua a tirare giù il pannello. Se preferisci, puoi passare al gesto **doppio tocco** nella pagina delle impostazioni.
 - La pagina delle impostazioni mostra lo stato attuale, il gesto scelto e un pulsante di aggiornamento.
 
 ## Anteprima
@@ -71,19 +71,19 @@ Secondi attivati: `15:06:03` — minuti e secondi mantengono il colore di sistem
 Il modulo aggancia solo **SystemUI**, usando l'approccio legacy Xposed collaudato,
 e **non tocca mai nessuna classe privata del produttore**, quindi non rompe lo stato interno del sistema né fa scattare la modalità provvisoria di LSPosed:
 
-- **Secondi**: aggancia lo stabile `TextView.setText` (after) per mettere in cache il testo grezzo che il sistema mette sull'orologio della barra di stato,
+- **Secondi**: aggancia lo stabile `TextView.setText` (after) per mettere in cache il testo grezzo che il sistema mette sull'ora della barra di stato,
   poi aggancia `TextView.onDraw` (before) per sovrascrivere la visualizzazione con `testoGrezzo:ss` dopo che il sistema ha impostato il testo,
-  pilotato da un `Handler` da 1 secondo. I secondi aggiunti ereditano il colore del testo proprio dell'orologio (misurato `#ccffffff`).
+  pilotato da un `Handler` da 1 secondo. I secondi aggiunti ereditano il colore del testo proprio dell'ora (misurato `#ccffffff`).
   La decina dell'ora viene inoltre colorata di rosso (un `ForegroundColorSpan` rosso su quell'unico carattere), sia che i secondi siano mostrati sia che non lo siano;
   minuti e secondi non sono mai rossi; le ore a una sola cifra non hanno decina e restano intatte.
-- **Attivazione**: il pannello notifiche di ColorOS intercetta i tocchi nell'area della barra di stato, quindi l'`OnTouchListener` proprio dell'orologio non riceve mai eventi.
+- **Attivazione**: il pannello notifiche di ColorOS intercetta i tocchi nell'area della barra di stato, quindi l'`OnTouchListener` proprio dell'ora non riceve mai eventi.
   Il modulo aggancia perciò il `View.dispatchTouchEvent` globale e capovolge l'interruttore `Settings.Secure` solo quando la pressione cade dentro
-  i limiti su schermo dell'orologio riconosciuto e non si muove quasi (tocco) oppure viene tenuta per 500 ms (tocco prolungato). Il modulo **non consuma**
+  i limiti su schermo dell'ora riconosciuto e non si muove quasi (tocco) oppure è un secondo tocco entro 350 ms (doppio tocco). Il modulo **non consuma**
   nessun evento di tocco, quindi il trascinamento del pannello notifiche funziona come al solito.
 
 ## Nota sul risparmio energetico
 
-- **Secondi ATTIVI**: il modulo ha bisogno di un timer da 1 secondo per pilotare gli aggiornamenti (il costo insito nel mostrare i secondi, circa 60 ridisegni dell'orologio al minuto).
+- **Secondi ATTIVI**: il modulo ha bisogno di un timer da 1 secondo per pilotare gli aggiornamenti (il costo insito nel mostrare i secondi, circa 60 ridisegni dell'ora al minuto).
 - **Secondi DISATTIVI**: il modulo **ferma subito quel timer** (`stopTicker`)—— nessun risveglio ogni secondo e nessuna lettura tra processi.
   Torna al ritmo originale del sistema «aggiorna una volta al minuto», quindi disattivare i secondi fa davvero risparmiare energia.
 - Lo stato è tenuto in **cache dentro il processo** (`sSecondsEnabled`), così il timer non legge `Settings.Secure` ogni secondo (evitando un IPC al secondo).
@@ -137,7 +137,7 @@ Controlla il logcat:
   ```
 
 - Se non ha effetto su un dispositivo non ColorOS: installa la build debug e guarda le righe `candidate:` / `CONFIG CLOCK:` nel log
-  per vedere se il nome della risorsa / il nome della classe dell'orologio della barra di stato del tuo dispositivo è coperto dalle regole di riconoscimento; se non lo è, basta una riga di regola in più.
+  per vedere se il nome della risorsa / il nome della classe dell'ora della barra di stato del tuo dispositivo è coperto dalle regole di riconoscimento; se non lo è, basta una riga di regola in più.
 
 </details>
 

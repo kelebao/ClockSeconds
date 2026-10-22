@@ -6,9 +6,9 @@
 
 <div align="center">
 
-# Secondes sur l'horloge (Clock Seconds)
+# Secondes à l'heure（Show Seconds in Time）
 
-Affichez les **secondes** sur l'horloge de la barre d'état, basculez d'un simple appui et gardez la **dizaine de l'heure en rouge**.<br>Aucune classe privée de fabricant. Vérifié sur appareil réel sous ColorOS 15 ; couvre aussi Xiaomi, OnePlus, Honor, vivo et les autres grands fabricants.
+Affichez les **secondes** sur l'heure de la barre d'état, basculez d'un simple appui et gardez la **dizaine de l'heure en rouge**.<br>Aucune classe privée de fabricant. Vérifié sur appareil réel sous ColorOS 15 ; couvre aussi Xiaomi, OnePlus, Honor, vivo et les autres grands fabricants.
 
 [![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -25,8 +25,8 @@ Affichez les **secondes** sur l'horloge de la barre d'état, basculez d'un simpl
 
 | Fonctionnalité | Description |
 |------|------|
-| Secondes | L'horloge de la barre d'état affiche les secondes (`HH:mm:ss` / `h:mm:ss a`, suit le réglage 12/24 h du système) |
-| Appui pour basculer | Un **appui** sur l'horloge de la barre d'état active/désactive les secondes ; le geste **appui long** est aussi disponible dans la page de réglages |
+| Secondes | L'heure de la barre d'état affiche les secondes (`HH:mm:ss` / `h:mm:ss a`, suit le réglage 12/24 h du système) |
+| Appui pour basculer | Un **appui** sur l'heure de la barre d'état active/désactive les secondes ; le geste **double appui** est aussi disponible dans la page de réglages |
 | Chiffre des dizaines en rouge | La **dizaine de l'heure** est colorée en rouge (le `1` de `13`, le `0` de `05`) ; les minutes et les secondes gardent la couleur du système. Les heures à un seul chiffre (ex. `9:45`) n'ont pas de dizaine et restent intactes. Efficace chez tous les fabricants |
 | Langues de l'interface | L'interface de l'application est traduite en **21 langues** (suit automatiquement la langue du système) : 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistance | L'état est stocké dans `Settings.Secure`, partagé entre les processus et conservé après un redémarrage de SystemUI |
@@ -43,12 +43,12 @@ Affichez les **secondes** sur l'horloge de la barre d'état, basculez d'un simpl
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> Sans cette permission, vous pouvez toujours basculer en appuyant sur l'horloge de la barre d'état (cette action s'exécute dans le processus SystemUI, qui en a déjà le droit).
+> Sans cette permission, vous pouvez toujours basculer en appuyant sur l'heure de la barre d'état (cette action s'exécute dans le processus SystemUI, qui en a déjà le droit).
 
 ## Utilisation
 
-- **Appuyez sur l'horloge de la barre d'état** : active/désactive les secondes (geste par défaut).
-- La bascule repose sur un test de touche globale, elle n'**entre donc jamais en conflit avec le « défilement du panneau de notifications »**—— un appui pur bascule, un balayage continue de dérouler le panneau. Si vous préférez, vous pouvez passer au geste **appui long** dans la page de réglages.
+- **Appuyez sur l'heure de la barre d'état** : active/désactive les secondes (geste par défaut).
+- La bascule repose sur un test de touche globale, elle n'**entre donc jamais en conflit avec le « défilement du panneau de notifications »**—— un appui pur bascule, un balayage continue de dérouler le panneau. Si vous préférez, vous pouvez passer au geste **double appui** dans la page de réglages.
 - La page de réglages affiche l'état actuel, le geste choisi et un bouton d'actualisation.
 
 ## Aperçu
@@ -71,19 +71,19 @@ Secondes activées : `15:06:03` — minutes et secondes gardent la couleur syst�
 Le module n'accroche que **SystemUI**, en utilisant l'approche legacy Xposed bien rodée,
 et **ne touche jamais aucune classe privée de fabricant** : il ne casse donc jamais l'état interne du système ni ne déclenche le mode sans échec de LSPosed :
 
-- **Secondes** : accrochez le stable `TextView.setText` (after) pour mettre en cache le texte brut que le système pose sur l'horloge de la barre d'état,
+- **Secondes** : accrochez le stable `TextView.setText` (after) pour mettre en cache le texte brut que le système pose sur l'heure de la barre d'état,
   puis accrochez `TextView.onDraw` (before) pour réécrire l'affichage en `texteBrut:ss` une fois que le système a posé le texte,
-  piloté par un `Handler` d'une seconde. Les secondes ajoutées héritent de la couleur du texte de l'horloge (mesurée `#ccffffff`).
+  piloté par un `Handler` d'une seconde. Les secondes ajoutées héritent de la couleur du texte de l'heure (mesurée `#ccffffff`).
   La dizaine de l'heure est en plus colorée en rouge (un `ForegroundColorSpan` rouge sur ce seul caractère), que les secondes soient affichées ou non ;
   les minutes et les secondes ne sont jamais rouges ; les heures à un seul chiffre n'ont pas de dizaine et restent intactes.
-- **Bascule** : le panneau de notifications de ColorOS intercepte les touchers dans la zone de la barre d'état, si bien que l'`OnTouchListener` de l'horloge elle-même ne reçoit jamais les événements.
+- **Bascule** : le panneau de notifications de ColorOS intercepte les touchers dans la zone de la barre d'état, si bien que l'`OnTouchListener` de l'heure elle-même ne reçoit jamais les événements.
   Le module accroche donc le `View.dispatchTouchEvent` global et ne fait basculer l'interrupteur `Settings.Secure` que lorsque l'appui tombe dans
-  les limites à l'écran de l'horloge reconnue, avec un déplacement quasi nul (appui) ou un maintien de 500 ms (appui long). Le module ne **consomme**
+  les limites à l'écran de l'heure reconnue, avec un déplacement quasi nul (appui) ou un second appui dans les 350 ms (double appui). Le module ne **consomme**
   aucun événement tactile : le défilement du panneau de notifications fonctionne donc comme d'habitude.
 
 ## Note sur les économies d'énergie
 
-- **Secondes ACTIVÉES** : le module a besoin d'un minuteur d'une seconde pour piloter les rafraîchissements (le coût inhérent à l'affichage des secondes, environ 60 redessins de l'horloge par minute).
+- **Secondes ACTIVÉES** : le module a besoin d'un minuteur d'une seconde pour piloter les rafraîchissements (le coût inhérent à l'affichage des secondes, environ 60 redessins de l'heure par minute).
 - **Secondes DÉSACTIVÉES** : le module **arrête immédiatement ce minuteur** (`stopTicker`)—— plus aucun réveil chaque seconde, plus aucune lecture inter-processus.
   Il revient au rythme d'origine du système « un rafraîchissement par minute », donc désactiver les secondes économise vraiment de l'énergie.
 - L'état est mis en **cache dans le processus** (`sSecondsEnabled`) : le minuteur ne lit pas `Settings.Secure` chaque seconde (un IPC par seconde est évité).
@@ -137,7 +137,7 @@ Consultez le logcat :
   ```
 
 - Si rien ne fonctionne sur un appareil non ColorOS : installez la compilation debug et regardez les lignes `candidate:` / `CONFIG CLOCK:` du journal
-  pour voir si le nom de ressource / le nom de classe de l'horloge de la barre d'état de votre appareil est couvert par les règles de reconnaissance ; sinon, une simple ligne de règle en plus suffit.
+  pour voir si le nom de ressource / le nom de classe de l'heure de la barre d'état de votre appareil est couvert par les règles de reconnaissance ; sinon, une simple ligne de règle en plus suffit.
 
 </details>
 

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">Segundos en el reloj</string>
-    <string name="module_description">Muestra los segundos en el reloj de la barra de estado. Toca el reloj para alternar los segundos; la decena de la hora se muestra en rojo.</string>
+    <string name="module_name">Segundos en la hora</string>
+    <string name="module_description">Muestra los segundos en la hora de la barra de estado. Toca la hora para alternar los segundos; la decena de la hora se muestra en rojo.</string>
 
-    <string name="settings_title">Segundos en el reloj</string>
+    <string name="settings_title">Segundos en la hora</string>
     <string name="settings_status_title">Estado actual</string>
     <string name="settings_enabled">Segundos: activados</string>
     <string name="settings_disabled">Segundos: desactivados</string>
     <string name="settings_gesture_title">Gesto para alternar segundos</string>
-    <string name="settings_gesture_click">Tocar el reloj</string>
-    <string name="settings_gesture_long_press">Mantener pulsado el reloj</string>
-    <string name="settings_hint">Nota: los cambios se aplican al instante. Si no funcionan, reinicia SystemUI o el dispositivo. Si tocar entra en conflicto con desplegar el panel, usa pulsación larga.</string>
+    <string name="settings_gesture_click">Tocar la hora</string>
+    <string name="settings_gesture_long_press">Mantener pulsada la hora</string>
+    <string name="settings_hint">Nota: los cambios se aplican al instante. Si no funcionan, reinicia SystemUI o el dispositivo. Si tocar entra en conflicto con desplegar el panel, usa doble toque.</string>
     <string name="settings_refresh">Actualizar estado</string>
     <string name="settings_section_general">General</string>
     <string name="settings_update_auto">Buscar actualizaciones automáticamente</string>
@@ -38,12 +38,12 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_write_failed">Error al escribir. Comprueba que el módulo esté activo en SystemUI o concede WRITE_SECURE_SETTINGS por adb</string>
     <string name="settings_color_enable">Activar color de la hora</string>
     <string name="settings_color_enable_sum">Al desactivarlo vuelve al estilo predeterminado del sistema</string>
-    <string name="settings_gesture_hint">Usa este gesto en el reloj de la barra de estado para activar o desactivar los segundos</string>
+    <string name="settings_gesture_hint">Usa este gesto en la hora de la barra de estado para activar o desactivar los segundos</string>
     <string name="settings_gesture_applied">Cambiado a %1$s — se aplica al instante. Si no funciona, reinicia SystemUI</string>
-    <string name="settings_gesture_double_tap">Doble toque en el reloj</string>
+    <string name="settings_gesture_double_tap">Doble toque en la hora</string>
     <string name="settings_network_time">Hora de red %1$s (local %2$s)</string>
     <string name="settings_network_time_fail">No se pudo obtener la hora de red — toca para reintentar</string>
     <string name="settings_sync_time">Sincronizar</string>
     <string name="settings_sync_requested">Hora automática activada: se ajustará en breve</string>
-    <string name="settings_preview_hint">Sugerencia: toca el reloj de la barra de estado (arriba a la izquierda) para mostrar u ocultar segundos</string>
+    <string name="settings_preview_hint">Sugerencia: toca la hora de la barra de estado (arriba a la izquierda) para mostrar u ocultar segundos</string>
 </resources>

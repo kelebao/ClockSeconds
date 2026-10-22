@@ -6,9 +6,9 @@
 
 <div align="center">
 
-# Saniyeli Saat (Clock Seconds)
+# Saniyeli Zaman（Show Seconds in Time）
 
-Durum çubuğu saatinde **saniyeleri** gösterin, tek dokunuşla açıp kapatın, saatin **onlar basamağını kırmızı** tutun.<br>Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda doğrulandı; Xiaomi, OnePlus, Honor, vivo ve diğer büyük üreticileri de kapsar.
+Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, zamanın **onlar basamağını kırmızı** tutun.<br>Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda doğrulandı; Xiaomi, OnePlus, Honor, vivo ve diğer büyük üreticileri de kapsar.
 
 [![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -25,9 +25,9 @@ Durum çubuğu saatinde **saniyeleri** gösterin, tek dokunuşla açıp kapatın
 
 | Özellik | Açıklama |
 |------|------|
-| Saniye gösterimi | Durum çubuğu saati saniyeye kadar gösterilir (`HH:mm:ss` / `h:mm:ss a`, sistemin 12/24 saat ayrını izler) |
-| Dokunarak aç/kapat | Durum çubuğu saatine **dokunmak** saniye gösterimini açar/kapatır; ayarlar sayfasından **uzun basma** hareketine geçilebilir |
-| Kırmızı saat basamağı | Saatin **onlar basamağı** kırmızıyla gösterilir (`13`deki `1`, `05`teki `0`); dakika ve saniye sistem rengini korur. Tek basamaklı saatlerde (ör. `9:45`) onlar basamağı yoktur, dokunulmaz. Tüm üreticilerde etkilidir |
+| Saniye gösterimi | Durum çubuğu zamanı saniyeye kadar gösterilir (`HH:mm:ss` / `h:mm:ss a`, sistemin 12/24 saat ayrını izler) |
+| Dokunarak aç/kapat | Durum çubuğu zamanına **dokunmak** saniye gösterimini açar/kapatır; ayarlar sayfasından **çift dokunuş** hareketine geçilebilir |
+| Kırmızı zaman basamağı | Zamanın **onlar basamağı** kırmızıyla gösterilir (`13`deki `1`, `05`teki `0`); dakika ve saniye sistem rengini korur. Tek basamaklı zamanlarda (ör. `9:45`) onlar basamağı yoktur, dokunulmaz. Tüm üreticilerde etkilidir |
 | Arayüz dilleri | Uygulama arayüzü **21 dili** destekler (sistem dilini otomatik izler): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Kalıcılık | Durum `Settings.Secure` içinde saklanır, işlemler arası paylaşılır, SystemUI yeniden başlatıldıktan sonra korunur |
 | Uyumluluk | ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; Xiaomi / Honor / Redmi gibi rootlu diğer üreticilerde de olduğu gibi çalışır. Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10 |
@@ -43,21 +43,21 @@ Durum çubuğu saatinde **saniyeleri** gösterin, tek dokunuşla açıp kapatın
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> İzin verilmezse durum çubuğu saatine dokunarak yine de açıp kapatabilirsiniz (bu işlem SystemUI işlemi içinde çalışır ve zaten izne sahiptir).
+> İzin verilmezse durum çubuğu zamanına dokunarak yine de açıp kapatabilirsiniz (bu işlem SystemUI işlemi içinde çalışır ve zaten izne sahiptir).
 
 ## Kullanım
 
-- **Durum çubuğu saatine dokunun**: saniye gösterimini açar/kapatır (varsayılan hareket).
-- Açma/kapatma genel dokunma isabet testiyle uygulanır, bu yüzden **"bildirim panelini aşağı çekmek" ile asla çakışmaz** — saf dokunuş açıp kapatır, kaydırma paneli her zamanki gibi aşağı çeker. İsterseniz ayarlar sayfasından **uzun basma** hareketine geçebilirsiniz.
+- **Durum çubuğu zamanına dokunun**: saniye gösterimini açar/kapatır (varsayılan hareket).
+- Açma/kapatma genel dokunma isabet testiyle uygulanır, bu yüzden **"bildirim panelini aşağı çekmek" ile asla çakışmaz** — saf dokunuş açıp kapatır, kaydırma paneli her zamanki gibi aşağı çeker. İsterseniz ayarlar sayfasından **çift dokunuş** hareketine geçebilirsiniz.
 - Ayarlar sayfasında mevcut durumu, hareket ayarını görüntüleyebilir ve yenileyebilirsiniz.
 
 ## Önizleme
 
 <table><tr>
 <td align="center" width="50%">
-<img src="screenshots/statusbar-seconds-off.jpg" alt="Saniye kapalı: `15:06` — saatin onlar basamağı `1` kırmızı kalır" width="100%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Saniye kapalı: `15:06` — zamanın onlar basamağı `1` kırmızı kalır" width="100%">
 <br>
-Saniye kapalı: `15:06` — saatin onlar basamağı `1` kırmızı kalır
+Saniye kapalı: `15:06` — zamanın onlar basamağı `1` kırmızı kalır
 </td>
 <td align="center" width="50%">
 <img src="screenshots/statusbar-seconds-on.jpg" alt="Saniye açık: `15:06:03` — dakika ve saniye sistem rengini korur" width="100%">
@@ -71,23 +71,23 @@ Saniye açık: `15:06:03` — dakika ve saniye sistem rengini korur
 Modül yalnızca **SystemUI** sürecine hook uygular, kanıtlanmış legacy Xposed yaklaşımını kullanır
 ve **hiçbir üreticiye özel sınıfa dokunmaz**, bu nedenle sistem iç durumunu bozmaz ve LSPosed güvenlik modunu tetiklemez:
 
-- **Saniyeler**: kararlı `TextView.setText` (after) hook ile sistemin durum çubuğu saatine yazdığı ham metni önbelleğe alın,
+- **Saniyeler**: kararlı `TextView.setText` (after) hook ile sistemin durum çubuğu zamanına yazdığı ham metni önbelleğe alın,
   ardından `TextView.onDraw` (before) hook ile sistem metni ayarladıktan sonra görüntüyü `hamMetin:ss` olarak üzerine yazın,
-  1 saniyelik bir `Handler` ile sürülür. Eklenen saniye saatin kendi metin rengini devralır (ölçülen `#ccffffff`).
-  Ayrıca saatin onlar basamağı kırmızıyla gösterilir (o tek karaktere kırmızı bir `ForegroundColorSpan` eklenir), saniye gösterimi açık veya kapalı olduğunda da kırmızı kalır;
-  dakika ve saniye kırmızı yapılmaz; tek basamaklı saatlerde onlar basamağı yoktur.
-- **Açma/kapatma**: ColorOS bildirim paneli durum çubuğu alanındaki dokunmaları ele geçirir, bu yüzden saatin kendi `OnTouchListener` olay almaz.
-  Modül bu nedenle genel `View.dispatchTouchEvent` hookunu kullanır ve yalnızca basılan nokta tanınan saatin ekran sınırları içine düştüğünde,
-  ve neredeyse hiç hareket etmediğinde (dokunma) veya 500 ms basılı tutulduğunda (uzun basma) `Settings.Secure` anahtarını çevirir. Modül hiçbir dokunma olayını
+  1 saniyelik bir `Handler` ile sürülür. Eklenen saniye zamanın kendi metin rengini devralır (ölçülen `#ccffffff`).
+  Ayrıca zamanın onlar basamağı kırmızıyla gösterilir (o tek karaktere kırmızı bir `ForegroundColorSpan` eklenir), saniye gösterimi açık veya kapalı olduğunda da kırmızı kalır;
+  dakika ve saniye kırmızı yapılmaz; tek basamaklı zamanlarda onlar basamağı yoktur.
+- **Açma/kapatma**: ColorOS bildirim paneli durum çubuğu alanındaki dokunmaları ele geçirir, bu yüzden zamanın kendi `OnTouchListener` olay almaz.
+  Modül bu nedenle genel `View.dispatchTouchEvent` hookunu kullanır ve yalnızca basılan nokta tanınan zamanın ekran sınırları içine düştüğünde,
+  ve neredeyse hiç hareket etmediğinde (dokunma) veya 350 ms içinde ikinci dokunuş (çift dokunuş) `Settings.Secure` anahtarını çevirir. Modül hiçbir dokunma olayını
   **tüketmez**, böylece bildirim panelini aşağı çekmek her zamanki gibi çalışır.
 
 ## Güç Tasarrufu
 
-- **Saniye AÇIK**: modülün yenilemeleri sürmek için 1 saniyelik bir zamanlayıcıya ihtiyacı vardır (saniye göstermekle gelen kaçınılmaz maliyet, dakikada ~60 saat yeniden çizimi).
+- **Saniye AÇIK**: modülün yenilemeleri sürmek için 1 saniyelik bir zamanlayıcıya ihtiyacı vardır (saniye göstermekle gelen kaçınılmaz maliyet, dakikada ~60 zaman yeniden çizimi).
 - **Saniye KAPALI**: modül bu zamanlayıcıyı **anında durdurur** (`stopTicker`) — saniyede bir uyandırma, işlemler arası okuma hiç kalmaz.
   Sistemin özgün "dakikada bir yenile" ritmine döner, bu nedenle saniye gösterimini kapatmak gerçekten daha tasarrufludur.
 - Durum **işlem içi önbellekte** (`sSecondsEnabled`) tutulur, zamanlayıcı her saniye `Settings.Secure` okumaz (saniyede bir IPC önlenir).
-- Hiçbir saat biçimlendirici oluşturulmaz: modül sistemin ham metnini yeniden kullanır ve yalnızca `:ss` ekler, bu nedenle biçimlendirici maliyeti sıfırdır.
+- Hiçbir zaman biçimlendirici oluşturulmaz: modül sistemin ham metnini yeniden kullanır ve yalnızca `:ss` ekler, bu nedenle biçimlendirici maliyeti sıfırdır.
 - Zamanlayıcı görünümün yalnızca **zayıf referansını** tutar ve yalnızca görünüm `isAttachedToWindow()` olduğu sürece devam eder, görünüm yok edildiğinde otomatik çıkar.
 
 ## Derleme
@@ -136,7 +136,7 @@ logcat inceleyin:
   ```
 
 - ColorOS olmayan bir cihazda çalışmıyorsa: debug derlemesini kurun ve günlükteki `candidate:` / `CONFIG CLOCK:` çıktılarına bakın
-  cihazınızın durum çubuğu saati kaynak adının / sınıf adının tanıma kurallarında olup olmadığını görün; değilse tek bir kural satırı eklemek yeterlidir.
+  cihazınızın durum çubuğu zamanı kaynak adının / sınıf adının tanıma kurallarında olup olmadığını görün; değilse tek bir kural satırı eklemek yeterlidir.
 
 </details>
 

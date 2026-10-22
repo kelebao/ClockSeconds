@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">ساعت با ثانیه</string>
-    <string name="module_description">ثانیه‌ها را روی ساعت نوار وضعیت نمایش می‌دهد. برای روشن/خاموش کردن ثانیه روی ساعت ضربه بزنید؛ رقم ده‌ها ساعت قرمز رنگ می‌شود.</string>
+    <string name="module_name">زمان با ثانیه</string>
+    <string name="module_description">ثانیه‌ها را روی زمان نوار وضعیت نمایش می‌دهد. برای روشن/خاموش کردن ثانیه روی زمان ضربه بزنید؛ رقم ده‌ها زمان قرمز رنگ می‌شود.</string>
 
-    <string name="settings_title">ساعت با ثانیه</string>
+    <string name="settings_title">زمان با ثانیه</string>
     <string name="settings_status_title">وضعیت فعلی</string>
     <string name="settings_enabled">ثانیه: روشن</string>
     <string name="settings_disabled">ثانیه: خاموش</string>
     <string name="settings_gesture_title">حرکت تغییر نمایش ثانیه</string>
-    <string name="settings_gesture_click">ضربه زدن روی ساعت</string>
-    <string name="settings_gesture_long_press">نگه داشتن ساعت</string>
-    <string name="settings_hint">نکته: تنظیمات فوراً اعمال می‌شوند. اگر اعمال نشدند، SystemUI یا دستگاه را دوباره راه‌اندازی کنید. اگر ضربه با باز کردن پنل اعلان‌ها تداخل داشت، از فشار طولانی استفاده کنید.</string>
+    <string name="settings_gesture_click">ضربه زدن روی زمان</string>
+    <string name="settings_gesture_long_press">نگه داشتن زمان</string>
+    <string name="settings_hint">نکته: تنظیمات فوراً اعمال می‌شوند. اگر اعمال نشدند، SystemUI یا دستگاه را دوباره راه‌اندازی کنید. اگر ضربه با باز کردن پنل اعلان‌ها تداخل داشت، از ضربه دوگانه استفاده کنید.</string>
     <string name="settings_refresh">به‌روزرسانی وضعیت</string>
     <string name="settings_section_general">عمومی</string>
     <string name="settings_update_auto">بررسی خودکار به‌روزرسانی</string>
@@ -33,17 +33,17 @@
     <string name="update_later">بعداً</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 کد منبع این ماژول: MIT © kelebao</string>
-    <string name="settings_color_title">رنگ ساعت</string>
+    <string name="settings_color_title">رنگ زمان</string>
     <string name="settings_color_hint">برای تغییر روی یک رنگ بزنید — فوراً اعمال می‌شود</string>
     <string name="settings_write_failed">نوشتن ناموفق بود. مطمئن شوید ماژول در SystemUI فعال است یا دسترسی WRITE_SECURE_SETTINGS را با adb بدهید</string>
-    <string name="settings_color_enable">فعال‌سازی رنگ ساعت</string>
+    <string name="settings_color_enable">فعال‌سازی رنگ زمان</string>
     <string name="settings_color_enable_sum">با خاموش کردن، ظاهر پیش‌فرض سیستم برمی‌گردد</string>
-    <string name="settings_gesture_hint">برای روشن/خاموش کردن ثانیه‌ها، این حرکت را روی ساعت نوار وضعیت انجام دهید</string>
+    <string name="settings_gesture_hint">برای روشن/خاموش کردن ثانیه‌ها، این حرکت را روی زمان نوار وضعیت انجام دهید</string>
     <string name="settings_gesture_applied">به %1$s تغییر کرد — فوراً اعمال می‌شود. اگر اعمال نشد، SystemUI را دوباره راه‌اندازی کنید</string>
-    <string name="settings_gesture_double_tap">دو ضربه روی ساعت</string>
+    <string name="settings_gesture_double_tap">دو ضربه روی زمان</string>
     <string name="settings_network_time">زمان شبکه %1$s (محلی %2$s)</string>
     <string name="settings_network_time_fail">زمان شبکه دریافت نشد — برای تلاش دوباره ضربه بزنید</string>
     <string name="settings_sync_time">همگام‌سازی</string>
     <string name="settings_sync_requested">زمان خودکار فعال شد — به‌زودی همگام می‌شود</string>
-    <string name="settings_preview_hint">راهنما: برای نمایش یا مخفی کردن ثانیه، روی ساعت نوار وضعیت (بالا سمت چپ) ضربه بزنید</string>
+    <string name="settings_preview_hint">راهنما: برای نمایش یا مخفی کردن ثانیه، روی زمان نوار وضعیت (بالا سمت چپ) ضربه بزنید</string>
 </resources>

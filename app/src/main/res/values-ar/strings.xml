@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">ساعة مع الثواني</string>
-    <string name="module_description">تعرض الثواني على ساعة شريط الحالة. انقر على الساعة لتبديل عرض الثواني، وتصبح خانة العشرات من الساعة باللون الأحمر.</string>
+    <string name="module_name">الوقت بالثواني</string>
+    <string name="module_description">يعرض الثواني في وقت شريط الحالة. انقر على الوقت لتبديل عرض الثواني، وتصبح خانة العشرات من الوقت باللون الأحمر.</string>
 
-    <string name="settings_title">ساعة مع الثواني</string>
+    <string name="settings_title">الوقت بالثواني</string>
     <string name="settings_status_title">الحالة الحالية</string>
     <string name="settings_enabled">الثواني: مفعّلة</string>
     <string name="settings_disabled">الثواني: معطّلة</string>
     <string name="settings_gesture_title">حركة تبديل عرض الثواني</string>
-    <string name="settings_gesture_click">النقر على الساعة</string>
-    <string name="settings_gesture_long_press">الضغط المطوّل على الساعة</string>
-    <string name="settings_hint">ملاحظة: تُطبَّق الإعدادات فوراً. إذا لم تعمل، أعد تشغيل SystemUI أو الجهاز. إذا تعارض النقر مع سحب لوحة الإشعارات، استخدم الضغط المطوّل.</string>
+    <string name="settings_gesture_click">النقر على الوقت</string>
+    <string name="settings_gesture_long_press">الضغط المطوّل على الوقت</string>
+    <string name="settings_hint">ملاحظة: تُطبَّق الإعدادات فوراً. إذا لم تعمل، أعد تشغيل SystemUI أو الجهاز. إذا تعارض النقر مع سحب لوحة الإشعارات، استخدم النقر المزدوج.</string>
     <string name="settings_refresh">تحديث الحالة</string>
     <string name="settings_section_general">عام</string>
     <string name="settings_update_auto">التحقق التلقائي من التحديثات</string>
@@ -33,17 +33,17 @@
     <string name="update_later">لاحقاً</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 الكود المصدري لهذه الوحدة: MIT © kelebao</string>
-    <string name="settings_color_title">لون الساعة</string>
+    <string name="settings_color_title">لون الوقت</string>
     <string name="settings_color_hint">انقر على لون لتغييره — يُطبَّق فوراً</string>
     <string name="settings_write_failed">فشل الكتابة. تأكد من أن الوحدة نشطة في SystemUI أو امنح WRITE_SECURE_SETTINGS عبر adb</string>
-    <string name="settings_color_enable">تفعيل لون الساعة</string>
+    <string name="settings_color_enable">تفعيل لون الوقت</string>
     <string name="settings_color_enable_sum">إيقاف التشغيل يعيد المظهر الافتراضي للنظام</string>
-    <string name="settings_gesture_hint">استخدم هذه الحركة على ساعة شريط الحالة لتبديل عرض الثواني</string>
+    <string name="settings_gesture_hint">استخدم هذه الحركة على وقت شريط الحالة لتبديل عرض الثواني</string>
     <string name="settings_gesture_applied">تم التبديل إلى %1$s — يُطبَّق فوراً. إذا لم يعمل، أعد تشغيل SystemUI</string>
-    <string name="settings_gesture_double_tap">نقر مزدوج على الساعة</string>
+    <string name="settings_gesture_double_tap">نقر مزدوج على الوقت</string>
     <string name="settings_network_time">وقت الشبكة %1$s (المحلي %2$s)</string>
     <string name="settings_network_time_fail">تعذر جلب وقت الشبكة — انقر لإعادة المحاولة</string>
     <string name="settings_sync_time">مزامنة</string>
     <string name="settings_sync_requested">تم تفعيل الوقت التلقائي — ستتم المزامنة قريباً</string>
-    <string name="settings_preview_hint">تلميح: انقر على ساعة شريط الحالة (أعلى اليسار) لإظهار أو إخفاء الثواني</string>
+    <string name="settings_preview_hint">تلميح: انقر على وقت شريط الحالة (أعلى اليسار) لإظهار أو إخفاء الثواني</string>
 </resources>

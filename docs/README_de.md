@@ -6,9 +6,9 @@
 
 <div align="center">
 
-# Sekundenanzeige (Clock Seconds)
+# Sekundenanzeige（Show Seconds in Time）
 
-Zeigt **Sekunden** in der Statusleisten-Uhr an, Umschalten mit einmaligem Tippen, und die **Zehnerstelle der Stunde bleibt rot**.<br>Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo und andere große Hersteller ab.
+Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippen, und die **Zehnerstelle der Stunde bleibt rot**.<br>Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo und andere große Hersteller ab.
 
 [![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -25,8 +25,8 @@ Zeigt **Sekunden** in der Statusleisten-Uhr an, Umschalten mit einmaligem Tippen
 
 | Funktion | Beschreibung |
 |------|------|
-| Sekundenanzeige | Die Statusleisten-Uhr zeigt Sekunden an (`HH:mm:ss` / `h:mm:ss a`, folgt der 12/24-Stunden-Einstellung des Systems) |
-| Tippen zum Umschalten | **Tippen** auf die Statusleisten-Uhr schaltet die Sekundenanzeige ein/aus; im Einstellungsbereich auch **langes Drücken** möglich |
+| Sekundenanzeige | Die Statusleisten-Zeit zeigt Sekunden an (`HH:mm:ss` / `h:mm:ss a`, folgt der 12/24-Stunden-Einstellung des Systems) |
+| Tippen zum Umschalten | **Tippen** auf die Statusleisten-Zeit schaltet die Sekundenanzeige ein/aus; im Einstellungsbereich auch **doppeltes Tippen** möglich |
 | Rote Stundenziffer | Die **Zehnerstelle der Stunde** wird rot gefärbt (die `1` in `13`, die `0` in `05`); Minuten und Sekunden behalten die Systemfarbe. Einstellige Stunden (z. B. `9:45`) haben keine Zehnerstelle und bleiben unberührt. Wirkt bei allen Herstellern |
 | Oberflächensprachen | Die App-Oberfläche ist in **21 Sprachen** übersetzt (folgt automatisch der Systemsprache): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistenz | Der Zustand liegt in `Settings.Secure`, ist prozessübergreifend gemeinsam genutzt und überlebt SystemUI-Neustarts |
@@ -43,12 +43,12 @@ Zeigt **Sekunden** in der Statusleisten-Uhr an, Umschalten mit einmaligem Tippen
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> Ohne die Berechtigung können Sie weiterhin durch Tippen auf die Statusleisten-Uhr umschalten (diese Aktion läuft im SystemUI-Prozess und hat das Recht von Haus aus).
+> Ohne die Berechtigung können Sie weiterhin durch Tippen auf die Statusleisten-Zeit umschalten (diese Aktion läuft im SystemUI-Prozess und hat das Recht von Haus aus).
 
 ## Verwendung
 
-- **Auf die Statusleisten-Uhr tippen**: schaltet die Sekundenanzeige ein/aus (Standardgeste).
-- Das Umschalten wird über eine globale Touch-Trefferprüfung realisiert und **konfligiert niemals mit dem „Herunterziehen des Benachrichtigungsfelds“**—— reines Tippen schaltet um, Wischen zieht das Benachrichtigungsfeld weiterhin herunter. Wer es lieber mag, kann die Geste im Einstellungsbereich auf **langes Drücken** umstellen.
+- **Auf die Statusleisten-Zeit tippen**: schaltet die Sekundenanzeige ein/aus (Standardgeste).
+- Das Umschalten wird über eine globale Touch-Trefferprüfung realisiert und **konfligiert niemals mit dem „Herunterziehen des Benachrichtigungsfelds“**—— reines Tippen schaltet um, Wischen zieht das Benachrichtigungsfeld weiterhin herunter. Wer es lieber mag, kann die Geste im Einstellungsbereich auf **doppeltes Tippen** umstellen.
 - Die Einstellungsseite zeigt den aktuellen Zustand, die gewählte Geste und eine Aktualisieren-Schaltfläche.
 
 ## Vorschau
@@ -71,19 +71,19 @@ Sekunden an: `15:06:03` — Minuten und Sekunden behalten die Systemfarbe
 Das Modul hookt nur **SystemUI** und nutzt den bewährten Legacy-Xposed-Ansatz,
 **berührt keinerlei herstellereigene private Klassen** und beschädigt daher nie den internen Systemzustand oder löst den LSPosed-Sicherheitsmodus aus:
 
-- **Sekunden**: Hook des stabilen `TextView.setText` (after) cached den Rohtext, den das System auf die Statusleisten-Uhr schreibt,
+- **Sekunden**: Hook des stabilen `TextView.setText` (after) cached den Rohtext, den das System auf die Statusleisten-Zeit schreibt,
   dann Hook von `TextView.onDraw` (before), um die Anzeige mit `Rohtext:ss` zu überschreiben, nachdem das System den Text gesetzt hat,
-  angetrieben von einem 1-Sekunden-`Handler`. Die angehängten Sekunden übernehmen die eigene Textfarbe der Uhr (gemessen `#ccffffff`).
+  angetrieben von einem 1-Sekunden-`Handler`. Die angehängten Sekunden übernehmen die eigene Textfarbe der Zeit (gemessen `#ccffffff`).
   Zusätzlich wird die Zehnerstelle der Stunde rot gefärbt (ein roter `ForegroundColorSpan` auf diesem einen Zeichen), unabhängig davon, ob Sekunden angezeigt werden;
   Minuten und Sekunden werden nie rot; einstellige Stunden haben keine Zehnerstelle und bleiben unberührt.
-- **Umschalten**: Das Benachrichtigungsfeld von ColorOS fängt Touches im Bereich der Statusleiste ab, daher erhält der eigene `OnTouchListener` der Uhr keine Ereignisse.
+- **Umschalten**: Das Benachrichtigungsfeld von ColorOS fängt Touches im Bereich der Statusleiste ab, daher erhält der eigene `OnTouchListener` der Zeit keine Ereignisse.
   Das Modul hookt deshalb das globale `View.dispatchTouchEvent` und dreht den `Settings.Secure`-Schalter nur, wenn der Druckpunkt
-  innerhalb der Bildschirmgrenzen der erkannten Uhr liegt und sich fast nicht bewegt (Tippen) oder 500 ms gehalten wird (langes Drücken). Das Modul **verbraucht**
+  innerhalb der Bildschirmgrenzen der erkannten Zeit liegt und sich fast nicht bewegt (Tippen) oder innerhalb 350 ms ein zweites Tippen erfolgt (doppeltes Tippen). Das Modul **verbraucht**
   kein Touch-Ereignis, das Herunterziehen des Benachrichtigungsfelds funktioniert wie gewohnt.
 
 ## Hinweise zum Stromverbrauch
 
-- **Sekundenanzeige AN**: Das Modul braucht einen 1-Sekunden-Timer für die Aktualisierungen (die inhärente Kosten des Sekundenanzeigens, rund 60 Neuzeichnungen der Uhr pro Minute).
+- **Sekundenanzeige AN**: Das Modul braucht einen 1-Sekunden-Timer für die Aktualisierungen (die inhärente Kosten des Sekundenanzeigens, rund 60 Neuzeichnungen der Zeit pro Minute).
 - **Sekundenanzeige AUS**: Das Modul **stoppt diesen Timer sofort** (`stopTicker`)—— überhaupt keine Aufwachvorgänge pro Sekunde mehr und keine prozessübergreifenden Lesevorgänge.
   Es kehrt zum ursprünglichen Rhythmus des Systems „einmal pro Minute aktualisieren“ zurück, daher ist das Ausschalten der Sekundenanzeige wirklich sparsamer.
 - Der Zustand wird **prozessintern gecacht** (`sSecondsEnabled`), sodass der Timer nicht in jeder Sekunde `Settings.Secure` liest (ein IPC pro Sekunde wird vermieden).
@@ -137,7 +137,7 @@ Logcat prüfen:
   ```
 
 - Falls es auf einem Nicht-ColorOS-Gerät nicht wirkt: Installieren Sie den Debug-Build und sehen Sie sich die Zeilen `candidate:` / `CONFIG CLOCK:` im Log an,
-  um zu prüfen, ob Ressourcenname / Klassenname der Statusleisten-Uhr Ihres Geräts von den Erkennungsregeln abgedeckt sind; wenn nicht, genügt eine zusätzliche Regelzeile.
+  um zu prüfen, ob Ressourcenname / Klassenname der Statusleisten-Zeit Ihres Geräts von den Erkennungsregeln abgedeckt sind; wenn nicht, genügt eine zusätzliche Regelzeile.
 
 </details>
 

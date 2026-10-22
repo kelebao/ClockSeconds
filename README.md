@@ -6,9 +6,9 @@
 
 <div align="center">
 
-# 时钟显秒（Clock Seconds）
+# 时间显示秒数（Show Seconds in Time）
 
-让状态栏时钟显示**秒**，单击即切换，小时十位数**常驻标红**。<br>不依赖任何厂商私有类，已在 ColorOS 15 真机验证，同时覆盖小米、一加、荣耀、vivo 等主流厂商。
+让状态栏时间显示**秒**，单击即切换，小时十位数**常驻标红**。<br>不依赖任何厂商私有类，已在 ColorOS 15 真机验证，同时覆盖小米、一加、荣耀、vivo 等主流厂商。
 
 [![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -25,8 +25,8 @@
 
 | 功能 | 说明 |
 |------|------|
-| 状态栏显秒 | 状态栏时钟显示到秒（`HH:mm:ss` / `h:mm:ss a`，跟随系统 12/24 小时制） |
-| 点击切换 | **单击**状态栏时钟即切换显秒开/关；也可在设置页改为**长按** |
+| 状态栏显秒 | 状态栏时间显示到秒（`HH:mm:ss` / `h:mm:ss a`，跟随系统 12/24 小时制） |
+| 点击切换 | **单击**状态栏时间即切换显秒开/关；也可在设置页改为**双击** |
 | 小时红色 | 把小时「十位数」标红（如 `13` 的 `1`、`05` 的 `0`），分钟与秒保持系统原色；单位数小时（如 `9:45`）无十位不标红。所有厂商机型均生效 |
 | 界面语言 | 应用内界面已适配 **21 种语言**（跟随系统语言自动切换）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 持久化 | 状态存于 `Settings.Secure`，跨进程共享，重启 SystemUI 后保持 |
@@ -43,12 +43,12 @@
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> 未授予时仍可点击状态栏时钟完成切换（该动作运行在 SystemUI 进程内，天然具备权限）。
+> 未授予时仍可点击状态栏时间完成切换（该动作运行在 SystemUI 进程内，天然具备权限）。
 
 ## 使用
 
-- **单击状态栏时钟**：切换显秒开/关（默认手势）。
-- 切换通过全局触摸命中判定实现，**不会与“下拉通知栏”冲突**——纯点击切换、下拉滑动照常拉出通知栏；若你更习惯，也可在配置页把切换手势改为**长按**。
+- **单击状态栏时间**：切换显秒开/关（默认手势）。
+- 切换通过全局触摸命中判定实现，**不会与“下拉通知栏”冲突**——纯点击切换、下拉滑动照常拉出通知栏；若你更习惯，也可在配置页把切换手势改为**双击**。
 - 配置页可查看当前状态、切换手势、刷新状态。
 
 ## 效果预览
@@ -71,19 +71,19 @@
 模块只 hook **SystemUI** 一个进程，采用稳妥的 legacy Xposed 范式，
 **完全不触碰任何厂商私有类**，因此不会破坏系统内部状态、不会触发 LSPosed 安全模式：
 
-- **显秒**：hook 稳定的 `TextView.setText`（after）缓存系统在状态栏时钟上给出的原始文本，
+- **显秒**：hook 稳定的 `TextView.setText`（after）缓存系统在状态栏时间上给出的原始文本，
   再 hook `TextView.onDraw`（before）在系统已设好文本之后覆写显示 `原文本:ss`，
-  并用 1 秒级 `Handler` 驱动刷新。追加的秒保持系统时钟自身的文字色（实测为白色 `#ccffffff`）。
+  并用 1 秒级 `Handler` 驱动刷新。追加的秒保持系统时间自身的文字色（实测为白色 `#ccffffff`）。
   同时把「小时十位数」标红（给该字符追加一段红色 `ForegroundColorSpan`），无论显秒开启或关闭均保持红色；
   分钟与秒不标红；单位数小时无十位则不标红。
-- **切换**：ColorOS 的通知面板会拦截状态栏区域的触摸，时钟自身的 `OnTouchListener` 收不到事件。
-  因此模块改为 hook 系统全局的 `View.dispatchTouchEvent`，仅当按下点落在已识别时钟的屏幕边界内、
-  且几乎无位移（点击）或按住 500ms（长按）时才翻转 `Settings.Secure` 开关；模块**不消费**
+- **切换**：ColorOS 的通知面板会拦截状态栏区域的触摸，时间自身的 `OnTouchListener` 收不到事件。
+  因此模块改为 hook 系统全局的 `View.dispatchTouchEvent`，仅当按下点落在已识别时间的屏幕边界内、
+  且几乎无位移（点击）或 350ms 内第二次点击（双击）时才翻转 `Settings.Secure` 开关；模块**不消费**
   任何触摸事件，下拉通知栏照常。
 
 ## 省电说明
 
-- **开启显秒时**：模块需要 1 秒级定时器驱动刷新（这是“显示秒”的固有开销，约 60 次/分钟重绘时钟）。
+- **开启显秒时**：模块需要 1 秒级定时器驱动刷新（这是“显示秒”的固有开销，约 60 次/分钟重绘时间）。
 - **关闭显秒时**：模块会**立即停止该定时器**（`stopTicker`），不再有任何每秒唤醒，也不再有跨进程读取，
   回到系统原本的“每分钟刷新一次”节奏，因此关闭显秒确实更省电。
 - 状态采用**进程内缓存**（`sSecondsEnabled`），定时器不会每秒去读 `Settings.Secure`（避免每秒一次 IPC）。
@@ -137,7 +137,7 @@ export JAVA_HOME=/path/to/jdk-17-or-21
   ```
 
 - 若在非 ColorOS 机型上不生效：装 debug 版看日志里的 `candidate:` / `CONFIG CLOCK:` 输出，
-  确认该机型状态栏时钟的资源名与类名是否在识别规则内，若不在则补一条规则即可。
+  确认该机型状态栏时间的资源名与类名是否在识别规则内，若不在则补一条规则即可。
 
 </details>
 

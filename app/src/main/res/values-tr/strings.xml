@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Saat Saniye Gösterme</string>
-    <string name="module_description">Durum çubuğu saatinde saniyeleri gösterir. Saate dokunarak saniye gösterimini açıp kapatabilirsiniz; saatin onlar basamağı kırmızı renkte görünür.</string>
+    <string name="module_description">Durum çubuğu zamanında saniyeleri gösterir. Zamana dokunarak saniye gösterimini açıp kapatabilirsiniz; zamanın onlar basamağı kırmızı renkte görünür.</string>
 
     <string name="settings_title">Saat Saniye Gösterme</string>
     <string name="settings_status_title">Mevcut durum</string>
@@ -10,7 +10,7 @@
     <string name="settings_gesture_title">Saniye değiştirme hareketi</string>
     <string name="settings_gesture_click">Saate dokun</string>
     <string name="settings_gesture_long_press">Saati basılı tut</string>
-    <string name="settings_hint">Not: ayarlar hemen geçerli olur. Geçerli olmazsa SystemUI\'yi veya cihazı yeniden başlatın. Dokunma bildirim panelini açmayla çakışıyorsa uzun basmayı kullanın.</string>
+    <string name="settings_hint">Not: ayarlar hemen geçerli olur. Geçerli olmazsa SystemUI\'yi veya cihazı yeniden başlatın. Dokunma bildirim panelini açmayla çakışıyorsa çift dokunuşu kullanın.</string>
     <string name="settings_refresh">Durumu yenile</string>
     <string name="settings_section_general">Genel</string>
     <string name="settings_update_auto">Güncellemeleri otomatik denetle</string>
@@ -38,12 +38,12 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_write_failed">Yazma başarısız. Modülün SystemUI\'de etkin olduğundan emin olun veya adb ile WRITE_SECURE_SETTINGS verin</string>
     <string name="settings_color_enable">Saat rengini etkinleştir</string>
     <string name="settings_color_enable_sum">Kapatınca sistem varsayılan görünümüne döner</string>
-    <string name="settings_gesture_hint">Saniyeleri açıp kapatmak için durum çubuğu saatinde bu hareketi kullanın</string>
+    <string name="settings_gesture_hint">Saniyeleri açıp kapatmak için durum çubuğu zamanında bu hareketi kullanın</string>
     <string name="settings_gesture_applied">%1$s olarak değiştirildi — hemen geçerli olur. Geçerli olmazsa SystemUI\'yi yeniden başlatın</string>
     <string name="settings_gesture_double_tap">Saate çift dokun</string>
-    <string name="settings_network_time">Ağ saati %1$s (yerel %2$s)</string>
-    <string name="settings_network_time_fail">Ağ saati alınamadı — yeniden denemek için dokunun</string>
+    <string name="settings_network_time">Ağ zamanı %1$s (yerel %2$s)</string>
+    <string name="settings_network_time_fail">Ağ zamanı alınamadı — yeniden denemek için dokunun</string>
     <string name="settings_sync_time">Eşitle</string>
-    <string name="settings_sync_requested">Otomatik saat açıldı — kısa süre içinde eşitlenir</string>
-    <string name="settings_preview_hint">İpucu: saniyeleri göstermek/gizlemek için durum çubuğu saatine (sol üst) dokunun</string>
+    <string name="settings_sync_requested">Otomatik zaman açıldı — kısa süre içinde eşitlenir</string>
+    <string name="settings_preview_hint">İpucu: saniyeleri göstermek/gizlemek için durum çubuğu zamanına (sol üst) dokunun</string>
 </resources>

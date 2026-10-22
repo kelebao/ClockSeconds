@@ -6,9 +6,9 @@
 
 <div align="center">
 
-# Segundos no relógio (Clock Seconds)
+# Segundos na hora（Show Seconds in Time）
 
-Mostre os **segundos** no relógio da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo e outros grandes fabricantes.
+Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo e outros grandes fabricantes.
 
 [![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -25,8 +25,8 @@ Mostre os **segundos** no relógio da barra de status, alterne com um único toq
 
 | Recurso | Descrição |
 |------|------|
-| Segundos | O relógio da barra de status mostra os segundos (`HH:mm:ss` / `h:mm:ss a`, segue a configuração de 12/24 horas do sistema) |
-| Toque para alternar | **Tocar** no relógio da barra de status alterna a exibição dos segundos; também é possível usar **toque longo** na página de configurações |
+| Segundos | A hora da barra de status mostra os segundos (`HH:mm:ss` / `h:mm:ss a`, segue a configuração de 12/24 horas do sistema) |
+| Toque para alternar | **Tocar** na hora da barra de status alterna a exibição dos segundos; também é possível usar **toque duplo** na página de configurações |
 | Dezena da hora em vermelho | A **dezena da hora** é pintada de vermelho (o `1` em `13`, o `0` em `05`); minutos e segundos mantêm a cor do sistema. Horas de um único dígito (ex. `9:45`) não têm dezena e ficam intactas. Efetivo em todos os fabricantes |
 | Idiomas da interface | A interface do app está traduzida em **21 idiomas** (segue o idioma do sistema automaticamente): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistência | O estado é salvo em `Settings.Secure`, compartilhado entre processos e mantido após reinícios do SystemUI |
@@ -43,12 +43,12 @@ Mostre os **segundos** no relógio da barra de status, alterne com um único toq
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> Sem ela, você ainda pode alternar tocando no relógio da barra de status (essa ação roda dentro do processo SystemUI, que já tem a permissão por natureza).
+> Sem ela, você ainda pode alternar tocando na hora da barra de status (essa ação roda dentro do processo SystemUI, que já tem a permissão por natureza).
 
 ## Uso
 
-- **Toque no relógio da barra de status**: alterna a exibição dos segundos (gesto padrão).
-- A alternância é implementada com um teste de acerto de toque global, então ela **nunca entra em conflito com "puxar para baixo o painel de notificações"**—— um toque puro alterna, um arrasto continua puxando o painel. Se preferir, você pode trocar o gesto para **toque longo** na página de configurações.
+- **Toque na hora da barra de status**: alterna a exibição dos segundos (gesto padrão).
+- A alternância é implementada com um teste de acerto de toque global, então ela **nunca entra em conflito com "puxar para baixo o painel de notificações"**—— um toque puro alterna, um arrasto continua puxando o painel. Se preferir, você pode trocar o gesto para **toque duplo** na página de configurações.
 - A página de configurações mostra o estado atual, o gesto escolhido e um botão de atualizar.
 
 ## Prévia
@@ -71,19 +71,19 @@ Segundos ativados: `15:06:03` — minutos e segundos mantêm a cor do sistema
 O módulo só hooka o **SystemUI**, usando a abordagem legacy Xposed bem testada,
 e **nunca toca em nenhuma classe privada de fabricante**, então não quebra o estado interno do sistema nem aciona o modo de segurança do LSPosed:
 
-- **Segundos**: hook do estável `TextView.setText` (after) para cachear o texto bruto que o sistema coloca no relógio da barra de status,
+- **Segundos**: hook do estável `TextView.setText` (after) para cachear o texto bruto que o sistema coloca na hora da barra de status,
   depois hook do `TextView.onDraw` (before) para sobrescrever a exibição com `textoBruto:ss` depois que o sistema tiver definido o texto,
-  movido por um `Handler` de 1 segundo. Os segundos acrescentados herdam a cor do próprio texto do relógio (medido `#ccffffff`).
+  movido por um `Handler` de 1 segundo. Os segundos acrescentados herdam a cor do próprio texto da hora (medido `#ccffffff`).
   Além disso, a dezena da hora é pintada de vermelho (um `ForegroundColorSpan` vermelho nesse único caractere), estejam os segundos sendo exibidos ou não;
   minutos e segundos nunca ficam vermelhos; horas de um único dígito não têm dezena e ficam intactas.
-- **Alternar**: o painel de notificações da ColorOS intercepta toques na área da barra de status, então o `OnTouchListener` do próprio relógio nunca recebe eventos.
+- **Alternar**: o painel de notificações da ColorOS intercepta toques na área da barra de status, então o `OnTouchListener` do próprio hora nunca recebe eventos.
   O módulo por isso hooka o `View.dispatchTouchEvent` global e só inverte o interruptor `Settings.Secure` quando o toque cai dentro
-  dos limites de tela do relógio reconhecido e quase não se move (toque) ou é mantido por 500 ms (toque longo). O módulo **não consome**
+  dos limites de tela da hora reconhecido e quase não se move (toque) ou é um segundo toque dentro de 350 ms (toque duplo). O módulo **não consome**
   nenhum evento de toque, então puxar para baixo o painel de notificações funciona como sempre.
 
 ## Nota sobre economia de energia
 
-- **Segundos LIGADOS**: o módulo precisa de um timer de 1 segundo para mover as atualizações (o custo inerente de mostrar segundos, cerca de 60 redesenhos do relógio por minuto).
+- **Segundos LIGADOS**: o módulo precisa de um timer de 1 segundo para mover as atualizações (o custo inerente de mostrar segundos, cerca de 60 redesenhos do hora por minuto).
 - **Segundos DESLIGADOS**: o módulo **para esse timer imediatamente** (`stopTicker`)—— nenhum despertar por segundo e nenhuma leitura entre processos.
   Ele volta ao ritmo original do sistema de "atualizar uma vez por minuto", então desligar os segundos economiza energia de verdade.
 - O estado é guardado em **cache dentro do processo** (`sSecondsEnabled`), então o timer não lê `Settings.Secure` a cada segundo (evitando um IPC por segundo).
@@ -137,7 +137,7 @@ Verifique o logcat:
   ```
 
 - Se não funcionar em um dispositivo que não seja ColorOS: instale o build debug e olhe as linhas `candidate:` / `CONFIG CLOCK:` no log
-  para ver se o nome do recurso / nome da classe do relógio da barra de status do seu dispositivo está coberto pelas regras de reconhecimento; se não estiver, uma linha de regra extra basta.
+  para ver se o nome do recurso / nome da classe da hora da barra de status do seu dispositivo está coberto pelas regras de reconhecimento; se não estiver, uma linha de regra extra basta.
 
 </details>
 

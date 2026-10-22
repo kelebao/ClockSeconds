@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">საათი წამებით</string>
-    <string name="module_description">აჩვენებს წამებს სტატუსის ზოლის საათზე. დააჭირეთ საათს წამების ჩვენების ჩასართავად/გამოსართავად; საათის ათეულის ციფრი წითელია.</string>
+    <string name="module_name">დრო წამებით</string>
+    <string name="module_description">აჩვენებს წამებს სტატუსის ზოლის დროზე. დააჭირეთ დროს წამების ჩვენების ჩასართავად/გამოსართავად; დროის ათეულის ციფრი წითელია.</string>
 
-    <string name="settings_title">საათი წამებით</string>
+    <string name="settings_title">დრო წამებით</string>
     <string name="settings_status_title">მიმდინარე მდგომარეობა</string>
     <string name="settings_enabled">წამები: ჩართული</string>
     <string name="settings_disabled">წამები: გამორთული</string>
     <string name="settings_gesture_title">წამების გადართვის ჟესტი</string>
-    <string name="settings_gesture_click">დააჭირეთ საათს</string>
-    <string name="settings_gesture_long_press">დააჭირეთ ხანგრძლივად საათს</string>
-    <string name="settings_hint">შენიშვნა: პარამეტრები დაუყოვნებლივ მოქმედებს. თუ არ მუშაობს, გადატვირთეთ SystemUI ან მოწყობილობა. თუ შეხება ეწინააღმდეგება პანელის გახსნას, გამოიყენეთ ხანგრძლივი დაჭერა.</string>
+    <string name="settings_gesture_click">დააჭირეთ დროს</string>
+    <string name="settings_gesture_long_press">დააჭირეთ ხანგრძლივად დროს</string>
+    <string name="settings_hint">შენიშვნა: პარამეტრები დაუყოვნებლივ მოქმედებს. თუ არ მუშაობს, გადატვირთეთ SystemUI ან მოწყობილობა. თუ შეხება ეწინააღმდეგება პანელის გახსნას, გამოიყენეთ ორმაგი შეხება.</string>
     <string name="settings_refresh">სტატუსის განახლება</string>
     <string name="settings_section_general">ზოგადი</string>
     <string name="settings_update_auto">განახლებების ავტომატური შემოწმება</string>
@@ -33,17 +33,17 @@
     <string name="update_later">მოგვიანებით</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 ამ მოდულის საწყისი კოდი: MIT © kelebao</string>
-    <string name="settings_color_title">საათის ფერი</string>
+    <string name="settings_color_title">დროის ფერი</string>
     <string name="settings_color_hint">შესაცვლელად შეეხეთ ფერს — დაუყოვნებლივ მოქმედებს</string>
     <string name="settings_write_failed">ჩაწერა ვერ მოხერხდა. დარწმუნდით, რომ მოდული SystemUI-ში აქტიურია, ან მიანიჭეთ WRITE_SECURE_SETTINGS adb-ით</string>
-    <string name="settings_color_enable">საათის ფერის ჩართვა</string>
+    <string name="settings_color_enable">დროის ფერის ჩართვა</string>
     <string name="settings_color_enable_sum">გამორთვისას სისტემის ნაგულისხმევი იერი ბრუნდება</string>
-    <string name="settings_gesture_hint">გამოიყენეთ ეს ჟესტი სტატუსის ზოლის საათზე წამების ჩასართავად/გამოსართავად</string>
+    <string name="settings_gesture_hint">გამოიყენეთ ეს ჟესტი სტატუსის ზოლის დროზე წამების ჩასართავად/გამოსართავად</string>
     <string name="settings_gesture_applied">გადაერთო %1$s-ზე — დაუყოვნებლივ მოქმედებს. თუ არ მუშაობს, გადატვირთეთ SystemUI</string>
-    <string name="settings_gesture_double_tap">საათზე ორმაგი შეხება</string>
+    <string name="settings_gesture_double_tap">დროზე ორმაგი შეხება</string>
     <string name="settings_network_time">ქსელის დრო %1$s (ლოკალური %2$s)</string>
     <string name="settings_network_time_fail">ქსელის დროის მიღება ვერ მოხერხდა — შეეხეთ ხელახლა საცდელად</string>
     <string name="settings_sync_time">სინქრონიზაცია</string>
     <string name="settings_sync_requested">ავტომატური დრო ჩართულია — მალე სინქრონდება</string>
-    <string name="settings_preview_hint">მინიშნება: დააჭირეთ სტატუს-ზოლის საათს (ზედა მარცხნივ) წამების ჩვენების/დამალვისთვის</string>
+    <string name="settings_preview_hint">მინიშნება: დააჭირეთ სტატუს-ზოლის დროს (ზედა მარცხნივ) წამების ჩვენების/დამალვისთვის</string>
 </resources>

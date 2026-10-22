@@ -6,9 +6,9 @@
 
 <div align="center">
 
-# Sekundy w zegarze (Clock Seconds)
+# Sekundy w czasie（Show Seconds in Time）
 
-Pokaż **sekundy** na zegarze paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo i innych dużych producentów.
+Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo i innych dużych producentów.
 
 [![version](https://img.shields.io/badge/version-1.0.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -25,8 +25,8 @@ Pokaż **sekundy** na zegarze paska stanu, przełączaj jednym dotknięciem i tr
 
 | Funkcja | Opis |
 |------|------|
-| Sekundy | Zegar paska stanu pokazuje sekundy (`HH:mm:ss` / `h:mm:ss a`, zgodnie z ustawieniem 12/24-godzinnym systemu) |
-| Dotknięcie przełącza | **Dotknięcie** zegara paska stanu przełącza wyświetlanie sekund; na stronie ustawień dostępny jest też gest **długiego naciśnięcia** |
+| Sekundy | Czas paska stanu pokazuje sekundy (`HH:mm:ss` / `h:mm:ss a`, zgodnie z ustawieniem 12/24-godzinnym systemu) |
+| Dotknięcie przełącza | **Dotknięcie** czasu paska stanu przełącza wyświetlanie sekund; na stronie ustawień dostępny jest też gest **podwójnego dotknięcia** |
 | Czerwona dziesiątka godziny | **Dziesiątka godziny** jest kolorowana na czerwono (`1` w `13`, `0` w `05`); minuty i sekundy zachowują kolor systemowy. Godziny jednocyfrowe (np. `9:45`) nie mają dziesiątki i pozostają nietknięte. Działa u wszystkich producentów |
 | Języki interfejsu | Interfejs aplikacji jest przetłumaczony na **21 języków** (automatycznie podąża za językiem systemu): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Trwałość | Stan zapisywany jest w `Settings.Secure`, współdzielony między procesami i przetrwa restarty SystemUI |
@@ -43,12 +43,12 @@ Pokaż **sekundy** na zegarze paska stanu, przełączaj jednym dotknięciem i tr
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> Bez niego nadal możesz przełączać, dotykając zegara paska stanu (ta akcja działa wewnątrz procesu SystemUI, który z natury ma uprawnienie).
+> Bez niego nadal możesz przełączać, dotykając czasu paska stanu (ta akcja działa wewnątrz procesu SystemUI, który z natury ma uprawnienie).
 
 ## Użytkowanie
 
-- **Dotknij zegara paska stanu**: przełącza wyświetlanie sekund (gest domyślny).
-- Przełączanie realizowane jest przez globalne trafienie dotyku, więc **nigdy nie koliduje z „zejściem panelu powiadomień”**—— czyste dotknięcie przełącza, przeciągnięcie nadal rozwija panel. Jeśli wolisz, możesz zmienić gest na **długie naciśnięcie** na stronie ustawień.
+- **Dotknij czasu paska stanu**: przełącza wyświetlanie sekund (gest domyślny).
+- Przełączanie realizowane jest przez globalne trafienie dotyku, więc **nigdy nie koliduje z „zejściem panelu powiadomień”**—— czyste dotknięcie przełącza, przeciągnięcie nadal rozwija panel. Jeśli wolisz, możesz zmienić gest na **podwójne dotknięcie** na stronie ustawień.
 - Strona ustawień pokazuje aktualny stan, wybrany gest i przycisk odświeżenia.
 
 ## Podgląd
@@ -71,19 +71,19 @@ Sekundy włączone: `15:06:03` — minuty i sekundy zachowują kolor systemowy
 Moduł hakuje tylko **SystemUI**, stosując sprawdzone podejście legacy Xposed,
 i **w ogóle nie dotyka prywatnych klas producenta**, więc nie uszkodzi wewnętrznego stanu systemu ani nie wywoła trybu awaryjnego LSPosed:
 
-- **Sekundy**: hak stabilnego `TextView.setText` (after) buforuje surowy tekst, który system kładzie na zegar paska stanu,
+- **Sekundy**: hak stabilnego `TextView.setText` (after) buforuje surowy tekst, który system kładzie na czas paska stanu,
   potem hak `TextView.onDraw` (before) nadpisuje wyświetlanie wartością `surowyTekst:ss` po tym, jak system ustawił tekst,
-  napędzany `Handler`em 1-sekundowym. Doklejone sekundy przejmują własny kolor tekstu zegara (zmierzony `#ccffffff`).
+  napędzany `Handler`em 1-sekundowym. Doklejone sekundy przejmują własny kolor tekstu czasu (zmierzony `#ccffffff`).
   Dodatkowo dziesiątka godziny jest kolorowana na czerwono (czerwony `ForegroundColorSpan` na tym jednym znaku), niezależnie od tego, czy sekundy są wyświetlane;
   minuty i sekundy nigdy nie są czerwone; godziny jednocyfrowe nie mają dziesiątki i pozostają nietknięte.
-- **Przełączanie**: panel powiadomień ColorOS przechwytuje dotyki w obszarze paska stanu, więc własny `OnTouchListener` zegara nigdy nie otrzymuje zdarzeń.
+- **Przełączanie**: panel powiadomień ColorOS przechwytuje dotyki w obszarze paska stanu, więc własny `OnTouchListener` czasu nigdy nie otrzymuje zdarzeń.
   Moduł dlatego hakuje globalny `View.dispatchTouchEvent` i przewraca przełącznik `Settings.Secure` tylko wtedy, gdy naciśnięcie trafia
-  w granice rozpoznanego zegara na ekranie i prawie się nie przesuwa (dotknięcie) albo jest trzymane 500 ms (długie naciśnięcie). Moduł **nie zużywa**
+  w granice rozpoznanego czasu na ekranie i prawie się nie przesuwa (dotknięcie) albo jest drugie dotknięcie w ciągu 350 ms (podwójne dotknięcie). Moduł **nie zużywa**
   żadnego zdarzenia dotyku, więc przeciąganie panelu powiadomień działa jak zwykle.
 
 ## Uwaga o oszczędności energii
 
-- **Sekundy WŁĄCZONE**: moduł potrzebuje 1-sekundowego licznika do napędzania odświeżania (nieodłączny koszt pokazywania sekund, około 60 przemalowań zegara na minutę).
+- **Sekundy WŁĄCZONE**: moduł potrzebuje 1-sekundowego licznika do napędzania odświeżania (nieodłączny koszt pokazywania sekund, około 60 przemalowań czasu na minutę).
 - **Sekundy WYŁĄCZONE**: moduł **natychmiast zatrzymuje ten licznik** (`stopTicker`)—— żadnych budzeń co sekundę i żadnych odczytów międzyprocesowych.
   Wraca do pierwotnego rytmu systemu „odświeżaj raz na minutę”, więc wyłączenie sekund naprawdę oszczędza energię.
 - Stan jest buforowany **wewnątrzprocesowo** (`sSecondsEnabled`), więc licznik nie czyta `Settings.Secure` co sekundę (unikany jest IPC co sekundę).
@@ -137,7 +137,7 @@ Sprawdź logcat:
   ```
 
 - Jeśli nie działa na urządzeniu innym niż ColorOS: zainstaluj build debug i spójrz na linie `candidate:` / `CONFIG CLOCK:` w logu,
-  aby sprawdzić, czy nazwa zasobu / nazwa klasy zegara paska stanu twojego urządzenia jest objęta regułami rozpoznawania; jeśli nie, wystarczy dodać jedną linię reguły.
+  aby sprawdzić, czy nazwa zasobu / nazwa klasy czasu paska stanu twojego urządzenia jest objęta regułami rozpoznawania; jeśli nie, wystarczy dodać jedną linię reguły.
 
 </details>
 

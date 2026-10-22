@@ -48,6 +48,12 @@ public final class ClockSecondsConfig {
             "coloros_clock_seconds_hour_color_enabled";
 
     /**
+     * 网络时间相对系统时间的偏移（毫秒，网络 - 系统），由设置页测得后写入。
+     * SystemUI 内的浮窗用它显示网络时间，无需自己发网络请求。
+     */
+    public static final String NET_OFFSET_KEY = "coloros_clock_seconds_net_offset";
+
+    /**
      * 设置页 → SystemUI 的配置广播。
      *
      * <p>设置页运行在普通应用进程，没有 {@code WRITE_SECURE_SETTINGS}；而模块在 SystemUI
@@ -63,6 +69,12 @@ public final class ClockSecondsConfig {
     /** 一键对时：让 SystemUI 打开系统「自动设置时间」。 */
     public static final String ACTION_SYNC_TIME =
             "io.github.kelebao.colorosclockseconds.action.SYNC_TIME";
+    /** 设置页 → SystemUI 写入网络时间偏移（浮窗显示网络时间用）。 */
+    public static final String ACTION_SET_NET_OFFSET =
+            "io.github.kelebao.colorosclockseconds.action.SET_NET_OFFSET";
+    /** long extra：网络 - 系统的偏移（毫秒）。 */
+    public static final String EXTRA_NET_OFFSET =
+            "io.github.kelebao.colorosclockseconds.extra.NET_OFFSET";
     public static final String EXTRA_COLOR = "color";
     public static final String EXTRA_GESTURE = "gesture";
     public static final String EXTRA_ENABLED = "enabled";
@@ -115,5 +127,15 @@ public final class ClockSecondsConfig {
     /** 写入小时颜色开关。 */
     public static void setHourColorEnabled(ContentResolver resolver, boolean enabled) {
         Settings.Secure.putInt(resolver, HOUR_COLOR_ENABLED_KEY, enabled ? 1 : 0);
+    }
+
+    /** 读取网络时间偏移（毫秒，网络 - 系统）。无记录时为 0（按系统时间显示）。 */
+    public static long getNetOffset(ContentResolver resolver) {
+        return Settings.Secure.getLong(resolver, NET_OFFSET_KEY, 0L);
+    }
+
+    /** 写入网络时间偏移（毫秒，网络 - 系统）。 */
+    public static void setNetOffset(ContentResolver resolver, long offsetMs) {
+        Settings.Secure.putLong(resolver, NET_OFFSET_KEY, offsetMs);
     }
 }

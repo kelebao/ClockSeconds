@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Clock Seconds</string>
-    <string name="module_description">Show seconds in the status bar clock. Tap the clock to toggle seconds, and the hour tens digit is colored red.</string>
+    <string name="module_description">Show seconds in the status bar time. Tap the time to toggle seconds, and the hour tens digit is colored red.</string>
 
     <string name="settings_title">Clock Seconds</string>
     <string name="settings_status_title">Current state</string>
     <string name="settings_enabled">Seconds: On</string>
     <string name="settings_disabled">Seconds: Off</string>
     <string name="settings_gesture_title">Toggle seconds gesture</string>
-    <string name="settings_gesture_click">Tap clock</string>
-    <string name="settings_gesture_long_press">Long-press clock</string>
-    <string name="settings_hint">Note: changes take effect immediately. If they do not, restart SystemUI or the device. If tapping conflicts with pulling down the shade, use long press instead.</string>
+    <string name="settings_gesture_click">Tap time</string>
+    <string name="settings_gesture_long_press">Long-press time</string>
+    <string name="settings_hint">Note: changes take effect immediately. If they do not, restart SystemUI or the device. If tapping conflicts with pulling down the shade, use double tap instead.</string>
     <string name="settings_refresh">Refresh state</string>
     <string name="settings_section_general">General</string>
     <string name="settings_update_auto">Check for updates automatically</string>
@@ -38,12 +38,12 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_write_failed">Write failed. Make sure the module is active in SystemUI, or grant WRITE_SECURE_SETTINGS via adb</string>
     <string name="settings_color_enable">Enable hour color</string>
     <string name="settings_color_enable_sum">Turn off to restore the system default look</string>
-    <string name="settings_gesture_hint">Use this gesture on the status bar clock to toggle seconds</string>
+    <string name="settings_gesture_hint">Use this gesture on the status bar time to toggle seconds</string>
     <string name="settings_gesture_applied">Switched to %1$s — takes effect immediately. If not, restart SystemUI</string>
-    <string name="settings_gesture_double_tap">Double tap clock</string>
+    <string name="settings_gesture_double_tap">Double tap time</string>
     <string name="settings_network_time">Network %1$s (local %2$s)</string>
     <string name="settings_network_time_fail">Could not get network time — tap to retry</string>
     <string name="settings_sync_time">Sync</string>
     <string name="settings_sync_requested">Auto time enabled — the system will sync shortly</string>
-    <string name="settings_preview_hint">提示：点击状态栏(左上角)时钟即可显示或关闭秒数</string>
+    <string name="settings_preview_hint">Tip: tap the status bar time (top left) to show or hide seconds</string>
 </resources>

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="module_name">Секунди на годиннику</string>
-    <string name="module_description">Показує секунди на годиннику рядка стану. Торкніться годинника, щоб перемкнути відображення секунд; десятки години будуть червоними.</string>
+    <string name="module_name">Секунди в часі</string>
+    <string name="module_description">Показує секунди в часі рядка стану. Торкніться часу, щоб перемкнути відображення секунд; десятки години будуть червоними.</string>
 
-    <string name="settings_title">Секунди на годиннику</string>
+    <string name="settings_title">Секунди в часі</string>
     <string name="settings_status_title">Поточний стан</string>
     <string name="settings_enabled">Секунди: увімкнено</string>
     <string name="settings_disabled">Секунди: вимкнено</string>
     <string name="settings_gesture_title">Жест перемикання секунд</string>
-    <string name="settings_gesture_click">Торкнутися годинника</string>
-    <string name="settings_gesture_long_press">Утримувати годинник</string>
-    <string name="settings_hint">Примітка: налаштування застосовуються одразу. Якщо не працює, перезапустіть SystemUI або пристрій. Якщо торкання заважає відкриттю панелі, використовуйте довге натискання.</string>
+    <string name="settings_gesture_click">Торкнутися часу</string>
+    <string name="settings_gesture_long_press">Утримувати час</string>
+    <string name="settings_hint">Примітка: налаштування застосовуються одразу. Якщо не працює, перезапустіть SystemUI або пристрій. Якщо торкання заважає відкриттю панелі, використовуйте подвійне натискання.</string>
     <string name="settings_refresh">Оновити стан</string>
     <string name="settings_section_general">Загальне</string>
     <string name="settings_update_auto">Автоперевірка оновлень</string>
@@ -33,17 +33,17 @@
     <string name="update_later">Пізніше</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Вихідний код цього модуля: MIT © kelebao</string>
-    <string name="settings_color_title">Колір години</string>
+    <string name="settings_color_title">Колір часу</string>
     <string name="settings_color_hint">Торкніться кольору, щоб змінити — застосовується одразу</string>
     <string name="settings_write_failed">Не вдалося записати. Переконайтеся, що модуль активний у SystemUI, або надайте WRITE_SECURE_SETTINGS через adb</string>
-    <string name="settings_color_enable">Увімкнути колір години</string>
+    <string name="settings_color_enable">Увімкнути колір часу</string>
     <string name="settings_color_enable_sum">Вимкнення поверне стандартний вигляд системи</string>
-    <string name="settings_gesture_hint">Використовуйте цей жест на годиннику в рядку стану, щоб увімкнути або вимкнути секунди</string>
+    <string name="settings_gesture_hint">Використовуйте цей жест на часі в рядку стану, щоб увімкнути або вимкнути секунди</string>
     <string name="settings_gesture_applied">Перемкнено на «%1$s» — застосовується одразу. Якщо не працює, перезапустіть SystemUI</string>
-    <string name="settings_gesture_double_tap">Подвійне натискання на годинник</string>
+    <string name="settings_gesture_double_tap">Подвійне натискання на час</string>
     <string name="settings_network_time">Мережевий час %1$s (локальний %2$s)</string>
     <string name="settings_network_time_fail">Не вдалося отримати мережевий час — торкніться для повтору</string>
     <string name="settings_sync_time">Синхр.</string>
     <string name="settings_sync_requested">Авточас увімкнено — синхронізація скоро відбудеться</string>
-    <string name="settings_preview_hint">Підказка: торкніться годинника в рядку стану (зверху зліва), щоб показати/сховати секунди</string>
+    <string name="settings_preview_hint">Підказка: торкніться часу в рядку стану (зверху зліва), щоб показати/сховати секунди</string>
 </resources>

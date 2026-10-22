@@ -1,16 +1,16 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="module_name">Secondes à l\'horloge</string>
-    <string name="module_description">Affiche les secondes sur l\'horloge de la barre d\'état. Touchez l\'horloge pour activer/désactiver les secondes ; les dizaines de l\'heure sont colorées en rouge.</string>
+    <string name="module_name">Secondes à l\'heure</string>
+    <string name="module_description">Affiche les secondes sur l\'heure de la barre d\'état. Touchez l\'heure pour activer/désactiver les secondes ; les dizaines de l\'heure sont colorées en rouge.</string>
 
-    <string name="settings_title">Secondes à l\'horloge</string>
+    <string name="settings_title">Secondes à l\'heure</string>
     <string name="settings_status_title">État actuel</string>
     <string name="settings_enabled">Secondes : activées</string>
     <string name="settings_disabled">Secondes : désactivées</string>
     <string name="settings_gesture_title">Geste pour basculer les secondes</string>
-    <string name="settings_gesture_click">Toucher l\'horloge</string>
-    <string name="settings_gesture_long_press">Appui long sur l\'horloge</string>
-    <string name="settings_hint">Remarque : les réglages prennent effet immédiatement. Sinon, redémarrez SystemUI ou l\'appareil. Si le toucher gêne le déploiement du panneau, utilisez l\'appui long.</string>
+    <string name="settings_gesture_click">Toucher l\'heure</string>
+    <string name="settings_gesture_long_press">Appui long sur l\'heure</string>
+    <string name="settings_hint">Remarque : les réglages prennent effet immédiatement. Sinon, redémarrez SystemUI ou l\'appareil. Si le toucher gêne le déploiement du panneau, utilisez le double appui.</string>
     <string name="settings_refresh">Actualiser l\'état</string>
     <string name="settings_section_general">Général</string>
     <string name="settings_update_auto">Vérifier les mises à jour automatiquement</string>
@@ -38,12 +38,12 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_write_failed">Échec de l\'écriture. Vérifiez que le module est actif dans SystemUI ou accordez WRITE_SECURE_SETTINGS via adb</string>
     <string name="settings_color_enable">Activer la couleur de l\'heure</string>
     <string name="settings_color_enable_sum">Désactivez pour revenir au style par défaut du système</string>
-    <string name="settings_gesture_hint">Utilisez ce geste sur l\'horloge de la barre d\'état pour activer ou désactiver les secondes</string>
+    <string name="settings_gesture_hint">Utilisez ce geste sur l\'heure de la barre d\'état pour activer ou désactiver les secondes</string>
     <string name="settings_gesture_applied">Passé à %1$s — effet immédiat. Si cela ne fonctionne pas, redémarrez SystemUI</string>
-    <string name="settings_gesture_double_tap">Double appui sur l\'horloge</string>
+    <string name="settings_gesture_double_tap">Double appui sur l\'heure</string>
     <string name="settings_network_time">Heure réseau %1$s (locale %2$s)</string>
     <string name="settings_network_time_fail">Heure réseau indisponible — touchez pour réessayer</string>
     <string name="settings_sync_time">Synchroniser</string>
     <string name="settings_sync_requested">Heure auto activée — synchronisation imminente</string>
-    <string name="settings_preview_hint">Astuce : appuyez sur l\'horloge de la barre d\'état (en haut à gauche) pour afficher/masquer les secondes</string>
+    <string name="settings_preview_hint">Astuce : appuyez sur l\'heure de la barre d\'état (en haut à gauche) pour afficher/masquer les secondes</string>
 </resources>

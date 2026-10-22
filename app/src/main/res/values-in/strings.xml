@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="module_name">Jam dengan Detik</string>
-    <string name="module_description">Menampilkan detik pada jam bilah status. Ketuk jam untuk menyalangkan detik; digit puluhan jam berwarna merah.</string>
+    <string name="module_description">Menampilkan detik pada waktu bilah status. Ketuk waktu untuk menyalangkan detik; digit puluhan waktu berwarna merah.</string>
 
     <string name="settings_title">Jam dengan Detik</string>
     <string name="settings_status_title">Status saat ini</string>
     <string name="settings_enabled">Detik: Aktif</string>
     <string name="settings_disabled">Detik: Nonaktif</string>
     <string name="settings_gesture_title">Gerakan ubah tampilan detik</string>
-    <string name="settings_gesture_click">Ketuk jam</string>
-    <string name="settings_gesture_long_press">Tekan lama jam</string>
-    <string name="settings_hint">Catatan: pengaturan langsung berlaku. Jika tidak, mulai ulang SystemUI atau perangkat. Jika ketuk bentrok dengan menarik panel notifikasi, gunakan tekan lama.</string>
+    <string name="settings_gesture_click">Ketuk waktu</string>
+    <string name="settings_gesture_long_press">Tekan lama waktu</string>
+    <string name="settings_hint">Catatan: pengaturan langsung berlaku. Jika tidak, mulai ulang SystemUI atau perangkat. Jika ketuk bentrok dengan menarik panel notifikasi, gunakan ketuk dua kali.</string>
     <string name="settings_refresh">Segarkan status</string>
     <string name="settings_section_general">Umum</string>
     <string name="settings_update_auto">Periksa pembaruan otomatis</string>
@@ -33,17 +33,17 @@
     <string name="update_later">Nanti</string>
     <string name="licenses_text">Xposed API (de.robv.android.xposed:api:82): Apache License 2.0
 Kode sumber modul ini: MIT © kelebao</string>
-    <string name="settings_color_title">Warna jam</string>
+    <string name="settings_color_title">Warna waktu</string>
     <string name="settings_color_hint">Ketuk warna untuk mengubah — langsung berlaku</string>
     <string name="settings_write_failed">Gagal menulis. Pastikan modul aktif di SystemUI atau berikan WRITE_SECURE_SETTINGS lewat adb</string>
-    <string name="settings_color_enable">Aktifkan warna jam</string>
+    <string name="settings_color_enable">Aktifkan warna waktu</string>
     <string name="settings_color_enable_sum">Matikan untuk kembali ke tampilan bawaan sistem</string>
-    <string name="settings_gesture_hint">Gunakan gerakan ini pada jam bilah status untuk menyalakan atau mematikan detik</string>
+    <string name="settings_gesture_hint">Gunakan gerakan ini pada waktu bilah status untuk menyalakan atau mematikan detik</string>
     <string name="settings_gesture_applied">Beralih ke %1$s — langsung berlaku. Jika tidak, mulai ulang SystemUI</string>
-    <string name="settings_gesture_double_tap">Ketuk jam dua kali</string>
+    <string name="settings_gesture_double_tap">Ketuk waktu dua kali</string>
     <string name="settings_network_time">Waktu jaringan %1$s (lokal %2$s)</string>
     <string name="settings_network_time_fail">Gagal mengambil waktu jaringan — ketuk untuk coba lagi</string>
     <string name="settings_sync_time">Sinkronkan</string>
     <string name="settings_sync_requested">Waktu otomatis aktif — akan disinkronkan sebentar lagi</string>
-    <string name="settings_preview_hint">Tips: ketuk jam bilah status (kiri atas) untuk menampilkan atau menyembunyikan detik</string>
+    <string name="settings_preview_hint">Tips: ketuk waktu bilah status (kiri atas) untuk menampilkan atau menyembunyikan detik</string>
 </resources>

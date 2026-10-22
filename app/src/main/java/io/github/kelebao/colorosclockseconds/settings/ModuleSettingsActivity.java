@@ -610,8 +610,30 @@ public final class ModuleSettingsActivity extends Activity {
                 }
                 netDriftMs = drift;
                 updateNetworkTimeLine();
+                saveNetOffset(drift);
             });
         }).start();
+    }
+
+    /**
+     * 把测得的网络时间偏移（网络 - 系统）写入 Secure，供 SystemUI 内的浮窗显示网络时间。
+     * 无 WRITE_SECURE_SETTINGS 时改发广播，由 SystemUI 代写。
+     */
+    private void saveNetOffset(long drift) {
+        try {
+            ClockSecondsConfig.setNetOffset(getContentResolver(), drift);
+            return;
+        } catch (SecurityException ignored) {
+            // 无权限，走广播路径
+        }
+        try {
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_NET_OFFSET);
+            intent.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            intent.putExtra(ClockSecondsConfig.EXTRA_NET_OFFSET, drift);
+            sendBroadcast(intent);
+        } catch (Throwable ignored) {
+            // 写不进就下次再测，浮窗会退回按系统时间显示
+        }
     }
 
     private Long headDate(String urlStr) {
