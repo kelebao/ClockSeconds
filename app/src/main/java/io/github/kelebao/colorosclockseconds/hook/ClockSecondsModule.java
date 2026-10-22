@@ -102,6 +102,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final android.graphics.Rect sClockRect = new android.graphics.Rect();
     private static final Object sClockRectLock = new Object();
 
+    /** 长按弹出浮窗的按住时长（毫秒）。Android 长按标准 500ms。 */
+    private static final long LONG_PRESS_MS = 500L;
+
     /** 点击/长按检测状态（全局单次手势，避免重复触发）。 */
     private static volatile boolean sPendingTap;
     private static long sDownTime;
@@ -289,7 +292,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             int gesture = sClockView.getContext() != null
                     ? ClockSecondsConfig.getGesture(sClockView.getContext().getContentResolver())
                     : ClockSecondsConfig.GESTURE_CLICK;
-            int action = ev.getAction();
+            // raw=原始 action（含 POINTER_DOWN/UP），masked=去掉指针索引的标准动作。
+            // 单指长按全程只有标准 DOWN/MOVE/UP；多指连点会产生 POINTER_UP，
+            // 必须清理长按任务（否则 500ms 后残留任务误弹浮窗），但不能 prematurely 结束主手势。
+            int raw = ev.getAction();
+            int action = ev.getActionMasked();
             if (action == MotionEvent.ACTION_DOWN) {
                 refreshClockRect(sClockView); // 每次按下刷新边界，覆盖旋转/状态变化
                 float x = ev.getRawX(), y = ev.getRawY();
@@ -298,6 +305,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     hit = sClockRect.contains((int) x, (int) y);
                 }
                 if (hit) {
+                    // 先清掉可能残留的旧长按任务，防止泄漏累积导致误弹。
+                    if (sLongPressTask != null) {
+                        sTouchHandler.removeCallbacks(sLongPressTask);
+                        sLongPressTask = null;
+                    }
                     sPendingTap = true;
                     sDownTime = ev.getEventTime();
                     sDownX = x;
@@ -310,7 +322,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         }
                     };
                     sLongPressTask = task;
-                    sTouchHandler.postDelayed(task, 500);
+                    sTouchHandler.postDelayed(task, LONG_PRESS_MS);
                 }
             } else if (action == MotionEvent.ACTION_MOVE) {
                 if (sPendingTap) {
@@ -324,13 +336,27 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         }
                     }
                 }
+            } else if (action == MotionEvent.ACTION_CANCEL) {
+                sPendingTap = false;
+                if (sLongPressTask != null) {
+                    sTouchHandler.removeCallbacks(sLongPressTask);
+                    sLongPressTask = null;
+                }
+            } else if (raw == MotionEvent.ACTION_POINTER_UP) {
+                // 多指中一根抬起：清理长按任务防误弹，但保持 pending（主手势未结束）。
+                if (sLongPressTask != null) {
+                    sTouchHandler.removeCallbacks(sLongPressTask);
+                    sLongPressTask = null;
+                }
             } else if (action == MotionEvent.ACTION_UP) {
-                if (sPendingTap) {
-                    sPendingTap = false;
-                    if (sLongPressTask != null) {
-                        sTouchHandler.removeCallbacks(sLongPressTask);
-                        sLongPressTask = null;
-                    }
+                // 最后一指抬起：无条件清理（连点误弹修复），并按手势判定点击/双击。
+                boolean wasPending = sPendingTap;
+                sPendingTap = false;
+                if (sLongPressTask != null) {
+                    sTouchHandler.removeCallbacks(sLongPressTask);
+                    sLongPressTask = null;
+                }
+                if (wasPending) {
                     if (gesture == ClockSecondsConfig.GESTURE_CLICK) {
                         long dt = ev.getEventTime() - sDownTime;
                         float dx = Math.abs(ev.getRawX() - sDownX);
@@ -353,12 +379,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             }
                         }
                     }
-                }
-            } else if (action == MotionEvent.ACTION_CANCEL) {
-                sPendingTap = false;
-                if (sLongPressTask != null) {
-                    sTouchHandler.removeCallbacks(sLongPressTask);
-                    sLongPressTask = null;
                 }
             }
         } catch (Throwable ignored) {
