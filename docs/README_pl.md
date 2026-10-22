@@ -10,7 +10,7 @@
 
 Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo, Samsung i innych dużych producentów.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzy
 | Trwałość | Stan zapisywany jest w `Settings.Secure`, współdzielony między procesami i przetrwa restarty SystemUI |
 | Zgodność | Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi / Samsung. Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. Minimum Android 10 |
 | Kafelek | Dodaj kafelek "Pokaż sekundy" do panelu, przełączaj jednym stuknięciem |
-| Ulepszony float | Pozycja i rozmiar okna są **zapamiętywane**; pokazuje **datę**; **podwójne stuknięcie** czasu też przełącza |
+| Ulepszony float | Pozycja i rozmiar okna są **zapamiętywane**; **podwójne stuknięcie** czasu też przełącza |
 | Oszczędzanie energii | W trybie oszczędzania odświeżanie co sekundę pauzuje (sekundy zamrożone), po wyłączeniu wznawia |
-| Wykrywanie konfigurowalne | Jeśli zegar nie jest wykrywany, wpisz nazwę zasobu (np. clock) w ustawieniach. Puste = reguły wbudowane |
+| Wykrywanie konfigurowalne | Jeśli zegar nie jest wykrywany na innych urządzeniach, naciśnij **Autowykrywanie** w ustawieniach lub wpisz nazwę zasobu (np. clock) ręcznie |
 
 ## Instalacja
 

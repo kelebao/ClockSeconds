@@ -50,11 +50,11 @@ TEXTS = {
              "Minimo Android 10"),            ('Tile rapida',
              'Aggiungi una tile "Mostra secondi" al pannello, attiva con un tocco'),
             ('Miglioramenti flottante',
-             "Posizione e dimensione del flottante **memorizzate**; mostra la **data**; **doppio tocco** sull'ora alterna"),
+             'Posizione e dimensione del flottante **memorizzate**; **doppio tocco** sull\'ora alterna'),
             ('Risparmio energetico',
              "Con il risparmio attivo, l'aggiornamento al secondo si mette in pausa (secondi fermi), riprende all'uscita"),
             ('Rilevamento configurabile',
-             "Se l'orologio non viene rilevato, indica il nome della risorsa (es. clock) nelle Impostazioni. Vuoto = regole integrate"),
+             'Se l\'orologio non viene rilevato su altri dispositivi, tocca **Rilevamento auto** nelle Impostazioni o indica il nome della risorsa (es. clock)'),
 
         ],
         'h_install': 'Installazione',

@@ -51,11 +51,11 @@ TEXTS = {
              "fabricant, donc le mode sans échec de LSPosed n'est pas déclenché. Android 10 minimum"),            ('Tuile rapide',
              'Ajoutez une tuile "Afficher les secondes" au panneau, basculez d\'un tap'),
             ('Flottant amélioré',
-             "Position et taille du flottant **mémorisées**; affiche la **date**; **double-tap** sur l'heure bascule aussi"),
+             'Position et taille du flottant **mémorisées**; **double-tap** sur l\'heure bascule aussi'),
             ("Économie d'énergie",
              "En mode économie, l'actualisation par seconde se met en pause (secondes figées), reprend à la sortie"),
             ('Détection configurable',
-             "Si l'horloge n'est pas détectée, saisissez son nom de ressource (ex. clock) dans les réglages. Vide = règles intégrées"),
+             'Si l\'horloge n\'est pas détectée sur d\'autres appareils, appuyez sur **Détection auto** dans les réglages, ou saisissez son nom de ressource (ex. clock)'),
 
         ],
         'h_install': 'Installation',

@@ -10,7 +10,7 @@
 
 اعرض **الثواني** على الوقت شريط الحالة، بدّل بلمسة واحدة، وأبقِ **خانة العشرات من الالوقت حمراء** دائمًا.<br>بدون أي أصناف خاصة بالمصنّع. تم التحقق على جهاز حقيقي بنظام ColorOS 15؛ ويغطي كذلك شاومي وون‌بلس وهونور وvivo وسامسونغ وغيرهم من المصنّعين الكبار.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | الاستمرارية | تُحفظ الحالة في `Settings.Secure`، وتشارَك بين العمليات، وتبقى بعد إعادة تشغيل SystemUI |
 | التوافق | تم التحقق على ColorOS 15 / 16 / 17 (OPPO / ون‌بلس / ريلمي)؛ ويعمل أيضًا مباشرة على مصنّعين آخرين بصلاحية الروت مثل شاومي / هونور / ريدمي / سامسونغ. بدون أصناف خاصة بالمصنّع، لذا لا يُفعّل الوضع الآمن لـ LSPosed. الحد الأدنى أندرويد 10 |
 | بلاطة سريعة | أضف بلاطة "إظهار الثواني" إلى لوحة الإشعارات، بدّل بنقرة واحدة |
-| تحسين الطافي | يتم **تذكر** موضع وحجم النافذة الطافية؛ تعرض **التاريخ**؛ **نقرة مزدوجة** على الوقت تبدّل الثواني |
+| تحسين الطافي | يتم **تذكر** موضع وحجم النافذة الطافية؛ **نقرة مزدوجة** على الوقت تبدّل الثواني |
 | تكيّف توفير الطاقة | عند تشغيل وضع توفير الطاقة، تتوقف التحديثات كل ثانية (تجمّد الثواني) وتستأنف فوراً عند الإيقاف |
-| اكتشاف قابل للتهيئة | إذا لم يتم التعرف على الساعة، أدخل اسم المورد (مثل clock) في الإعدادات. فارغ = القواعد المدمجة |
+| اكتشاف قابل للتهيئة | إذا لم يتم التعرف على الساعة على أجهزة أخرى، اضغط **اكتشاف تلقائي** في الإعدادات أو أدخل اسم المورد (مثل clock) يدويًا |
 
 ## التثبيت
 

@@ -10,7 +10,7 @@
 
 Affichez les **secondes** sur l'heure de la barre d'état, basculez d'un simple appui et gardez la **dizaine de l'heure en rouge**.<br>Aucune classe privée de fabricant. Vérifié sur appareil réel sous ColorOS 15 ; couvre aussi Xiaomi, OnePlus, Honor, vivo, Samsung et les autres grands fabricants.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Affichez les **secondes** sur l'heure de la barre d'état, basculez d'un simple 
 | Persistance | L'état est stocké dans `Settings.Secure`, partagé entre les processus et conservé après un redémarrage de SystemUI |
 | Compatibilité | Vérifié sur ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) ; fonctionne aussi tel quel sur d'autres fabricants rootés comme Xiaomi / Honor / Redmi / Samsung. Aucune classe privée de fabricant, donc le mode sans échec de LSPosed n'est pas déclenché. Android 10 minimum |
 | Tuile rapide | Ajoutez une tuile "Afficher les secondes" au panneau, basculez d'un tap |
-| Flottant amélioré | Position et taille du flottant **mémorisées**; affiche la **date**; **double-tap** sur l'heure bascule aussi |
+| Flottant amélioré | Position et taille du flottant **mémorisées**; **double-tap** sur l'heure bascule aussi |
 | Économie d'énergie | En mode économie, l'actualisation par seconde se met en pause (secondes figées), reprend à la sortie |
-| Détection configurable | Si l'horloge n'est pas détectée, saisissez son nom de ressource (ex. clock) dans les réglages. Vide = règles intégrées |
+| Détection configurable | Si l'horloge n'est pas détectée sur d'autres appareils, appuyez sur **Détection auto** dans les réglages, ou saisissez son nom de ressource (ex. clock) |
 
 ## Installation
 

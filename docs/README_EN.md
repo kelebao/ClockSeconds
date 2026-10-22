@@ -10,7 +10,7 @@
 
 Show **seconds** in the status bar time, toggle with a single tap, and keep the **hour tens digit in red**.<br>No vendor-private classes involved. Verified on ColorOS 15, and designed to cover Xiaomi, OnePlus, Honor, vivo, Samsung and other major vendors.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Show **seconds** in the status bar time, toggle with a single tap, and keep the 
 | Persistence | State is stored in `Settings.Secure`, shared across processes, survives SystemUI restarts |
 | Compatibility | Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. No vendor-private classes, so LSPosed safe mode will not be triggered. Minimum Android 10 |
 | Quick tile | Add a "Show Seconds" tile to the notification shade to toggle seconds in one tap |
-| Float upgrade | Float window position & size are **remembered**; it now shows the **date**; **double-tap** the time to also toggle seconds |
+| Float upgrade | Float window position & size are **remembered**; **double-tap** the time to also toggle seconds |
 | Power-save aware | When battery saver is on, per-second refresh pauses (seconds freeze); resumes instantly when off |
-| Configurable detection | If the clock is not auto-detected on other devices, set its resource name (e.g. clock) in Settings; empty = built-in rules |
+| Configurable detection | If the clock is not auto-detected on other devices, tap **Auto-detect** in Settings, or enter its resource name (e.g. clock) manually |
 
 ## Install
 

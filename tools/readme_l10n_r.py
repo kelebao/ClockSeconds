@@ -47,11 +47,11 @@ TEXTS = {
              'sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10'),            ('Tile cepat',
              'Tambahkan tile "Tampilkan detik" ke panel, alihkan dengan satu ketuk'),
             ('Float ditingkatkan',
-             'Posisi & ukuran float **diingat**; menampilkan **tanggal**; **ketuk ganda** waktu juga mengalihkan'),
+             'Posisi & ukuran float **diingat**; **ketuk ganda** waktu juga mengalihkan'),
             ('Sadar hemat baterai',
              'Saat mode hemat aktif, penyegaran per detik dijeda (detik membeku), saat mati langsung dilanjut'),
             ('Deteksi dapat diatur',
-             'Jika jam tidak terdeteksi, masukkan nama sumber (mis. clock) di Pengaturan. Kosong = aturan bawaan'),
+             'Jika jam tidak terdeteksi di perangkat lain, ketuk **Deteksi otomatis** di Pengaturan, atau masukkan nama sumber (mis. clock) secara manual'),
 
         ],
         'h_install': 'Instalasi',

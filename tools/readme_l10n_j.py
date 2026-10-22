@@ -50,11 +50,11 @@ TEXTS = {
              'nicht ausgelöst. Mindestens Android 10'),            ('Schnellkachel',
              'Füge eine "Sekunden anzeigen"-Kachel zum Benachrichtigungsbereich hinzu, mit einem Tipp umschalten'),
             ('Float verbessert',
-             'Position & Größe des Floats werden **gemerkt**; zeigt das **Datum**; **Doppeltipp** auf die Zeit schaltet Sekunden um'),
+             'Position & Größe des Floats werden **gemerkt**; **Doppeltipp** auf die Zeit schaltet Sekunden um'),
             ('Energiesparerkennung',
              'Bei Aktivierung des Energiesparmodus pausiert die Sekundenaktualisierung (Sekunden einfrieren), danach sofort weiter'),
             ('Erkennung konfigurierbar',
-             'Wird die Uhr auf anderen Geräten nicht erkannt, gib den Ressourcennamen (z. B. clock) in den Einstellungen ein. Leer = eingebaute Regeln'),
+             'Wird die Uhr auf anderen Geräten nicht erkannt, tippe in den Einstellungen auf **Automatisch erkennen** oder gib den Ressourcennamen (z. B. clock) manuell ein'),
 
         ],
         'h_install': 'Installation',

@@ -10,7 +10,7 @@
 
 Показуйте **секунды** в часі в рядку стану, перемикайте одним дотиком і тримайте **десяток часу червоним**.<br>Жодних приватних класів виробника. Перевірено на реальному пристрої з ColorOS 15; також розраховано на Xiaomi, OnePlus, Honor, vivo, Samsung та інших великих виробників.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | Збереження стану | Стан зберігається в `Settings.Secure`, спільний між процесами й зберігається після перезапуску SystemUI |
 | Сумісність | Перевірено на ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); також працює «з коробки» на інших виробниках із root, як-от Xiaomi / Honor / Redmi / Samsung. Без приватних класів виробника, тому безпечний режим LSPosed не спрацьовує. Мінімум Android 10 |
 | Швидка плитка | Додайте плитку "Показувати секунди" у шторку, перемкніть одним дотиком |
-| Покращення плаваючого | Позиція та розмір вікна **запам'ятовуються**; показує **дату**; **подвійний тап** по часу теж перемикає |
+| Покращення плаваючого | Позиція та розмір вікна **запам'ятовуються**; **подвійний тап** по часу теж перемикає |
 | Енергозбереження | У режимі економії оновлення покроково призупиняється (секунди завмирають), після вимкнення — одразу поновлюється |
-| Налаштовуване розпізнавання | Якщо годинник не визначається, вкажіть ім'я ресурсу (напр. clock) у налаштуваннях. Порожньо = вбудовані правила |
+| Налаштовуване розпізнавання | Якщо годинник не визначається на іншому пристрої, натисніть «Автовизначення» у налаштуваннях або вкажіть ім'я ресурсу (напр. clock) вручну |
 
 ## Встановлення
 

@@ -10,7 +10,7 @@
 
 讓狀態欄時間顯示**秒**，單擊即切換，小時十位數**常駐標紅**。<br>不依賴任何廠商私有類，已在 ColorOS 15 真機驗證，同時覆蓋小米、一加、榮耀、vivo、三星 等主要廠商。
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | 持久化 | 狀態存於 `Settings.Secure`，跨程序共享，重啟 SystemUI 後保持 |
 | 適應範圍 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真機驗證；小米 / 榮耀 / 紅米 / 三星 等有 root 的其它廠商同步生效。不依賴任何廠商私有類，避免觸發 LSPosed 安全模式。最低支援 Android 10 |
 | 下拉磁貼 | 下拉通知欄新增「時間顯秒」磁貼，一鍵開關顯秒（無需打開設定頁） |
-| 浮窗增強 | 浮窗位置與尺寸**自動記憶**；浮窗顯示**日期**；**雙擊**浮窗時間也可切換顯秒 |
+| 浮窗增強 | 浮窗位置與尺寸**自動記憶**（下次長按按記憶恢復）；**雙擊**浮窗時間也可切換顯秒 |
 | 省電自適應 | 系統開啟省電模式時自動暫停秒級重新整理（狀態列秒數凍結），退出省電立即恢復 |
-| 時鐘識別可設定 | 其它廠商機型若未能自動識別狀態列時鐘，可在設定頁填寫其資源名（如 clock），留空用內建規則 |
+| 時間識別名 | 其它廠商機型若未能自動識別狀態列時間，可在設定頁點「自動偵測」一鍵完成；也可手動填寫資源名（如 clock） |
 
 ## 安裝
 

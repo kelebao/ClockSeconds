@@ -46,11 +46,11 @@ TEXTS = {
              'không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10'),            ('Ô vuông nhanh',
              'Thêm ô "Hiện giây" vào bảng thông báo, bật/tắt bằng một chạm'),
             ('Cải tiến float',
-             'Vị trí & kích thước float được **nhớ**; hiển thị **ngày**; **nhấn đúp** thời gian cũng bật/tắt giây'),
+             'Vị trí & kích thước float được **nhớ**; **nhấn đúp** thời gian cũng bật/tắt giây'),
             ('Tiết kiệm pin',
              'Bật tiết kiệm pin thì tạm dừng làm mới từng giây (giây đông cứng), tắt thì phục hồi ngay'),
             ('Nhận diện cấu hình',
-             'Nếu đồng hồ không tự nhận diện, nhập tên tài nguyên (vd clock) trong Cài đặt. Trống = quy tắc mặc định'),
+             'Nếu đồng hồ không tự nhận diện, hãy nhấn **Tự phát hiện** trong Cài đặt, hoặc nhập tên tài nguyên (vd clock) thủ công'),
 
         ],
         'h_install': 'Cài đặt',

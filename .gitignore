@@ -8,3 +8,7 @@ deliverables/
 
 # APK 产物不入库（交付统一放 deliverables/）
 *.apk
+
+# 本机调试产物（logcat 导出、LSPosed 配置库快照）
+docs/*.log
+docs/lspd_cfg.db

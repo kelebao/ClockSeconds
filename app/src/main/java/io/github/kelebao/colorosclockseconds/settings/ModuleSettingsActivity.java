@@ -665,8 +665,8 @@ public final class ModuleSettingsActivity extends Activity {
             if (android.os.Build.VERSION.SDK_INT >= 33) {
                 // RECEIVER_EXPORTED：回传广播来自 SystemUI（不同应用），
                 // NOT_EXPORTED 会阻止跨应用显式广播。
-                // 风险可控：action 为模块私有，内容仅为时钟资源名字符串。
-                // v1.0.8 将配合 signature 级自定义权限加固（安全 F1）。
+                // 风险可控：action 为模块私有，内容仅为时钟资源名字符串，
+                // 且接收方只做 Toast 提示、不写入任何状态（F1 加固已覆盖写入侧）。
                 registerReceiver(mDetectReceiver, filter, Context.RECEIVER_EXPORTED);
             } else {
                 registerReceiver(mDetectReceiver, filter);

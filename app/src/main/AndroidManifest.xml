@@ -7,6 +7,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
+    <!-- 安全加固（F1）：SystemUI 内注册的配置接收器要求发送方持有本 signature 级权限。
+         设置页 / 磁贴与本模块同签名，天然持有；其它已安装 App 无此签名 → 无法广播代写
+         Secure/Global（开关显秒、改识别名、改小时色、置 AUTO_TIME）。 -->
+    <permission
+        android:name="io.github.kelebao.colorosclockseconds.permission.CONFIG"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="io.github.kelebao.colorosclockseconds.permission.CONFIG" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

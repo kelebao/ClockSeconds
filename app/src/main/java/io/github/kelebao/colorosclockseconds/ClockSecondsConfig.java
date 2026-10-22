@@ -27,6 +27,16 @@ public final class ClockSecondsConfig {
     public static final String MODULE_PACKAGE = "io.github.kelebao.colorosclockseconds";
 
     /**
+     * 配置广播的 signature 级自定义权限（安全加固 F1）。
+     *
+     * <p>SystemUI 进程内注册的配置接收器以此作为 {@code broadcastPermission}，
+     * 要求<b>发送方</b>持有该权限。设置页与磁贴和模块同签名，天然持有；其它已安装 App
+     * 无本模块签名 → 无法广播代写 {@code Settings.Secure/Global}。</p>
+     */
+    public static final String CONFIG_PERMISSION =
+            "io.github.kelebao.colorosclockseconds.permission.CONFIG";
+
+    /**
      * 模块自有显秒开关（唯一主状态）。由于已无原生路径，所有版本都使用本键，
      * 由 SystemUI 内的 hook 在「进程内首次遇到时钟」与「用户点击切换」时读写。
      */

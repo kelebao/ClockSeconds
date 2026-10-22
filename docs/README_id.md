@@ -10,7 +10,7 @@
 
 Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan buat **puluhan waktu tetap merah**.<br>Tanpa kelas privat vendor mana pun. Terverifikasi di perangkat nyata dengan ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, Samsung, dan vendor besar lainnya.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan b
 | Persistensi | Status disimpan di `Settings.Secure`, dibagi antar proses, dan bertahan setelah SystemUI dimulai ulang |
 | Kompatibilitas | Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Tanpa kelas privat vendor, sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10 |
 | Tile cepat | Tambahkan tile "Tampilkan detik" ke panel, alihkan dengan satu ketuk |
-| Float ditingkatkan | Posisi & ukuran float **diingat**; menampilkan **tanggal**; **ketuk ganda** waktu juga mengalihkan |
+| Float ditingkatkan | Posisi & ukuran float **diingat**; **ketuk ganda** waktu juga mengalihkan |
 | Sadar hemat baterai | Saat mode hemat aktif, penyegaran per detik dijeda (detik membeku), saat mati langsung dilanjut |
-| Deteksi dapat diatur | Jika jam tidak terdeteksi, masukkan nama sumber (mis. clock) di Pengaturan. Kosong = aturan bawaan |
+| Deteksi dapat diatur | Jika jam tidak terdeteksi di perangkat lain, ketuk **Deteksi otomatis** di Pengaturan, atau masukkan nama sumber (mis. clock) secara manual |
 
 ## Instalasi
 

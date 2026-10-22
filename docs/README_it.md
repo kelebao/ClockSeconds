@@ -10,7 +10,7 @@
 
 Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un solo tocco e tieni la **decina dell'ora sempre rossa**.<br>Nessuna classe privata del produttore. Verificato su dispositivo reale con ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo, Samsung e gli altri grandi produttori.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un solo
 | Persistenza | Lo stato è salvato in `Settings.Secure`, condiviso tra processi e conservato dopo il riavvio di SystemUI |
 | Compatibilità | Verificato su ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); funziona anche così com'è su altri produttori con root come Xiaomi / Honor / Redmi / Samsung. Nessuna classe privata del produttore, quindi la modalità provvisoria di LSPosed non scatta. Minimo Android 10 |
 | Tile rapida | Aggiungi una tile "Mostra secondi" al pannello, attiva con un tocco |
-| Miglioramenti flottante | Posizione e dimensione del flottante **memorizzate**; mostra la **data**; **doppio tocco** sull'ora alterna |
+| Miglioramenti flottante | Posizione e dimensione del flottante **memorizzate**; **doppio tocco** sull'ora alterna |
 | Risparmio energetico | Con il risparmio attivo, l'aggiornamento al secondo si mette in pausa (secondi fermi), riprende all'uscita |
-| Rilevamento configurabile | Se l'orologio non viene rilevato, indica il nome della risorsa (es. clock) nelle Impostazioni. Vuoto = regole integrate |
+| Rilevamento configurabile | Se l'orologio non viene rilevato su altri dispositivi, tocca **Rilevamento auto** nelle Impostazioni o indica il nome della risorsa (es. clock) |
 
 ## Installazione
 

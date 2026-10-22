@@ -10,7 +10,7 @@
 
 상태 표시줄 시간에 **초**를 표시합니다. 한 번 탑으로 전환하고,시간 십의 자리는 **항상 빨강**.<br>제조사私有 클래스에 전혀 의존하지 않으며 ColorOS 15 실기기에서 검증되었습니다.샤오미·원플러스·아너·vivo·삼성 등 주요 제조사도 지원합니다.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | 영속성 | 상태는 `Settings.Secure`에 저장. 프로세스 간 공유되며 SystemUI 재시작 후에도 유지 |
 | 지원 범위 | ColorOS 15 / 16 / 17（OPPO / 원플러스 / 리얼미） 실기기 검증 완료. 샤오미 / 아너 / 레드미 / 삼성 등 루팅된 다른 제조사에서도 그대로 동작. 제조사私有 클래스에 의존하지 않아 LSPosed 안전 모드가 발동하지 않음. 최소 Android 10 |
 | 빠른 타일 | 알림 창에 "초 표시" 타일을 추가해 한 번에 켜고 끄기 |
-| 플로팅 강화 | 플로팅 위치·크기**자동 기억**; **날짜** 표시; 플로팅 시간**두 번 탭**으로도 초 전환 |
+| 플로팅 강화 | 플로팅 위치·크기**자동 기억**(다음 길게 누르면 복원); 플로팅 시간**두 번 탭**으로도 초 전환 |
 | 절전 대응 | 절전 모드 켜면 초 단위 갱신 일시정지(초 멈춤), 끄면 즉시 재개 |
-| 인식 설정 가능 | 다른 기기에서 시계가 자동 인식되지 않으면 설정에서 리소스 이름(예: clock) 지정. 비우면 내장 규칙 |
+| 인식 설정 가능 | 다른 기기에서 시계가 자동 인식되지 않으면 설정에서 「자동 감지」를 누르세요. 리소스 이름(예: clock)을 직접 입력할 수도 있습니다 |
 
 ## 설치
 

@@ -10,7 +10,7 @@
 
 แสดง**วินาที**บนเวลาแถบสถานะ เปิด/ปิดด้วยการแตะครั้งเดียว และทำให้**หลักสิบของชั่วโมงเป็นสีแดง**เสมอ<br>ไม่พึ่งพาคลาสส่วนตัวของผู้ผลิตระบบแม้แต่ตัวใด ยืนยันแล้วบนเครื่องจริง ColorOS 15 พร้อมรองรับ Xiaomi, OnePlus, Honor, vivo, Samsung และผู้ผลิตรายใหญ่อื่น ๆ
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | การเก็บสถานะถาวร | สถานะเก็บไว้ใน `Settings.Secure` ใช้ร่วมระหว่างโปรเซส และคงอยู่หลังจากรีสตาร์ท SystemUI |
 | ขอบเขตการรองรับ | ยืนยันแล้วบน ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) และทำงานได้ทันทีบนผู้ผลิตอื่น ๆ ที่รูทแล้ว เช่น Xiaomi / Honor / Redmi / Samsung ไม่พึ่งพาคลาสส่วนตัวของผู้ผลิต จึงไม่ทำให้ LSPosed เข้าสู่โหมดปลอดภัย รองรับต่ำถึง Android 10 |
 | เทมเพลตด่วน | เพิ่มไทล์ "แสดงวินาที" ในบานหน้าต่างการแจ้งเตือน เปิด/ปิดด้วยแตะเดียว |
-| พื้นที่ลอย | ตำแหน่งและขนาดหน้าต่างลอย**ถูกจดจำ**; แสดง**วันที่**; **แตะสองครั้ง**ที่เวลาก็สลับวินาที |
+| พื้นที่ลอย | ตำแหน่งและขนาดหน้าต่างลอย**ถูกจดจำ**; **แตะสองครั้ง**ที่เวลาก็สลับวินาที |
 | ประหยัดพลังงาน | เปิดโหมดประหยัดแบตเตอรี่จะหยุดรีเฟรชวินาที (วินาทีค้าง) ปิดแล้วกลับมาทันที |
-| ปรับแต่งการจับคู่ได้ | หากนาฬิกาไม่ถูกจับคู่โดยอัตโนมัติ ให้ป้อนชื่อทรัพยากร (เช่น clock) ในการตั้งค่า ว่าง = กฎในตัว |
+| ปรับแต่งการจับคู่ได้ | หากนาฬิกาไม่ถูกจับคู่อัตโนมัติ ให้แตะ **ตรวจจับอัตโนมัติ** ในการตั้งค่า หรือป้อนชื่อทรัพยากร (เช่น clock) ด้วยตนเอง |
 
 ## การติดตั้ง
 

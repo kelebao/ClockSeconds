@@ -1581,10 +1581,30 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         }
                     }
                 };
+                // 安全加固（F1）：以 signature 级自定义权限作为 broadcastPermission，
+                // 要求发送方持有该权限（设置页/磁贴同签名天然持有，其它 App 被拒），
+                // 防止任意应用广播代写 Secure/Global。
                 if (Build.VERSION.SDK_INT >= 33) {
-                    context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+                    context.registerReceiver(receiver, filter,
+                            ClockSecondsConfig.CONFIG_PERMISSION, null,
+                            Context.RECEIVER_EXPORTED);
                 } else {
-                    context.registerReceiver(receiver, filter);
+                    context.registerReceiver(receiver, filter,
+                            ClockSecondsConfig.CONFIG_PERMISSION, null);
+                }
+                if (BuildConfig.DEBUG) {
+                    // 自检：本模块 App 是否真的持有该签名权限（应为 GRANTED）。
+                    // 若为 DENIED，说明设置页/磁贴的广播会被系统丢弃 → 设置不生效。
+                    int granted = android.content.pm.PackageManager.PERMISSION_DENIED;
+                    try {
+                        granted = context.getPackageManager().checkPermission(
+                                ClockSecondsConfig.CONFIG_PERMISSION,
+                                ClockSecondsConfig.MODULE_PACKAGE);
+                    } catch (Throwable ignored) {
+                        // 查询失败按未授予记录
+                    }
+                    XposedBridge.log(LOG_PREFIX + "config permission granted="
+                            + (granted == android.content.pm.PackageManager.PERMISSION_GRANTED));
                 }
                 // 注册成功后才置位：万一首次注册抛异常，下次还有机会重试。
                 sConfigReceiverRegistered = true;

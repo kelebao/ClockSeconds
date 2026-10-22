@@ -10,7 +10,7 @@
 
 让状态栏时间显示**秒**，单击即切换，小时十位数**常驻标红**。<br>**长按**弹出毛玻璃浮窗实时预览**网络时间**（可拖动、可拉伸）；不依赖任何厂商私有类，已在 ColorOS 15 真机验证，同时覆盖小米、一加、荣耀、vivo、三星 等主流厂商。
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | 持久化 | 状态存于 `Settings.Secure`，跨进程共享，重启 SystemUI 后保持 |
 | 适配范围 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真机验证；小米 / 荣耀 / 红米 / 三星 等有 root 的其它厂商同步生效。不依赖任何厂商私有类，避免触发 LSPosed 安全模式。最低支持 Android 10 |
 | 下拉磁贴 | 下拉通知栏添加「时间显秒」磁贴，一键开关显秒（无需打开设置页） |
-| 浮窗增强 | 浮窗位置与尺寸**自动记忆**（下次长按按记忆显示）；浮窗新增**日期**行；**双击**浮窗时间也可切换显秒 |
+| 浮窗增强 | 浮窗位置与尺寸**自动记忆**（下次长按按记忆恢复）；**双击**浮窗时间也可切换显秒 |
 | 省电自适应 | 系统开启省电模式时自动暂停秒级刷新（状态栏秒数冻结），退出省电立即恢复，零额外耗电 |
-| 时钟识别可配置 | 其它厂商机型若未能自动识别状态栏时钟，可在设置页填写其资源名（如 clock），留空用内置规则 |
+| 时间识别名 | 其它厂商机型若未能自动识别状态栏时间，可在设置页点「自动检测」一键完成；也可手动填写资源名（如 clock） |
 
 ## 安装
 

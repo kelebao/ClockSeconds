@@ -10,7 +10,7 @@
 
 Muestra los **segundos** en la hora de la barra de estado, alterna con un solo toque y mantén la **decena de la hora en rojo**.<br>Sin clases privadas de fabricante. Verificado en dispositivo real con ColorOS 15; también cubre Xiaomi, OnePlus, Honor, vivo, Samsung y otros fabricantes importantes.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Muestra los **segundos** en la hora de la barra de estado, alterna con un solo t
 | Persistencia | El estado es un segundo toque guarda en `Settings.Secure`, se comparte entre procesos y sobrevive a los reinicios de SystemUI |
 | Compatibilidad | Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual en otros fabricantes con root como Xiaomi / Honor / Redmi / Samsung. Sin clases privadas de fabricante, así que no dispara el modo seguro de LSPosed. Mínimo Android 10 |
 | Mosaico rápido | Añade un mosaico "Mostrar segundos" en el panel, alterna con un toque |
-| Mejoras flotante | La posición y tamaño del flotante se **recuerdan**; muestra la **fecha**; **doble toque** en la hora también alterna |
+| Mejoras flotante | La posición y tamaño del flotante se **recuerdan**; **doble toque** en la hora también alterna |
 | Ahorro de batería | Con el ahorro de batería activo, la actualización por segundo se pausa (segundos se congelan), al desactivar se reanuda |
-| Detección configurable | Si el reloj no se detecta, indica su nombre de recurso (p. ej. clock) en Ajustes. Vacío = reglas integradas |
+| Detección configurable | Si el reloj no se detecta en otros dispositivos, pulsa **Detección automática** en Ajustes o indica su nombre de recurso (p. ej. clock) manualmente |
 
 ## Instalación
 

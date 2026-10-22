@@ -10,7 +10,7 @@
 
 აჩვენეთ **წამები** სტატუსის ზოლის დროზე, გადართეთ ერთი შეხებით და დატოვეთ დროის **ათეულის ციფრი მუდმივად წითელი**.<br>მწარმოებლების პრივატული კლასების გარეშე. გადამოწმებული რეალურ მოწყობილობაზე ColorOS 15-ით; ასევე მოიცავს Xiaomi, OnePlus, Honor, vivo, Samsung-სა და სხვა დიდ მწარმოებლებს.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | მდგომარეობის შენახვა | მდგომარეობა ინახება `Settings.Secure`-ში, საზღვარგარეთულად გაზიარებული პროცესებს შორის და რჩება SystemUI-ის გადატვირთვის შემდეგ |
 | თავსებადობა | გადამოწმებულია ColorOS 15 / 16 / 17-ზე (OPPO / OnePlus / realme); ასევე მუშაობს სხვა რუთავ მწარმოებლებზე, როგორებიცაა Xiaomi / Honor / Redmi / Samsung. მწარმოებლების პრივატული კლასების გარეშე, ამიტომ LSPosed-ის უსაფრთხო რეჟიმი არ გააქტიურდება. მინიმუმი Android 10 |
 | სწრაფი ელემენტი | დაამატეთ ელემენტი "წამების ჩვენება" შეტყობინებების ზოლში, ერთი შეხებით გადართვა |
-| გაუმჯობესებული გაფანტული | ფანჯრის მდებარეობა და ზომა **ინახება**; აჩვენებს **თარიღს**; დროზე **ორმაგი შეხება** ასევე გადართავს წამებს |
+| გაუმჯობესებული გაფანტული | ფანჯრის მდებარეობა და ზომა **ინახება**; დროზე **ორმაგი შეხება** ასევე გადართავს წამებს |
 | შემოსაზღვრის ადაპტაცია | კვების შემოზღუდვის რეჟიმში წამობითი განახლება პაუზდება (წამები გაყინებულია), გამორთვისას მყისიერად გრძელდება |
-| კონფიგურირებადი ანგარიში | თუ საათი ავტომატურად არ ჩანს, მიუთითეთ რესურსის სახელი (მაგ. clock) პარამეტრებში. ცარიელი = ჩაშენებული წესები |
+| კონფიგურირებადი ანგარიში | თუ საათი სხვა მოწყობილობებზე ავტომატურად არ ჩანს, პარამეტრებში დააჭირეთ **ავტო-გამოვლენას** ან ხელით მიუთითეთ რესურსის სახელი (მაგ. clock) |
 
 ## ინსტალაცია
 

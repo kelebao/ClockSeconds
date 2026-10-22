@@ -48,11 +48,11 @@ TEXTS = {
              'fabricante, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo'),            ('Tile rápido',
              'Adicione um tile "Mostrar segundos" no painel, alterne com um toque'),
             ('Flutuante aprimorado',
-             'Posição e tamanho do flutuante são **lembrados**; mostra a **data**; **toque duplo** na hora também alterna'),
+             'Posição e tamanho do flutuante são **lembrados**; **toque duplo** na hora também alterna'),
             ('Economia de bateria',
              'Com economia ativa, a atualização por segundo pausa (segundos congelam), ao desativar retoma'),
             ('Detecção configurável',
-             'Se o relógio não for detectado, informe o nome do recurso (ex. clock) nas Configurações. Vazio = regras internas'),
+             'Se o relógio não for detectado em outros aparelhos, toque em **Detecção automática** nas Configurações ou informe o nome do recurso (ex. clock) manualmente'),
 
         ],
         'h_install': 'Instalação',

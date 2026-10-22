@@ -10,7 +10,7 @@
 
 ステータスバーの時刻に**秒**を表示。ワンタップで切り替え、時の十の位は**常に赤**。<br>ベンダー固有クラスには一切依存せず、ColorOS 15 の実機で検証済み。Xiaomi・OnePlus・Honor・vivo・Samsung など主要メーカーにも対応。
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | 永続化 | 状態は `Settings.Secure` に保存。プロセス間で共有され、SystemUI 再起動後も維持 |
 | 対応範囲 | ColorOS 15 / 16 / 17（OPPO / OnePlus / realme）は実機検証済み。Xiaomi / Honor / Redmi / Samsung など root 取得済みの他メーカーでもそのまま動作。ベンダー固有クラスに依存しないため LSPosed セーフモードは誘発しません。最低 Android 10 |
 | クイックタイル | 通知シェードに「秒表示」タイルを追加し、ワンタップで切替 |
-| フロート強化 | フロートの位置とサイズを**記憶**；**日付**も表示；フロートの時刻を**ダブルタップ**でも秒表示切替 |
+| フロート強化 | フロートの位置とサイズを**記憶**（次回長押しで復元）；フロートの時刻を**ダブルタップ**でも秒表示切替 |
 | 省電対応 | 省電モードONで秒更新を一時停止（秒が停止）；OFFで即座に再開 |
-| 認識を設定可能 | 他社端末で時計が自動認識されない場合、設定でリソース名（例: clock）を指定。空欄は内蔵ルール |
+| 認識を設定可能 | 他社端末で時計が自動認識されない場合、設定の「自動検出」をタップ。手動でリソース名（例: clock）も指定可能 |
 
 ## インストール
 

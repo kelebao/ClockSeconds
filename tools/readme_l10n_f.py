@@ -46,11 +46,11 @@ TEXTS = {
              'Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10'),            ('Hızlı döşeme',
              'Bildirim panelinde "Saniye Göster" döşemesi ekleyin, tek dokunuşla aç/kapat'),
             ('Kayan pencere',
-             'Kayan pencerenin konumu ve boyutu **hatırlanır**; **tarih** gösterilir; zamana **çift dokun** ile saniye aç/kapat'),
+             'Kayan pencerenin konumu ve boyutu **hatırlanır**; zamana **çift dokun** ile saniye aç/kapat'),
             ('Pil tasarrufu',
              'Tasarruf modu açılınca saniye yenileme durur (saniyeler donar), kapayınca hemen devam eder'),
             ('Algılama yapılandırılabilir',
-             'Saat diğer cihazlarda algılanmazsa ayarlardan kaynak adını (ör. clock) girin. Boş = yerleşik kurallar'),
+             'Saat diğer cihazlarda algılanmazsa ayarlarda **Otomatik algıla** düğmesine dokunun; kaynak adını (ör. clock) elle de girebilirsiniz'),
 
         ],
         'h_install': 'Kurulum',

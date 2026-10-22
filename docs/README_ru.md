@@ -10,7 +10,7 @@
 
 Покажите **секунды** во времени в строке состояния, переключайте одним касанием и держите **десяток времени красным**.<br>Никаких приватных классов производителя. Проверено на реальном устройстве с ColorOS 15; также рассчитано на Xiaomi, OnePlus, Honor, vivo, Samsung и других крупных производителей.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | Сохранение состояния | Состояние хранится в `Settings.Secure`, общедоступно между процессами и сохраняется после перезапуска SystemUI |
 | Совместимость | Проверено на ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); также работает «из коробки» на других производителях с root, например Xiaomi / Honor / Redmi / Samsung. Без приватных классов производителя, поэтому безопасный режим LSPosed не срабатывает. Минимум Android 10 |
 | Плитка | Добавьте плитку "Показывать секунды" в шторку, переключение в один тап |
-| Улучшения плавающего | Позиция и размер окна **запоминаются**; показывается **дата**; **двойной тап** по времени тоже переключает секунды |
+| Улучшения плавающего | Позиция и размер окна **запоминаются**; **двойной тап** по времени тоже переключает секунды |
 | Энергосбережение | В режиме экономии обновление в секунду приостанавливается (секунды замирают), при выходе — сразу возобновляется |
-| Настраиваемое распознавание | Если часы не определяются на другом устройстве, укажите имя ресурса (напр. clock) в настройках. Пусто = встроенные правила |
+| Настраиваемое распознавание | Если часы не определяются на другом устройстве, нажмите «Автоопределение» в настройках или укажите имя ресурса (напр. clock) вручную |
 
 ## Установка
 

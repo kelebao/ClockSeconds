@@ -10,7 +10,7 @@
 
 Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo, Samsung e outros grandes fabricantes.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Mostre os **segundos** na hora da barra de status, alterne com um único toque e
 | Persistência | O estado é salvo em `Settings.Secure`, compartilhado entre processos e mantido após reinícios do SystemUI |
 | Compatibilidade | Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto em outros fabricantes com root como Xiaomi / Honor / Redmi / Samsung. Sem classes privadas de fabricante, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo |
 | Tile rápido | Adicione um tile "Mostrar segundos" no painel, alterne com um toque |
-| Flutuante aprimorado | Posição e tamanho do flutuante são **lembrados**; mostra a **data**; **toque duplo** na hora também alterna |
+| Flutuante aprimorado | Posição e tamanho do flutuante são **lembrados**; **toque duplo** na hora também alterna |
 | Economia de bateria | Com economia ativa, a atualização por segundo pausa (segundos congelam), ao desativar retoma |
-| Detecção configurável | Se o relógio não for detectado, informe o nome do recurso (ex. clock) nas Configurações. Vazio = regras internas |
+| Detecção configurável | Se o relógio não for detectado em outros aparelhos, toque em **Detecção automática** nas Configurações ou informe o nome do recurso (ex. clock) manualmente |
 
 ## Instalação
 

@@ -10,7 +10,7 @@
 
 Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, zamanın **onlar basamağını kırmızı** tutun.<br>Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda doğrulandı; Xiaomi, OnePlus, Honor, vivo, Samsung ve diğer büyük üreticileri de kapsar.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@ Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapat�
 | Kalıcılık | Durum `Settings.Secure` içinde saklanır, işlemler arası paylaşılır, SystemUI yeniden başlatıldıktan sonra korunur |
 | Uyumluluk | ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; Xiaomi / Honor / Redmi / Samsung gibi rootlu diğer üreticilerde de olduğu gibi çalışır. Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10 |
 | Hızlı döşeme | Bildirim panelinde "Saniye Göster" döşemesi ekleyin, tek dokunuşla aç/kapat |
-| Kayan pencere | Kayan pencerenin konumu ve boyutu **hatırlanır**; **tarih** gösterilir; zamana **çift dokun** ile saniye aç/kapat |
+| Kayan pencere | Kayan pencerenin konumu ve boyutu **hatırlanır**; zamana **çift dokun** ile saniye aç/kapat |
 | Pil tasarrufu | Tasarruf modu açılınca saniye yenileme durur (saniyeler donar), kapayınca hemen devam eder |
-| Algılama yapılandırılabilir | Saat diğer cihazlarda algılanmazsa ayarlardan kaynak adını (ör. clock) girin. Boş = yerleşik kurallar |
+| Algılama yapılandırılabilir | Saat diğer cihazlarda algılanmazsa ayarlarda **Otomatik algıla** düğmesine dokunun; kaynak adını (ör. clock) elle de girebilirsiniz |
 
 ## Kurulum
 

@@ -49,11 +49,11 @@ TEXTS = {
              'Minimum Android 10'),            ('Kafelek',
              'Dodaj kafelek "Pokaż sekundy" do panelu, przełączaj jednym stuknięciem'),
             ('Ulepszony float',
-             'Pozycja i rozmiar okna są **zapamiętywane**; pokazuje **datę**; **podwójne stuknięcie** czasu też przełącza'),
+             'Pozycja i rozmiar okna są **zapamiętywane**; **podwójne stuknięcie** czasu też przełącza'),
             ('Oszczędzanie energii',
              'W trybie oszczędzania odświeżanie co sekundę pauzuje (sekundy zamrożone), po wyłączeniu wznawia'),
             ('Wykrywanie konfigurowalne',
-             'Jeśli zegar nie jest wykrywany, wpisz nazwę zasobu (np. clock) w ustawieniach. Puste = reguły wbudowane'),
+             'Jeśli zegar nie jest wykrywany na innych urządzeniach, naciśnij **Autowykrywanie** w ustawieniach lub wpisz nazwę zasobu (np. clock) ręcznie'),
 
         ],
         'h_install': 'Instalacja',

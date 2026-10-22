@@ -10,7 +10,7 @@
 
 Δείξτε τα **δευτερόλεπτα** στην ώρα της γραμμής κατάστασης, εναλλάξτε με ένα μόνο άγγιγμα και κρατήστε τα **δεκάδες της ώρας πάντα κόκκινα**.<br>Χωρίς κλάσεις ιδιωτικές του κατασκευαστή. Επαληθευμένο σε πραγματική συσκευή με ColorOS 15· καλύπτει επίσης Xiaomi, OnePlus, Honor, vivo, Samsung και άλλους μεγάλους κατασκευαστές.
 
-[![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
@@ -35,9 +35,9 @@
 | Διατήρηση κατάστασης | Η κατάσταση αποθηκεύεται στο `Settings.Secure`, μοιράζεται μεταξύ διεργασιών και διατηρείται μετά την επανεκκίνηση του SystemUI |
 | Συμβατότητα | Επαληθευμένο σε ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme)· λειτουργεί επίσης άμεσα σε άλλους κατασκευαστές με root όπως Xiaomi / Honor / Redmi / Samsung. Χωρίς κλάσεις ιδιωτικές του κατασκευαστή, άρα η ασφαλής λειτουργία του LSPosed δεν ενεργοποιείται. Ελάχιστο Android 10 |
 | Γρήγορη πλακέτα | Προσθέστε πλακέτα "Εμφάνιση δευτερολέπτων" στην περιοχή ειδοποιήσεων, εναλλαγή με μία αφή |
-| Βελτιωμένο επίπλευσης | Η θέση και το μέγεθος του παραθύρου **απομνημονεύονται**· εμφανίζει την **ημερομηνία**· **διπλό tap** στην ώρα εναλλάσσει |
+| Βελτιωμένο επίπλευσης | Η θέση και το μέγεθος του παραθύρου **απομνημονεύονται**· **διπλό tap** στην ώρα εναλλάσσει |
 | Προσαρμογή εξοικονόμησης | Όταν ενεργοποιηθεί η εξοικονόμηση, το ανά δευτερόλεπτο refresh παύει (δευτερόλεπτα παγώνουν), συνεχίζει αμέσως μετά |
-| Ρυθμιζόμενη ανίχνευση | Αν το ρολόι δεν εντοπίζεται, ορίστε το όνομα πόρου (π.χ. clock) στις Ρυθμίσεις. Κενό = ενσωματωμένοι κανόνες |
+| Ρυθμιζόμενη ανίχνευση | Αν το ρολόι δεν εντοπίζεται σε άλλες συσκευές, πατήστε **Αυτόματη ανίχνευση** στις Ρυθμίσεις ή ορίστε το όνομα πόρου (π.χ. clock) χειροκίνητα |
 
 ## Εγκατάσταση
 
