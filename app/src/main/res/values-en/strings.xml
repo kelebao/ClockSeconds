@@ -49,7 +49,7 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_float_hint">Long-press the top-left time to show the floating time</string>
     <string name="tile_label">Show Seconds</string>
     <string name="settings_rule_title">Status-bar time name</string>
-    <string name="settings_rule_sum">Not sure? Tap “Set” → “Auto detect” to finish in one tap</string>
+    <string name="settings_rule_sum">If another device can’t auto-detect the time and seconds don’t show, set it here</string>
     <string name="settings_rule_set">Set</string>
     <string name="settings_rule_msg">If the status-bar time is not auto-detected on other devices, enter the time widget’s resource name (e.g. clock). Leave empty for built-in rules.</string>
     <string name="settings_rule_apply">Apply</string>

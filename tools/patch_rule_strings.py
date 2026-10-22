@@ -174,14 +174,14 @@ NEW = {
 UPDATE = {
     'zh': {
         'settings_rule_title': '状态栏时间识别名',
-        'settings_rule_sum': '不懂设置？点「设置」内的「自动检测」一键完成',
+        'settings_rule_sum': '其他厂商机型未能自动识别时间、无法显示秒数时，可在此设置',
         'settings_rule_msg': '若其它厂商机型未能自动识别状态栏时间，可手动填写时间控件的资源名（如 clock），留空则使用内置规则。',
         'settings_rule_detecting': '正在检测状态栏时间…',
         'settings_rule_detect_fail': '未识别到状态栏时间，请尝试手动设置或重启后重试',
     },
     'en': {
         'settings_rule_title': 'Status-bar time name',
-        'settings_rule_sum': 'Not sure? Tap “Set” → “Auto detect” to finish in one tap',
+        'settings_rule_sum': 'If another device can’t auto-detect the time and seconds don’t show, set it here',
         'settings_rule_msg': 'If the status-bar time is not auto-detected on other devices, enter the time widget’s resource name (e.g. clock). Leave empty for built-in rules.',
         'settings_rule_detecting': 'Detecting status-bar time…',
         'settings_rule_detect_fail': 'Status-bar time not found. Try manual entry or restart and retry.',

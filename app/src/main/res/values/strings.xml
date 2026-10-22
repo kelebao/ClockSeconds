@@ -49,7 +49,7 @@
     <string name="settings_float_hint">长按左上角时间可显示浮窗时间</string>
     <string name="tile_label">时间显秒</string>
     <string name="settings_rule_title">状态栏时间识别名</string>
-    <string name="settings_rule_sum">不懂设置？点「设置」内的「自动检测」一键完成</string>
+    <string name="settings_rule_sum">其他厂商机型未能自动识别时间、无法显示秒数时，可在此设置</string>
     <string name="settings_rule_set">设置</string>
     <string name="settings_rule_msg">若其它厂商机型未能自动识别状态栏时间，可手动填写时间控件的资源名（如 clock），留空则使用内置规则。</string>
     <string name="settings_rule_apply">应用</string>
