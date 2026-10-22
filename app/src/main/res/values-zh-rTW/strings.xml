@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">識別名可能無效</string>
     <string name="settings_rule_confirm_msg">「%1$s」看起來不像時間控件的資源名（通常包含 clock 或 time），可能無法生效。建議先點「自動偵測」。仍要儲存嗎？</string>
     <string name="settings_rule_confirm_save">仍要儲存</string>
+    <string name="settings_launcher_title">桌面顯示圖示</string>
+    <string name="settings_launcher_sum">在桌面產生設定入口；關閉後仍可從 LSPosed 管理器開啟</string>
+    <string name="settings_launcher_on">桌面圖示已顯示</string>
+    <string name="settings_launcher_off">桌面圖示已隱藏</string>
+    <string name="settings_breath_title">秒數字呼吸高亮</string>
+    <string name="settings_breath_sum">目前秒數字顏色緩慢漸變，帶輕微「呼吸」感</string>
 </resources>

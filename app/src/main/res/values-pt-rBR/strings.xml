@@ -68,4 +68,10 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_rule_confirm_title">O nome pode ser inválido</string>
     <string name="settings_rule_confirm_msg">“%1$s” não parece o nome de recurso de um widget de hora (geralmente contém clock ou time) e pode não funcionar. Tente “Detectar automaticamente” primeiro. Salvar mesmo assim?</string>
     <string name="settings_rule_confirm_save">Salvar mesmo assim</string>
+    <string name="settings_launcher_title">Mostrar ícone no launcher</string>
+    <string name="settings_launcher_sum">Adiciona um atalho para as configurações na tela inicial; se desativado, abra pelo gerenciador do LSPosed</string>
+    <string name="settings_launcher_on">Ícone do launcher exibido</string>
+    <string name="settings_launcher_off">Ícone do launcher oculto</string>
+    <string name="settings_breath_title">Segundos respirando</string>
+    <string name="settings_breath_sum">Os dígitos dos segundos mudam de cor lentamente, com um sutil efeito de respiração</string>
 </resources>

@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">სახელი შეიძლება არასწორი იყოს</string>
     <string name="settings_rule_confirm_msg">«%1$s» არ ჰგავს დროის ვიჯეტის რესურსის სახელს (ჩვეულებრივ შეიცავს clock ან time) და შეიძლება არ იმუშაოს. ჯერ სცადეთ «ავტომატური ძებნა». მაინც შენახვა?</string>
     <string name="settings_rule_confirm_save">მაინც შენახვა</string>
+    <string name="settings_launcher_title">ლაუნჩერში ხატულის ჩვენება</string>
+    <string name="settings_launcher_sum">მთავარ ეკრანზე პარამეტრების მალსახმობის დამატება; გამორთულისას გახსენით LSPosed მენეჯერიდან</string>
+    <string name="settings_launcher_on">ხატული ნაჩვენებია</string>
+    <string name="settings_launcher_off">ხატული დამალულია</string>
+    <string name="settings_breath_title">წამების სუნთქვა</string>
+    <string name="settings_breath_sum">წამების ციფრების ფერი ნელა იცვლება — რბილი სუნთქვის ეფექტი</string>
 </resources>

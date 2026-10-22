@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">Το όνομα ίσως δεν είναι έγκυρο</string>
     <string name="settings_rule_confirm_msg">Το «%1$s» δεν μοιάζει με όνομα πόρου γραφικού στοιχείου ώρας (συνήθως περιέχει clock ή time) και ίσως δεν λειτουργήσει. Δοκιμάστε πρώτα «Αυτόματη ανίχνευση». Αποθήκευση παρόλα αυτά;</string>
     <string name="settings_rule_confirm_save">Αποθήκευση παρόλα αυτά</string>
+    <string name="settings_launcher_title">Εμφάνιση εικονιδίου στον εκκινητή</string>
+    <string name="settings_launcher_sum">Προσθήκη συντόμευσης ρυθμίσεων στην αρχική οθόνη· αν είναι ανενεργό, ανοίξτε το από τον διαχειριστή LSPosed</string>
+    <string name="settings_launcher_on">Το εικονίδιο εμφανίστηκε</string>
+    <string name="settings_launcher_off">Το εικονίδιο κρύφτηκε</string>
+    <string name="settings_breath_title">Αναπνοή δευτερολέπτων</string>
+    <string name="settings_breath_sum">Τα ψηφία των δευτερολέπτων αλλάζουν αργά χρώμα, με απαλό εφέ αναπνοής</string>
 </resources>

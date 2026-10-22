@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">Ім’я може бути недійсним</string>
     <string name="settings_rule_confirm_msg">«%1$s» не схоже на ім’я ресурсу віджета часу (зазвичай містить clock або time) і може не працювати. Спочатку спробуйте «Автовизначення». Все одно зберегти?</string>
     <string name="settings_rule_confirm_save">Все одно зберегти</string>
+    <string name="settings_launcher_title">Показувати значок у лаунчері</string>
+    <string name="settings_launcher_sum">Додати ярлик налаштувань на головний екран; якщо вимкнено, відкривайте з менеджера LSPosed</string>
+    <string name="settings_launcher_on">Значок у лаунчері показано</string>
+    <string name="settings_launcher_off">Значок у лаунчері приховано</string>
+    <string name="settings_breath_title">Дихання секунд</string>
+    <string name="settings_breath_sum">Цифри секунд повільно змінюють колір, створюючи легкий ефект дихання</string>
 </resources>

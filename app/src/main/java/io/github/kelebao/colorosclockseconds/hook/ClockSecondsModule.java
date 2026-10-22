@@ -123,6 +123,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static volatile int sFloatHourColor = ClockSecondsConfig.HOUR_COLOR_DEFAULT;
     private static volatile boolean sFloatHourColorEnabled = true;
     private static volatile boolean sFloatColorLoaded;
+    /** 秒数字呼吸高亮开关（进程内缓存，广播更新）。 */
+    private static volatile boolean sSecondBreathEnabled = true;
 
     /** 自定义状态栏时钟识别名（设置页填写，空 = 内置规则）；广播更新。 */
     private static volatile String sCustomRule = "";
@@ -907,6 +909,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 sb.setSpan(new ForegroundColorSpan(sFloatHourColor), 0, 1,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            // 秒数字「呼吸」高亮：只作用于浮窗（状态栏保持系统原色）。
+            ClockSecondsConfig.applyBreathSpans(sb, sb.length() - 2, sb.length(),
+                    0xFFFFFFFF,
+                    sFloatHourColorEnabled
+                            ? sFloatHourColor : ClockSecondsConfig.BREATH_ACCENT_FALLBACK,
+                    sSecondBreathEnabled, System.currentTimeMillis());
             // 自适应字号：取宽高允许的较小值，保证 "HH:mm:ss" 完整放进窗口。
             try {
                 float density = context.getResources().getDisplayMetrics().density;
@@ -966,6 +974,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         try {
             sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver());
+            sSecondBreathEnabled =
+                    ClockSecondsConfig.isSecondBreathEnabled(context.getContentResolver());
             if (!sCustomRuleLoaded) {
                 sCustomRule = ClockSecondsConfig.getClockRule(context.getContentResolver());
                 sCustomRuleLoaded = true;
@@ -1017,6 +1027,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
         sb.append(ss);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
+        // 注：秒数字「呼吸」高亮只用于浮窗与设置页预览，状态栏保持系统原色（不改状态栏观感）。
         applyHourTensRed(sb, view, hourColor(view));
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
@@ -1193,9 +1204,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
 
             firstDetachedAt = 0L;
-            // 省电模式：暂停秒级刷新（让状态栏秒数冻结在最后一帧），省电结束自动恢复；
-            // 仍保持每秒轮询，以便退出省电的瞬间立即恢复走秒。
-            if (sSecondsEnabled && isPowerSaveMode(view.getContext())) {
+            // 省电模式 / 熄屏：暂停秒级刷新（让状态栏秒数冻结在最后一帧），恢复后自动续走；
+            // 仍保持每秒轮询，以便亮屏或退出省电的瞬间立即恢复走秒。
+            Context ctx = view.getContext();
+            if (sSecondsEnabled && (isPowerSaveMode(ctx) || !isInteractive(ctx))) {
                 view.postDelayed(this, 1000L);
                 return;
             }
@@ -1424,6 +1436,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
+     * 屏幕是否处于交互（亮屏解锁）状态。
+     *
+     * <p>熄屏时状态栏不可见，每秒 setText + invalidate 纯属浪费；此时暂停刷新，
+     * 亮屏后由 1 秒轮询立即恢复。取不到状态时按「亮屏」处理（宁可多刷新一次）。
+     * 注：API 20 起 {@code isInteractive()} 公开可用，minSdk=29 无需版本判断。</p>
+     */
+    private static boolean isInteractive(Context context) {
+        try {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            return pm == null || pm.isInteractive();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    /**
      * 模块自保护：记录一次 hook 异常。若在同一时间窗口内异常次数超过阈值，
      * 自动停用本模块的全部 hook 逻辑（置 {@code sSelfDisabled}），避免把 SystemUI 反复拖崩、
      * 触发 LSPosed 安全模式。恢复只需重启 SystemUI。
@@ -1487,6 +1515,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_SECOND_BREATH);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
@@ -1509,6 +1538,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
                                 sFloatHourColorEnabled =
                                         ClockSecondsConfig.isHourColorEnabled(cr);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_SECOND_BREATH.equals(action)) {
+                                // 秒数字呼吸高亮开关：写 Secure + 更新内存态 + 立即重绘。
+                                boolean breathOn = intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_ENABLED, 1) == 1;
+                                ClockSecondsConfig.setSecondBreathEnabled(cr, breathOn);
+                                sSecondBreathEnabled = breathOn;
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
                                 ClockSecondsConfig.setGesture(cr, intent.getIntExtra(

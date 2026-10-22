@@ -1,7 +1,11 @@
 package io.github.kelebao.colorosclockseconds;
 
 import android.content.ContentResolver;
+import android.graphics.Color;
 import android.provider.Settings;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import java.util.Locale;
 
 /**
@@ -60,6 +64,15 @@ public final class ClockSecondsConfig {
     /** 小时颜色总开关（1 = 启用，0 = 关闭并恢复系统默认样式）。默认启用。 */
     public static final String HOUR_COLOR_ENABLED_KEY =
             "coloros_clock_seconds_hour_color_enabled";
+
+    /**
+     * 秒数字「呼吸」高亮（1 = 启用，0 = 关闭）。默认启用。
+     *
+     * <p>给追加的秒数字上色，颜色在「系统文字色 ↔ 小时颜色」之间按约 12 秒一个周期
+     * 缓慢往返（两位秒数字之间再留一点色差形成渐变），肉眼是轻微呼吸感，不刺眼。
+     * 只在 {@code writeTime} 拼接 Span 时生效，不改系统渲染流程。</p>
+     */
+    public static final String SECOND_BREATH_KEY = "coloros_clock_seconds_second_breath";
 
     /**
      * 网络时间相对系统时间的偏移（毫秒，网络 - 系统），由设置页测得后写入。
@@ -121,6 +134,9 @@ public final class ClockSecondsConfig {
     /** 设置页 → SystemUI 写入小时颜色。 */
     public static final String ACTION_SET_HOUR_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR";
+    /** 设置页 → SystemUI 写入秒数字呼吸高亮开关。 */
+    public static final String ACTION_SET_SECOND_BREATH =
+            "io.github.kelebao.colorosclockseconds.action.SET_SECOND_BREATH";
     public static final String ACTION_SET_GESTURE =
             "io.github.kelebao.colorosclockseconds.action.SET_GESTURE";
     public static final String ACTION_SET_HOUR_COLOR_ENABLED =
@@ -186,6 +202,89 @@ public final class ClockSecondsConfig {
     /** 写入小时颜色开关。 */
     public static void setHourColorEnabled(ContentResolver resolver, boolean enabled) {
         Settings.Secure.putInt(resolver, HOUR_COLOR_ENABLED_KEY, enabled ? 1 : 0);
+    }
+
+    /** 秒数字呼吸高亮是否启用（默认启用）。 */
+    public static boolean isSecondBreathEnabled(ContentResolver resolver) {
+        return Settings.Secure.getInt(resolver, SECOND_BREATH_KEY, 1) == 1;
+    }
+
+    /** 写入秒数字呼吸高亮开关。 */
+    public static void setSecondBreathEnabled(ContentResolver resolver, boolean enabled) {
+        Settings.Secure.putInt(resolver, SECOND_BREATH_KEY, enabled ? 1 : 0);
+    }
+
+    // ------------------------------------------------------------------
+    // 秒数字「呼吸」高亮（只用于浮窗与设置页预览，不用于状态栏）
+    // ------------------------------------------------------------------
+
+    /** 呼吸周期（毫秒）：约 12 秒一个完整往返，肉眼是缓慢起伏而非闪烁。 */
+    public static final long BREATH_PERIOD_MS = 12_000L;
+    /** 呼吸最大着色权重（相对目标色）：0.5 即最多混到一半，保证「轻微」。 */
+    public static final float BREATH_MAX_WEIGHT = 0.5f;
+    /** 小时颜色被关闭时的呼吸目标色（柔和天蓝）。 */
+    public static final int BREATH_ACCENT_FALLBACK = 0xFF64B5F6;
+
+    /**
+     * 当前时刻的呼吸权重（0 ~ {@link #BREATH_MAX_WEIGHT}）。
+     *
+     * <p>用 {@code (1 - cos(2πt)) / 2} 而不是 sin，保证相位从 0 开始——刚上色时最接近原色，
+     * 不会一出现就突兀地变色。</p>
+     *
+     * @param nowMs 当前时间戳（毫秒）
+     */
+    public static float breathWeight(long nowMs) {
+        double phase = Math.floorMod(nowMs, BREATH_PERIOD_MS) / (double) BREATH_PERIOD_MS;
+        double wave = (1 - Math.cos(phase * 2 * Math.PI)) / 2; // 0..1..0
+        return (float) (BREATH_MAX_WEIGHT * wave);
+    }
+
+    /** 按权重 w（0..1）在 from 与 to 之间线性混合两个 ARGB 颜色。 */
+    public static int blendColor(int from, int to, float w) {
+        if (w <= 0f) {
+            return from;
+        }
+        if (w >= 1f) {
+            return to;
+        }
+        int a = Math.round(Color.alpha(from) + (Color.alpha(to) - Color.alpha(from)) * w);
+        int r = Math.round(Color.red(from) + (Color.red(to) - Color.red(from)) * w);
+        int g = Math.round(Color.green(from) + (Color.green(to) - Color.green(from)) * w);
+        int b = Math.round(Color.blue(from) + (Color.blue(to) - Color.blue(from)) * w);
+        return Color.argb(a, r, g, b);
+    }
+
+    /**
+     * 给 {@code [digitsStart, digitsEnd)} 区间的秒数字上「呼吸」渐变。
+     *
+     * <p>颜色在 {@code baseColor}（原文字色）与 {@code accent}（小时颜色）之间按呼吸权重往返；
+     * 两位数字再取不同权重（第二个更接近原色），形成从左到右的轻微渐变。</p>
+     *
+     * @param enabled 总开关关闭时直接返回，不加任何 Span
+     */
+    public static void applyBreathSpans(SpannableStringBuilder sb, int digitsStart, int digitsEnd,
+                                        int baseColor, int accent, boolean enabled, long nowMs) {
+        if (!enabled || sb == null) {
+            return;
+        }
+        int count = digitsEnd - digitsStart;
+        if (count < 1) {
+            return;
+        }
+        try {
+            float weight = breathWeight(nowMs);
+            if (count >= 2) {
+                sb.setSpan(new ForegroundColorSpan(blendColor(baseColor, accent, weight)),
+                        digitsStart, digitsStart + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(new ForegroundColorSpan(blendColor(baseColor, accent, weight * 0.55f)),
+                        digitsStart + 1, digitsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                sb.setSpan(new ForegroundColorSpan(blendColor(baseColor, accent, weight)),
+                        digitsStart, digitsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        } catch (Throwable ignored) {
+            // 上色失败只是没有呼吸效果，绝不影响时间显示
+        }
     }
 
     /** 读取网络时间偏移（毫秒，网络 - 系统）。无记录时为 0（按系统时间显示）。 */

@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">Имя может быть неверным</string>
     <string name="settings_rule_confirm_msg">«%1$s» не похоже на имя ресурса виджета времени (обычно содержит clock или time) и может не сработать. Сначала попробуйте «Автоопределение». Всё равно сохранить?</string>
     <string name="settings_rule_confirm_save">Всё равно сохранить</string>
+    <string name="settings_launcher_title">Показывать значок в лаунчере</string>
+    <string name="settings_launcher_sum">Добавить ярлык настроек на главный экран; если выключено, открывайте из менеджера LSPosed</string>
+    <string name="settings_launcher_on">Значок в лаунчере показан</string>
+    <string name="settings_launcher_off">Значок в лаунчере скрыт</string>
+    <string name="settings_breath_title">Дыхание секунд</string>
+    <string name="settings_breath_sum">Цифры секунд медленно меняют цвет, создавая лёгкий эффект дыхания</string>
 </resources>

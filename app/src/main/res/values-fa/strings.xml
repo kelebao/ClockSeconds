@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">نام ممکن است نامعتبر باشد</string>
     <string name="settings_rule_confirm_msg">«%1$s» شبیه نام منبع ویجت زمان نیست (معمولاً شامل clock یا time است) و ممکن است کار نکند. ابتدا «تشخیص خودکار» را امتحان کنید. با این حال ذخیره شود؟</string>
     <string name="settings_rule_confirm_save">با این حال ذخیره کن</string>
+    <string name="settings_launcher_title">نمایش آیکون در لانچر</string>
+    <string name="settings_launcher_sum">میان‌بر تنظیمات در صفحه اصلی بسازید؛ وقتی خاموش است از مدیر LSPosed باز کنید</string>
+    <string name="settings_launcher_on">آیکون لانچر نمایش داده شد</string>
+    <string name="settings_launcher_off">آیکون لانچر پنهان شد</string>
+    <string name="settings_breath_title">تنفس ثانیه‌ها</string>
+    <string name="settings_breath_sum">رنگ ارقام ثانیه به‌آرامی تغییر می‌کند و حس تنفس ملایمی می‌دهد</string>
 </resources>

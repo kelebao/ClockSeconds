@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">이름이 유효하지 않을 수 있음</string>
     <string name="settings_rule_confirm_msg">“%1$s”은(는) 시간 위젯 리소스 이름처럼 보이지 않습니다(보통 clock 또는 time 포함). 적용되지 않을 수 있습니다. 먼저 “자동 감지”를 사용해 보세요. 그래도 저장할까요?</string>
     <string name="settings_rule_confirm_save">그래도 저장</string>
+    <string name="settings_launcher_title">런처 아이콘 표시</string>
+    <string name="settings_launcher_sum">홈 화면에 설정 바로가기를 만듭니다. 꺼도 LSPosed 관리자에서 열 수 있습니다</string>
+    <string name="settings_launcher_on">런처 아이콘을 표시했습니다</string>
+    <string name="settings_launcher_off">런처 아이콘을 숨겼습니다</string>
+    <string name="settings_breath_title">초 숫자 호흡 강조</string>
+    <string name="settings_breath_sum">초 숫자의 색이 천천히 변하며 은은한 호흡 효과를 줍니다</string>
 </resources>

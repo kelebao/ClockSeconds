@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">قد يكون الاسم غير صالح</string>
     <string name="settings_rule_confirm_msg">«%1$s» لا يبدو اسم مورد واجهة وقت (عادةً يحتوي على clock أو time) وقد لا يعمل. جرّب «كشف تلقائي» أولاً. هل تريد الحفظ على أي حال؟</string>
     <string name="settings_rule_confirm_save">احفظ على أي حال</string>
+    <string name="settings_launcher_title">إظهار الأيقونة في المشغّل</string>
+    <string name="settings_launcher_sum">إضافة اختصار للإعدادات على الشاشة الرئيسية؛ عند الإيقاف افتحه من مدير LSPosed</string>
+    <string name="settings_launcher_on">تم إظهار أيقونة المشغّل</string>
+    <string name="settings_launcher_off">تم إخفاء أيقونة المشغّل</string>
+    <string name="settings_breath_title">تنفّس الثواني</string>
+    <string name="settings_breath_sum">تتغير ألوان أرقام الثواني ببطء لإعطاء إحساس تنفّس خفيف</string>
 </resources>

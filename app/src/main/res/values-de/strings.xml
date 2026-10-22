@@ -68,4 +68,10 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_rule_confirm_title">Name möglicherweise ungültig</string>
     <string name="settings_rule_confirm_msg">„%1$s“ sieht nicht wie der Ressourcenname eines Zeit-Widgets aus (enthält meist clock oder time) und funktioniert evtl. nicht. Versuche zuerst „Automatisch erkennen“. Trotzdem speichern?</string>
     <string name="settings_rule_confirm_save">Trotzdem speichern</string>
+    <string name="settings_launcher_title">Symbol im Launcher anzeigen</string>
+    <string name="settings_launcher_sum">Verknüpfung zu den Einstellungen auf dem Startbildschirm anlegen; wenn aus, über den LSPosed-Manager öffnen</string>
+    <string name="settings_launcher_on">Launcher-Symbol eingeblendet</string>
+    <string name="settings_launcher_off">Launcher-Symbol ausgeblendet</string>
+    <string name="settings_breath_title">Atmende Sekunden</string>
+    <string name="settings_breath_sum">Die Sekundenziffern wechseln langsam die Farbe – ein dezenter Atem-Effekt</string>
 </resources>

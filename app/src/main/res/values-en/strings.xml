@@ -68,4 +68,10 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_rule_confirm_title">Name may be invalid</string>
     <string name="settings_rule_confirm_msg">“%1$s” doesn’t look like a time widget’s resource name (usually contains “clock” or “time”) and may not work. Try “Auto detect” first. Save anyway?</string>
     <string name="settings_rule_confirm_save">Save anyway</string>
+    <string name="settings_launcher_title">Show launcher icon</string>
+    <string name="settings_launcher_sum">Add a settings shortcut to the home screen; when off, open it from the LSPosed manager</string>
+    <string name="settings_launcher_on">Launcher icon shown</string>
+    <string name="settings_launcher_off">Launcher icon hidden</string>
+    <string name="settings_breath_title">Breathing seconds</string>
+    <string name="settings_breath_sum">The seconds digits slowly shift colour for a subtle breathing glow</string>
 </resources>

@@ -68,4 +68,10 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_rule_confirm_title">Tên có thể không hợp lệ</string>
     <string name="settings_rule_confirm_msg">“%1$s” không giống tên tài nguyên widget thời gian (thường chứa clock hoặc time) và có thể không hoạt động. Hãy thử “Tự động phát hiện” trước. Vẫn lưu?</string>
     <string name="settings_rule_confirm_save">Vẫn lưu</string>
+    <string name="settings_launcher_title">Hiện biểu tượng trên màn hình chính</string>
+    <string name="settings_launcher_sum">Tạo lối tắt cài đặt trên màn hình chính; khi tắt vẫn mở được từ trình quản lý LSPosed</string>
+    <string name="settings_launcher_on">Đã hiện biểu tượng</string>
+    <string name="settings_launcher_off">Đã ẩn biểu tượng</string>
+    <string name="settings_breath_title">Nhịp thở cho số giây</string>
+    <string name="settings_breath_sum">Màu số giây thay đổi chậm, tạo hiệu ứng thở nhẹ</string>
 </resources>

@@ -68,4 +68,10 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_rule_confirm_title">Il nome potrebbe non essere valido</string>
     <string name="settings_rule_confirm_msg">“%1$s” non sembra il nome della risorsa di un widget dell’ora (di solito contiene clock o time) e potrebbe non funzionare. Prova prima “Rilevamento automatico”. Salvare comunque?</string>
     <string name="settings_rule_confirm_save">Salva comunque</string>
+    <string name="settings_launcher_title">Mostra icona nel launcher</string>
+    <string name="settings_launcher_sum">Aggiunge una scorciatoia alle impostazioni nella schermata iniziale; se disattivato, aprilo dal gestore LSPosed</string>
+    <string name="settings_launcher_on">Icona del launcher mostrata</string>
+    <string name="settings_launcher_off">Icona del launcher nascosta</string>
+    <string name="settings_breath_title">Secondi che respirano</string>
+    <string name="settings_breath_sum">Le cifre dei secondi cambiano colore lentamente, con un leggero effetto respiro</string>
 </resources>

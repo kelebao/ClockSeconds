@@ -3,11 +3,13 @@ package io.github.kelebao.colorosclockseconds.settings;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
@@ -146,6 +148,7 @@ public final class ModuleSettingsActivity extends Activity {
         setTitle(R.string.settings_title);
         setContentView(buildContentView());
         applyStatusBarAppearance();
+        reconcileLauncherIcon();
         refreshStatus();
         maybeAutoCheckUpdate();
     }
@@ -218,6 +221,7 @@ public final class ModuleSettingsActivity extends Activity {
         buildStatsRow(root);
         buildColorCard(root);
         buildAdvancedCard(root);
+        buildLauncherCard(root);
         buildUpdateCard(root);
         buildAboutCard(root);
         buildPrimaryButton(root);
@@ -427,7 +431,57 @@ public final class ModuleSettingsActivity extends Activity {
         hint.setTextColor(text3());
         hint.setPadding(0, dp(10), 0, 0);
         card.addView(hint);
+
+        // 秒数字呼吸高亮开关（与小时颜色同卡，都属「状态栏时间外观」）。
+        LinearLayout breathRow = new LinearLayout(this);
+        breathRow.setOrientation(LinearLayout.HORIZONTAL);
+        breathRow.setGravity(Gravity.CENTER_VERTICAL);
+        breathRow.setPadding(0, dp(16), 0, 0);
+
+        LinearLayout breathTexts = new LinearLayout(this);
+        breathTexts.setOrientation(LinearLayout.VERTICAL);
+        breathTexts.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView breathTitle = new TextView(this);
+        breathTitle.setText(R.string.settings_breath_title);
+        breathTitle.setTextSize(15f);
+        breathTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        breathTitle.setTextColor(text());
+        breathTexts.addView(breathTitle);
+        TextView breathSub = new TextView(this);
+        breathSub.setText(R.string.settings_breath_sum);
+        breathSub.setTextSize(11f);
+        breathSub.setTextColor(text2());
+        breathSub.setPadding(0, dp(3), 0, 0);
+        breathTexts.addView(breathSub);
+        breathRow.addView(breathTexts);
+
+        final Switch breathSwitch = new Switch(this);
+        breathSwitch.setChecked(ClockSecondsConfig.isSecondBreathEnabled(getContentResolver()));
+        styleSwitch(breathSwitch);
+        breathRow.addView(breathSwitch);
+        card.addView(breathRow);
+
         root.addView(card);
+
+        final boolean[] breathReverting = {false};
+        breathSwitch.setOnCheckedChangeListener((v, checked) -> {
+            if (breathReverting[0]) {
+                return;
+            }
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_SECOND_BREATH)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
+            applyConfig(ClockSecondsConfig.SECOND_BREATH_KEY, checked ? 1 : 0, intent, ok -> {
+                if (ok) {
+                    updatePreview();
+                } else {
+                    breathReverting[0] = true;
+                    breathSwitch.setChecked(!checked);
+                    breathReverting[0] = false;
+                    toastWriteFailed();
+                }
+            });
+        });
 
         final boolean[] reverting = {false};
         colorSwitch.setOnCheckedChangeListener((v, checked) -> {
@@ -701,6 +755,120 @@ public final class ModuleSettingsActivity extends Activity {
         }
     }
 
+    // ------------------------------------------------------------------
+    // 桌面图标开关
+    // ------------------------------------------------------------------
+
+    /** 桌面图标（activity-alias）在桌面上的组件名。 */
+    private static final String LAUNCHER_ALIAS_CLASS =
+            "io.github.kelebao.colorosclockseconds.settings.LauncherAlias";
+    private static final String PREF_LAUNCHER_ICON = "launcher_icon";
+
+    /** 桌面图标是否启用（默认开，与 manifest 里 activity-alias 的 enabled 保持一致）。 */
+    private boolean isLauncherIconOn() {
+        return getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(PREF_LAUNCHER_ICON, true);
+    }
+
+    /**
+     * 启用/禁用桌面图标。
+     *
+     * <p>用 {@code setComponentEnabledSetting} 直接改 activity-alias 的启用态，
+     * 不改 APK 本身、不需要重启；{@code DONT_KILL_APP} 保证不杀进程。</p>
+     */
+    private boolean setLauncherIcon(boolean enabled) {
+        try {
+            getPackageManager().setComponentEnabledSetting(
+                    new ComponentName(this, LAUNCHER_ALIAS_CLASS),
+                    enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                            : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP);
+            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                    .putBoolean(PREF_LAUNCHER_ICON, enabled).apply();
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * 以 SharedPreferences 为准，校准桌面图标的实际启用态。
+     *
+     * <p>PackageManager 里 activity-alias 的启用态会跨版本升级保留（例如调试期显式关过后再
+     * 覆盖安装），而偏好默认是「开」。这里在每次启动对齐一次，保证「默认开」能在各种历史
+     * 状态下自愈；同时用户主动关过后偏好为 false，不会被反过来打开。
+     * {@code COMPONENT_ENABLED_STATE_DEFAULT} 对本别名等同于启用（manifest enabled=true）。</p>
+     */
+    private void reconcileLauncherIcon() {
+        try {
+            boolean want = isLauncherIconOn();
+            int desired = want ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                    : PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+            int state = getPackageManager().getComponentEnabledSetting(
+                    new ComponentName(this, LAUNCHER_ALIAS_CLASS));
+            int actual = (state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED)
+                    ? PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                    : PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+            if (actual != desired) {
+                setLauncherIcon(want);
+            }
+        } catch (Throwable ignored) {
+            // 校准失败不影响使用，用户仍可用开关手动切换
+        }
+    }
+
+    /** 卡片：桌面显示图标开关。 */
+    private void buildLauncherCard(LinearLayout root) {
+        LinearLayout card = card();
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView title = new TextView(this);
+        title.setText(R.string.settings_launcher_title);
+        title.setTextSize(15f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        texts.addView(title);
+        TextView sub = new TextView(this);
+        sub.setText(R.string.settings_launcher_sum);
+        sub.setTextSize(11f);
+        sub.setTextColor(text2());
+        sub.setPadding(0, dp(3), 0, 0);
+        texts.addView(sub);
+        row.addView(texts);
+
+        final Switch sw = new Switch(this);
+        sw.setChecked(isLauncherIconOn());
+        styleSwitch(sw);
+        row.addView(sw);
+        card.addView(row);
+        root.addView(card);
+
+        final boolean[] reverting = {false};
+        sw.setOnCheckedChangeListener((v, checked) -> {
+            if (reverting[0]) {
+                return;
+            }
+            if (setLauncherIcon(checked)) {
+                Toast.makeText(this, checked
+                                ? R.string.settings_launcher_on
+                                : R.string.settings_launcher_off,
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                reverting[0] = true;
+                sw.setChecked(!checked);
+                reverting[0] = false;
+                toastWriteFailed();
+            }
+        });
+    }
+
     private void buildUpdateCard(LinearLayout root) {
         LinearLayout card = card();
         card.setPadding(dp(18), dp(6), dp(18), dp(6));
@@ -811,6 +979,17 @@ public final class ModuleSettingsActivity extends Activity {
                 && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
             sb.setSpan(new ForegroundColorSpan(ClockSecondsConfig.getHourColor(
                     getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        // 秒数字「呼吸」高亮：只作用于预览（与浮窗一致），状态栏保持系统原色。
+        if (seconds) {
+            int base = previewView.getCurrentTextColor();
+            int accent = ClockSecondsConfig.isHourColorEnabled(getContentResolver())
+                    ? ClockSecondsConfig.getHourColor(getContentResolver())
+                    : ClockSecondsConfig.BREATH_ACCENT_FALLBACK;
+            ClockSecondsConfig.applyBreathSpans(sb, sb.length() - 2, sb.length(),
+                    base, accent,
+                    ClockSecondsConfig.isSecondBreathEnabled(getContentResolver()),
+                    System.currentTimeMillis());
         }
         previewView.setText(sb);
 

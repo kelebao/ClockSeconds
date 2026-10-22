@@ -68,4 +68,10 @@
     <string name="settings_rule_confirm_title">ชื่ออาจไม่ถูกต้อง</string>
     <string name="settings_rule_confirm_msg">“%1$s” ไม่ดูเหมือนชื่อทรัพยากรวิดเจ็ตเวลา (มักมี clock หรือ time) และอาจไม่ทำงาน ลอง “ตรวจหาอัตโนมัติ” ก่อน ยังคงบันทึกหรือไม่?</string>
     <string name="settings_rule_confirm_save">ยังคงบันทึก</string>
+    <string name="settings_launcher_title">แสดงไอคอนบนหน้าจอหลัก</string>
+    <string name="settings_launcher_sum">สร้างทางลัดการตั้งค่าบนหน้าจอหลัก ปิดแล้วยังเปิดได้จากตัวจัดการ LSPosed</string>
+    <string name="settings_launcher_on">แสดงไอคอนแล้ว</string>
+    <string name="settings_launcher_off">ซ่อนไอคอนแล้ว</string>
+    <string name="settings_breath_title">หายใจของหลักวินาที</string>
+    <string name="settings_breath_sum">สีของหลักวินาทีเปลี่ยนช้า ๆ ให้ความรู้สึกหายใจเบา ๆ</string>
 </resources>

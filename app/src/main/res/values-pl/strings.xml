@@ -68,4 +68,10 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_rule_confirm_title">Nazwa może być nieprawidłowa</string>
     <string name="settings_rule_confirm_msg">„%1$s” nie wygląda na nazwę zasobu widżetu czasu (zwykle zawiera clock lub time) i może nie działać. Najpierw spróbuj „Wykryj automatycznie”. Mimo to zapisać?</string>
     <string name="settings_rule_confirm_save">Mimo to zapisz</string>
+    <string name="settings_launcher_title">Pokaż ikonę w launcherze</string>
+    <string name="settings_launcher_sum">Dodaj skrót do ustawień na ekranie głównym; gdy wyłączone, otwieraj z menedżera LSPosed</string>
+    <string name="settings_launcher_on">Ikona w launcherze pokazana</string>
+    <string name="settings_launcher_off">Ikona w launcherze ukryta</string>
+    <string name="settings_breath_title">Oddychające sekundy</string>
+    <string name="settings_breath_sum">Cyfry sekund powoli zmieniają kolor, dając subtelny efekt oddychania</string>
 </resources>

@@ -62,5 +62,22 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <!-- 桌面图标入口（TIME 别名）：默认启用，用户可在设置页「桌面显示图标」里关闭。
+             用 activity-alias 而非直接给 Activity 加 LAUNCHER，是为了能独立启停、
+             且不影响 LSPosed 管理器里的模块入口。标签固定为 TIME（品牌标识）。 -->
+        <activity-alias
+            android:name=".settings.LauncherAlias"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/launcher_label"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:targetActivity=".settings.ModuleSettingsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
     </application>
 </manifest>

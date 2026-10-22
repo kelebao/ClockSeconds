@@ -68,4 +68,10 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_rule_confirm_title">Ad geçersiz olabilir</string>
     <string name="settings_rule_confirm_msg">“%1$s” bir saat bileşeni kaynak adına benzemiyor (genellikle clock veya time içerir) ve çalışmayabilir. Önce “Otomatik algıla”yı deneyin. Yine de kaydedilsin mi?</string>
     <string name="settings_rule_confirm_save">Yine de kaydet</string>
+    <string name="settings_launcher_title">Başlatıcı simgesini göster</string>
+    <string name="settings_launcher_sum">Ana ekrana ayarlar kısayolu ekle; kapalıyken LSPosed yöneticisinden açılır</string>
+    <string name="settings_launcher_on">Başlatıcı simgesi gösterildi</string>
+    <string name="settings_launcher_off">Başlatıcı simgesi gizlendi</string>
+    <string name="settings_breath_title">Saniyelerde nefes efekti</string>
+    <string name="settings_breath_sum">Saniye rakamlarının rengi yavaşça değişir, hafif bir nefes etkisi verir</string>
 </resources>
