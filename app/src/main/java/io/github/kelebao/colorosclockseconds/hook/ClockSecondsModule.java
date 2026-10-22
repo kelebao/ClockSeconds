@@ -512,11 +512,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     lp.y = startY;
                                     lp.width = newW;
                                     lp.height = newH;
-                                    // 文字随窗口高度等比缩放（14~48sp）。
-                                    float scale = newH / (float) startH;
-                                    tv.setTextSize(Math.max(14f,
-                                            Math.min(48f, 20f * scale)));
+                                    // 文字大小交给 updateFloatText 按窗口宽高自适应。
                                     box.requestLayout();
+                                    updateFloatText(tv, context, offset[0], lp);
                                     try {
                                         wm.updateViewLayout(box, lp);
                                     } catch (Throwable ignored) {
@@ -532,7 +530,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
                     wm.addView(box, lp);
                     sFloatView = box;
-                    updateFloatText(tv, context, offset[0]);
+                    updateFloatText(tv, context, offset[0], lp);
                     // 测量完后把窗口推到右上角（靠右留 12dp）。
                     box.post(() -> {
                         try {
@@ -565,7 +563,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             sTouchHandler.post(() -> {
                                 if (sFloatView == box) {
                                     offset[0] = drift;
-                                    updateFloatText(tv, context, offset[0]);
+                                    updateFloatText(tv, context, offset[0], lp);
                                 }
                             });
                         }
@@ -578,7 +576,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             if (sFloatView != box) {
                                 return;
                             }
-                            updateFloatText(tv, context, offset[0]);
+                            updateFloatText(tv, context, offset[0], lp);
                             sTouchHandler.postDelayed(this, 1000L);
                         }
                     };
@@ -767,10 +765,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /**
      * 浮窗文本：网络时间 HH:mm:ss（系统时间 + 网络偏移），小时十位用设置的小时颜色（若启用）。
+     * 字号按窗口当前宽高自适应（10~60sp），保证任何尺寸下都完整显示、不被裁切。
      *
      * @param offsetMs 网络 - 系统的偏移（毫秒）
+     * @param lp       浮窗窗口参数（取宽高算字号；可为 null）
      */
-    private static void updateFloatText(TextView tv, Context context, long offsetMs) {
+    private static void updateFloatText(TextView tv, Context context, long offsetMs,
+                                        WindowManager.LayoutParams lp) {
         try {
             long netNow = System.currentTimeMillis() + offsetMs;
             String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
@@ -780,6 +781,27 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
                 sb.setSpan(new ForegroundColorSpan(ClockSecondsConfig.getHourColor(
                         context.getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            // 自适应字号：取宽高允许的较小值，保证 "HH:mm:ss" 完整放进窗口。
+            try {
+                float density = context.getResources().getDisplayMetrics().density;
+                int availW = (tv.getWidth() > 0 ? tv.getWidth() : 240)
+                        - tv.getPaddingLeft() - tv.getPaddingRight();
+                int availH = (tv.getHeight() > 0 ? tv.getHeight() : 110)
+                        - tv.getPaddingTop() - tv.getPaddingBottom();
+                if (lp != null && lp.width > 0) {
+                    availW = lp.width - tv.getPaddingLeft() - tv.getPaddingRight();
+                }
+                if (lp != null && lp.height > 0) {
+                    availH = lp.height - tv.getPaddingTop() - tv.getPaddingBottom();
+                }
+                // "HH:mm:ss" 数字宽约 0.62em、冒号约 0.35em，平均按 0.55em/字符估算。
+                float maxByW = availW / (text.length() * 0.55f) / density;
+                float maxByH = availH * 0.62f / density;
+                float size = Math.max(10f, Math.min(60f, Math.min(maxByW, maxByH)));
+                tv.setTextSize(size);
+            } catch (Throwable ignored) {
+                // 字号自适应失败就用当前字号
             }
             tv.setText(sb);
         } catch (Throwable ignored) {
