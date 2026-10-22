@@ -20,6 +20,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
@@ -110,7 +111,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static Runnable sLongPressTask;
 
     /** 长按弹出的预览浮窗（非空表示正在显示）。 */
-    private static TextView sFloatView;
+    private static View sFloatView;
     private static Runnable sFloatTicker;
 
     /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
@@ -361,9 +362,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
-     * 长按状态栏时间：在下方弹出浮窗显示**网络时间**（HH:mm:ss，小时十位跟随设置的颜色）。
-     * 弹出时立即用「系统时间 + 已记录的网络偏移」显示，同时后台向网络校准一次偏移并写回；
-     * 每秒刷新，3 秒后自动消失，点一下浮窗立即关闭。全程 try/catch，绝不影响系统。
+     * 长按状态栏时间：弹出毛玻璃浮窗显示**网络时间**（HH:mm:ss，小时十位跟随设置的颜色）。
+     * 默认只显示时间；点击时间才浮现「关闭 / 拉伸」按钮，可拖动移位、拉伸改尺寸。
+     * 后台向网络校准一次偏移并写回。全程 try/catch，绝不影响系统。
      */
     private static void showFloatPreview(View clockView) {
         try {
@@ -381,39 +382,136 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     if (wm == null) {
                         return;
                     }
-                    dismissFloatPreview(); // 重复长按先关掉旧的，重置 3 秒计时
+                    dismissFloatPreview(); // 重复长按先关掉旧的
 
                     // 偏移在浮窗存活期间缓存，避免每秒跨进程读 Secure。
                     final long[] offset = {ClockSecondsConfig.getNetOffset(
                             context.getContentResolver())};
 
+                    // 容器：时间 + 两个浮层按钮，整体可拖动、可拉伸。
+                    final FloatBox box = new FloatBox(context);
+                    GradientDrawable bg = new GradientDrawable();
+                    bg.setCornerRadius(floatDp(context, 12));
+                    // 半透明深色底座（配合窗口级模糊即毛玻璃效果）。
+                    bg.setColor(0xB3111118);
+                    box.setBackground(bg);
+
+                    // 时间：填满容器，点击它显示/隐藏按钮。
                     final TextView tv = new TextView(context);
-                    tv.setTextSize(34f);
+                    tv.setTextSize(20f);
                     tv.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                     tv.setTextColor(0xFFFFFFFF);
                     tv.setGravity(Gravity.CENTER);
-                    int padH = floatDp(context, 16);
-                    int padV = floatDp(context, 10);
-                    tv.setPadding(padH, padV, padH, padV);
-                    GradientDrawable bg = new GradientDrawable();
-                    bg.setCornerRadius(floatDp(context, 14));
-                    bg.setColor(0xE6111118);
-                    tv.setBackground(bg);
+                    tv.setPadding(floatDp(context, 16), floatDp(context, 10),
+                            floatDp(context, 16), floatDp(context, 10));
+                    box.addView(tv, new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT));
 
-                    WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    // 关闭按钮：右上角，默认隐藏。
+                    final TextView close = new TextView(context);
+                    close.setText("✕");
+                    close.setTextSize(11f);
+                    close.setTextColor(0xFFFFFFFF);
+                    close.setGravity(Gravity.CENTER);
+                    close.setPadding(floatDp(context, 7), floatDp(context, 4),
+                            floatDp(context, 7), floatDp(context, 4));
+                    close.setVisibility(View.GONE);
+                    close.setOnClickListener(v -> dismissFloatPreview());
+                    FrameLayout.LayoutParams closeLp = new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            Gravity.TOP | Gravity.END);
+                    box.addView(close, closeLp);
+
+                    // 拉伸按钮：右下角，默认隐藏；拖动它改变浮窗尺寸。
+                    final TextView resize = new TextView(context);
+                    resize.setText("◢");
+                    resize.setTextSize(11f);
+                    resize.setTextColor(0xFFFFFFFF);
+                    resize.setGravity(Gravity.CENTER);
+                    resize.setPadding(floatDp(context, 7), floatDp(context, 4),
+                            floatDp(context, 7), floatDp(context, 4));
+                    resize.setVisibility(View.GONE);
+                    FrameLayout.LayoutParams resizeLp = new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            Gravity.BOTTOM | Gravity.END);
+                    box.addView(resize, resizeLp);
+
+                    // 点击时间：显示 / 隐藏按钮。
+                    tv.setOnClickListener(v -> {
+                        boolean show = close.getVisibility() != View.VISIBLE;
+                        close.setVisibility(show ? View.VISIBLE : View.GONE);
+                        resize.setVisibility(show ? View.VISIBLE : View.GONE);
+                    });
+
+                    final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                             WindowManager.LayoutParams.WRAP_CONTENT,
                             WindowManager.LayoutParams.WRAP_CONTENT,
                             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                             PixelFormat.TRANSLUCENT);
-                    lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-                    lp.y = floatAnchorY(context, clockView);
+                    // 默认右上角（电量下方），靠右留 12dp。
+                    lp.gravity = Gravity.TOP | Gravity.END;
+                    lp.x = floatDp(context, 12);
+                    lp.y = floatDp(context, 4);
+                    // 毛玻璃：模糊窗口背后的屏幕内容（API 31+ 公开 API，不支持时退化为半透明）。
+                    try {
+                        if (Build.VERSION.SDK_INT >= 31
+                                && wm.isCrossWindowBlurEnabled()) {
+                            lp.setBlurBehindRadius(floatDp(context, 18));
+                        }
+                    } catch (Throwable ignored) {
+                        // 不支持模糊时保持半透明
+                    }
+                    box.attach(wm, lp);
 
-                    wm.addView(tv, lp);
-                    sFloatView = tv;
+                    // 拉伸手柄：改窗口宽高（最小 70×36dp，最大 400×200dp）。
+                    resize.setOnTouchListener(new View.OnTouchListener() {
+                        private float downRawX, downRawY;
+                        private int startW, startH;
+
+                        @Override
+                        public boolean onTouch(View v, MotionEvent ev) {
+                            switch (ev.getAction()) {
+                                case MotionEvent.ACTION_DOWN:
+                                    downRawX = ev.getRawX();
+                                    downRawY = ev.getRawY();
+                                    startW = box.getWidth();
+                                    startH = box.getHeight();
+                                    return true;
+                                case MotionEvent.ACTION_MOVE: {
+                                    if (startW <= 0 || startH <= 0) {
+                                        return true;
+                                    }
+                                    int nw = (int) (startW + (ev.getRawX() - downRawX));
+                                    int nh = (int) (startH + (ev.getRawY() - downRawY));
+                                    lp.width = Math.max(floatDp(context, 70),
+                                            Math.min(nw, floatDp(context, 400)));
+                                    lp.height = Math.max(floatDp(context, 36),
+                                            Math.min(nh, floatDp(context, 200)));
+                                    // 文字随窗口高度等比缩放（14~48sp）。
+                                    float scale = lp.height / (float) startH;
+                                    tv.setTextSize(Math.max(14f,
+                                            Math.min(48f, 20f * scale)));
+                                    try {
+                                        wm.updateViewLayout(box, lp);
+                                    } catch (Throwable ignored) {
+                                        // 视图已不在窗口上时静默
+                                    }
+                                    return true;
+                                }
+                                default:
+                                    return true;
+                            }
+                        }
+                    });
+
+                    wm.addView(box, lp);
+                    sFloatView = box;
                     updateFloatText(tv, context, offset[0]);
-                    tv.setOnClickListener(v -> dismissFloatPreview());
 
                     // 后台向网络校准一次偏移（HTTP Date 头，按 RTT 折半校正）。
                     new Thread(() -> {
@@ -429,7 +527,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         }
                         if (sTouchHandler != null) {
                             sTouchHandler.post(() -> {
-                                if (sFloatView == tv) {
+                                if (sFloatView == box) {
                                     offset[0] = drift;
                                     updateFloatText(tv, context, offset[0]);
                                 }
@@ -437,16 +535,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         }
                     }).start();
 
+                    // 常显：只每秒刷新时间，不自动消失（✕ 关闭）。
                     final Runnable tickerTask = new Runnable() {
-                        private int ticks = 0;
-
                         @Override
                         public void run() {
-                            if (sFloatView != tv) {
-                                return;
-                            }
-                            if (++ticks >= 3) {
-                                dismissFloatPreview();
+                            if (sFloatView != box) {
                                 return;
                             }
                             updateFloatText(tv, context, offset[0]);
@@ -461,6 +554,88 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             });
         } catch (Throwable ignored) {
             // 浮窗失败不应影响系统
+        }
+    }
+
+    /**
+     * 可拖动的浮窗容器：按下不拦截（让按钮/时间正常收到点击），位移超阈值才拦截并拖动。
+     * 默认靠右上角（END 锚点），首次拖动时换算成 START 左上角坐标。
+     */
+    private static final class FloatBox extends FrameLayout {
+        private WindowManager windowManager;
+        private WindowManager.LayoutParams params;
+        private float downRawX, downRawY;
+        private int startX, startY;
+        private boolean dragging;
+
+        FloatBox(Context context) {
+            super(context);
+        }
+
+        void attach(WindowManager wm, WindowManager.LayoutParams lp) {
+            this.windowManager = wm;
+            this.params = lp;
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(MotionEvent ev) {
+            if (params == null) {
+                return false;
+            }
+            switch (ev.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    downRawX = ev.getRawX();
+                    downRawY = ev.getRawY();
+                    startX = params.x;
+                    startY = params.y;
+                    dragging = false;
+                    return false; // 不拦截：点击事件放行给子 view
+                case MotionEvent.ACTION_MOVE: {
+                    float dx = ev.getRawX() - downRawX;
+                    float dy = ev.getRawY() - downRawY;
+                    float threshold = floatDp(getContext(), 6);
+                    if (!dragging && (Math.abs(dx) > threshold || Math.abs(dy) > threshold)) {
+                        dragging = true;
+                        // END 锚点换算成 START，之后按左上角坐标拖动。
+                        if ((params.gravity & Gravity.END) != 0
+                                || (params.gravity & Gravity.RIGHT) != 0) {
+                            int w = getWidth() > 0 ? getWidth() : floatDp(getContext(), 96);
+                            int screenW = getResources().getDisplayMetrics().widthPixels;
+                            params.gravity = Gravity.TOP | Gravity.START;
+                            params.x = screenW - params.x - w;
+                            startX = params.x;
+                        }
+                        return true; // 拦截，开始拖动
+                    }
+                    return false;
+                }
+                default:
+                    return false;
+            }
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent ev) {
+            if (params != null && dragging
+                    && (ev.getAction() == MotionEvent.ACTION_MOVE)) {
+                float dx = ev.getRawX() - downRawX;
+                float dy = ev.getRawY() - downRawY;
+                int screenW = getResources().getDisplayMetrics().widthPixels;
+                int screenH = getResources().getDisplayMetrics().heightPixels;
+                int w = getWidth();
+                int h = getHeight();
+                int nx = (int) (startX + dx);
+                int ny = (int) (startY + dy);
+                params.x = Math.max(0, Math.min(nx, Math.max(0, screenW - w)));
+                params.y = Math.max(0, Math.min(ny, Math.max(0, screenH - h)));
+                try {
+                    windowManager.updateViewLayout(this, params);
+                } catch (Throwable ignored) {
+                    // 视图已不在窗口上时静默
+                }
+                return true;
+            }
+            return super.onTouchEvent(ev);
         }
     }
 
@@ -556,30 +731,21 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 浮窗锚点 Y：时钟下沿 + 4dp，至少不低于状态栏底部。 */
-    private static int floatAnchorY(Context context, View clockView) {
-        try {
-            int[] loc = new int[2];
-            clockView.getLocationOnScreen(loc);
-            int below = loc[1] + clockView.getHeight() + floatDp(context, 4);
-            int barBottom = statusBarHeight(context) + floatDp(context, 4);
-            return Math.max(below, barBottom);
-        } catch (Throwable ignored) {
-            return statusBarHeight(context) + floatDp(context, 8);
-        }
-    }
-
     private static int statusBarHeight(Context context) {
         try {
             int id = context.getResources().getIdentifier(
                     "status_bar_height", "dimen", "android");
             if (id > 0) {
-                return context.getResources().getDimensionPixelSize(id);
+                int h = context.getResources().getDimensionPixelSize(id);
+                // sanity：正常状态栏 24~48dp；个别机型该资源异常偏大，回退默认值。
+                if (h > 0 && h <= floatDp(context, 48)) {
+                    return h;
+                }
             }
         } catch (Throwable ignored) {
             // 取不到就用默认值
         }
-        return floatDp(context, 24);
+        return floatDp(context, 28);
     }
 
     private static int floatDp(Context context, int dp) {
