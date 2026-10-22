@@ -2,10 +2,15 @@
 <!-- legacy Xposed API 模块声明（参考 io.github.betterclock）：
      - 作用域只声明 SystemUI（模块只 hook 系统界面进程）
      - 入口类在 assets/xposed_init 中指定 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <!-- 该权限仅系统应用天然持有；本模块由用户通过 adb pm grant 显式授予（README 已说明），
+         或在 SystemUI 进程内代写 Secure。lint 的 ProtectedPermissions 属预期行为。 -->
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
     <!-- 安全加固（F1）：SystemUI 内注册的配置接收器要求发送方持有本 signature 级权限。
          设置页 / 磁贴与本模块同签名，天然持有；其它已安装 App 无此签名 → 无法广播代写

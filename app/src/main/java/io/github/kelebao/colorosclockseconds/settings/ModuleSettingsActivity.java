@@ -634,7 +634,13 @@ public final class ModuleSettingsActivity extends Activity {
         Toast.makeText(this, R.string.settings_rule_applied, Toast.LENGTH_LONG).show();
     }
 
-    /** 自动检测状态栏时钟识别名：发广播给 SystemUI，由其在系统进程内扫描候选并回写。 */
+    /**
+     * 自动检测状态栏时钟识别名：发广播给 SystemUI，由其在系统进程内扫描候选并回写。
+     *
+     * <p>{@code UnspecifiedRegisterReceiverFlag}：API &lt; 33 没有 RECEIVER_EXPORTED 重载，
+     * 该分支已按版本显式分流，属预期写法。</p>
+     */
+    @android.annotation.SuppressLint("UnspecifiedRegisterReceiverFlag")
     private void startDetect() {
         if (mDetecting.compareAndSet(false, true)) {
             // 注册结果回传接收器（仅本 Activity 存活期间），避免泄漏。

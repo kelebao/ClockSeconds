@@ -1456,7 +1456,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     // 由 SystemUI 进程（系统应用，天然具备该权限）代写。
     // ==================================================================
 
-    /** 只注册一次：接收设置页发来的改色 / 改手势广播，并在 SystemUI 进程内写 Secure。 */
+    /**
+     * 只注册一次：接收设置页发来的改色 / 改手势广播，并在 SystemUI 进程内写 Secure。
+     *
+     * <p>{@code UnspecifiedRegisterReceiverFlag}：API &lt; 33 没有 RECEIVER_EXPORTED 重载，
+     * 该分支已按版本显式分流；且所有广播都以 signature 级 {@code CONFIG_PERMISSION} 作为
+     * {@code broadcastPermission} 保护，非本模块签名的应用无法投递。</p>
+     */
+    @android.annotation.SuppressLint("UnspecifiedRegisterReceiverFlag")
     private static void registerConfigReceiver(final Context context) {
         if (sConfigReceiverRegistered) {
             return;
