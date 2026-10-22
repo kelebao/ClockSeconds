@@ -8,7 +8,7 @@
 
 # 시간 초 단위 표시（Show Seconds in Time）
 
-상태 표시줄 시간에 **초**를 표시합니다. 한 번 탑으로 전환하고,시간 십의 자리는 **항상 빨강**.<br>제조사私有 클래스에 전혀 의존하지 않으며 ColorOS 15 실기기에서 검증되었습니다.샤오미·원플러스·아너·vivo 등 주요 제조사도 지원합니다.
+상태 표시줄 시간에 **초**를 표시합니다. 한 번 탑으로 전환하고,시간 십의 자리는 **항상 빨강**.<br>제조사私有 클래스에 전혀 의존하지 않으며 ColorOS 15 실기기에서 검증되었습니다.샤오미·원플러스·아너·vivo·삼성 등 주요 제조사도 지원합니다.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@
 | adb 불필요 | 설정은 `Settings.Secure` 에 저장. `WRITE_SECURE_SETTINGS` 권한이 없으면 브로드캐스트로 자동 전환되어 SystemUI 가 대신 처리 — **adb 인증 불필요** |
 | UI 언어 | 앱 UI가 **21개 언어**를 지원（시스템 언어 자동 전환）: 简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 영속성 | 상태는 `Settings.Secure`에 저장. 프로세스 간 공유되며 SystemUI 재시작 후에도 유지 |
-| 지원 범위 | ColorOS 15 / 16 / 17（OPPO / 원플러스 / 리얼미） 실기기 검증 완료. 샤오미 / 아너 / 레드미 등 루팅된 다른 제조사에서도 그대로 동작. 제조사私有 클래스에 의존하지 않아 LSPosed 안전 모드가 발동하지 않음. 최소 Android 10 |
+| 지원 범위 | ColorOS 15 / 16 / 17（OPPO / 원플러스 / 리얼미） 실기기 검증 완료. 샤오미 / 아너 / 레드미 / 삼성 등 루팅된 다른 제조사에서도 그대로 동작. 제조사私有 클래스에 의존하지 않아 LSPosed 안전 모드가 발동하지 않음. 최소 Android 10 |
 
 ## 설치
 

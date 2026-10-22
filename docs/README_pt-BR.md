@@ -8,7 +8,7 @@
 
 # Segundos na hora（Show Seconds in Time）
 
-Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo e outros grandes fabricantes.
+Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo, Samsung e outros grandes fabricantes.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Mostre os **segundos** na hora da barra de status, alterne com um único toque e
 | Sem adb | As configurações vão para `Settings.Secure`; sem a permissão `WRITE_SECURE_SETTINGS` o módulo usa um broadcast tratado pelo SystemUI — **não precisa de adb** |
 | Idiomas da interface | A interface do app está traduzida em **21 idiomas** (segue o idioma do sistema automaticamente): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistência | O estado é salvo em `Settings.Secure`, compartilhado entre processos e mantido após reinícios do SystemUI |
-| Compatibilidade | Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto em outros fabricantes com root como Xiaomi / Honor / Redmi. Sem classes privadas de fabricante, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo |
+| Compatibilidade | Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto em outros fabricantes com root como Xiaomi / Honor / Redmi / Samsung. Sem classes privadas de fabricante, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo |
 
 ## Instalação
 

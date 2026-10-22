@@ -8,7 +8,7 @@ TEXTS = {
             "Affichez les **secondes** sur l'heure de la barre d'état, basculez d'un simple "
             "appui et gardez la **dizaine de l'heure en rouge**.<br>"
             "Aucune classe privée de fabricant. Vérifié sur appareil réel sous ColorOS 15 ; "
-            "couvre aussi Xiaomi, OnePlus, Honor, vivo et les autres grands fabricants."
+            "couvre aussi Xiaomi, OnePlus, Honor, vivo, Samsung et les autres grands fabricants."
         ),
         'h_features': 'Fonctionnalités',
         'th_feature': 'Fonctionnalité',
@@ -47,7 +47,7 @@ TEXTS = {
              "L'état est stocké dans `Settings.Secure`, partagé entre les processus et conservé après un redémarrage de SystemUI"),
             ('Compatibilité',
              "Vérifié sur ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) ; fonctionne aussi tel quel "
-             "sur d'autres fabricants rootés comme Xiaomi / Honor / Redmi. Aucune classe privée de "
+             "sur d'autres fabricants rootés comme Xiaomi / Honor / Redmi / Samsung. Aucune classe privée de "
              "fabricant, donc le mode sans échec de LSPosed n'est pas déclenché. Android 10 minimum"),
         ],
         'h_install': 'Installation',

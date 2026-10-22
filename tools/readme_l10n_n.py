@@ -8,7 +8,7 @@ TEXTS = {
             'Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem '
             'i trzymaj **dziesiątkę godziny na czerwono**.<br>'
             'Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu '
-            'z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo i innych dużych producentów.'
+            'z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo, Samsung i innych dużych producentów.'
         ),
         'h_features': 'Funkcje',
         'th_feature': 'Funkcja',
@@ -44,7 +44,7 @@ TEXTS = {
              'Stan zapisywany jest w `Settings.Secure`, współdzielony między procesami i przetrwa restarty SystemUI'),
             ('Zgodność',
              'Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również '
-             'od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi. '
+             'od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi / Samsung. '
              'Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. '
              'Minimum Android 10'),
         ],

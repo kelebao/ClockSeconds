@@ -8,7 +8,7 @@
 
 # 時間顯示秒數（Show Seconds in Time）
 
-讓狀態欄時間顯示**秒**，單擊即切換，小時十位數**常駐標紅**。<br>不依賴任何廠商私有類，已在 ColorOS 15 真機驗證，同時覆蓋小米、一加、榮耀、vivo 等主流廠商。
+讓狀態欄時間顯示**秒**，單擊即切換，小時十位數**常駐標紅**。<br>不依賴任何廠商私有類，已在 ColorOS 15 真機驗證，同時覆蓋小米、一加、榮耀、vivo、三星 等主要廠商。
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@
 | 免 adb 授權 | 所有設定寫入優先走 `Settings.Secure`，無 `WRITE_SECURE_SETTINGS` 權限時自動改走廣播由 SystemUI 代寫——**無需 adb 授權**即可正常使用全部功能 |
 | 介面語言 | 應用內介面已適應 **21 種語言**（跟隨系統語言自動切換）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 持久化 | 狀態存於 `Settings.Secure`，跨程序共享，重啟 SystemUI 後保持 |
-| 適應範圍 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真機驗證；小米 / 榮耀 / 紅米 等有 root 的其它廠商同步生效。不依賴任何廠商私有類，避免觸發 LSPosed 安全模式。最低支援 Android 10 |
+| 適應範圍 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真機驗證；小米 / 榮耀 / 紅米 / 三星 等有 root 的其它廠商同步生效。不依賴任何廠商私有類，避免觸發 LSPosed 安全模式。最低支援 Android 10 |
 
 ## 安裝
 

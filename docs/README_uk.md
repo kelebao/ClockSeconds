@@ -8,7 +8,7 @@
 
 # Секунди в часі（Show Seconds in Time）
 
-Показуйте **секунды** в часі в рядку стану, перемикайте одним дотиком і тримайте **десяток часу червоним**.<br>Жодних приватних класів виробника. Перевірено на реальному пристрої з ColorOS 15; також розраховано на Xiaomi, OnePlus, Honor, vivo та інших великих виробників.
+Показуйте **секунды** в часі в рядку стану, перемикайте одним дотиком і тримайте **десяток часу червоним**.<br>Жодних приватних класів виробника. Перевірено на реальному пристрої з ColorOS 15; також розраховано на Xiaomi, OnePlus, Honor, vivo, Samsung та інших великих виробників.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@
 | Без adb | Налаштування пишуться в `Settings.Secure`; без дозволу `WRITE_SECURE_SETTINGS` модуль автоматично переходить на широкомовлення, яке обробляє SystemUI — **права adb не потрібні** |
 | Мови інтерфейсу | Інтерфейс застосунку локалізовано на **21 мову** (автоматично йде за системною мовою): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Збереження стану | Стан зберігається в `Settings.Secure`, спільний між процесами й зберігається після перезапуску SystemUI |
-| Сумісність | Перевірено на ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); також працює «з коробки» на інших виробниках із root, як-от Xiaomi / Honor / Redmi. Без приватних класів виробника, тому безпечний режим LSPosed не спрацьовує. Мінімум Android 10 |
+| Сумісність | Перевірено на ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); також працює «з коробки» на інших виробниках із root, як-от Xiaomi / Honor / Redmi / Samsung. Без приватних класів виробника, тому безпечний режим LSPosed не спрацьовує. Мінімум Android 10 |
 
 ## Встановлення
 

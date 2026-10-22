@@ -8,7 +8,7 @@
 
 # Detik pada Waktu（Show Seconds in Time）
 
-Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan buat **puluhan waktu tetap merah**.<br>Tanpa kelas privat vendor mana pun. Terverifikasi di perangkat nyata dengan ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, dan vendor besar lainnya.
+Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan buat **puluhan waktu tetap merah**.<br>Tanpa kelas privat vendor mana pun. Terverifikasi di perangkat nyata dengan ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, Samsung, dan vendor besar lainnya.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan b
 | Tanpa adb | Setelan ditulis ke `Settings.Secure`; tanpa izin `WRITE_SECURE_SETTINGS` modul beralih ke broadcast yang diproses SystemUI — **tidak perlu izin adb** |
 | Bahasa antarmuka | Antarmuka aplikasi diterjemahkan ke **21 bahasa** (otomatis mengikuti bahasa sistem): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistensi | Status disimpan di `Settings.Secure`, dibagi antar proses, dan bertahan setelah SystemUI dimulai ulang |
-| Kompatibilitas | Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi. Tanpa kelas privat vendor, sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10 |
+| Kompatibilitas | Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Tanpa kelas privat vendor, sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10 |
 
 ## Instalasi
 

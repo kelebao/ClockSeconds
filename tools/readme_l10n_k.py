@@ -8,7 +8,7 @@ TEXTS = {
             'Muestra los **segundos** en la hora de la barra de estado, alterna con un solo toque '
             'y mantén la **decena de la hora en rojo**.<br>'
             'Sin clases privadas de fabricante. Verificado en dispositivo real con ColorOS 15; '
-            'también cubre Xiaomi, OnePlus, Honor, vivo y otros fabricantes importantes.'
+            'también cubre Xiaomi, OnePlus, Honor, vivo, Samsung y otros fabricantes importantes.'
         ),
         'h_features': 'Funciones',
         'th_feature': 'Función',
@@ -43,7 +43,7 @@ TEXTS = {
              'El estado es un segundo toque guarda en `Settings.Secure`, se comparte entre procesos y sobrevive a los reinicios de SystemUI'),
             ('Compatibilidad',
              'Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual '
-             'en otros fabricantes con root como Xiaomi / Honor / Redmi. Sin clases privadas de '
+             'en otros fabricantes con root como Xiaomi / Honor / Redmi / Samsung. Sin clases privadas de '
              'fabricante, así que no dispara el modo seguro de LSPosed. Mínimo Android 10'),
         ],
         'h_install': 'Instalación',

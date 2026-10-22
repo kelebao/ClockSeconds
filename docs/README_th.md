@@ -8,7 +8,7 @@
 
 # เวลาแสดงวินาที（Show Seconds in Time）
 
-แสดง**วินาที**บนเวลาแถบสถานะ เปิด/ปิดด้วยการแตะครั้งเดียว และทำให้**หลักสิบของชั่วโมงเป็นสีแดง**เสมอ<br>ไม่พึ่งพาคลาสส่วนตัวของผู้ผลิตระบบแม้แต่ตัวใด ยืนยันแล้วบนเครื่องจริง ColorOS 15 พร้อมรองรับ Xiaomi, OnePlus, Honor, vivo และผู้ผลิตรายใหญ่อื่น ๆ
+แสดง**วินาที**บนเวลาแถบสถานะ เปิด/ปิดด้วยการแตะครั้งเดียว และทำให้**หลักสิบของชั่วโมงเป็นสีแดง**เสมอ<br>ไม่พึ่งพาคลาสส่วนตัวของผู้ผลิตระบบแม้แต่ตัวใด ยืนยันแล้วบนเครื่องจริง ColorOS 15 พร้อมรองรับ Xiaomi, OnePlus, Honor, vivo, Samsung และผู้ผลิตรายใหญ่อื่น ๆ
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@
 | ไม่ต้องใช้ adb | การตั้งค่าบันทึกลง `Settings.Secure` หากไม่มีสิทธิ์ `WRITE_SECURE_SETTINGS` จะสลับไปใช้บรอดคาสท์ที่ SystemUI ช่วยประมวลผล — **ไม่ต้องให้สิทธิ์ adb** |
 | ภาษาของอินเทอร์เฟซ | อินเทอร์เฟซแอปรองรับ **21 ภาษา** (สลับตามภาษาของระบบอัตโนมัติ): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | การเก็บสถานะถาวร | สถานะเก็บไว้ใน `Settings.Secure` ใช้ร่วมระหว่างโปรเซส และคงอยู่หลังจากรีสตาร์ท SystemUI |
-| ขอบเขตการรองรับ | ยืนยันแล้วบน ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) และทำงานได้ทันทีบนผู้ผลิตอื่น ๆ ที่รูทแล้ว เช่น Xiaomi / Honor / Redmi ไม่พึ่งพาคลาสส่วนตัวของผู้ผลิต จึงไม่ทำให้ LSPosed เข้าสู่โหมดปลอดภัย รองรับต่ำถึง Android 10 |
+| ขอบเขตการรองรับ | ยืนยันแล้วบน ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) และทำงานได้ทันทีบนผู้ผลิตอื่น ๆ ที่รูทแล้ว เช่น Xiaomi / Honor / Redmi / Samsung ไม่พึ่งพาคลาสส่วนตัวของผู้ผลิต จึงไม่ทำให้ LSPosed เข้าสู่โหมดปลอดภัย รองรับต่ำถึง Android 10 |
 
 ## การติดตั้ง
 

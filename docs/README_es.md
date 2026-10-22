@@ -8,7 +8,7 @@
 
 # Segundos en la hora（Show Seconds in Time）
 
-Muestra los **segundos** en la hora de la barra de estado, alterna con un solo toque y mantén la **decena de la hora en rojo**.<br>Sin clases privadas de fabricante. Verificado en dispositivo real con ColorOS 15; también cubre Xiaomi, OnePlus, Honor, vivo y otros fabricantes importantes.
+Muestra los **segundos** en la hora de la barra de estado, alterna con un solo toque y mantén la **decena de la hora en rojo**.<br>Sin clases privadas de fabricante. Verificado en dispositivo real con ColorOS 15; también cubre Xiaomi, OnePlus, Honor, vivo, Samsung y otros fabricantes importantes.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Muestra los **segundos** en la hora de la barra de estado, alterna con un solo t
 | Sin adb | Los ajustes se escriben en `Settings.Secure`; sin el permiso `WRITE_SECURE_SETTINGS` el módulo usa automáticamente un broadcast que procesa SystemUI — **no se necesita adb** |
 | Idiomas de la interfaz | La interfaz de la app está traducida a **21 idiomas** (sigue automáticamente el idioma del sistema): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistencia | El estado es un segundo toque guarda en `Settings.Secure`, se comparte entre procesos y sobrevive a los reinicios de SystemUI |
-| Compatibilidad | Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual en otros fabricantes con root como Xiaomi / Honor / Redmi. Sin clases privadas de fabricante, así que no dispara el modo seguro de LSPosed. Mínimo Android 10 |
+| Compatibilidad | Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual en otros fabricantes con root como Xiaomi / Honor / Redmi / Samsung. Sin clases privadas de fabricante, así que no dispara el modo seguro de LSPosed. Mínimo Android 10 |
 
 ## Instalación
 

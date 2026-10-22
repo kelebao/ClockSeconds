@@ -114,6 +114,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 长按弹出的预览浮窗（非空表示正在显示）。 */
     private static View sFloatView;
     private static Runnable sFloatTicker;
+    /** 浮窗用的小时颜色缓存（广播更新，避免每秒跨进程读 Secure）。 */
+    private static volatile int sFloatHourColor = ClockSecondsConfig.HOUR_COLOR_DEFAULT;
+    private static volatile boolean sFloatHourColorEnabled = true;
+    private static volatile boolean sFloatColorLoaded;
 
     /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
     private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
@@ -782,11 +786,23 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             long netNow = System.currentTimeMillis() + offsetMs;
             String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
             SpannableStringBuilder sb = new SpannableStringBuilder(text);
-            if (ClockSecondsConfig.isHourColorEnabled(context.getContentResolver())
+            // 小时颜色用进程内缓存（设置变更经广播更新），首次读取一次。
+            if (!sFloatColorLoaded) {
+                try {
+                    sFloatHourColor = ClockSecondsConfig.getHourColor(
+                            context.getContentResolver());
+                    sFloatHourColorEnabled = ClockSecondsConfig.isHourColorEnabled(
+                            context.getContentResolver());
+                    sFloatColorLoaded = true;
+                } catch (Throwable ignored) {
+                    // 读不到用默认值
+                }
+            }
+            if (sFloatHourColorEnabled
                     && sb.length() >= 2
                     && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
-                sb.setSpan(new ForegroundColorSpan(ClockSecondsConfig.getHourColor(
-                        context.getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(new ForegroundColorSpan(sFloatHourColor), 0, 1,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             // 自适应字号：取宽高允许的较小值，保证 "HH:mm:ss" 完整放进窗口。
             try {
@@ -1120,6 +1136,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         return clockRelated;
     }
 
+
     private static String resourceName(TextView view) {
         try {
             Resources resources = view.getResources();
@@ -1207,10 +1224,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
                                 ClockSecondsConfig.setHourColor(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));
+                                sFloatHourColor = ClockSecondsConfig.getHourColor(cr);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED.equals(action)) {
                                 ClockSecondsConfig.setHourColorEnabled(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
+                                sFloatHourColorEnabled =
+                                        ClockSecondsConfig.isHourColorEnabled(cr);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
                                 ClockSecondsConfig.setGesture(cr, intent.getIntExtra(

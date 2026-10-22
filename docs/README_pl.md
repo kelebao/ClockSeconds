@@ -8,7 +8,7 @@
 
 # Sekundy w czasie（Show Seconds in Time）
 
-Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo i innych dużych producentów.
+Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo, Samsung i innych dużych producentów.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzy
 | Bez adb | Ustawienia zapisują się w `Settings.Secure`; bez uprawnienia `WRITE_SECURE_SETTINGS` moduł automatycznie przechodzi na broadcast obsługiwany przez SystemUI — **bez uprawnień adb** |
 | Języki interfejsu | Interfejs aplikacji jest przetłumaczony na **21 języków** (automatycznie podąża za językiem systemu): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Trwałość | Stan zapisywany jest w `Settings.Secure`, współdzielony między procesami i przetrwa restarty SystemUI |
-| Zgodność | Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi. Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. Minimum Android 10 |
+| Zgodność | Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi / Samsung. Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. Minimum Android 10 |
 
 ## Instalacja
 

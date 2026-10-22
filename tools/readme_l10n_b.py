@@ -8,7 +8,7 @@ TEXTS = {
             'Show **seconds** in the status bar time, toggle with a single tap, '
             'and keep the **hour tens digit in red**.<br>'
             'No vendor-private classes involved. Verified on ColorOS 15, '
-            'and designed to cover Xiaomi, OnePlus, Honor, vivo and other major vendors.'
+            'and designed to cover Xiaomi, OnePlus, Honor, vivo, Samsung and other major vendors.'
         ),
         'h_features': 'Features',
         'th_feature': 'Feature',
@@ -43,7 +43,7 @@ TEXTS = {
              'State is stored in `Settings.Secure`, shared across processes, survives SystemUI restarts'),
             ('Compatibility',
              'Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box '
-             'on other rooted vendors such as Xiaomi / Honor / Redmi. No vendor-private classes, '
+             'on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. No vendor-private classes, '
              'so LSPosed safe mode will not be triggered. Minimum Android 10'),
         ],
         'h_install': 'Install',

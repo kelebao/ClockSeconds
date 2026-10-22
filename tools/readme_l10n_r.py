@@ -8,7 +8,7 @@ TEXTS = {
             'Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, '
             'dan buat **puluhan waktu tetap merah**.<br>'
             'Tanpa kelas privat vendor mana pun. Terverifikasi di perangkat nyata dengan '
-            'ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, dan vendor besar lainnya.'
+            'ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, Samsung, dan vendor besar lainnya.'
         ),
         'h_features': 'Fitur',
         'th_feature': 'Fitur',
@@ -43,7 +43,7 @@ TEXTS = {
              'Status disimpan di `Settings.Secure`, dibagi antar proses, dan bertahan setelah SystemUI dimulai ulang'),
             ('Kompatibilitas',
              'Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi '
-             'di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi. Tanpa kelas privat vendor, '
+             'di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Tanpa kelas privat vendor, '
              'sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10'),
         ],
         'h_install': 'Instalasi',

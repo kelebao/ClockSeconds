@@ -8,7 +8,7 @@
 
 # Sekundenanzeige（Show Seconds in Time）
 
-Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippen, und die **Zehnerstelle der Stunde bleibt rot**.<br>Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo und andere große Hersteller ab.
+Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippen, und die **Zehnerstelle der Stunde bleibt rot**.<br>Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo, Samsung und andere große Hersteller ab.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippe
 | Kein adb nötig | Einstellungen werden in `Settings.Secure` geschrieben; ohne `WRITE_SECURE_SETTINGS` weicht das Modul automatisch auf einen Broadcast aus, den SystemUI verarbeitet — **keine adb-Freigabe nötig** |
 | Oberflächensprachen | Die App-Oberfläche ist in **21 Sprachen** übersetzt (folgt automatisch der Systemsprache): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistenz | Der Zustand liegt in `Settings.Secure`, ist prozessübergreifend gemeinsam genutzt und überlebt SystemUI-Neustarts |
-| Kompatibilität | Auf ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) auf echtem Gerät verifiziert; funktioniert auch auf anderen gerooteten Herstellern wie Xiaomi / Honor / Redmi. Keine herstellereigenen privaten Klassen, daher wird der LSPosed-Sicherheitsmodus nicht ausgelöst. Mindestens Android 10 |
+| Kompatibilität | Auf ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) auf echtem Gerät verifiziert; funktioniert auch auf anderen gerooteten Herstellern wie Xiaomi / Honor / Redmi / Samsung. Keine herstellereigenen privaten Klassen, daher wird der LSPosed-Sicherheitsmodus nicht ausgelöst. Mindestens Android 10 |
 
 ## Installation
 

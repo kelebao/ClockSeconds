@@ -8,7 +8,7 @@
 
 # 時刻の秒表示（Show Seconds in Time）
 
-ステータスバーの時刻に**秒**を表示。ワンタップで切り替え、時の十の位は**常に赤**。<br>ベンダー固有クラスには一切依存せず、ColorOS 15 の実機で検証済み。Xiaomi・OnePlus・Honor・vivo など主要メーカーにも対応。
+ステータスバーの時刻に**秒**を表示。ワンタップで切り替え、時の十の位は**常に赤**。<br>ベンダー固有クラスには一切依存せず、ColorOS 15 の実機で検証済み。Xiaomi・OnePlus・Honor・vivo・Samsung など主要メーカーにも対応。
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@
 | adb 不要 | 設定は `Settings.Secure` へ書き込み。`WRITE_SECURE_SETTINGS` がない場合は自動的にブロードキャストにフォールバックし SystemUI が代行——**adb 承認は不要**です |
 | UI 言語 | アプリ UI は **21 言語**に対応（システム言語に自動追従）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 永続化 | 状態は `Settings.Secure` に保存。プロセス間で共有され、SystemUI 再起動後も維持 |
-| 対応範囲 | ColorOS 15 / 16 / 17（OPPO / OnePlus / realme）は実機検証済み。Xiaomi / Honor / Redmi など root 取得済みの他メーカーでもそのまま動作。ベンダー固有クラスに依存しないため LSPosed セーフモードは誘発しません。最低 Android 10 |
+| 対応範囲 | ColorOS 15 / 16 / 17（OPPO / OnePlus / realme）は実機検証済み。Xiaomi / Honor / Redmi / Samsung など root 取得済みの他メーカーでもそのまま動作。ベンダー固有クラスに依存しないため LSPosed セーフモードは誘発しません。最低 Android 10 |
 
 ## インストール
 

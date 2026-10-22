@@ -8,7 +8,7 @@ TEXTS = {
             "Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un "
             "solo tocco e tieni la **decina dell'ora sempre rossa**.<br>"
             "Nessuna classe privata del produttore. Verificato su dispositivo reale con "
-            "ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo e gli altri grandi produttori."
+            "ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo, Samsung e gli altri grandi produttori."
         ),
         'h_features': 'Funzioni',
         'th_feature': 'Funzione',
@@ -45,7 +45,7 @@ TEXTS = {
              "Lo stato è salvato in `Settings.Secure`, condiviso tra processi e conservato dopo il riavvio di SystemUI"),
             ('Compatibilità',
              "Verificato su ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); funziona anche così "
-             "com'è su altri produttori con root come Xiaomi / Honor / Redmi. Nessuna classe "
+             "com'è su altri produttori con root come Xiaomi / Honor / Redmi / Samsung. Nessuna classe "
              "privata del produttore, quindi la modalità provvisoria di LSPosed non scatta. "
              "Minimo Android 10"),
         ],

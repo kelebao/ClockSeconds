@@ -8,7 +8,7 @@ TEXTS = {
             'ステータスバーの時刻に**秒**を表示。ワンタップで切り替え、'
             '時の十の位は**常に赤**。<br>'
             'ベンダー固有クラスには一切依存せず、ColorOS 15 の実機で検証済み。'
-            'Xiaomi・OnePlus・Honor・vivo など主要メーカーにも対応。'
+            'Xiaomi・OnePlus・Honor・vivo・Samsung など主要メーカーにも対応。'
         ),
         'h_features': '機能',
         'th_feature': '機能',
@@ -43,7 +43,7 @@ TEXTS = {
              '状態は `Settings.Secure` に保存。プロセス間で共有され、SystemUI 再起動後も維持'),
             ('対応範囲',
              'ColorOS 15 / 16 / 17（OPPO / OnePlus / realme）は実機検証済み。'
-             'Xiaomi / Honor / Redmi など root 取得済みの他メーカーでもそのまま動作。'
+             'Xiaomi / Honor / Redmi / Samsung など root 取得済みの他メーカーでもそのまま動作。'
              'ベンダー固有クラスに依存しないため LSPosed セーフモードは誘発しません。最低 Android 10'),
         ],
         'h_install': 'インストール',

@@ -8,7 +8,7 @@ TEXTS = {
             'Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, '
             'zamanın **onlar basamağını kırmızı** tutun.<br>'
             'Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda '
-            'doğrulandı; Xiaomi, OnePlus, Honor, vivo ve diğer büyük üreticileri de kapsar.'
+            'doğrulandı; Xiaomi, OnePlus, Honor, vivo, Samsung ve diğer büyük üreticileri de kapsar.'
         ),
         'h_features': 'Özellikler',
         'th_feature': 'Özellik',
@@ -42,7 +42,7 @@ TEXTS = {
              'Durum `Settings.Secure` içinde saklanır, işlemler arası paylaşılır, SystemUI yeniden başlatıldıktan sonra korunur'),
             ('Uyumluluk',
              'ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; '
-             'Xiaomi / Honor / Redmi gibi rootlu diğer üreticilerde de olduğu gibi çalışır. '
+             'Xiaomi / Honor / Redmi / Samsung gibi rootlu diğer üreticilerde de olduğu gibi çalışır. '
              'Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10'),
         ],
         'h_install': 'Kurulum',

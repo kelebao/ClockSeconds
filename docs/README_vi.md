@@ -8,7 +8,7 @@
 
 # Hiển thị giây（Show Seconds in Time）
 
-Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, và giữ **hàng chục của giờ luôn màu đỏ**.<br>Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo và các hãng lớn khác.
+Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, và giữ **hàng chục của giờ luôn màu đỏ**.<br>Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo, Samsung và các hãng lớn khác.
 
 [![version](https://img.shields.io/badge/version-1.0.7-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng
 | Không cần adb | Cài đặt ghi vào `Settings.Secure`; nếu không có quyền `WRITE_SECURE_SETTINGS`, module tự chuyển sang broadcast do SystemUI xử lý — **không cần cấp quyền adb** |
 | Ngôn ngữ giao diện | Giao diện ứng dụng đã hỗ trợ **21 ngôn ngữ** (tự động theo ngôn ngữ hệ thống): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Lưu trữ bền vững | Trạng thái lưu trong `Settings.Secure`, dùng chung giữa các tiến trình, giữ nguyên sau khi khởi động lại SystemUI |
-| Phạm vi tương thích | Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay trên các hãng đã root khác như Xiaomi / Honor / Redmi. Không dùng lớp私有 của hãng nên không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10 |
+| Phạm vi tương thích | Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Không dùng lớp私有 của hãng nên không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10 |
 
 ## Cài đặt
 
