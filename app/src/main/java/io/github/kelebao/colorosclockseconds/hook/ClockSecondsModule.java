@@ -12,6 +12,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -1180,6 +1181,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 return;
             }
             try {
+                // 首次安装（Secure 里没有显秒键）时主动写入开启，保证状态栏时间默认显示秒数。
+                // 已有关键（用户显式关闭过）则尊重用户选择，不覆盖。
+                try {
+                    ContentResolver cr0 = context.getContentResolver();
+                    if (Settings.Secure.getInt(cr0, ClockSecondsConfig.MODULE_SECONDS_KEY, -1)
+                            == -1) {
+                        ClockSecondsConfig.setEnabled(cr0, true);
+                    }
+                } catch (Throwable ignored) {
+                    // 写入失败不影响后续注册
+                }
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
