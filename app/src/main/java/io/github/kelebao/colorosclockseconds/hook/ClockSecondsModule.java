@@ -393,12 +393,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     GradientDrawable bg = new GradientDrawable();
                     bg.setCornerRadius(floatDp(context, 12));
                     // 半透明深色底座（配合窗口级模糊即毛玻璃效果）。
-                    bg.setColor(0xB3111118);
+                    bg.setColor(0x8C111118);
                     box.setBackground(bg);
 
                     // 时间：填满容器，点击它显示/隐藏按钮。
                     final TextView tv = new TextView(context);
                     tv.setTextSize(20f);
+                    tv.setSingleLine(true);
+                    tv.setEllipsize(null);
                     tv.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                     tv.setTextColor(0xFFFFFFFF);
                     tv.setGravity(Gravity.CENTER);
@@ -426,17 +428,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
                     // 拉伸按钮：右下角，默认隐藏；拖动它改变浮窗尺寸。
                     final TextView resize = new TextView(context);
-                    resize.setText("◢");
+                    resize.setText("◣");
                     resize.setTextSize(11f);
                     resize.setTextColor(0xFFFFFFFF);
                     resize.setGravity(Gravity.CENTER);
-                    resize.setPadding(floatDp(context, 7), floatDp(context, 4),
-                            floatDp(context, 7), floatDp(context, 4));
+                    resize.setPadding(floatDp(context, 8), floatDp(context, 6),
+                            floatDp(context, 8), floatDp(context, 6));
                     resize.setVisibility(View.GONE);
                     FrameLayout.LayoutParams resizeLp = new FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
                             FrameLayout.LayoutParams.WRAP_CONTENT,
-                            Gravity.BOTTOM | Gravity.END);
+                            Gravity.BOTTOM | Gravity.START);
                     box.addView(resize, resizeLp);
 
                     // 点击时间：显示 / 隐藏按钮。
@@ -453,9 +455,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                             PixelFormat.TRANSLUCENT);
-                    // 默认右上角（电量下方），靠右留 12dp。
-                    lp.gravity = Gravity.TOP | Gravity.END;
-                    lp.x = floatDp(context, 12);
+                    // 全程使用左上角坐标（START|TOP），拖动/拉伸零换算、绝不跳移。
+                    lp.gravity = Gravity.TOP | Gravity.START;
                     lp.y = floatDp(context, 4);
                     // 毛玻璃：模糊窗口背后的屏幕内容（API 31+ 公开 API，不支持时退化为半透明）。
                     try {
@@ -467,35 +468,55 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         // 不支持模糊时保持半透明
                     }
                     box.attach(wm, lp);
+                    box.markInteractive(close);
+                    box.markInteractive(resize);
 
-                    // 拉伸手柄：改窗口宽高（最小 70×36dp，最大 400×200dp）。
+                    // 拉伸手柄（左下角）：左缘与下缘跟随手指，右上角纹丝不动。
                     resize.setOnTouchListener(new View.OnTouchListener() {
                         private float downRawX, downRawY;
-                        private int startW, startH;
+                        private int startX, startY, startW, startH;
 
                         @Override
                         public boolean onTouch(View v, MotionEvent ev) {
                             switch (ev.getAction()) {
-                                case MotionEvent.ACTION_DOWN:
+                                case MotionEvent.ACTION_DOWN: {
+                                    // 全程 START 坐标，直接记录初始值，无需换算。
                                     downRawX = ev.getRawX();
                                     downRawY = ev.getRawY();
+                                    startX = lp.x;
+                                    startY = lp.y;
                                     startW = box.getWidth();
                                     startH = box.getHeight();
                                     return true;
+                                }
                                 case MotionEvent.ACTION_MOVE: {
                                     if (startW <= 0 || startH <= 0) {
                                         return true;
                                     }
-                                    int nw = (int) (startW + (ev.getRawX() - downRawX));
-                                    int nh = (int) (startH + (ev.getRawY() - downRawY));
-                                    lp.width = Math.max(floatDp(context, 70),
-                                            Math.min(nw, floatDp(context, 400)));
-                                    lp.height = Math.max(floatDp(context, 36),
-                                            Math.min(nh, floatDp(context, 200)));
+                                    float dx = ev.getRawX() - downRawX;
+                                    float dy = ev.getRawY() - downRawY;
+                                    int minW = floatDp(context, 70);
+                                    int maxW = floatDp(context, 400);
+                                    int minH = floatDp(context, 36);
+                                    int maxH = floatDp(context, 200);
+                                    // 右缘固定：width = startW - dx；左缘跟随：x = startX + dx
+                                    int newW = startW - (int) dx;
+                                    int newH = startH + (int) dy;
+                                    int newX = startX + (int) dx;
+                                    // 约束：宽高在 min~max，左缘不出屏
+                                    newW = Math.max(minW, Math.min(newW, maxW));
+                                    newH = Math.max(minH, Math.min(newH, maxH));
+                                    newX = Math.max(0, Math.min(newX,
+                                            startX + startW - newW));
+                                    lp.x = newX;
+                                    lp.y = startY;
+                                    lp.width = newW;
+                                    lp.height = newH;
                                     // 文字随窗口高度等比缩放（14~48sp）。
-                                    float scale = lp.height / (float) startH;
+                                    float scale = newH / (float) startH;
                                     tv.setTextSize(Math.max(14f,
                                             Math.min(48f, 20f * scale)));
+                                    box.requestLayout();
                                     try {
                                         wm.updateViewLayout(box, lp);
                                     } catch (Throwable ignored) {
@@ -512,6 +533,21 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     wm.addView(box, lp);
                     sFloatView = box;
                     updateFloatText(tv, context, offset[0]);
+                    // 测量完后把窗口推到右上角（靠右留 12dp）。
+                    box.post(() -> {
+                        try {
+                            if (sFloatView != box) {
+                                return;
+                            }
+                            int screenW = context.getResources()
+                                    .getDisplayMetrics().widthPixels;
+                            lp.x = Math.max(0, screenW - floatDp(context, 12)
+                                    - box.getWidth());
+                            wm.updateViewLayout(box, lp);
+                        } catch (Throwable ignored) {
+                            // 忽略
+                        }
+                    });
 
                     // 后台向网络校准一次偏移（HTTP Date 头，按 RTT 折半校正）。
                     new Thread(() -> {
@@ -567,9 +603,33 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         private float downRawX, downRawY;
         private int startX, startY;
         private boolean dragging;
+        /** 按钮（关闭/拉伸）专用交互区：DOWN 落在里面就绝不拦截，避免抢走按钮的手势。 */
+        private final java.util.List<View> interactiveChildren =
+                new java.util.ArrayList<>();
+        private boolean childHandling;
 
         FloatBox(Context context) {
             super(context);
+        }
+
+        /** 注册专属交互子 view（关闭/拉伸按钮）。 */
+        void markInteractive(View v) {
+            interactiveChildren.add(v);
+        }
+
+        private boolean isOnInteractiveChild(float rx, float ry) {
+            for (View v : interactiveChildren) {
+                if (v.getVisibility() != View.VISIBLE || v.getWidth() == 0) {
+                    continue;
+                }
+                int[] loc = new int[2];
+                v.getLocationOnScreen(loc);
+                if (rx >= loc[0] && rx <= loc[0] + v.getWidth()
+                        && ry >= loc[1] && ry <= loc[1] + v.getHeight()) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         void attach(WindowManager wm, WindowManager.LayoutParams lp) {
@@ -589,22 +649,18 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     startX = params.x;
                     startY = params.y;
                     dragging = false;
+                    // DOWN 落在按钮上：该手势归按钮，容器全程不拦截。
+                    childHandling = isOnInteractiveChild(ev.getRawX(), ev.getRawY());
                     return false; // 不拦截：点击事件放行给子 view
                 case MotionEvent.ACTION_MOVE: {
+                    if (childHandling) {
+                        return false; // 按钮正在处理（如拉伸），不抢
+                    }
                     float dx = ev.getRawX() - downRawX;
                     float dy = ev.getRawY() - downRawY;
                     float threshold = floatDp(getContext(), 6);
                     if (!dragging && (Math.abs(dx) > threshold || Math.abs(dy) > threshold)) {
                         dragging = true;
-                        // END 锚点换算成 START，之后按左上角坐标拖动。
-                        if ((params.gravity & Gravity.END) != 0
-                                || (params.gravity & Gravity.RIGHT) != 0) {
-                            int w = getWidth() > 0 ? getWidth() : floatDp(getContext(), 96);
-                            int screenW = getResources().getDisplayMetrics().widthPixels;
-                            params.gravity = Gravity.TOP | Gravity.START;
-                            params.x = screenW - params.x - w;
-                            startX = params.x;
-                        }
                         return true; // 拦截，开始拖动
                     }
                     return false;
