@@ -55,4 +55,10 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_rule_apply">Appliquer</string>
     <string name="settings_rule_reset">Réinitialiser</string>
     <string name="settings_rule_applied">Règle enregistrée. Redémarrez SystemUI.</string>
+    <string name="settings_rule_detect">Détection auto</string>
+    <string name="settings_rule_detecting">Détection de l\'horloge de la barre d\'état…</string>
+    <string name="settings_rule_detected">Détectée : %1$s</string>
+    <string name="settings_rule_detect_fail">Aucune horloge trouvée. Touchez d\'abord l\'horloge de la barre d\'état, ou redémarrez SystemUI et réessayez.</string>
+    <string name="settings_rule_current">Actuel : %1$s</string>
+    <string name="settings_rule_builtin">intégré</string>
 </resources>

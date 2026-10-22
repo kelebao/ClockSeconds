@@ -55,4 +55,10 @@
     <string name="settings_rule_apply">適用</string>
     <string name="settings_rule_reset">リセット</string>
     <string name="settings_rule_applied">ルールを保存しました。SystemUI を再起動して反映。</string>
+    <string name="settings_rule_detect">自動検出</string>
+    <string name="settings_rule_detecting">ステータスバーの時計を検出中…</string>
+    <string name="settings_rule_detected">検出しました: %1$s</string>
+    <string name="settings_rule_detect_fail">時計が見つかりません。まずステータスバーの時計をタップするか、SystemUI を再起動して再試行してください。</string>
+    <string name="settings_rule_current">現在: %1$s</string>
+    <string name="settings_rule_builtin">内蔵ルール</string>
 </resources>

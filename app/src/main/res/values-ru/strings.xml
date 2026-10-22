@@ -55,4 +55,10 @@
     <string name="settings_rule_apply">Применить</string>
     <string name="settings_rule_reset">Сбросить</string>
     <string name="settings_rule_applied">Правило сохранено. Перезапустите SystemUI.</string>
+    <string name="settings_rule_detect">Автоопределение</string>
+    <string name="settings_rule_detecting">Определение часов в строке состояния…</string>
+    <string name="settings_rule_detected">Обнаружено: %1$s</string>
+    <string name="settings_rule_detect_fail">Часы не найдены. Сначала нажмите на часы в строке состояния или перезапустите SystemUI и повторите.</string>
+    <string name="settings_rule_current">Текущее: %1$s</string>
+    <string name="settings_rule_builtin">встроенные</string>
 </resources>

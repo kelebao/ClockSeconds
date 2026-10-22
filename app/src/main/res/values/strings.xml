@@ -55,4 +55,10 @@
     <string name="settings_rule_apply">应用</string>
     <string name="settings_rule_reset">恢复默认</string>
     <string name="settings_rule_applied">识别规则已保存，重启 SystemUI 后生效</string>
+    <string name="settings_rule_detect">自动检测</string>
+    <string name="settings_rule_detecting">正在检测状态栏时钟…</string>
+    <string name="settings_rule_detected">已识别：%1$s</string>
+    <string name="settings_rule_detect_fail">未检测到时钟，请先点按状态栏时间，或重启 SystemUI 后再试</string>
+    <string name="settings_rule_current">当前：%1$s</string>
+    <string name="settings_rule_builtin">内置规则</string>
 </resources>

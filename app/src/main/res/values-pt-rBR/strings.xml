@@ -55,4 +55,10 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_rule_apply">Aplicar</string>
     <string name="settings_rule_reset">Redefinir</string>
     <string name="settings_rule_applied">Regra salva. Reinicie o SystemUI.</string>
+    <string name="settings_rule_detect">Detectar automaticamente</string>
+    <string name="settings_rule_detecting">Detectando o relógio da barra de estado…</string>
+    <string name="settings_rule_detected">Detectado: %1$s</string>
+    <string name="settings_rule_detect_fail">Relógio não encontrado. Toque primeiro no relógio da barra de estado ou reinicie o SystemUI e tente novamente.</string>
+    <string name="settings_rule_current">Atual: %1$s</string>
+    <string name="settings_rule_builtin">interno</string>
 </resources>

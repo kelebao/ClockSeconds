@@ -142,6 +142,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final Set<String> LOGGED_CANDIDATES =
             Collections.synchronizedSet(new HashSet<>());
 
+    /**
+     * 自动检测用的候选时钟视图池（弱引用，避免内存泄漏）。
+     * 任何正在显示 {@code HH:mm} 时间格式、且不在排除名单里的 TextView 都会被记录，
+     * 供 {@link #detectClockName()} 在收到检测广播时从中挑出最像状态栏时钟的那个。
+     */
+    private static final java.util.List<WeakReference<TextView>> sClockCandidates =
+            new java.util.concurrent.CopyOnWriteArrayList<>();
+
     // ==================================================================
     // 入口
     // ==================================================================
@@ -175,6 +183,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         BASE_TEXT.put(view, (CharSequence) param.args[0]);
                     }
                     logCandidate(view);
+                    // 自动检测：把任何正在显示时间格式、且非排除类的 TextView 收入候选池。
+                    recordCandidate(view);
                     if (!isStatusBarClock(view)) {
                         return;
                     }
@@ -459,20 +469,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             FrameLayout.LayoutParams.MATCH_PARENT,
                             FrameLayout.LayoutParams.MATCH_PARENT));
 
-                    // 日期行：浮窗底部居中显示当前日期（跟随系统语言）。
-                    final TextView dateTv = new TextView(context);
-                    dateTv.setTextSize(10f);
-                    dateTv.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
-                    dateTv.setTextColor(0xB3FFFFFF);
-                    dateTv.setGravity(Gravity.CENTER);
-                    dateTv.setIncludeFontPadding(false);
-                    FrameLayout.LayoutParams dateLp = new FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.WRAP_CONTENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT,
-                            Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-                    dateLp.bottomMargin = floatDp(context, 4);
-                    box.addView(dateTv, dateLp);
-
                     // 关闭按钮：右上角，默认隐藏。
                     final TextView close = new TextView(context);
                     close.setText("✕");
@@ -615,7 +611,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     lp.height = newH;
                                     // 文字大小交给 updateFloatText 按窗口宽高自适应。
                                     box.requestLayout();
-                                    updateFloatText(tv, dateTv, context, offset[0], lp);
+                                    updateFloatText(tv, context, offset[0], lp);
                                     try {
                                         wm.updateViewLayout(box, lp);
                                     } catch (Throwable ignored) {
@@ -631,7 +627,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
                     wm.addView(box, lp);
                     sFloatView = box;
-                    updateFloatText(tv, dateTv, context, offset[0], lp);
+                    updateFloatText(tv, context, offset[0], lp);
                     // 测量完后把窗口推到右上角（靠右留 12dp）；已从记忆恢复位置则跳过。
                     box.post(() -> {
                         try {
@@ -667,7 +663,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             sTouchHandler.post(() -> {
                                 if (sFloatView == box) {
                                     offset[0] = drift;
-                                    updateFloatText(tv, dateTv, context, offset[0], lp);
+                                    updateFloatText(tv, context, offset[0], lp);
                                 }
                             });
                         }
@@ -680,7 +676,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             if (sFloatView != box) {
                                 return;
                             }
-                            updateFloatText(tv, dateTv, context, offset[0], lp);
+                            updateFloatText(tv, context, offset[0], lp);
                             sTouchHandler.postDelayed(this, 1000L);
                         }
                     };
@@ -887,19 +883,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * @param offsetMs 网络 - 系统的偏移（毫秒）
      * @param lp       浮窗窗口参数（取宽高算字号；可为 null）
      */
-    private static void updateFloatText(TextView tv, TextView dateTv, Context context,
+    private static void updateFloatText(TextView tv, Context context,
                                         long offsetMs, WindowManager.LayoutParams lp) {
         try {
             long netNow = System.currentTimeMillis() + offsetMs;
             String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
-            if (dateTv != null) {
-                try {
-                    dateTv.setText(new SimpleDateFormat("yyyy-MM-dd EEE",
-                            Locale.getDefault()).format(new Date(netNow)));
-                } catch (Throwable ignored) {
-                    // 日期渲染失败不影响时间
-                }
-            }
             SpannableStringBuilder sb = new SpannableStringBuilder(text);
             // 小时颜色用进程内缓存（设置变更经广播更新），首次读取一次。
             if (!sFloatColorLoaded) {
@@ -1229,8 +1217,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     // 时钟识别
     // ==================================================================
 
-    /** 判断该 TextView 是否为「状态栏左上角时钟」（目标控件）。 */
+    /** 判断该 TextView 是否为「状态栏左上角时钟」（目标控件）：内置规则命中，或命中用户自定义识别名。 */
     private static boolean isStatusBarClock(TextView view) {
+        if (isStatusBarClockBuiltin(view)) {
+            return true;
+        }
+        // 用户自定义识别名（其它厂商机型）：资源名包含该串即视为状态栏时钟，但仍排除锁屏 / AOD / 日期。
+        if (sCustomRule.isEmpty()) {
+            return false;
+        }
         int id = view.getId();
         if (id == View.NO_ID || id == 0) {
             return false;
@@ -1240,30 +1235,35 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             return false;
         }
         String className = view.getClass().getName().toLowerCase(Locale.ROOT);
+        return !isClockNameExcluded(name, className) && name.contains(sCustomRule);
+    }
 
-        // 排除锁屏 / AOD / 日期等大型时钟，以及分隔符、通知栏无关控件。
-        boolean excluded = name.contains("keyguard") || name.contains("lockscreen")
-                || name.contains("aod") || name.contains("date")
-                || name.contains("separator") || name.startsWith("no_carrier")
-                || name.contains("shade_") || name.contains("quick_setting")
-                || className.contains("keyguard") || className.contains("aod");
-        if (excluded) {
+    /**
+     * 仅按内置规则判断（不依赖用户自定义识别名）。
+     * 用于自动检测区分「内置已识别」（保持内置规则，避免多时钟命中导致触摸边界被下拉面板里的
+     * QS 时钟覆盖）与「内置未命中、需自定义」（其它厂商机型）。
+     */
+    private static boolean isStatusBarClockBuiltin(TextView view) {
+        int id = view.getId();
+        if (id == View.NO_ID || id == 0) {
             return false;
         }
-
+        String name = resourceName(view);
+        if (name.isEmpty()) {
+            return false;
+        }
+        String className = view.getClass().getName().toLowerCase(Locale.ROOT);
+        if (isClockNameExcluded(name, className)) {
+            return false;
+        }
         // 状态栏 / 通知栏头部时钟的资源名或类名特征。
-        boolean clockRelated = name.equals("clock")
+        return name.equals("clock")
                 || name.equals("status_bar_clock")
                 || name.equals("header_clock")
                 || name.contains("status_clock")
                 || name.contains("clock_text")
                 || className.contains("statusbar.policy.clock")
                 || className.contains("statclock");
-        if (clockRelated) {
-            return true;
-        }
-        // 用户自定义识别名（其它厂商机型）：资源名包含该串即视为状态栏时钟，但仍排除锁屏 / AOD / 日期。
-        return !sCustomRule.isEmpty() && !excluded && name.contains(sCustomRule);
     }
 
 
@@ -1300,6 +1300,106 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (LOGGED_CANDIDATES.add(key)) {
             XposedBridge.log(LOG_PREFIX + "candidate: " + key + " text=[" + view.getText() + "]");
         }
+    }
+
+    /** 资源名/类名是否落在「状态栏时钟」排除名单（锁屏/AOD/日期/分隔符/通知面板无关控件）。 */
+    private static boolean isClockNameExcluded(String name, String className) {
+        return name.contains("keyguard") || name.contains("lockscreen")
+                || name.contains("aod") || name.contains("date")
+                || name.contains("separator") || name.startsWith("no_carrier")
+                || name.contains("shade_") || name.contains("quick_setting")
+                || className.contains("keyguard") || className.contains("aod");
+    }
+
+    /**
+     * 自动检测：记录一个候选时钟视图。仅当文本当前显示「数字:数字」时间格式、
+     * 且资源名/类名不在排除名单里才收录，供 {@link #detectClockName()} 扫描。
+     */
+    private static void recordCandidate(TextView view) {
+        try {
+            CharSequence txt = view.getText();
+            String text = txt == null ? "" : txt.toString();
+            if (!text.matches(".*\\d{1,2}[:：]\\d{2}.*")) {
+                return;
+            }
+            String name = resourceName(view);
+            String className = view.getClass().getName().toLowerCase(Locale.ROOT);
+            if (isClockNameExcluded(name, className)) {
+                return;
+            }
+            // 去重：若已收录同一视图实例则跳过（CopyOnWriteArrayList，O(n) 但 n 很小）。
+            for (WeakReference<TextView> ref : sClockCandidates) {
+                if (ref.get() == view) {
+                    return;
+                }
+            }
+            sClockCandidates.add(new WeakReference<>(view));
+        } catch (Throwable ignored) {
+            // 记录失败不影响系统
+        }
+    }
+
+    /**
+     * 自动检测状态栏时钟识别名：扫描候选池，挑出最像状态栏时钟的 TextView，
+     * 返回其资源 entry 名（空串表示未检测到 / 命中内置规则无需自定义）。
+     */
+    private static String detectClockName() {
+        TextView best = null;
+        int bestScore = 0;
+        boolean bestShowsClock = false;
+        for (WeakReference<TextView> ref : sClockCandidates) {
+            TextView v = ref.get();
+            if (v == null) {
+                continue;
+            }
+            String name = resourceName(v);
+            if (name.isEmpty()) {
+                continue;
+            }
+            String className = v.getClass().getName().toLowerCase(Locale.ROOT);
+            if (isClockNameExcluded(name, className)) {
+                continue;
+            }
+            int score = 0;
+            boolean showsClock = false;
+            CharSequence txt = v.getText();
+            String text = txt == null ? "" : txt.toString();
+            if (text.matches("^\\s*\\d{1,2}[:：]\\d{2}\\s*$")) {
+                showsClock = true;
+                score += 1;
+            }
+            if (name.equals("clock")) {
+                score += 3;
+            } else {
+                if (name.contains("clock")) score += 3;
+                if (name.contains("status")) score += 2;
+                if (name.contains("time")) score += 1;
+            }
+            // 偏好当前正显示时间的候选；分数相同时优先 showsClock。
+            if (score > bestScore || (score == bestScore && showsClock && !bestShowsClock)) {
+                best = v;
+                bestScore = score;
+                bestShowsClock = showsClock;
+            }
+        }
+        if (best == null || bestScore <= 0) {
+            return "";
+        }
+        return resourceName(best);
+    }
+
+    /**
+     * 返回首个被「内置规则」识别的候选时钟资源名（空串 = 内置规则未命中任何候选）。
+     * 自动检测据此判断是否需要写入自定义识别名。
+     */
+    private static String findBuiltinClockName() {
+        for (WeakReference<TextView> ref : sClockCandidates) {
+            TextView v = ref.get();
+            if (v != null && isStatusBarClockBuiltin(v)) {
+                return resourceName(v);
+            }
+        }
+        return "";
     }
 
     private static boolean isSystemUiProcess(String processName) {
@@ -1383,6 +1483,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
+                filter.addAction(ClockSecondsConfig.ACTION_DETECT_CLOCK);
                 filter.addAction(ClockSecondsConfig.ACTION_SYNC_TIME);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_NET_OFFSET);
                 BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -1417,6 +1518,52 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 String rule = intent.getStringExtra(ClockSecondsConfig.EXTRA_RULE);
                                 sCustomRule = (rule == null ? "" : rule.trim());
                                 ClockSecondsConfig.setClockRule(cr, sCustomRule);
+                            } else if (ClockSecondsConfig.ACTION_DETECT_CLOCK.equals(action)) {
+                                // 自动检测状态栏时钟识别名。
+                                String builtinName = findBuiltinClockName();
+                                String reported;
+                                if (!builtinName.isEmpty()) {
+                                    // 内置规则已识别到时钟：保持「内置规则」（清空自定义名）。
+                                    // 关键：不要额外写入自定义名，否则下拉面板里的 QS 时钟也会同时命中，
+                                    // 导致最后配置的视图覆盖 sClockRect（其位置在折叠时不可见），
+                                    // 状态栏的点击/长按判定随之失效。
+                                    sCustomRule = "";
+                                    ClockSecondsConfig.setClockRule(cr, "");
+                                    refreshClockNow();
+                                    reported = builtinName;
+                                } else {
+                                    // 内置规则未命中（其它厂商机型）：把最佳候选的资源名写入自定义识别名。
+                                    String best = detectClockName();
+                                    sCustomRule = best; // 立即生效，无需重启
+                                    ClockSecondsConfig.setClockRule(cr, best);
+                                    // 让新规则命中的时钟立即接管（正常也会在下一次 setText 自动配置）。
+                                    if (sSecondsEnabled) {
+                                        for (WeakReference<TextView> ref : sClockCandidates) {
+                                            TextView v = ref.get();
+                                            if (v != null && isStatusBarClock(v)
+                                                    && !CONFIGURED.contains(v)) {
+                                                configureClockView(v);
+                                                refreshClock(v);
+                                            }
+                                        }
+                                    }
+                                    refreshClockNow();
+                                    reported = best;
+                                }
+                                // 回传结果给设置页（显示检测到的时钟资源名）。
+                                try {
+                                    Intent res = new Intent(
+                                            ClockSecondsConfig.ACTION_DETECT_CLOCK_RESULT);
+                                    res.setPackage(ClockSecondsConfig.MODULE_PACKAGE);
+                                    res.putExtra(ClockSecondsConfig.EXTRA_DETECTED_RULE, reported);
+                                    ctx.sendBroadcast(res);
+                                } catch (Throwable ignored) {
+                                    // 回传失败不影响已写入的规则
+                                }
+                                if (BuildConfig.DEBUG) {
+                                    XposedBridge.log(LOG_PREFIX + "DETECT builtin=" + builtinName
+                                            + " reported=" + reported);
+                                }
                             } else if (ClockSecondsConfig.ACTION_SYNC_TIME.equals(action)) {
                                 // 应用无权直接改系统时钟（SET_TIME 是系统权限），
                                 // 打开系统「自动设置时间」让系统自己向网络校准。

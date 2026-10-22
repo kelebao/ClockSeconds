@@ -55,4 +55,10 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_rule_apply">Terapkan</string>
     <string name="settings_rule_reset">Atur ulang</string>
     <string name="settings_rule_applied">Aturan disimpan. Mulai ulang SystemUI.</string>
+    <string name="settings_rule_detect">Deteksi otomatis</string>
+    <string name="settings_rule_detecting">Mendeteksi jam status bar…</string>
+    <string name="settings_rule_detected">Terdeteksi: %1$s</string>
+    <string name="settings_rule_detect_fail">Jam tidak ditemukan. Ketuk dulu jam status bar, atau mulai ulang SystemUI lalu coba lagi.</string>
+    <string name="settings_rule_current">Saat ini: %1$s</string>
+    <string name="settings_rule_builtin">bawaan</string>
 </resources>

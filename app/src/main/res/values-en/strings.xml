@@ -55,4 +55,10 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_rule_apply">Apply</string>
     <string name="settings_rule_reset">Reset</string>
     <string name="settings_rule_applied">Rule saved. Restart SystemUI to apply.</string>
+    <string name="settings_rule_detect">Auto detect</string>
+    <string name="settings_rule_detecting">Detecting status-bar clock…</string>
+    <string name="settings_rule_detected">Detected: %1$s</string>
+    <string name="settings_rule_detect_fail">No clock found. Tap the status-bar clock first, or restart SystemUI and retry.</string>
+    <string name="settings_rule_current">Current: %1$s</string>
+    <string name="settings_rule_builtin">built-in</string>
 </resources>

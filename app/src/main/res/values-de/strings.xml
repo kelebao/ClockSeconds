@@ -55,4 +55,10 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_rule_apply">Anwenden</string>
     <string name="settings_rule_reset">Zurücksetzen</string>
     <string name="settings_rule_applied">Regel gespeichert. SystemUI neu starten.</string>
+    <string name="settings_rule_detect">Automatisch erkennen</string>
+    <string name="settings_rule_detecting">Statusleisten-Uhr wird erkannt…</string>
+    <string name="settings_rule_detected">Erkannt: %1$s</string>
+    <string name="settings_rule_detect_fail">Keine Uhr gefunden. Tippe zuerst auf die Uhr in der Statusleiste oder starte SystemUI neu und versuche es erneut.</string>
+    <string name="settings_rule_current">Aktuell: %1$s</string>
+    <string name="settings_rule_builtin">eingebaut</string>
 </resources>

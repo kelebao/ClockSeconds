@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -91,6 +93,13 @@ public final class ModuleSettingsActivity extends Activity {
     private TextView syncView;
     private TextView colorValueView;
     private View colorDotView;
+    /** 当前识别规则摘要（"内置规则" 或 "自定义：clock"）。 */
+    private TextView ruleSummaryView;
+    /** 自动检测开关：避免检测广播未到达时重复点击。 */
+    private final java.util.concurrent.atomic.AtomicBoolean mDetecting =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+    /** 接收 SystemUI 回传的自动检测结果。 */
+    private android.content.BroadcastReceiver mDetectReceiver;
 
     /** 网络时间相对本地的偏移（毫秒，网络 - 本地）；Long.MIN_VALUE 表示还没取到。 */
     private long netDriftMs = Long.MIN_VALUE;
@@ -154,6 +163,7 @@ public final class ModuleSettingsActivity extends Activity {
         super.onPause();
         ticker.removeCallbacks(tick);
         ticker.removeCallbacks(hideHint);
+        unregisterDetectReceiver();
     }
 
     private void applyStatusBarAppearance() {
@@ -465,7 +475,30 @@ public final class ModuleSettingsActivity extends Activity {
         sub.setTextColor(text2());
         sub.setPadding(0, dp(3), 0, 0);
         texts.addView(sub);
+        ruleSummaryView = new TextView(this);
+        ruleSummaryView.setTextSize(11f);
+        ruleSummaryView.setTextColor(text3());
+        ruleSummaryView.setPadding(0, dp(3), 0, 0);
+        texts.addView(ruleSummaryView);
         row.addView(texts);
+
+        // 自动检测 + 手动设置 两个胶囊按钮。
+        LinearLayout btns = new LinearLayout(this);
+        btns.setOrientation(LinearLayout.HORIZONTAL);
+        btns.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView detectBtn = new TextView(this);
+        detectBtn.setText(R.string.settings_rule_detect);
+        detectBtn.setTextSize(12f);
+        detectBtn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        detectBtn.setTextColor(accent());
+        detectBtn.setPadding(dp(12), dp(6), dp(12), dp(6));
+        GradientDrawable detectBg = new GradientDrawable();
+        detectBg.setCornerRadius(dp(999));
+        detectBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
+        detectBtn.setBackground(detectBg);
+        detectBtn.setOnClickListener(v -> startDetect());
+        btns.addView(detectBtn);
 
         TextView btn = new TextView(this);
         btn.setText(R.string.settings_rule_set);
@@ -477,11 +510,24 @@ public final class ModuleSettingsActivity extends Activity {
         btnBg.setCornerRadius(dp(999));
         btnBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
         btn.setBackground(btnBg);
-        row.addView(btn);
+        btn.setPadding(dp(12), dp(6), dp(12), dp(6));
+        btns.addView(btn);
 
-        card.addView(row);
+        row.addView(btns);
         btn.setOnClickListener(v -> showRuleDialog());
+        card.addView(row);
         root.addView(card);
+        refreshRuleSummary();
+    }
+
+    /** 刷新「当前识别规则」摘要：内置规则 / 自定义资源名。 */
+    private void refreshRuleSummary() {
+        if (ruleSummaryView == null) {
+            return;
+        }
+        String rule = ClockSecondsConfig.getClockRule(getContentResolver());
+        ruleSummaryView.setText(getString(R.string.settings_rule_current,
+                rule.isEmpty() ? getString(R.string.settings_rule_builtin) : rule));
     }
 
     private void showRuleDialog() {
@@ -517,7 +563,63 @@ public final class ModuleSettingsActivity extends Activity {
         } catch (Throwable ignored) {
             // 发送失败不影响本地保存
         }
+        refreshRuleSummary();
         Toast.makeText(this, R.string.settings_rule_applied, Toast.LENGTH_LONG).show();
+    }
+
+    /** 自动检测状态栏时钟识别名：发广播给 SystemUI，由其在系统进程内扫描候选并回写。 */
+    private void startDetect() {
+        if (mDetecting.compareAndSet(false, true)) {
+            // 注册结果回传接收器（仅本 Activity 存活期间），避免泄漏。
+            mDetectReceiver = new android.content.BroadcastReceiver() {
+                @Override
+                public void onReceive(android.content.Context ctx, Intent intent) {
+                    mDetecting.set(false);
+                    String detected = intent.getStringExtra(ClockSecondsConfig.EXTRA_DETECTED_RULE);
+                    unregisterDetectReceiver();
+                    refreshRuleSummary();
+                    if (detected == null || detected.isEmpty()) {
+                        Toast.makeText(ModuleSettingsActivity.this,
+                                R.string.settings_rule_detect_fail, Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(ModuleSettingsActivity.this,
+                                getString(R.string.settings_rule_detected, detected),
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+            };
+            IntentFilter filter = new IntentFilter(ClockSecondsConfig.ACTION_DETECT_CLOCK_RESULT);
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                // RECEIVER_EXPORTED：回传广播来自 SystemUI（不同应用），
+                // NOT_EXPORTED 会阻止跨应用显式广播。
+                // 风险可控：action 为模块私有，内容仅为时钟资源名字符串。
+                // v1.0.8 将配合 signature 级自定义权限加固（安全 F1）。
+                registerReceiver(mDetectReceiver, filter, Context.RECEIVER_EXPORTED);
+            } else {
+                registerReceiver(mDetectReceiver, filter);
+            }
+            try {
+                Intent req = new Intent(ClockSecondsConfig.ACTION_DETECT_CLOCK);
+                req.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+                sendBroadcast(req);
+                Toast.makeText(this, R.string.settings_rule_detecting, Toast.LENGTH_SHORT).show();
+            } catch (Throwable ignored) {
+                mDetecting.set(false);
+                unregisterDetectReceiver();
+                Toast.makeText(this, R.string.settings_rule_detect_fail, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void unregisterDetectReceiver() {
+        if (mDetectReceiver != null) {
+            try {
+                unregisterReceiver(mDetectReceiver);
+            } catch (Throwable ignored) {
+                // 已注销则忽略
+            }
+            mDetectReceiver = null;
+        }
     }
 
     private void buildUpdateCard(LinearLayout root) {

@@ -23,6 +23,9 @@ public final class ClockSecondsConfig {
 
     public static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
 
+    /** 模块自身（设置页）包名，用于 SystemUI → 设置页的回传广播定向发送。 */
+    public static final String MODULE_PACKAGE = "io.github.kelebao.colorosclockseconds";
+
     /**
      * 模块自有显秒开关（唯一主状态）。由于已无原生路径，所有版本都使用本键，
      * 由 SystemUI 内的 hook 在「进程内首次遇到时钟」与「用户点击切换」时读写。
@@ -86,6 +89,22 @@ public final class ClockSecondsConfig {
             "io.github.kelebao.colorosclockseconds.action.SET_CLOCK_RULE";
     /** String extra：自定义时钟资源名（空 = 内置规则）。 */
     public static final String EXTRA_RULE = "rule";
+
+    /**
+     * 设置页 → SystemUI 触发「自动检测状态栏时钟识别名」。
+     *
+     * <p>用户无需知道时钟控件的资源名——由运行在 SystemUI 进程内的 hook 扫描当前正在显示
+     * {@code HH:mm} 时间格式的 TextView，挑出最像状态栏时钟的那个，把它的资源名写回
+     * {@link #CLOCK_RULE_KEY}（空串表示「内置规则已命中，无需自定义」），再以
+     * {@link #ACTION_DETECT_CLOCK_RESULT} 回传结果。</p>
+     */
+    public static final String ACTION_DETECT_CLOCK =
+            "io.github.kelebao.colorosclockseconds.action.DETECT_CLOCK";
+    /** SystemUI → 设置页：回传自动检测到的时钟识别名（可能为空串，表示检测失败）。 */
+    public static final String ACTION_DETECT_CLOCK_RESULT =
+            "io.github.kelebao.colorosclockseconds.action.DETECT_CLOCK_RESULT";
+    /** String extra：检测到的时钟资源名（空 = 检测失败 / 命中内置规则）。 */
+    public static final String EXTRA_DETECTED_RULE = "detected_rule";
 
     /** 设置页 → SystemUI 写入小时颜色。 */
     public static final String ACTION_SET_HOUR_COLOR =

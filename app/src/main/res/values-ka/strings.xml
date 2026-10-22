@@ -55,4 +55,10 @@
     <string name="settings_rule_apply">გამოყენება</string>
     <string name="settings_rule_reset">გასუფთავება</string>
     <string name="settings_rule_applied">წესი შესრულებულია. გადატვირთეთ SystemUI.</string>
+    <string name="settings_rule_detect">ავტომატური ძებნა</string>
+    <string name="settings_rule_detecting">სტატუსის ზოლის საათის ძებნა…</string>
+    <string name="settings_rule_detected">ნაპოვნია: %1$s</string>
+    <string name="settings_rule_detect_fail">საათი ვერ მოიძებნა. ჯერ შეეხეთ სტატუსის ზოლის საათს ან გადატვირთეთ SystemUI და სცადეთ თავიდან.</string>
+    <string name="settings_rule_current">მიმდინარე: %1$s</string>
+    <string name="settings_rule_builtin">ჩაშენებული</string>
 </resources>

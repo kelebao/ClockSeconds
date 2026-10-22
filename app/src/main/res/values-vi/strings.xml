@@ -55,4 +55,10 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_rule_apply">Áp dụng</string>
     <string name="settings_rule_reset">Đặt lại</string>
     <string name="settings_rule_applied">Đã lưu quy tắc. Khởi động lại SystemUI để áp dụng.</string>
+    <string name="settings_rule_detect">Tự động phát hiện</string>
+    <string name="settings_rule_detecting">Đang phát hiện đồng hồ thanh trạng thái…</string>
+    <string name="settings_rule_detected">Đã nhận diện: %1$s</string>
+    <string name="settings_rule_detect_fail">Không tìm thấy đồng hồ. Hãy nhấn vào đồng hồ thanh trạng thái trước, hoặc khởi động lại SystemUI rồi thử lại.</string>
+    <string name="settings_rule_current">Hiện tại: %1$s</string>
+    <string name="settings_rule_builtin">tích hợp</string>
 </resources>

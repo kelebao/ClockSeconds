@@ -55,4 +55,10 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_rule_apply">Uygula</string>
     <string name="settings_rule_reset">Sıfırla</string>
     <string name="settings_rule_applied">Kural kaydedildi. Uygulamak için SystemUI\'yi yeniden başlatın.</string>
+    <string name="settings_rule_detect">Otomatik algıla</string>
+    <string name="settings_rule_detecting">Durum çubuğu saati algılanıyor…</string>
+    <string name="settings_rule_detected">Algılandı: %1$s</string>
+    <string name="settings_rule_detect_fail">Saat bulunamadı. Önce durum çubuğu saatine dokunun veya SystemUI\'yi yeniden başlatıp tekrar deneyin.</string>
+    <string name="settings_rule_current">Şu anki: %1$s</string>
+    <string name="settings_rule_builtin">yerleşik</string>
 </resources>
