@@ -46,4 +46,5 @@
     <string name="settings_sync_time">Синхр.</string>
     <string name="settings_sync_requested">Автовремя включено — синхронизация скоро произойдёт</string>
     <string name="settings_preview_hint">Подсказка: нажмите на время в строке состояния (вверху слева), чтобы показать или скрыть секунды</string>
+    <string name="settings_float_hint">Долгое нажатие на время вверху слева покажет плавающее время</string>
 </resources>

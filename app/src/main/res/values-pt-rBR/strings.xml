@@ -46,4 +46,5 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_sync_time">Sincronizar</string>
     <string name="settings_sync_requested">Hora automática ativada — sincroniza em instantes</string>
     <string name="settings_preview_hint">Dica: toque na hora da barra de status (canto superior esquerdo) para mostrar/ocultar segundos</string>
+    <string name="settings_float_hint">Pressione a hora no canto superior esquerdo para ver a hora flutuante</string>
 </resources>

@@ -46,4 +46,5 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_sync_time">Sync</string>
     <string name="settings_sync_requested">Auto time enabled — the system will sync shortly</string>
     <string name="settings_preview_hint">Tip: tap the status bar time (top left) to show or hide seconds</string>
+    <string name="settings_float_hint">Long-press the top-left time to show the floating time</string>
 </resources>

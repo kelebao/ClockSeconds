@@ -46,4 +46,5 @@
     <string name="settings_sync_time">동기화</string>
     <string name="settings_sync_requested">자동 시간 설정을 켰습니다. 곧 동기화됩니다</string>
     <string name="settings_preview_hint">팁: 상태 표시줄 시간(왼쪽 위)을 탭하여 초를 표시하거나 숨깁니다</string>
+    <string name="settings_float_hint">왼쪽 위 시간을 길게 누르면 플로팅 시간이 표시됩니다</string>
 </resources>

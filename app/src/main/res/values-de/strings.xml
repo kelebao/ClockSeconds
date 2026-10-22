@@ -46,4 +46,5 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_sync_time">Sync</string>
     <string name="settings_sync_requested">Automatische Zeit aktiviert — wird gleich abgeglichen</string>
     <string name="settings_preview_hint">Tipp: Tippe auf die Statusleistenuhr (oben links), um Sekunden ein-/auszublenden</string>
+    <string name="settings_float_hint">Oben links lange auf die Zeit drücken, um die schwebende Zeit anzuzeigen</string>
 </resources>

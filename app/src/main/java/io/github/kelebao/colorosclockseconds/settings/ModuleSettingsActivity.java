@@ -95,6 +95,13 @@ public final class ModuleSettingsActivity extends Activity {
     /** 网络时间相对本地的偏移（毫秒，网络 - 本地）；Long.MIN_VALUE 表示还没取到。 */
     private long netDriftMs = Long.MIN_VALUE;
 
+    /**
+     * 写入操作序列号：快速连续切换（如连点色板）时，旧操作的校验会被新值覆盖而误报失败。
+     * 只有序列号仍是最新的操作才允许回调结果，被取代的旧操作静默丢弃。
+     */
+    private final java.util.concurrent.atomic.AtomicInteger mWriteSeq =
+            new java.util.concurrent.atomic.AtomicInteger(0);
+
     private final Handler ticker = new Handler(Looper.getMainLooper());
     private final Runnable tick = new Runnable() {
         @Override
@@ -290,6 +297,15 @@ public final class ModuleSettingsActivity extends Activity {
         netRow.addView(syncView);
 
         card.addView(netRow);
+
+        // 浮窗入口提示：长按左上角时间显示浮窗时间。
+        TextView floatHint = new TextView(this);
+        floatHint.setText(R.string.settings_float_hint);
+        floatHint.setTextSize(11f);
+        floatHint.setTextColor(text3());
+        floatHint.setGravity(Gravity.CENTER_HORIZONTAL);
+        floatHint.setPadding(0, dp(8), 0, 0);
+        card.addView(floatHint);
 
         root.addView(card);
         updatePreview();
@@ -1001,9 +1017,16 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void applyConfig(final String key, final int value, final Intent broadcast,
                              final java.util.function.Consumer<Boolean> onResult) {
+        // 序列号守卫：只有最新操作的结果会回调，旧操作被新操作取代时静默（避免误报失败）。
+        final int seq = mWriteSeq.incrementAndGet();
+        final java.util.function.Consumer<Boolean> guarded = ok -> {
+            if (mWriteSeq.get() == seq) {
+                onResult.accept(ok);
+            }
+        };
         try {
             Settings.Secure.putInt(getContentResolver(), key, value);
-            onResult.accept(true);
+            guarded.accept(true);
             return;
         } catch (SecurityException ignored) {
             // 无 WRITE_SECURE_SETTINGS：走广播路径
@@ -1012,10 +1035,10 @@ public final class ModuleSettingsActivity extends Activity {
             broadcast.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
             sendBroadcast(broadcast);
         } catch (Throwable t) {
-            onResult.accept(false);
+            guarded.accept(false);
             return;
         }
-        verifyWrite(key, value, 0, onResult);
+        verifyWrite(key, value, 0, guarded);
     }
 
     private void verifyWrite(final String key, final int value, final int attempt,
@@ -1033,12 +1056,12 @@ public final class ModuleSettingsActivity extends Activity {
             onResult.accept(true);
             return;
         }
-        if (attempt >= 6) {
+        if (attempt >= 8) {
             onResult.accept(false);
             return;
         }
         new Handler(Looper.getMainLooper()).postDelayed(
-                () -> verifyWrite(key, value, attempt + 1, onResult), 400);
+                () -> verifyWrite(key, value, attempt + 1, onResult), 250);
     }
 
     private void toastWriteFailed() {

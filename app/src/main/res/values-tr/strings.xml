@@ -46,4 +46,5 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_sync_time">Eşitle</string>
     <string name="settings_sync_requested">Otomatik zaman açıldı — kısa süre içinde eşitlenir</string>
     <string name="settings_preview_hint">İpucu: saniyeleri göstermek/gizlemek için durum çubuğu zamanına (sol üst) dokunun</string>
+    <string name="settings_float_hint">Sol üstteki zamana uzun basarak kayan saati gösterin</string>
 </resources>

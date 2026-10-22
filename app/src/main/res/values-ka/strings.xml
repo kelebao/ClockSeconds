@@ -46,4 +46,5 @@
     <string name="settings_sync_time">სინქრონიზაცია</string>
     <string name="settings_sync_requested">ავტომატური დრო ჩართულია — მალე სინქრონდება</string>
     <string name="settings_preview_hint">მინიშნება: დააჭირეთ სტატუს-ზოლის დროს (ზედა მარცხნივ) წამების ჩვენების/დამალვისთვის</string>
+    <string name="settings_float_hint">ზედა მარცხნივ დროზე ხანგრძლივი დაჭერა მოძრავ დროს აჩვენებს</string>
 </resources>

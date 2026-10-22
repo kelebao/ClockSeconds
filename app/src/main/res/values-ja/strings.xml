@@ -46,4 +46,5 @@
     <string name="settings_sync_time">同期</string>
     <string name="settings_sync_requested">自動時刻合わせを有効にしました。まもなく同期します</string>
     <string name="settings_preview_hint">ヒント: ステータスバーの時刻（左上）をタップして秒表示を切り替えます</string>
+    <string name="settings_float_hint">左上の時刻を長押しすると浮動時刻を表示します</string>
 </resources>

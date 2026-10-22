@@ -46,4 +46,5 @@
     <string name="settings_sync_time">Συγχρονισμός</string>
     <string name="settings_sync_requested">Ενεργοποιήθηκε η αυτόματη ώρα — σύντομα θα συγχρονιστεί</string>
     <string name="settings_preview_hint">Συμβουλή: Πατήστε την ώρα της γραμμής κατάστασης (πάνω αριστερά) για εμφάνιση/απόκρυψη δευτερολέπτων</string>
+    <string name="settings_float_hint">Παρατεταμένο πάτημα στην ώρα πάνω αριστερά για την αιωρούμενη ώρα</string>
 </resources>

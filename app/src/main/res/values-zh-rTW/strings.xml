@@ -46,4 +46,5 @@
     <string name="settings_sync_time">同步</string>
     <string name="settings_sync_requested">已開啟自動對時，系統將自動校正</string>
     <string name="settings_preview_hint">提示：點擊狀態欄(左上角)時間即可顯示或關閉秒數</string>
+    <string name="settings_float_hint">長按左上角時間可顯示浮動時間</string>
 </resources>

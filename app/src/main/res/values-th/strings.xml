@@ -46,4 +46,5 @@
     <string name="settings_sync_time">ซิงค์</string>
     <string name="settings_sync_requested">เปิดตั้งเวลาอัตโนมัติแล้ว ระบบจะซิงค์ในไม่ช้า</string>
     <string name="settings_preview_hint">เคล็ดลับ: แตะเวลาแถบสถานะ (มุมซ้ายบน) เพื่อแสดง/ซ่อนวินาที</string>
+    <string name="settings_float_hint">กดค้างเวลาแถบซ้ายบนเพื่อแสดงเวลาแบบลอย</string>
 </resources>
