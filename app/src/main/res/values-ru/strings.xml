@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">встроенные</string>
     <string name="settings_rule_detected_builtin">Часы в строке состояния распознаны. Встроенные правила активны — дополнительная настройка не требуется.</string>
     <string name="settings_rule_detected_custom">Часы в строке состояния распознаны. Настройка сохранена. Перезапустите SystemUI для применения.</string>
+    <string name="settings_rule_dialog_desc">Не знаете? Нажмите «Автоопределение» ниже — готово в один тап. Можно также ввести имя ресурса виджета времени (пусто = встроенные правила).</string>
+    <string name="settings_rule_or_manual">Или введите имя ресурса виджета времени вручную</string>
+    <string name="settings_rule_confirm_title">Имя может быть неверным</string>
+    <string name="settings_rule_confirm_msg">«%1$s» не похоже на имя ресурса виджета времени (обычно содержит clock или time) и может не сработать. Сначала попробуйте «Автоопределение». Всё равно сохранить?</string>
+    <string name="settings_rule_confirm_save">Всё равно сохранить</string>
 </resources>

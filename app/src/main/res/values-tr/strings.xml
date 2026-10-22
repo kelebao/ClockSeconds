@@ -63,4 +63,9 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_rule_builtin">yerleşik</string>
     <string name="settings_rule_detected_builtin">Durum çubuğu saati tanındı. Yerleşik kurallar aktif — ek kurulum gerekmez.</string>
     <string name="settings_rule_detected_custom">Durum çubuğu saati tanındı. Yapılandırma kaydedildi. Uygulamak için SystemUI\'yi yeniden başlatın.</string>
+    <string name="settings_rule_dialog_desc">Bilemiyor musunuz? Aşağıdaki “Otomatik algıla” ile tek dokunuşta tamamlayın. Saat bileşeninin kaynak adını elle de girebilirsiniz (boş = yerleşik kurallar).</string>
+    <string name="settings_rule_or_manual">Veya saat bileşeninin kaynak adını elle girin</string>
+    <string name="settings_rule_confirm_title">Ad geçersiz olabilir</string>
+    <string name="settings_rule_confirm_msg">“%1$s” bir saat bileşeni kaynak adına benzemiyor (genellikle clock veya time içerir) ve çalışmayabilir. Önce “Otomatik algıla”yı deneyin. Yine de kaydedilsin mi?</string>
+    <string name="settings_rule_confirm_save">Yine de kaydet</string>
 </resources>

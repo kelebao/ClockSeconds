@@ -482,24 +482,7 @@ public final class ModuleSettingsActivity extends Activity {
         texts.addView(ruleSummaryView);
         row.addView(texts);
 
-        // 自动检测 + 手动设置 两个胶囊按钮。
-        LinearLayout btns = new LinearLayout(this);
-        btns.setOrientation(LinearLayout.HORIZONTAL);
-        btns.setGravity(Gravity.CENTER_VERTICAL);
-
-        TextView detectBtn = new TextView(this);
-        detectBtn.setText(R.string.settings_rule_detect);
-        detectBtn.setTextSize(12f);
-        detectBtn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        detectBtn.setTextColor(accent());
-        detectBtn.setPadding(dp(12), dp(6), dp(12), dp(6));
-        GradientDrawable detectBg = new GradientDrawable();
-        detectBg.setCornerRadius(dp(999));
-        detectBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
-        detectBtn.setBackground(detectBg);
-        detectBtn.setOnClickListener(v -> startDetect());
-        btns.addView(detectBtn);
-
+        // 只保留一个「设置」按钮；「自动检测」放进设置弹窗内（一键完成）。
         TextView btn = new TextView(this);
         btn.setText(R.string.settings_rule_set);
         btn.setTextSize(12f);
@@ -510,11 +493,9 @@ public final class ModuleSettingsActivity extends Activity {
         btnBg.setCornerRadius(dp(999));
         btnBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
         btn.setBackground(btnBg);
-        btn.setPadding(dp(12), dp(6), dp(12), dp(6));
-        btns.addView(btn);
-
-        row.addView(btns);
         btn.setOnClickListener(v -> showRuleDialog());
+        row.addView(btn);
+
         card.addView(row);
         root.addView(card);
         refreshRuleSummary();
@@ -530,22 +511,108 @@ public final class ModuleSettingsActivity extends Activity {
                 rule.isEmpty() ? getString(R.string.settings_rule_builtin) : rule));
     }
 
+    /**
+     * 设置弹窗：内置「自动检测」一键按钮 + 手动填写输入框。
+     *
+     * <p>多数用户不懂「资源名」是什么，所以把自动检测放在最显眼的位置；手动填写作为备选。
+     * 手填值明显不像时间控件资源名时，保存前二次确认，避免乱填导致不生效却以为设置好了。</p>
+     */
     private void showRuleDialog() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(22), dp(4), dp(22), dp(4));
+
+        // 说明：不懂设置可点自动检测一键完成。
+        TextView desc = new TextView(this);
+        desc.setText(R.string.settings_rule_dialog_desc);
+        desc.setTextSize(13f);
+        desc.setTextColor(text2());
+        desc.setLineSpacing(dp(3), 1f);
+        box.addView(desc);
+
+        // 自动检测大按钮（主操作，醒目）。
+        TextView detectBtn = new TextView(this);
+        detectBtn.setText(R.string.settings_rule_detect);
+        detectBtn.setTextSize(14f);
+        detectBtn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        detectBtn.setTextColor(0xFFFFFFFF);
+        detectBtn.setGravity(Gravity.CENTER);
+        detectBtn.setPadding(dp(16), dp(11), dp(16), dp(11));
+        GradientDrawable detectBg = new GradientDrawable();
+        detectBg.setCornerRadius(dp(999));
+        detectBg.setColor(accent());
+        detectBtn.setBackground(detectBg);
+        LinearLayout.LayoutParams detectLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        detectLp.topMargin = dp(12);
+        detectBtn.setLayoutParams(detectLp);
+        box.addView(detectBtn);
+
+        // 「或手动填写」分隔提示。
+        TextView orManual = new TextView(this);
+        orManual.setText(R.string.settings_rule_or_manual);
+        orManual.setTextSize(11f);
+        orManual.setTextColor(text3());
+        orManual.setPadding(0, dp(14), 0, dp(4));
+        box.addView(orManual);
+
         final android.widget.EditText input = new android.widget.EditText(this);
         input.setSingleLine(true);
         input.setText(ClockSecondsConfig.getClockRule(getContentResolver()));
         input.setHint("clock");
         input.setPadding(dp(8), dp(10), dp(8), dp(10));
-        new AlertDialog.Builder(this)
+        box.addView(input);
+
+        // 当前生效值提示。
+        TextView current = new TextView(this);
+        String rule = ClockSecondsConfig.getClockRule(getContentResolver());
+        current.setText(getString(R.string.settings_rule_current,
+                rule.isEmpty() ? getString(R.string.settings_rule_builtin) : rule));
+        current.setTextSize(11f);
+        current.setTextColor(text3());
+        current.setPadding(0, dp(6), 0, 0);
+        box.addView(current);
+
+        final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.settings_rule_title)
-                .setMessage(R.string.settings_rule_msg)
-                .setView(input)
-                .setNegativeButton(R.string.settings_rule_reset, (d, w) -> applyRule(""))
-                .setPositiveButton(R.string.settings_rule_apply, (d, w) -> {
-                    String v = input.getText().toString().trim();
-                    applyRule(v);
-                })
-                .show();
+                .setView(box)
+                .setNeutralButton(R.string.settings_rule_reset, (d, w) -> applyRule(""))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.settings_rule_apply, null)
+                .create();
+        dialog.show();
+
+        // 自动检测：关闭弹窗后走一键检测流程（结果用 Toast 反馈）。
+        detectBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            startDetect();
+        });
+
+        // 应用按钮手动接管：手填值可疑时先二次确认，避免「乱填→以为设置好了」。
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String val = input.getText().toString().trim();
+            if (val.isEmpty() || looksLikeClockName(val)) {
+                applyRule(val);
+                dialog.dismiss();
+            } else {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.settings_rule_confirm_title)
+                        .setMessage(getString(R.string.settings_rule_confirm_msg, val))
+                        .setPositiveButton(R.string.settings_rule_confirm_save,
+                                (d2, w2) -> {
+                                    applyRule(val);
+                                    dialog.dismiss();
+                                })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            }
+        });
+    }
+
+    /** 手填值是否「像」时间控件的资源名（通常含 clock / time / date 关键字）。 */
+    private static boolean looksLikeClockName(String v) {
+        String s = v.toLowerCase(Locale.ROOT);
+        return s.contains("clock") || s.contains("time") || s.contains("date");
     }
 
     /** 保存自定义时钟识别名：优先直接写 Secure，无权限改发广播由 SystemUI 代写。 */

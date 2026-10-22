@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">內建規則</string>
     <string name="settings_rule_detected_builtin">識別狀態列時間成功，已使用內建規則，無需額外設定</string>
     <string name="settings_rule_detected_custom">識別狀態列時間成功，已自動設定，重啟 SystemUI 後生效</string>
+    <string name="settings_rule_dialog_desc">不懂設定？點下方「自動偵測」即可一鍵完成。也可手動填寫時間控件的資源名，留空則使用內建規則。</string>
+    <string name="settings_rule_or_manual">或手動填寫時間控件資源名</string>
+    <string name="settings_rule_confirm_title">識別名可能無效</string>
+    <string name="settings_rule_confirm_msg">「%1$s」看起來不像時間控件的資源名（通常包含 clock 或 time），可能無法生效。建議先點「自動偵測」。仍要儲存嗎？</string>
+    <string name="settings_rule_confirm_save">仍要儲存</string>
 </resources>

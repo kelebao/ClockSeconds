@@ -63,4 +63,9 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_rule_builtin">integrado</string>
     <string name="settings_rule_detected_builtin">Reloj de la barra de estado reconocido. Reglas integradas activas — no se necesita configuración adicional.</string>
     <string name="settings_rule_detected_custom">Reloj de la barra de estado reconocido. Configuración guardada. Reinicia SystemUI para aplicar.</string>
+    <string name="settings_rule_dialog_desc">¿No sabes? Pulsa “Detectar automáticamente” abajo y listo. También puedes escribir el nombre de recurso del widget de hora (vacío = reglas integradas).</string>
+    <string name="settings_rule_or_manual">O escribe manualmente el nombre de recurso del widget de hora</string>
+    <string name="settings_rule_confirm_title">El nombre puede no ser válido</string>
+    <string name="settings_rule_confirm_msg">“%1$s” no parece el nombre de recurso de un widget de hora (suele contener clock o time) y podría no funcionar. Prueba “Detectar automáticamente” primero. ¿Guardar igualmente?</string>
+    <string name="settings_rule_confirm_save">Guardar igualmente</string>
 </resources>

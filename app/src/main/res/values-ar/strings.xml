@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">مدمج</string>
     <string name="settings_rule_detected_builtin">تم التعرف على ساعة شريط الحالة. القواعد المدمجة نشطة — لا حاجة إلى إعداد إضافي.</string>
     <string name="settings_rule_detected_custom">تم التعرف على ساعة شريط الحالة. تم حفظ الإعدادات. أعد تشغيل SystemUI للتطبيق.</string>
+    <string name="settings_rule_dialog_desc">لا تعرف؟ اضغط «كشف تلقائي» أدناه لإكمال الأمر بلمسة واحدة. يمكنك أيضاً إدخال اسم مورد واجهة الوقت (فارغ = القواعد المدمجة).</string>
+    <string name="settings_rule_or_manual">أو أدخل اسم مورد واجهة الوقت يدوياً</string>
+    <string name="settings_rule_confirm_title">قد يكون الاسم غير صالح</string>
+    <string name="settings_rule_confirm_msg">«%1$s» لا يبدو اسم مورد واجهة وقت (عادةً يحتوي على clock أو time) وقد لا يعمل. جرّب «كشف تلقائي» أولاً. هل تريد الحفظ على أي حال؟</string>
+    <string name="settings_rule_confirm_save">احفظ على أي حال</string>
 </resources>

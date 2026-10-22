@@ -63,4 +63,9 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_rule_builtin">wbudowane</string>
     <string name="settings_rule_detected_builtin">Rozpoznano zegar na pasku stanu. Reguły wbudowane aktywne — nie wymaga dodatkowej konfiguracji.</string>
     <string name="settings_rule_detected_custom">Rozpoznano zegar na pasku stanu. Konfiguracja zapisana. Zrestartuj SystemUI, aby zastosować.</string>
+    <string name="settings_rule_dialog_desc">Nie wiesz? Dotknij „Wykryj automatycznie” poniżej i gotowe. Możesz też wpisać nazwę zasobu widżetu czasu (puste = reguły wbudowane).</string>
+    <string name="settings_rule_or_manual">Lub wpisz ręcznie nazwę zasobu widżetu czasu</string>
+    <string name="settings_rule_confirm_title">Nazwa może być nieprawidłowa</string>
+    <string name="settings_rule_confirm_msg">„%1$s” nie wygląda na nazwę zasobu widżetu czasu (zwykle zawiera clock lub time) i może nie działać. Najpierw spróbuj „Wykryj automatycznie”. Mimo to zapisać?</string>
+    <string name="settings_rule_confirm_save">Mimo to zapisz</string>
 </resources>

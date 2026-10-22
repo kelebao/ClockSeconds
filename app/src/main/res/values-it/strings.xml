@@ -63,4 +63,9 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_rule_builtin">integrato</string>
     <string name="settings_rule_detected_builtin">Orologio della barra di stato riconosciuto. Regole integrate attive — nessuna configurazione aggiuntiva necessaria.</string>
     <string name="settings_rule_detected_custom">Orologio della barra di stato riconosciuto. Configurazione salvata. Riavvia SystemUI per applicare.</string>
+    <string name="settings_rule_dialog_desc">Non sai? Tocca “Rilevamento automatico” qui sotto e fatto. Puoi anche inserire il nome della risorsa del widget dell’ora (vuoto = regole integrate).</string>
+    <string name="settings_rule_or_manual">Oppure inserisci manualmente il nome della risorsa del widget dell’ora</string>
+    <string name="settings_rule_confirm_title">Il nome potrebbe non essere valido</string>
+    <string name="settings_rule_confirm_msg">“%1$s” non sembra il nome della risorsa di un widget dell’ora (di solito contiene clock o time) e potrebbe non funzionare. Prova prima “Rilevamento automatico”. Salvare comunque?</string>
+    <string name="settings_rule_confirm_save">Salva comunque</string>
 </resources>

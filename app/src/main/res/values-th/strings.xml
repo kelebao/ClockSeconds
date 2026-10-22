@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">ในตัว</string>
     <string name="settings_rule_detected_builtin">ตรวจพบนาฬิกาแถบสถานะสำเร็จ ใช้กฎในตัว — ไม่ต้องตั้งค่าเพิ่ม</string>
     <string name="settings_rule_detected_custom">ตรวจพบนาฬิกาแถบสถานะสำเร็จ บันทึกการตั้งค่าแล้ว เริ่ม SystemUI ใหม่เพื่อใช้งาน</string>
+    <string name="settings_rule_dialog_desc">ไม่แน่ใจ? แตะ “ตรวจหาอัตโนมัติ” ด้านล่างเพื่อเสร็จในแตะเดียว หรือจะป้อนชื่อทรัพยากรของวิดเจ็ตเวลาก็ได้ (ว่าง = กฎในตัว)</string>
+    <string name="settings_rule_or_manual">หรือป้อนชื่อทรัพยากรวิดเจ็ตเวลาด้วยตนเอง</string>
+    <string name="settings_rule_confirm_title">ชื่ออาจไม่ถูกต้อง</string>
+    <string name="settings_rule_confirm_msg">“%1$s” ไม่ดูเหมือนชื่อทรัพยากรวิดเจ็ตเวลา (มักมี clock หรือ time) และอาจไม่ทำงาน ลอง “ตรวจหาอัตโนมัติ” ก่อน ยังคงบันทึกหรือไม่?</string>
+    <string name="settings_rule_confirm_save">ยังคงบันทึก</string>
 </resources>

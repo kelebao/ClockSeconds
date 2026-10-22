@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">ενσωματωμένος</string>
     <string name="settings_rule_detected_builtin">Το ρολόι της γραμμής κατάστασης αναγνωρίστηκε. Ενσωματωμένοι κανόνες ενεργοί — δεν απαιτείται επιπλέον ρύθμιση.</string>
     <string name="settings_rule_detected_custom">Το ρολόι της γραμμής κατάστασης αναγνωρίστηκε. Η ρύθμιση αποθηκεύτηκε. Επανεκκινήστε το SystemUI για εφαρμογή.</string>
+    <string name="settings_rule_dialog_desc">Δεν ξέρετε; Πατήστε «Αυτόματη ανίχνευση» παρακάτω και τελειώσατε. Μπορείτε επίσης να εισαγάγετε το όνομα πόρου του γραφικού στοιχείου ώρας (κενό = ενσωματωμένοι κανόνες).</string>
+    <string name="settings_rule_or_manual">Ή εισαγάγετε χειροκίνητα το όνομα πόρου του γραφικού στοιχείου ώρας</string>
+    <string name="settings_rule_confirm_title">Το όνομα ίσως δεν είναι έγκυρο</string>
+    <string name="settings_rule_confirm_msg">Το «%1$s» δεν μοιάζει με όνομα πόρου γραφικού στοιχείου ώρας (συνήθως περιέχει clock ή time) και ίσως δεν λειτουργήσει. Δοκιμάστε πρώτα «Αυτόματη ανίχνευση». Αποθήκευση παρόλα αυτά;</string>
+    <string name="settings_rule_confirm_save">Αποθήκευση παρόλα αυτά</string>
 </resources>

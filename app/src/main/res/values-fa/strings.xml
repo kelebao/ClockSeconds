@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">داخلی</string>
     <string name="settings_rule_detected_builtin">ساعت نوار وضعیت شناسایی شد. قوانین داخلی فعال — نیازی به تنظیم اضافی نیست.</string>
     <string name="settings_rule_detected_custom">ساعت نوار وضعیت شناسایی شد. تنظیمات ذخیره شد. برای اعمال SystemUI را راه‌اندازی مجدد کنید.</string>
+    <string name="settings_rule_dialog_desc">نمی‌دانید؟ روی «تشخیص خودکار» در پایین بزنید تا با یک ضربه تمام شود. همچنین می‌توانید نام منبع ویجت زمان را وارد کنید (خالی = قوانین داخلی).</string>
+    <string name="settings_rule_or_manual">یا نام منبع ویجت زمان را دستی وارد کنید</string>
+    <string name="settings_rule_confirm_title">نام ممکن است نامعتبر باشد</string>
+    <string name="settings_rule_confirm_msg">«%1$s» شبیه نام منبع ویجت زمان نیست (معمولاً شامل clock یا time است) و ممکن است کار نکند. ابتدا «تشخیص خودکار» را امتحان کنید. با این حال ذخیره شود؟</string>
+    <string name="settings_rule_confirm_save">با این حال ذخیره کن</string>
 </resources>

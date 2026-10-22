@@ -63,4 +63,9 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_rule_builtin">intégré</string>
     <string name="settings_rule_detected_builtin">Horloge de la barre d\'état reconnue. Règles intégrées actives — aucune configuration supplémentaire requise.</string>
     <string name="settings_rule_detected_custom">Horloge de la barre d\'état reconnue. Configuration enregistrée. Redémarrez SystemUI pour appliquer.</string>
+    <string name="settings_rule_dialog_desc">Vous ne savez pas ? Touchez « Détection auto » ci-dessous pour terminer en un geste. Vous pouvez aussi saisir le nom de ressource du widget d’heure (vide = règles intégrées).</string>
+    <string name="settings_rule_or_manual">Ou saisissez manuellement le nom de ressource du widget d’heure</string>
+    <string name="settings_rule_confirm_title">Nom peut-être invalide</string>
+    <string name="settings_rule_confirm_msg">« %1$s » ne ressemble pas au nom de ressource d’un widget d’heure (contient généralement clock ou time) et pourrait ne pas fonctionner. Essayez d’abord « Détection auto ». Enregistrer quand même ?</string>
+    <string name="settings_rule_confirm_save">Enregistrer quand même</string>
 </resources>

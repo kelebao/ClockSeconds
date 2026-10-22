@@ -63,4 +63,9 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_rule_builtin">bawaan</string>
     <string name="settings_rule_detected_builtin">Jam status bar dikenali. Aturan bawaan aktif — tidak perlu pengaturan tambahan.</string>
     <string name="settings_rule_detected_custom">Jam status bar dikenali. Pengaturan disimpan. Mulai ulang SystemUI untuk menerapkan.</string>
+    <string name="settings_rule_dialog_desc">Tidak tahu? Ketuk “Deteksi otomatis” di bawah untuk selesai sekali ketuk. Anda juga bisa memasukkan nama sumber widget waktu (kosong = aturan bawaan).</string>
+    <string name="settings_rule_or_manual">Atau masukkan nama sumber widget waktu secara manual</string>
+    <string name="settings_rule_confirm_title">Nama mungkin tidak valid</string>
+    <string name="settings_rule_confirm_msg">“%1$s” tampaknya bukan nama sumber widget waktu (biasanya berisi clock atau time) dan mungkin tidak berfungsi. Coba “Deteksi otomatis” dulu. Tetap simpan?</string>
+    <string name="settings_rule_confirm_save">Tetap simpan</string>
 </resources>

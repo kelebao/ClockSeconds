@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">вбудовані</string>
     <string name="settings_rule_detected_builtin">Годинник у смужці стану розпізнано. Вбудовані правила активні — додаткове налаштування не потрібне.</string>
     <string name="settings_rule_detected_custom">Годинник у смужці стану розпізнано. Налаштування збережено. Перезапустіть SystemUI для застосування.</string>
+    <string name="settings_rule_dialog_desc">Не знаєте? Натисніть «Автовизначення» нижче — готово одним дотиком. Можна також ввести ім’я ресурсу віджета часу (порожньо = вбудовані правила).</string>
+    <string name="settings_rule_or_manual">Або введіть ім’я ресурсу віджета часу вручну</string>
+    <string name="settings_rule_confirm_title">Ім’я може бути недійсним</string>
+    <string name="settings_rule_confirm_msg">«%1$s» не схоже на ім’я ресурсу віджета часу (зазвичай містить clock або time) і може не працювати. Спочатку спробуйте «Автовизначення». Все одно зберегти?</string>
+    <string name="settings_rule_confirm_save">Все одно зберегти</string>
 </resources>

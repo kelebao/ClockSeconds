@@ -63,4 +63,9 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_rule_builtin">eingebaut</string>
     <string name="settings_rule_detected_builtin">Statusleisten-Uhr erkannt. Eingebaute Regeln aktiv — keine zusätzliche Einrichtung nötig.</string>
     <string name="settings_rule_detected_custom">Statusleisten-Uhr erkannt. Konfiguration gespeichert. SystemUI neu starten, um anzuwenden.</string>
+    <string name="settings_rule_dialog_desc">Unsicher? Tippe unten auf „Automatisch erkennen“ — in einem Tipp erledigt. Du kannst auch den Ressourcennamen des Zeit-Widgets eingeben (leer = eingebaute Regeln).</string>
+    <string name="settings_rule_or_manual">Oder Ressourcennamen des Zeit-Widgets manuell eingeben</string>
+    <string name="settings_rule_confirm_title">Name möglicherweise ungültig</string>
+    <string name="settings_rule_confirm_msg">„%1$s“ sieht nicht wie der Ressourcenname eines Zeit-Widgets aus (enthält meist clock oder time) und funktioniert evtl. nicht. Versuche zuerst „Automatisch erkennen“. Trotzdem speichern?</string>
+    <string name="settings_rule_confirm_save">Trotzdem speichern</string>
 </resources>

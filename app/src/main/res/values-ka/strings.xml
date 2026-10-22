@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">ჩაშენებული</string>
     <string name="settings_rule_detected_builtin">სტატუსის ზოლის საათი ამოცნობილია. ჩაშენებული წესები აქტიურია — დამატებითი კონფიგურაცია არ არის საჭირო.</string>
     <string name="settings_rule_detected_custom">სტატუსის ზოლის საათი ამოცნობილია. კონფიგურაცია შენახულია. გადატვირთეთ SystemUI გამოსაყენებლად.</string>
+    <string name="settings_rule_dialog_desc">არ იცით? დააჭირეთ ქვემოთ «ავტომატური ძებნა» და დასრულდა. ასევე შეგიძლიათ შეიყვანოთ დროის ვიჯეტის რესურსის სახელი (ცარიელი = ჩაშენებული წესები).</string>
+    <string name="settings_rule_or_manual">ან ხელით შეიყვანეთ დროის ვიჯეტის რესურსის სახელი</string>
+    <string name="settings_rule_confirm_title">სახელი შეიძლება არასწორი იყოს</string>
+    <string name="settings_rule_confirm_msg">«%1$s» არ ჰგავს დროის ვიჯეტის რესურსის სახელს (ჩვეულებრივ შეიცავს clock ან time) და შეიძლება არ იმუშაოს. ჯერ სცადეთ «ავტომატური ძებნა». მაინც შენახვა?</string>
+    <string name="settings_rule_confirm_save">მაინც შენახვა</string>
 </resources>

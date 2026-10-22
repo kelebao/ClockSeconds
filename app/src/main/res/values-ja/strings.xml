@@ -63,4 +63,9 @@
     <string name="settings_rule_builtin">内蔵ルール</string>
     <string name="settings_rule_detected_builtin">ステータスバーの時計を認識しました。内蔵ルールを使用 — 追加設定は不要です。</string>
     <string name="settings_rule_detected_custom">ステータスバーの時計を認識しました。設定を保存しました。SystemUI を再起動して反映してください。</string>
+    <string name="settings_rule_dialog_desc">わからない場合は下の「自動検出」でワンタップ完了。手動で時刻ウィジェットのリソース名を入力することもできます（空欄なら内蔵ルール）。</string>
+    <string name="settings_rule_or_manual">または時刻ウィジェットのリソース名を手動入力</string>
+    <string name="settings_rule_confirm_title">名前が無効の可能性</string>
+    <string name="settings_rule_confirm_msg">「%1$s」は時刻ウィジェットのリソース名らしくありません（通常 clock や time を含みます）。有効でない可能性があります。先に「自動検出」をお試しください。それでも保存しますか？</string>
+    <string name="settings_rule_confirm_save">それでも保存</string>
 </resources>

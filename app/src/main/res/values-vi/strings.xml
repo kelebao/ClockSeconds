@@ -63,4 +63,9 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_rule_builtin">tích hợp</string>
     <string name="settings_rule_detected_builtin">Đã nhận diện đồng hồ thanh trạng thái. Quy tắc tích hợp đang hoạt động — không cần thiết lập thêm.</string>
     <string name="settings_rule_detected_custom">Đã nhận diện đồng hồ thanh trạng thái. Đã lưu cấu hình. Khởi động lại SystemUI để áp dụng.</string>
+    <string name="settings_rule_dialog_desc">Không rõ? Nhấn “Tự động phát hiện” bên dưới để hoàn tất một chạm. Bạn cũng có thể nhập tên tài nguyên của widget thời gian (để trống = quy tắc mặc định).</string>
+    <string name="settings_rule_or_manual">Hoặc tự nhập tên tài nguyên widget thời gian</string>
+    <string name="settings_rule_confirm_title">Tên có thể không hợp lệ</string>
+    <string name="settings_rule_confirm_msg">“%1$s” không giống tên tài nguyên widget thời gian (thường chứa clock hoặc time) và có thể không hoạt động. Hãy thử “Tự động phát hiện” trước. Vẫn lưu?</string>
+    <string name="settings_rule_confirm_save">Vẫn lưu</string>
 </resources>
