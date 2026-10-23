@@ -189,8 +189,17 @@ public final class ClockSecondsConfig {
     }
 
     // ------------------------------------------------------------------
-    // （背景板呼吸灯已移除；如后续再做类似效果，在此新增即可）
+    // 呼吸强度（用于选中色块的荧光呼吸光晕；6s 一个平滑明暗周期）
     // ------------------------------------------------------------------
+
+    /** 呼吸周期（毫秒）：约 3 秒一次完整明暗往返（用户要求快一些）。 */
+    public static final long BREATH_PERIOD_MS = 3_000L;
+
+    /** 当前时刻的呼吸强度（0..1）：平滑余弦，明 → 暗 → 明。 */
+    public static float breathIntensity(long nowMs) {
+        double p = Math.floorMod(nowMs, BREATH_PERIOD_MS) / (double) BREATH_PERIOD_MS;
+        return (float) ((1 - Math.cos(p * 2 * Math.PI)) / 2);
+    }
 
     /** 读取网络时间偏移（毫秒，网络 - 系统）。无记录时为 0（按系统时间显示）。 */
     public static long getNetOffset(ContentResolver resolver) {

@@ -71,5 +71,5 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_launcher_title">Show launcher icon</string>
     <string name="settings_launcher_sum">Add a settings shortcut to the home screen; when off, open it from the LSPosed manager</string>
     <string name="settings_launcher_on">Launcher icon shown</string>
-    <string name="settings_launcher_off">Launcher icon hidden</string>
+    <string name="settings_launcher_off">Launcher icon hidden; reboot for it to disappear from the home screen</string>
 </resources>

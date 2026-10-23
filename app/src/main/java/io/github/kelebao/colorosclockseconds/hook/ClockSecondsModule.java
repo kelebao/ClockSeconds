@@ -1019,7 +1019,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
         sb.append(ss);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
-        // 注：秒数字「呼吸」高亮只用于浮窗与设置页预览，状态栏保持系统原色（不改状态栏观感）。
+        // 注：状态栏与浮窗的秒数字均保持系统原色；呼吸高亮仅用于设置页预览卡的刻度与色块。
         applyHourTensRed(sb, view, hourColor(view));
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="

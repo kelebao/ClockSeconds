@@ -51,6 +51,7 @@ public class CornerArcsDrawable extends Drawable {
     @Override
     public void setAlpha(int alpha) {
         mPaint.setAlpha(alpha);
+        invalidateSelf();
     }
 
     @Override

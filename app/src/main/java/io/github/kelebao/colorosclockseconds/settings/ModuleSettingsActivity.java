@@ -23,6 +23,8 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import io.github.kelebao.colorosclockseconds.ArcTickDrawable;
+import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
 import io.github.kelebao.colorosclockseconds.WavyLineView;
 import android.text.style.AbsoluteSizeSpan;
@@ -97,6 +99,12 @@ public final class ModuleSettingsActivity extends Activity {
     private TextView previewView;
     /** 预览时间所在的背景板容器。 */
     private FrameLayout previewPlate;
+    /** 当前选中色块的「荧光呼吸」光晕 drawable（高频刷新）。 */
+    private BreathSwatchDrawable mBreathSwatch;
+    /** 预览卡顶部半弧刻度盘 drawable（高频刷新旋转）。 */
+    private ArcTickDrawable mArcTicks;
+    /** 小时颜色卡右下角同心弧（关闭小时颜色时隐藏，避免透出盖住半透明色块）。 */
+    private CornerArcsDrawable mCornerArcs;
     /** 虚线分隔线 / 右下角同心弧的固定颜色（浅薰衣草紫 #D4C5FF）。 */
     private static final int WAVE_COLOR = 0xFFD4C5FF;
     private TextView netTimeView;
@@ -130,11 +138,29 @@ public final class ModuleSettingsActivity extends Activity {
             ticker.postDelayed(this, 1000L);
         }
     };
+    /** 选中色块荧光光晕 + 半弧刻度盘的高频刷新（~50ms）。 */
+    private final Runnable breathTick = new Runnable() {
+        @Override
+        public void run() {
+            long now = System.currentTimeMillis();
+            if (mBreathSwatch != null) {
+                mBreathSwatch.setBreath(ClockSecondsConfig.breathIntensity(now));
+            }
+            if (mArcTicks != null) {
+                mArcTicks.setRotation((now % 35_000L) / 35_000f * 360f);
+                // 呼吸灯：6s 余弦呼吸（独立于色块 3s）+ 30s 色相循环/中心漂移
+                double bp = (now % 6_000L) / 6_000.0;
+                mArcTicks.setBreath((float) ((1 - Math.cos(bp * 2 * Math.PI)) / 2));
+                mArcTicks.setDrift((now % 30_000L) / 30_000f);
+            }
+            ticker.postDelayed(this, 50L);
+        }
+    };
 
     /** 点击预览时钟后显示提示，3 秒后自动收起。 */
     private final Runnable hideHint = () -> {
         if (previewHintView != null) {
-            previewHintView.setVisibility(View.GONE);
+            previewHintView.setVisibility(View.INVISIBLE);
         }
     };
 
@@ -168,12 +194,15 @@ public final class ModuleSettingsActivity extends Activity {
         refreshStatus();
         ticker.removeCallbacks(tick);
         ticker.post(tick);
+        ticker.removeCallbacks(breathTick);
+        ticker.post(breathTick);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         ticker.removeCallbacks(tick);
+        ticker.removeCallbacks(breathTick);
         ticker.removeCallbacks(hideHint);
         unregisterDetectReceiver();
     }
@@ -272,10 +301,27 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void buildPreviewCard(LinearLayout root) {
         LinearLayout card = card();
+        // 顶部留白收小；底部留小缝，让「长按…」提示贴近卡片最下方。
+        card.setPadding(dp(18), dp(2), dp(18), dp(6));
+        // 底部叠「长弧刻度」（只有刻度、无弧线），把网络时间/提示两行圈在弧中间。
+        ArcTickDrawable arc = new ArcTickDrawable(WAVE_COLOR);
+        mArcTicks = arc;
+        card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arc}));
+
+        // 提示（在预览时间上方；点击预览后才出现，3 秒后自动收起）。
+        previewHintView = new TextView(this);
+        previewHintView.setText(R.string.settings_preview_hint);
+        previewHintView.setTextSize(10f);
+        previewHintView.setTextColor(text3());
+        previewHintView.setGravity(Gravity.CENTER_HORIZONTAL);
+        previewHintView.setPadding(0, 0, 0, dp(1));
+        // 常驻占位（INVISIBLE）：显示提示时不再撑高卡片。
+        previewHintView.setVisibility(View.INVISIBLE);
+        card.addView(previewHintView);
 
         // 预览时间容器（仅承载文字）。
         previewPlate = new FrameLayout(this);
-        previewPlate.setPadding(dp(22), dp(14), dp(22), dp(14));
+        previewPlate.setPadding(dp(22), dp(2), dp(22), dp(14));
 
         previewView = new TextView(this);
         previewView.setTextSize(44f);
@@ -286,21 +332,11 @@ public final class ModuleSettingsActivity extends Activity {
         previewPlate.addView(previewView);
         card.addView(previewPlate);
 
-        // 提示用户：要点状态栏的时钟，不是点这里。点击预览后才出现，3 秒后自动收起。
-        previewHintView = new TextView(this);
-        previewHintView.setText(R.string.settings_preview_hint);
-        previewHintView.setTextSize(11f);
-        previewHintView.setTextColor(text3());
-        previewHintView.setGravity(Gravity.CENTER_HORIZONTAL);
-        previewHintView.setPadding(0, dp(6), 0, 0);
-        previewHintView.setVisibility(View.GONE);
-        card.addView(previewHintView);
-
         // 网络时间对比：点一下重新获取（HTTP Date 头，按 RTT 折半校正）。
         LinearLayout netRow = new LinearLayout(this);
         netRow.setOrientation(LinearLayout.HORIZONTAL);
         netRow.setGravity(Gravity.CENTER);
-        netRow.setPadding(0, dp(10), 0, 0);
+        netRow.setPadding(0, dp(40), 0, 0);
 
         netTimeView = new TextView(this);
         netTimeView.setTextSize(12f);
@@ -334,7 +370,7 @@ public final class ModuleSettingsActivity extends Activity {
         floatHint.setTextSize(11f);
         floatHint.setTextColor(text3());
         floatHint.setGravity(Gravity.CENTER_HORIZONTAL);
-        floatHint.setPadding(0, dp(8), 0, 0);
+        floatHint.setPadding(0, dp(4), 0, 0);
         card.addView(floatHint);
 
         root.addView(card);
@@ -382,7 +418,7 @@ public final class ModuleSettingsActivity extends Activity {
         colorRow.setPadding(0, dp(8), 0, 0);
 
         colorDotView = new View(this);
-        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(16), dp(16));
+        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(26), dp(26));
         dotLp.rightMargin = dp(8);
         colorDotView.setLayoutParams(dotLp);
         colorRow.addView(colorDotView);
@@ -404,6 +440,7 @@ public final class ModuleSettingsActivity extends Activity {
 
         // 右下角三条同心半弧装饰（参考支付卡片），固定浅薰衣草紫。
         CornerArcsDrawable arcs = new CornerArcsDrawable(WAVE_COLOR, dp(2));
+        mCornerArcs = arcs;
         card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arcs}));
 
         LinearLayout switchRow = new LinearLayout(this);
@@ -828,10 +865,14 @@ public final class ModuleSettingsActivity extends Activity {
                 return;
             }
             if (setLauncherIcon(checked)) {
-                Toast.makeText(this, checked
-                                ? R.string.settings_launcher_on
-                                : R.string.settings_launcher_off,
-                        Toast.LENGTH_SHORT).show();
+                if (checked) {
+                    Toast.makeText(this, R.string.settings_launcher_on,
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    // 关闭后桌面图标不会立即消失（启动器缓存），需重启设备才会移除。
+                    Toast.makeText(this, R.string.settings_launcher_off,
+                            Toast.LENGTH_LONG).show();
+                }
             } else {
                 reverting[0] = true;
                 sw.setChecked(!checked);
@@ -1081,12 +1122,11 @@ public final class ModuleSettingsActivity extends Activity {
         int color = ClockSecondsConfig.getHourColor(getContentResolver());
         boolean enabled = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         if (colorDotView != null) {
-            GradientDrawable dot = new GradientDrawable();
-            dot.setShape(GradientDrawable.OVAL);
-            dot.setColor(color);
-            dot.setStroke(dp(1), 0x22000000);
+            // 小结绿点：实心圆 + 荧光呼吸光晕（颜色=当前小时色），由 breathTick 驱动。
+            BreathSwatchDrawable dot = new BreathSwatchDrawable(color, true, 0x22000000, dp(1));
             colorDotView.setBackground(dot);
             colorDotView.setAlpha(enabled ? 1f : 0.35f);
+            mBreathSwatch = dot;
         }
         if (colorValueView != null) {
             colorValueView.setText(String.format(Locale.US, "#%06X", color & 0xFFFFFF));
@@ -1127,6 +1167,10 @@ public final class ModuleSettingsActivity extends Activity {
             View child = grid.getChildAt(i);
             child.setAlpha(enabled ? 1f : 0.3f);
             child.setClickable(enabled);
+        }
+        // 关闭小时颜色时隐藏右下角同心弧，避免从半透明色块后透出、看起来盖住色块。
+        if (mCornerArcs != null) {
+            mCornerArcs.setAlpha(enabled ? 255 : 0);
         }
     }
 
