@@ -9,7 +9,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
+import io.github.kelebao.colorosclockseconds.BreathPlateDrawable;
 import android.os.Build;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -123,8 +123,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static volatile int sFloatHourColor = ClockSecondsConfig.HOUR_COLOR_DEFAULT;
     private static volatile boolean sFloatHourColorEnabled = true;
     private static volatile boolean sFloatColorLoaded;
-    /** 秒数字呼吸高亮开关（进程内缓存，广播更新）。 */
-    private static volatile boolean sSecondBreathEnabled = true;
+    /** 浮窗背景板（呼吸光晕的目标 Drawable；进程内缓存，每秒重绘时更新着色器）。 */
+    private static volatile BreathPlateDrawable sFloatBg;
+    /** 浮窗呼吸光晕的高频刷新定时器（~100ms，与文本 1s 刷新解耦，保证渐变顺滑）。 */
+    private static volatile Runnable sFloatGlowTicker;
+    /** 浮窗背景板底色（光晕之外的深色底，半透明以配合窗口级毛玻璃）。 */
+    private static final int FLOAT_BG_BASE = 0x8C111118;
 
     /** 自定义状态栏时钟识别名（设置页填写，空 = 内置规则）；广播更新。 */
     private static volatile String sCustomRule = "";
@@ -451,11 +455,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
                     // 容器：时间 + 两个浮层按钮，整体可拖动、可拉伸。
                     final FloatBox box = new FloatBox(context);
-                    GradientDrawable bg = new GradientDrawable();
-                    bg.setCornerRadius(floatDp(context, 12));
-                    // 半透明深色底座（配合窗口级模糊即毛玻璃效果）。
-                    bg.setColor(0x8C111118);
+                    // 半透明深色底座（配合窗口级模糊即毛玻璃效果）；呼吸光晕以着色器叠加其上。
+                    BreathPlateDrawable bg = new BreathPlateDrawable(
+                            FLOAT_BG_BASE, floatDp(context, 12));
                     box.setBackground(bg);
+                    sFloatBg = bg;
 
                     // 时间：填满容器，点击它显示/隐藏按钮。
                     final TextView tv = new TextView(context);
@@ -684,6 +688,20 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     };
                     sFloatTicker = tickerTask;
                     sTouchHandler.postDelayed(tickerTask, 1000L);
+
+                    // 呼吸光晕高频刷新：~100ms 一帧，与文本 1s 刷新解耦 → 渐变丝滑无台阶。
+                    final Runnable glowTask = new Runnable() {
+                        @Override
+                        public void run() {
+                            if (sFloatView != box) {
+                                return;
+                            }
+                            updateFloatGlow(tv, lp);
+                            sTouchHandler.postDelayed(this, 100L);
+                        }
+                    };
+                    sFloatGlowTicker = glowTask;
+                    sTouchHandler.postDelayed(glowTask, 100L);
                 } catch (Throwable ignored) {
                     // 浮窗失败不应影响系统
                 }
@@ -848,6 +866,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 sTouchHandler.removeCallbacks(sFloatTicker);
             }
             sFloatTicker = null;
+            if (sTouchHandler != null && sFloatGlowTicker != null) {
+                sTouchHandler.removeCallbacks(sFloatGlowTicker);
+            }
+            sFloatGlowTicker = null;
             if (sFloatView != null) {
                 try {
                     // 浮窗关闭前先记忆几何（左上角坐标 + 尺寸），下次长按按记忆恢复。
@@ -909,12 +931,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 sb.setSpan(new ForegroundColorSpan(sFloatHourColor), 0, 1,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            // 秒数字「呼吸」高亮：只作用于浮窗（状态栏保持系统原色）。
-            ClockSecondsConfig.applyBreathSpans(sb, sb.length() - 2, sb.length(),
-                    0xFFFFFFFF,
-                    sFloatHourColorEnabled
-                            ? sFloatHourColor : ClockSecondsConfig.BREATH_ACCENT_FALLBACK,
-                    sSecondBreathEnabled, System.currentTimeMillis());
+            // 背景板「呼吸灯」渐变：与每秒文本刷新解耦，由独立 ~100ms 定时器平滑驱动。
+            updateFloatGlow(tv, lp);
             // 自适应字号：取宽高允许的较小值，保证 "HH:mm:ss" 完整放进窗口。
             try {
                 float density = context.getResources().getDisplayMetrics().density;
@@ -939,6 +957,27 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             tv.setText(sb);
         } catch (Throwable ignored) {
             // 文本刷新失败静默
+        }
+    }
+
+    /**
+     * 浮窗背景板「呼吸灯」：深色底 + 一枚缓慢明暗/漂移的半弧柔光。
+     * 由独立的 ~100ms 定时器驱动（见 {@code sFloatGlowTicker}），与每秒的文本刷新解耦，
+     * 保证渐变顺滑、无台阶感（用户要求「渐变顺滑点」）。
+     */
+    private static void updateFloatGlow(TextView tv, WindowManager.LayoutParams lp) {
+        if (sFloatBg == null) {
+            return;
+        }
+        try {
+            int pw = (lp != null && lp.width > 0) ? lp.width : tv.getWidth();
+            int ph = (lp != null && lp.height > 0) ? lp.height : tv.getHeight();
+            sFloatBg.setGlow(ClockSecondsConfig.buildPlateGlow(
+                    pw, ph, FLOAT_BG_BASE,
+                    ClockSecondsConfig.glowAccent(sFloatHourColorEnabled, sFloatHourColor),
+                    System.currentTimeMillis()));
+        } catch (Throwable ignored) {
+            // 着色器构建失败则保留上一帧外观，绝不影响时间显示
         }
     }
 
@@ -974,8 +1013,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         try {
             sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver());
-            sSecondBreathEnabled =
-                    ClockSecondsConfig.isSecondBreathEnabled(context.getContentResolver());
             if (!sCustomRuleLoaded) {
                 sCustomRule = ClockSecondsConfig.getClockRule(context.getContentResolver());
                 sCustomRuleLoaded = true;
@@ -1515,7 +1552,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
-                filter.addAction(ClockSecondsConfig.ACTION_SET_SECOND_BREATH);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
@@ -1538,13 +1574,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
                                 sFloatHourColorEnabled =
                                         ClockSecondsConfig.isHourColorEnabled(cr);
-                                refreshClockNow();
-                            } else if (ClockSecondsConfig.ACTION_SET_SECOND_BREATH.equals(action)) {
-                                // 秒数字呼吸高亮开关：写 Secure + 更新内存态 + 立即重绘。
-                                boolean breathOn = intent.getIntExtra(
-                                        ClockSecondsConfig.EXTRA_ENABLED, 1) == 1;
-                                ClockSecondsConfig.setSecondBreathEnabled(cr, breathOn);
-                                sSecondBreathEnabled = breathOn;
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GESTURE.equals(action)) {
                                 ClockSecondsConfig.setGesture(cr, intent.getIntExtra(

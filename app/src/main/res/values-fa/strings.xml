@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">میان‌بر تنظیمات در صفحه اصلی بسازید؛ وقتی خاموش است از مدیر LSPosed باز کنید</string>
     <string name="settings_launcher_on">آیکون لانچر نمایش داده شد</string>
     <string name="settings_launcher_off">آیکون لانچر پنهان شد</string>
-    <string name="settings_breath_title">تنفس ثانیه‌ها</string>
-    <string name="settings_breath_sum">رنگ ارقام ثانیه به‌آرامی تغییر می‌کند و حس تنفس ملایمی می‌دهد</string>
 </resources>

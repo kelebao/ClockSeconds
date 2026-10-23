@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">Добавить ярлык настроек на главный экран; если выключено, открывайте из менеджера LSPosed</string>
     <string name="settings_launcher_on">Значок в лаунчере показан</string>
     <string name="settings_launcher_off">Значок в лаунчере скрыт</string>
-    <string name="settings_breath_title">Дыхание секунд</string>
-    <string name="settings_breath_sum">Цифры секунд медленно меняют цвет, создавая лёгкий эффект дыхания</string>
 </resources>

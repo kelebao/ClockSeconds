@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">إضافة اختصار للإعدادات على الشاشة الرئيسية؛ عند الإيقاف افتحه من مدير LSPosed</string>
     <string name="settings_launcher_on">تم إظهار أيقونة المشغّل</string>
     <string name="settings_launcher_off">تم إخفاء أيقونة المشغّل</string>
-    <string name="settings_breath_title">تنفّس الثواني</string>
-    <string name="settings_breath_sum">تتغير ألوان أرقام الثواني ببطء لإعطاء إحساس تنفّس خفيف</string>
 </resources>

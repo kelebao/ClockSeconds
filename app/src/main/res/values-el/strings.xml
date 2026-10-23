@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">Προσθήκη συντόμευσης ρυθμίσεων στην αρχική οθόνη· αν είναι ανενεργό, ανοίξτε το από τον διαχειριστή LSPosed</string>
     <string name="settings_launcher_on">Το εικονίδιο εμφανίστηκε</string>
     <string name="settings_launcher_off">Το εικονίδιο κρύφτηκε</string>
-    <string name="settings_breath_title">Αναπνοή δευτερολέπτων</string>
-    <string name="settings_breath_sum">Τα ψηφία των δευτερολέπτων αλλάζουν αργά χρώμα, με απαλό εφέ αναπνοής</string>
 </resources>

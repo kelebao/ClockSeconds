@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">สร้างทางลัดการตั้งค่าบนหน้าจอหลัก ปิดแล้วยังเปิดได้จากตัวจัดการ LSPosed</string>
     <string name="settings_launcher_on">แสดงไอคอนแล้ว</string>
     <string name="settings_launcher_off">ซ่อนไอคอนแล้ว</string>
-    <string name="settings_breath_title">หายใจของหลักวินาที</string>
-    <string name="settings_breath_sum">สีของหลักวินาทีเปลี่ยนช้า ๆ ให้ความรู้สึกหายใจเบา ๆ</string>
 </resources>

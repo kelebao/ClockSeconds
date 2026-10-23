@@ -72,6 +72,4 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_launcher_sum">Aggiunge una scorciatoia alle impostazioni nella schermata iniziale; se disattivato, aprilo dal gestore LSPosed</string>
     <string name="settings_launcher_on">Icona del launcher mostrata</string>
     <string name="settings_launcher_off">Icona del launcher nascosta</string>
-    <string name="settings_breath_title">Secondi che respirano</string>
-    <string name="settings_breath_sum">Le cifre dei secondi cambiano colore lentamente, con un leggero effetto respiro</string>
 </resources>

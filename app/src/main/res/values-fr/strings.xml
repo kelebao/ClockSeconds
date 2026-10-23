@@ -72,6 +72,4 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_launcher_sum">Ajouter un raccourci vers les réglages sur l\'écran d\'accueil ; si désactivé, ouvrez-les depuis le gestionnaire LSPosed</string>
     <string name="settings_launcher_on">Icône du lanceur affichée</string>
     <string name="settings_launcher_off">Icône du lanceur masquée</string>
-    <string name="settings_breath_title">Secondes respirantes</string>
-    <string name="settings_breath_sum">Les chiffres des secondes changent lentement de couleur, un léger effet de respiration</string>
 </resources>

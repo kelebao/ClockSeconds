@@ -74,6 +74,4 @@
     <string name="launcher_label" translatable="false">TIME</string>
     <string name="settings_launcher_on">桌面图标已显示</string>
     <string name="settings_launcher_off">桌面图标已隐藏</string>
-    <string name="settings_breath_title">秒数字呼吸高亮</string>
-    <string name="settings_breath_sum">当前秒数字颜色缓慢渐变，带轻微「呼吸」感</string>
 </resources>

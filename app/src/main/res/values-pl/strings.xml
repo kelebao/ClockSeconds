@@ -72,6 +72,4 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_launcher_sum">Dodaj skrót do ustawień na ekranie głównym; gdy wyłączone, otwieraj z menedżera LSPosed</string>
     <string name="settings_launcher_on">Ikona w launcherze pokazana</string>
     <string name="settings_launcher_off">Ikona w launcherze ukryta</string>
-    <string name="settings_breath_title">Oddychające sekundy</string>
-    <string name="settings_breath_sum">Cyfry sekund powoli zmieniają kolor, dając subtelny efekt oddychania</string>
 </resources>

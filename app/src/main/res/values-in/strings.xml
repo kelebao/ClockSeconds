@@ -72,6 +72,4 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_launcher_sum">Tambahkan pintasan pengaturan di layar utama; jika mati, buka dari pengelola LSPosed</string>
     <string name="settings_launcher_on">Ikon peluncur ditampilkan</string>
     <string name="settings_launcher_off">Ikon peluncur disembunyikan</string>
-    <string name="settings_breath_title">Detik bernapas</string>
-    <string name="settings_breath_sum">Warna angka detik berubah perlahan, memberi efek napas halus</string>
 </resources>

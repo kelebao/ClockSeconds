@@ -72,6 +72,4 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_launcher_sum">Add a settings shortcut to the home screen; when off, open it from the LSPosed manager</string>
     <string name="settings_launcher_on">Launcher icon shown</string>
     <string name="settings_launcher_off">Launcher icon hidden</string>
-    <string name="settings_breath_title">Breathing seconds</string>
-    <string name="settings_breath_sum">The seconds digits slowly shift colour for a subtle breathing glow</string>
 </resources>

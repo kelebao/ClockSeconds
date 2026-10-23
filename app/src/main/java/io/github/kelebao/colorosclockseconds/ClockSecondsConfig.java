@@ -1,11 +1,9 @@
 package io.github.kelebao.colorosclockseconds;
 
 import android.content.ContentResolver;
-import android.graphics.Color;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
 import android.provider.Settings;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
 import java.util.Locale;
 
 /**
@@ -64,15 +62,6 @@ public final class ClockSecondsConfig {
     /** 小时颜色总开关（1 = 启用，0 = 关闭并恢复系统默认样式）。默认启用。 */
     public static final String HOUR_COLOR_ENABLED_KEY =
             "coloros_clock_seconds_hour_color_enabled";
-
-    /**
-     * 秒数字「呼吸」高亮（1 = 启用，0 = 关闭）。默认启用。
-     *
-     * <p>给追加的秒数字上色，颜色在「系统文字色 ↔ 小时颜色」之间按约 12 秒一个周期
-     * 缓慢往返（两位秒数字之间再留一点色差形成渐变），肉眼是轻微呼吸感，不刺眼。
-     * 只在 {@code writeTime} 拼接 Span 时生效，不改系统渲染流程。</p>
-     */
-    public static final String SECOND_BREATH_KEY = "coloros_clock_seconds_second_breath";
 
     /**
      * 网络时间相对系统时间的偏移（毫秒，网络 - 系统），由设置页测得后写入。
@@ -134,9 +123,6 @@ public final class ClockSecondsConfig {
     /** 设置页 → SystemUI 写入小时颜色。 */
     public static final String ACTION_SET_HOUR_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR";
-    /** 设置页 → SystemUI 写入秒数字呼吸高亮开关。 */
-    public static final String ACTION_SET_SECOND_BREATH =
-            "io.github.kelebao.colorosclockseconds.action.SET_SECOND_BREATH";
     public static final String ACTION_SET_GESTURE =
             "io.github.kelebao.colorosclockseconds.action.SET_GESTURE";
     public static final String ACTION_SET_HOUR_COLOR_ENABLED =
@@ -204,87 +190,81 @@ public final class ClockSecondsConfig {
         Settings.Secure.putInt(resolver, HOUR_COLOR_ENABLED_KEY, enabled ? 1 : 0);
     }
 
-    /** 秒数字呼吸高亮是否启用（默认启用）。 */
-    public static boolean isSecondBreathEnabled(ContentResolver resolver) {
-        return Settings.Secure.getInt(resolver, SECOND_BREATH_KEY, 1) == 1;
-    }
-
-    /** 写入秒数字呼吸高亮开关。 */
-    public static void setSecondBreathEnabled(ContentResolver resolver, boolean enabled) {
-        Settings.Secure.putInt(resolver, SECOND_BREATH_KEY, enabled ? 1 : 0);
-    }
-
     // ------------------------------------------------------------------
-    // 秒数字「呼吸」高亮（只用于浮窗与设置页预览，不用于状态栏）
+    // 背景板「呼吸灯」渐变（只用于浮窗背景板与设置页预览背景板，不用于文字、不用于状态栏；
+    // 常开、无开关）：深色底 + 一枚柔和的半弧光晕，像呼吸灯一样随时间平滑明暗，并极缓慢漂移。
     // ------------------------------------------------------------------
 
-    /** 呼吸周期（毫秒）：约 12 秒一个完整往返，肉眼是缓慢起伏而非闪烁。 */
-    public static final long BREATH_PERIOD_MS = 12_000L;
-    /** 呼吸最大着色权重（相对目标色）：0.5 即最多混到一半，保证「轻微」。 */
-    public static final float BREATH_MAX_WEIGHT = 0.5f;
-    /** 小时颜色被关闭时的呼吸目标色（柔和天蓝）。 */
+    /** 呼吸周期（毫秒）：约 6 秒一次完整明暗往返，短周期让极值处的「停顿」不易察觉。 */
+    public static final long BREATH_PERIOD_MS = 6_000L;
+    /** 光晕漂移一圈的时长（毫秒）：极缓慢，保证光晕始终在轻微移动、绝不静止发闷。 */
+    private static final long GLOW_DRIFT_PERIOD_MS = 30_000L;
+    /** 小时颜色被关闭时的光晕替代色（柔和天蓝）。 */
     public static final int BREATH_ACCENT_FALLBACK = 0xFF64B5F6;
 
     /**
-     * 当前时刻的呼吸权重（0 ~ {@link #BREATH_MAX_WEIGHT}）。
+     * 当前时刻的光晕强度（0..1）：平滑正弦呼吸，明 → 暗 → 明。
      *
-     * <p>用 {@code (1 - cos(2πt)) / 2} 而不是 sin，保证相位从 0 开始——刚上色时最接近原色，
-     * 不会一出现就突兀地变色。</p>
+     * <p>用余弦保证在峰值/谷值处一阶导为 0，过渡丝滑不闪烁；周期较短（6s）以减轻
+     * 「在极值停顿太久」的手感。</p>
      *
      * @param nowMs 当前时间戳（毫秒）
      */
-    public static float breathWeight(long nowMs) {
-        double phase = Math.floorMod(nowMs, BREATH_PERIOD_MS) / (double) BREATH_PERIOD_MS;
-        double wave = (1 - Math.cos(phase * 2 * Math.PI)) / 2; // 0..1..0
-        return (float) (BREATH_MAX_WEIGHT * wave);
+    public static float breathIntensity(long nowMs) {
+        double p = Math.floorMod(nowMs, BREATH_PERIOD_MS) / (double) BREATH_PERIOD_MS;
+        return (float) ((1 - Math.cos(p * 2 * Math.PI)) / 2); // 0..1..0
     }
 
-    /** 按权重 w（0..1）在 from 与 to 之间线性混合两个 ARGB 颜色。 */
-    public static int blendColor(int from, int to, float w) {
-        if (w <= 0f) {
-            return from;
-        }
-        if (w >= 1f) {
-            return to;
-        }
-        int a = Math.round(Color.alpha(from) + (Color.alpha(to) - Color.alpha(from)) * w);
-        int r = Math.round(Color.red(from) + (Color.red(to) - Color.red(from)) * w);
-        int g = Math.round(Color.green(from) + (Color.green(to) - Color.green(from)) * w);
-        int b = Math.round(Color.blue(from) + (Color.blue(to) - Color.blue(from)) * w);
-        return Color.argb(a, r, g, b);
+    /** 光晕中心相对板中心的横向漂移（归一化，小幅）：极缓慢移动，形成柔和的半弧。 */
+    public static float glowOffsetX(long nowMs) {
+        double p = Math.floorMod(nowMs, GLOW_DRIFT_PERIOD_MS) / (double) GLOW_DRIFT_PERIOD_MS;
+        return (float) (Math.cos(p * 2 * Math.PI) * 0.16);
+    }
+
+    /** 光晕中心相对板中心的纵向漂移（归一化，小幅）。 */
+    public static float glowOffsetY(long nowMs) {
+        double p = Math.floorMod(nowMs, GLOW_DRIFT_PERIOD_MS) / (double) GLOW_DRIFT_PERIOD_MS;
+        return (float) (Math.sin(p * 2 * Math.PI) * 0.10);
+    }
+
+    /** 取光晕强调色：小时颜色启用时用小时颜色，否则用柔和天蓝。 */
+    public static int glowAccent(boolean hourColorEnabled, int hourColor) {
+        return hourColorEnabled ? hourColor : BREATH_ACCENT_FALLBACK;
     }
 
     /**
-     * 给 {@code [digitsStart, digitsEnd)} 区间的秒数字上「呼吸」渐变。
+     * 构造背景板的「呼吸灯」半弧渐变（{@link RadialGradient}）。
      *
-     * <p>颜色在 {@code baseColor}（原文字色）与 {@code accent}（小时颜色）之间按呼吸权重往返；
-     * 两位数字再取不同权重（第二个更接近原色），形成从左到右的轻微渐变。</p>
+     * <p>深色底板上放一枚偏在一侧的柔光：中心不在正中 → 亮区沿一侧铺开、呈半弧形（而非
+     * 呆板的正中圆斑）；亮度与半径随 {@link #breathIntensity} 平滑起伏 → 像呼吸灯；中心再叠加
+     * 一层极缓慢的漂移 → 全程有细微流动、不会在明暗两端「停顿太久」，整体丝滑。</p>
      *
-     * @param enabled 总开关关闭时直接返回，不加任何 Span
+     * <p>仅作用于背景板 drawable；秒数字与状态栏文字始终保持系统原色。</p>
+     *
+     * @param plateW,plateH 背景板像素宽高（决定光晕尺寸）
+     * @param baseColor     底色（光晕之外的部分）
+     * @param accent        光晕颜色（通常为小时颜色）
+     * @param nowMs         当前时间戳（毫秒）
      */
-    public static void applyBreathSpans(SpannableStringBuilder sb, int digitsStart, int digitsEnd,
-                                        int baseColor, int accent, boolean enabled, long nowMs) {
-        if (!enabled || sb == null) {
-            return;
-        }
-        int count = digitsEnd - digitsStart;
-        if (count < 1) {
-            return;
-        }
-        try {
-            float weight = breathWeight(nowMs);
-            if (count >= 2) {
-                sb.setSpan(new ForegroundColorSpan(blendColor(baseColor, accent, weight)),
-                        digitsStart, digitsStart + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                sb.setSpan(new ForegroundColorSpan(blendColor(baseColor, accent, weight * 0.55f)),
-                        digitsStart + 1, digitsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            } else {
-                sb.setSpan(new ForegroundColorSpan(blendColor(baseColor, accent, weight)),
-                        digitsStart, digitsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-        } catch (Throwable ignored) {
-            // 上色失败只是没有呼吸效果，绝不影响时间显示
-        }
+    public static RadialGradient buildPlateGlow(int plateW, int plateH, int baseColor,
+                                                int accent, long nowMs) {
+        int w = Math.max(1, plateW);
+        int h = Math.max(1, plateH);
+        float inten = breathIntensity(nowMs);
+        // 中心基础偏右（形成向右铺开的半弧高光），叠加极缓慢漂移。
+        float cx = w * (0.60f + glowOffsetX(nowMs));
+        float cy = h * (0.50f + glowOffsetY(nowMs));
+        // 半径随呼吸轻微起伏：亮时晕开、暗时收拢。
+        float radius = Math.max(w, h) * (0.55f + 0.22f * inten);
+        int rgb = accent & 0x00FFFFFF;
+        // 亮度调制：中心 alpha 在 0x1A（暗）..0x66（亮）之间平滑往返。
+        int coreA = Math.round(0x1A + (0x66 - 0x1A) * inten);
+        int core = (rgb) | (coreA << 24);
+        int mid = (rgb) | (Math.round(coreA * 0.32f) << 24);
+        // 边缘完全透明 → 光晕作为覆盖层透出底板的圆角底色，呼吸灯质感。
+        return new RadialGradient(cx, cy, radius,
+                new int[]{core, mid, 0x00000000},
+                new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP);
     }
 
     /** 读取网络时间偏移（毫秒，网络 - 系统）。无记录时为 0（按系统时间显示）。 */

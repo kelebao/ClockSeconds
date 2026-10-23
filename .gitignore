@@ -12,3 +12,7 @@ deliverables/
 # 本机调试产物（logcat 导出、LSPosed 配置库快照）
 docs/*.log
 docs/lspd_cfg.db
+
+# 根目录临时截图（验证/调试用，勿入库）
+cyc_*.png
+*.tmp

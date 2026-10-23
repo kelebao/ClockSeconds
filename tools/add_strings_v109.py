@@ -97,52 +97,6 @@ TRANS = {
 }
 
 
-BREATH = {
-    'zh': ('秒数字呼吸高亮', '当前秒数字颜色缓慢渐变，带轻微「呼吸」感'),
-    'en': ('Breathing seconds',
-           'The seconds digits slowly shift colour for a subtle breathing glow'),
-    'zh-TW': ('秒數字呼吸高亮', '目前秒數字顏色緩慢漸變，帶輕微「呼吸」感'),
-    'ja': ('秒数字の呼吸ハイライト',
-           '秒の数字の色がゆっくり変化し、かすかな呼吸のような輝きになります'),
-    'ko': ('초 숫자 호흡 강조',
-           '초 숫자의 색이 천천히 변하며 은은한 호흡 효과를 줍니다'),
-    'tr': ('Saniyelerde nefes efekti',
-           'Saniye rakamlarının rengi yavaşça değişir, hafif bir nefes etkisi verir'),
-    'ru': ('Дыхание секунд',
-           'Цифры секунд медленно меняют цвет, создавая лёгкий эффект дыхания'),
-    'vi': ('Nhịp thở cho số giây',
-           'Màu số giây thay đổi chậm, tạo hiệu ứng thở nhẹ'),
-    'th': ('หายใจของหลักวินาที',
-           'สีของหลักวินาทีเปลี่ยนช้า ๆ ให้ความรู้สึกหายใจเบา ๆ'),
-    'de': ('Atmende Sekunden',
-           'Die Sekundenziffern wechseln langsam die Farbe – ein dezenter Atem-Effekt'),
-    'es': ('Segundos con respiración',
-           'Los dígitos de los segundos cambian de color lentamente, '
-           'con un sutil efecto de respiración'),
-    'fr': ('Secondes respirantes',
-           'Les chiffres des secondes changent lentement de couleur, '
-           'un léger effet de respiration'),
-    'uk': ('Дихання секунд',
-           'Цифри секунд повільно змінюють колір, створюючи легкий ефект дихання'),
-    'pl': ('Oddychające sekundy',
-           'Cyfry sekund powoli zmieniają kolor, dając subtelny efekt oddychania'),
-    'pt-BR': ('Segundos respirando',
-              'Os dígitos dos segundos mudam de cor lentamente, '
-              'com um sutil efeito de respiração'),
-    'fa': ('تنفس ثانیه\u200cها',
-           'رنگ ارقام ثانیه به\u200cآرامی تغییر می\u200cکند و حس تنفس ملایمی می\u200cدهد'),
-    'ar': ('تنفّس الثواني',
-           'تتغير ألوان أرقام الثواني ببطء لإعطاء إحساس تنفّس خفيف'),
-    'id': ('Detik bernapas',
-           'Warna angka detik berubah perlahan, memberi efek napas halus'),
-    'it': ('Secondi che respirano',
-           'Le cifre dei secondi cambiano colore lentamente, '
-           'con un leggero effetto respiro'),
-    'el': ('Αναπνοή δευτερολέπτων',
-           'Τα ψηφία των δευτερολέπτων αλλάζουν αργά χρώμα, με απαλό εφέ αναπνοής'),
-    'ka': ('წამების სუნთქვა',
-           'წამების ციფრების ფერი ნელა იცვლება — რბილი სუნთქვის ეფექტი'),
-}
 
 
 def esc(s):
@@ -173,13 +127,6 @@ def main():
         if 'name="settings_launcher_off"' not in src:
             block.append('    <string name="settings_launcher_off">%s</string>'
                          % esc(off_txt))
-        bar_title, bar_sum = BREATH[lang]
-        if 'name="settings_breath_title"' not in src:
-            block.append('    <string name="settings_breath_title">%s</string>'
-                         % esc(bar_title))
-        if 'name="settings_breath_sum"' not in src:
-            block.append('    <string name="settings_breath_sum">%s</string>'
-                         % esc(bar_sum))
         if not block:
             print('  = %s already has keys' % lang)
             continue

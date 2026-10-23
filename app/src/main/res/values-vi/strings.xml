@@ -72,6 +72,4 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_launcher_sum">Tạo lối tắt cài đặt trên màn hình chính; khi tắt vẫn mở được từ trình quản lý LSPosed</string>
     <string name="settings_launcher_on">Đã hiện biểu tượng</string>
     <string name="settings_launcher_off">Đã ẩn biểu tượng</string>
-    <string name="settings_breath_title">Nhịp thở cho số giây</string>
-    <string name="settings_breath_sum">Màu số giây thay đổi chậm, tạo hiệu ứng thở nhẹ</string>
 </resources>

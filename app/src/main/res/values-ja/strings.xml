@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">ホーム画面に設定へのショートカットを作成。オフでも LSPosed マネージャーから開けます</string>
     <string name="settings_launcher_on">ランチャーのアイコンを表示しました</string>
     <string name="settings_launcher_off">ランチャーのアイコンを非表示にしました</string>
-    <string name="settings_breath_title">秒数字の呼吸ハイライト</string>
-    <string name="settings_breath_sum">秒の数字の色がゆっくり変化し、かすかな呼吸のような輝きになります</string>
 </resources>

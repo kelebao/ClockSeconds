@@ -72,6 +72,4 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_launcher_sum">Ana ekrana ayarlar kısayolu ekle; kapalıyken LSPosed yöneticisinden açılır</string>
     <string name="settings_launcher_on">Başlatıcı simgesi gösterildi</string>
     <string name="settings_launcher_off">Başlatıcı simgesi gizlendi</string>
-    <string name="settings_breath_title">Saniyelerde nefes efekti</string>
-    <string name="settings_breath_sum">Saniye rakamlarının rengi yavaşça değişir, hafif bir nefes etkisi verir</string>
 </resources>

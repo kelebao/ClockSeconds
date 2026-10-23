@@ -72,6 +72,4 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_launcher_sum">Añade un acceso a los ajustes en la pantalla de inicio; si está desactivado, ábrelo desde el gestor de LSPosed</string>
     <string name="settings_launcher_on">Icono del lanzador mostrado</string>
     <string name="settings_launcher_off">Icono del lanzador oculto</string>
-    <string name="settings_breath_title">Segundos con respiración</string>
-    <string name="settings_breath_sum">Los dígitos de los segundos cambian de color lentamente, con un sutil efecto de respiración</string>
 </resources>

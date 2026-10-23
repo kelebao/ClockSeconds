@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">홈 화면에 설정 바로가기를 만듭니다. 꺼도 LSPosed 관리자에서 열 수 있습니다</string>
     <string name="settings_launcher_on">런처 아이콘을 표시했습니다</string>
     <string name="settings_launcher_off">런처 아이콘을 숨겼습니다</string>
-    <string name="settings_breath_title">초 숫자 호흡 강조</string>
-    <string name="settings_breath_sum">초 숫자의 색이 천천히 변하며 은은한 호흡 효과를 줍니다</string>
 </resources>

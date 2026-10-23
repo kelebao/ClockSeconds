@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">მთავარ ეკრანზე პარამეტრების მალსახმობის დამატება; გამორთულისას გახსენით LSPosed მენეჯერიდან</string>
     <string name="settings_launcher_on">ხატული ნაჩვენებია</string>
     <string name="settings_launcher_off">ხატული დამალულია</string>
-    <string name="settings_breath_title">წამების სუნთქვა</string>
-    <string name="settings_breath_sum">წამების ციფრების ფერი ნელა იცვლება — რბილი სუნთქვის ეფექტი</string>
 </resources>

@@ -72,6 +72,4 @@
     <string name="settings_launcher_sum">在桌面產生設定入口；關閉後仍可從 LSPosed 管理器開啟</string>
     <string name="settings_launcher_on">桌面圖示已顯示</string>
     <string name="settings_launcher_off">桌面圖示已隱藏</string>
-    <string name="settings_breath_title">秒數字呼吸高亮</string>
-    <string name="settings_breath_sum">目前秒數字顏色緩慢漸變，帶輕微「呼吸」感</string>
 </resources>

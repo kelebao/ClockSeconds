@@ -14,6 +14,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import io.github.kelebao.colorosclockseconds.BreathPlateDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,6 +29,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridLayout;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -90,6 +92,10 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean night;
     private TextView chipView;
     private TextView previewView;
+    /** 预览时间所在的背景板（随秒数字「呼吸」缓慢渐变高亮）。 */
+    private FrameLayout previewPlate;
+    /** 背景板 Drawable（每秒重绘时更新呼吸光晕）。 */
+    private BreathPlateDrawable previewPlateBg;
     private TextView netTimeView;
     private TextView previewHintView;
     private TextView syncView;
@@ -119,6 +125,14 @@ public final class ModuleSettingsActivity extends Activity {
         public void run() {
             updatePreview();
             ticker.postDelayed(this, 1000L);
+        }
+    };
+    /** 背景板呼吸光晕高频刷新（~100ms）：与文本 1s 刷新解耦 → 渐变丝滑无台阶。 */
+    private final Runnable breathTick = new Runnable() {
+        @Override
+        public void run() {
+            updatePreviewBreath();
+            ticker.postDelayed(this, 100L);
         }
     };
 
@@ -159,12 +173,15 @@ public final class ModuleSettingsActivity extends Activity {
         refreshStatus();
         ticker.removeCallbacks(tick);
         ticker.post(tick);
+        ticker.removeCallbacks(breathTick);
+        ticker.post(breathTick);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         ticker.removeCallbacks(tick);
+        ticker.removeCallbacks(breathTick);
         ticker.removeCallbacks(hideHint);
         unregisterDetectReceiver();
     }
@@ -263,13 +280,23 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void buildPreviewCard(LinearLayout root) {
         LinearLayout card = card();
+
+        // 背景板：包裹预览时间文字，随秒数字「呼吸」缓慢渐变高亮（仅此处与浮窗，不作用于状态栏文字）。
+        previewPlate = new FrameLayout(this);
+        BreathPlateDrawable plateBg = new BreathPlateDrawable(
+                night ? 0x1AFFFFFF : 0x0A000000, dp(18));
+        previewPlate.setBackground(plateBg);
+        previewPlateBg = plateBg;
+        previewPlate.setPadding(dp(22), dp(14), dp(22), dp(14));
+
         previewView = new TextView(this);
         previewView.setTextSize(44f);
         previewView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         previewView.setTextColor(text());
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
         previewView.setOnClickListener(v -> showPreviewHint());
-        card.addView(previewView);
+        previewPlate.addView(previewView);
+        card.addView(previewPlate);
 
         // 提示用户：要点状态栏的时钟，不是点这里。点击预览后才出现，3 秒后自动收起。
         previewHintView = new TextView(this);
@@ -432,56 +459,9 @@ public final class ModuleSettingsActivity extends Activity {
         hint.setPadding(0, dp(10), 0, 0);
         card.addView(hint);
 
-        // 秒数字呼吸高亮开关（与小时颜色同卡，都属「状态栏时间外观」）。
-        LinearLayout breathRow = new LinearLayout(this);
-        breathRow.setOrientation(LinearLayout.HORIZONTAL);
-        breathRow.setGravity(Gravity.CENTER_VERTICAL);
-        breathRow.setPadding(0, dp(16), 0, 0);
-
-        LinearLayout breathTexts = new LinearLayout(this);
-        breathTexts.setOrientation(LinearLayout.VERTICAL);
-        breathTexts.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        TextView breathTitle = new TextView(this);
-        breathTitle.setText(R.string.settings_breath_title);
-        breathTitle.setTextSize(15f);
-        breathTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        breathTitle.setTextColor(text());
-        breathTexts.addView(breathTitle);
-        TextView breathSub = new TextView(this);
-        breathSub.setText(R.string.settings_breath_sum);
-        breathSub.setTextSize(11f);
-        breathSub.setTextColor(text2());
-        breathSub.setPadding(0, dp(3), 0, 0);
-        breathTexts.addView(breathSub);
-        breathRow.addView(breathTexts);
-
-        final Switch breathSwitch = new Switch(this);
-        breathSwitch.setChecked(ClockSecondsConfig.isSecondBreathEnabled(getContentResolver()));
-        styleSwitch(breathSwitch);
-        breathRow.addView(breathSwitch);
-        card.addView(breathRow);
+        // 秒数字「呼吸」高亮已改为「背景板呼吸」且常开、无开关（见预览背景板与浮窗背景板）。
 
         root.addView(card);
-
-        final boolean[] breathReverting = {false};
-        breathSwitch.setOnCheckedChangeListener((v, checked) -> {
-            if (breathReverting[0]) {
-                return;
-            }
-            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_SECOND_BREATH)
-                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
-            applyConfig(ClockSecondsConfig.SECOND_BREATH_KEY, checked ? 1 : 0, intent, ok -> {
-                if (ok) {
-                    updatePreview();
-                } else {
-                    breathReverting[0] = true;
-                    breathSwitch.setChecked(!checked);
-                    breathReverting[0] = false;
-                    toastWriteFailed();
-                }
-            });
-        });
 
         final boolean[] reverting = {false};
         colorSwitch.setOnCheckedChangeListener((v, checked) -> {
@@ -980,17 +960,6 @@ public final class ModuleSettingsActivity extends Activity {
             sb.setSpan(new ForegroundColorSpan(ClockSecondsConfig.getHourColor(
                     getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        // 秒数字「呼吸」高亮：只作用于预览（与浮窗一致），状态栏保持系统原色。
-        if (seconds) {
-            int base = previewView.getCurrentTextColor();
-            int accent = ClockSecondsConfig.isHourColorEnabled(getContentResolver())
-                    ? ClockSecondsConfig.getHourColor(getContentResolver())
-                    : ClockSecondsConfig.BREATH_ACCENT_FALLBACK;
-            ClockSecondsConfig.applyBreathSpans(sb, sb.length() - 2, sb.length(),
-                    base, accent,
-                    ClockSecondsConfig.isSecondBreathEnabled(getContentResolver()),
-                    System.currentTimeMillis());
-        }
         previewView.setText(sb);
 
         // 状态胶囊也每秒跟随：用户在状态栏点击切换后，页面能立刻反映真实状态。
@@ -998,7 +967,34 @@ public final class ModuleSettingsActivity extends Activity {
             chipView.setText(seconds
                     ? R.string.settings_enabled : R.string.settings_disabled);
         }
+        // 预览背景板「呼吸」高亮：让承载时间的面板随秒数字缓慢渐变（文字保持原色）。
+        updatePreviewBreath();
         updateNetworkTimeLine();
+    }
+
+    /** 预览时间所在的背景板随秒数字「呼吸」缓慢渐变高亮（仅此面板，不作用于文字或状态栏）。 */
+    private void updatePreviewBreath() {
+        if (previewPlateBg == null || previewPlate == null) {
+            return;
+        }
+        try {
+            int pw = previewPlate.getWidth();
+            int ph = previewPlate.getHeight();
+            if (pw <= 0 || ph <= 0) {
+                // 尚未测量（首帧）：用预览字号粗估一个尺寸，避免光晕为 0。
+                pw = Math.max(pw, dp(200));
+                ph = Math.max(ph, dp(72));
+            }
+            int base = night ? 0x1AFFFFFF : 0x0A000000;
+            int accent = ClockSecondsConfig.glowAccent(
+                    ClockSecondsConfig.isHourColorEnabled(getContentResolver()),
+                    ClockSecondsConfig.getHourColor(getContentResolver()));
+            previewPlateBg.setBaseColor(base);
+            previewPlateBg.setGlow(ClockSecondsConfig.buildPlateGlow(
+                    pw, ph, base, accent, System.currentTimeMillis()));
+        } catch (Throwable ignored) {
+            // 着色器失败保留上一帧外观，绝不影响设置页
+        }
     }
 
     /** 网络时间 = 本地时间 + 采样得到的偏移，每秒跟着走。 */

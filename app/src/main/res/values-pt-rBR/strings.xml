@@ -72,6 +72,4 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_launcher_sum">Adiciona um atalho para as configurações na tela inicial; se desativado, abra pelo gerenciador do LSPosed</string>
     <string name="settings_launcher_on">Ícone do launcher exibido</string>
     <string name="settings_launcher_off">Ícone do launcher oculto</string>
-    <string name="settings_breath_title">Segundos respirando</string>
-    <string name="settings_breath_sum">Os dígitos dos segundos mudam de cor lentamente, com um sutil efeito de respiração</string>
 </resources>
