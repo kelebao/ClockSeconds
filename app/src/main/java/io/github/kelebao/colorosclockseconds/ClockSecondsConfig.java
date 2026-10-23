@@ -1,8 +1,6 @@
 package io.github.kelebao.colorosclockseconds;
 
 import android.content.ContentResolver;
-import android.graphics.RadialGradient;
-import android.graphics.Shader;
 import android.provider.Settings;
 import java.util.Locale;
 
@@ -191,81 +189,8 @@ public final class ClockSecondsConfig {
     }
 
     // ------------------------------------------------------------------
-    // 背景板「呼吸灯」渐变（只用于浮窗背景板与设置页预览背景板，不用于文字、不用于状态栏；
-    // 常开、无开关）：深色底 + 一枚柔和的半弧光晕，像呼吸灯一样随时间平滑明暗，并极缓慢漂移。
+    // （背景板呼吸灯已移除；如后续再做类似效果，在此新增即可）
     // ------------------------------------------------------------------
-
-    /** 呼吸周期（毫秒）：约 6 秒一次完整明暗往返，短周期让极值处的「停顿」不易察觉。 */
-    public static final long BREATH_PERIOD_MS = 6_000L;
-    /** 光晕漂移一圈的时长（毫秒）：极缓慢，保证光晕始终在轻微移动、绝不静止发闷。 */
-    private static final long GLOW_DRIFT_PERIOD_MS = 30_000L;
-    /** 小时颜色被关闭时的光晕替代色（柔和天蓝）。 */
-    public static final int BREATH_ACCENT_FALLBACK = 0xFF64B5F6;
-
-    /**
-     * 当前时刻的光晕强度（0..1）：平滑正弦呼吸，明 → 暗 → 明。
-     *
-     * <p>用余弦保证在峰值/谷值处一阶导为 0，过渡丝滑不闪烁；周期较短（6s）以减轻
-     * 「在极值停顿太久」的手感。</p>
-     *
-     * @param nowMs 当前时间戳（毫秒）
-     */
-    public static float breathIntensity(long nowMs) {
-        double p = Math.floorMod(nowMs, BREATH_PERIOD_MS) / (double) BREATH_PERIOD_MS;
-        return (float) ((1 - Math.cos(p * 2 * Math.PI)) / 2); // 0..1..0
-    }
-
-    /** 光晕中心相对板中心的横向漂移（归一化，小幅）：极缓慢移动，形成柔和的半弧。 */
-    public static float glowOffsetX(long nowMs) {
-        double p = Math.floorMod(nowMs, GLOW_DRIFT_PERIOD_MS) / (double) GLOW_DRIFT_PERIOD_MS;
-        return (float) (Math.cos(p * 2 * Math.PI) * 0.16);
-    }
-
-    /** 光晕中心相对板中心的纵向漂移（归一化，小幅）。 */
-    public static float glowOffsetY(long nowMs) {
-        double p = Math.floorMod(nowMs, GLOW_DRIFT_PERIOD_MS) / (double) GLOW_DRIFT_PERIOD_MS;
-        return (float) (Math.sin(p * 2 * Math.PI) * 0.10);
-    }
-
-    /** 取光晕强调色：小时颜色启用时用小时颜色，否则用柔和天蓝。 */
-    public static int glowAccent(boolean hourColorEnabled, int hourColor) {
-        return hourColorEnabled ? hourColor : BREATH_ACCENT_FALLBACK;
-    }
-
-    /**
-     * 构造背景板的「呼吸灯」半弧渐变（{@link RadialGradient}）。
-     *
-     * <p>深色底板上放一枚偏在一侧的柔光：中心不在正中 → 亮区沿一侧铺开、呈半弧形（而非
-     * 呆板的正中圆斑）；亮度与半径随 {@link #breathIntensity} 平滑起伏 → 像呼吸灯；中心再叠加
-     * 一层极缓慢的漂移 → 全程有细微流动、不会在明暗两端「停顿太久」，整体丝滑。</p>
-     *
-     * <p>仅作用于背景板 drawable；秒数字与状态栏文字始终保持系统原色。</p>
-     *
-     * @param plateW,plateH 背景板像素宽高（决定光晕尺寸）
-     * @param baseColor     底色（光晕之外的部分）
-     * @param accent        光晕颜色（通常为小时颜色）
-     * @param nowMs         当前时间戳（毫秒）
-     */
-    public static RadialGradient buildPlateGlow(int plateW, int plateH, int baseColor,
-                                                int accent, long nowMs) {
-        int w = Math.max(1, plateW);
-        int h = Math.max(1, plateH);
-        float inten = breathIntensity(nowMs);
-        // 中心基础偏右（形成向右铺开的半弧高光），叠加极缓慢漂移。
-        float cx = w * (0.60f + glowOffsetX(nowMs));
-        float cy = h * (0.50f + glowOffsetY(nowMs));
-        // 半径随呼吸轻微起伏：亮时晕开、暗时收拢。
-        float radius = Math.max(w, h) * (0.55f + 0.22f * inten);
-        int rgb = accent & 0x00FFFFFF;
-        // 亮度调制：中心 alpha 在 0x1A（暗）..0x66（亮）之间平滑往返。
-        int coreA = Math.round(0x1A + (0x66 - 0x1A) * inten);
-        int core = (rgb) | (coreA << 24);
-        int mid = (rgb) | (Math.round(coreA * 0.32f) << 24);
-        // 边缘完全透明 → 光晕作为覆盖层透出底板的圆角底色，呼吸灯质感。
-        return new RadialGradient(cx, cy, radius,
-                new int[]{core, mid, 0x00000000},
-                new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP);
-    }
 
     /** 读取网络时间偏移（毫秒，网络 - 系统）。无记录时为 0（按系统时间显示）。 */
     public static long getNetOffset(ContentResolver resolver) {

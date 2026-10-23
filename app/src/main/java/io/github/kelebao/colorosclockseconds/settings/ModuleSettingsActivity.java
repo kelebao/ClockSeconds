@@ -13,8 +13,9 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import io.github.kelebao.colorosclockseconds.BreathPlateDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,6 +23,8 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
+import io.github.kelebao.colorosclockseconds.WavyLineView;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
@@ -92,10 +95,10 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean night;
     private TextView chipView;
     private TextView previewView;
-    /** 预览时间所在的背景板（随秒数字「呼吸」缓慢渐变高亮）。 */
+    /** 预览时间所在的背景板容器。 */
     private FrameLayout previewPlate;
-    /** 背景板 Drawable（每秒重绘时更新呼吸光晕）。 */
-    private BreathPlateDrawable previewPlateBg;
+    /** 虚线分隔线 / 右下角同心弧的固定颜色（浅薰衣草紫 #D4C5FF）。 */
+    private static final int WAVE_COLOR = 0xFFD4C5FF;
     private TextView netTimeView;
     private TextView previewHintView;
     private TextView syncView;
@@ -125,14 +128,6 @@ public final class ModuleSettingsActivity extends Activity {
         public void run() {
             updatePreview();
             ticker.postDelayed(this, 1000L);
-        }
-    };
-    /** 背景板呼吸光晕高频刷新（~100ms）：与文本 1s 刷新解耦 → 渐变丝滑无台阶。 */
-    private final Runnable breathTick = new Runnable() {
-        @Override
-        public void run() {
-            updatePreviewBreath();
-            ticker.postDelayed(this, 100L);
         }
     };
 
@@ -173,15 +168,12 @@ public final class ModuleSettingsActivity extends Activity {
         refreshStatus();
         ticker.removeCallbacks(tick);
         ticker.post(tick);
-        ticker.removeCallbacks(breathTick);
-        ticker.post(breathTick);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         ticker.removeCallbacks(tick);
-        ticker.removeCallbacks(breathTick);
         ticker.removeCallbacks(hideHint);
         unregisterDetectReceiver();
     }
@@ -281,12 +273,8 @@ public final class ModuleSettingsActivity extends Activity {
     private void buildPreviewCard(LinearLayout root) {
         LinearLayout card = card();
 
-        // 背景板：包裹预览时间文字，随秒数字「呼吸」缓慢渐变高亮（仅此处与浮窗，不作用于状态栏文字）。
+        // 预览时间容器（仅承载文字）。
         previewPlate = new FrameLayout(this);
-        BreathPlateDrawable plateBg = new BreathPlateDrawable(
-                night ? 0x1AFFFFFF : 0x0A000000, dp(18));
-        previewPlate.setBackground(plateBg);
-        previewPlateBg = plateBg;
         previewPlate.setPadding(dp(22), dp(14), dp(22), dp(14));
 
         previewView = new TextView(this);
@@ -413,6 +401,10 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void buildColorCard(LinearLayout root) {
         LinearLayout card = card();
+
+        // 右下角三条同心半弧装饰（参考支付卡片），固定浅薰衣草紫。
+        CornerArcsDrawable arcs = new CornerArcsDrawable(WAVE_COLOR, dp(2));
+        card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arcs}));
 
         LinearLayout switchRow = new LinearLayout(this);
         switchRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -967,34 +959,7 @@ public final class ModuleSettingsActivity extends Activity {
             chipView.setText(seconds
                     ? R.string.settings_enabled : R.string.settings_disabled);
         }
-        // 预览背景板「呼吸」高亮：让承载时间的面板随秒数字缓慢渐变（文字保持原色）。
-        updatePreviewBreath();
         updateNetworkTimeLine();
-    }
-
-    /** 预览时间所在的背景板随秒数字「呼吸」缓慢渐变高亮（仅此面板，不作用于文字或状态栏）。 */
-    private void updatePreviewBreath() {
-        if (previewPlateBg == null || previewPlate == null) {
-            return;
-        }
-        try {
-            int pw = previewPlate.getWidth();
-            int ph = previewPlate.getHeight();
-            if (pw <= 0 || ph <= 0) {
-                // 尚未测量（首帧）：用预览字号粗估一个尺寸，避免光晕为 0。
-                pw = Math.max(pw, dp(200));
-                ph = Math.max(ph, dp(72));
-            }
-            int base = night ? 0x1AFFFFFF : 0x0A000000;
-            int accent = ClockSecondsConfig.glowAccent(
-                    ClockSecondsConfig.isHourColorEnabled(getContentResolver()),
-                    ClockSecondsConfig.getHourColor(getContentResolver()));
-            previewPlateBg.setBaseColor(base);
-            previewPlateBg.setGlow(ClockSecondsConfig.buildPlateGlow(
-                    pw, ph, base, accent, System.currentTimeMillis()));
-        } catch (Throwable ignored) {
-            // 着色器失败保留上一帧外观，绝不影响设置页
-        }
     }
 
     /** 网络时间 = 本地时间 + 采样得到的偏移，每秒跟着走。 */
@@ -1281,10 +1246,10 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     private View divider() {
-        View v = new View(this);
-        v.setBackgroundColor(night ? DARK_DIVIDER : LIGHT_DIVIDER);
+        WavyLineView v = new WavyLineView(this);
+        v.setLineColor(WAVE_COLOR);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, dp(1)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(3));
         v.setLayoutParams(lp);
         return v;
     }
