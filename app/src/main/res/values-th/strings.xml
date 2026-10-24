@@ -77,4 +77,16 @@
     <string name="settings_intro_title">ยินดีต้อนรับสู่ Clock Seconds</string>
     <string name="settings_intro_msg">ขอบคุณที่ติดตั้ง Clock Seconds!\n\n1. เปิดใช้งาน: ใน LSPosed ให้เปิดโมดูลนี้และทำเครื่องหมาย «SystemUI» แล้วรีสตาร์ท SystemUI\n2. แสดง/ซ่อนวินาที: แตะเวลาในแถบสถานะ (มุมซ้ายบน) เพื่อสลับ หากขัดแย้งกับการดึงแผงการแจ้งเตือน ให้เปลี่ยนเป็นแตะสองครั้งใน «ท่าทางสลับวินาที»\n3. สีชั่วโมง: ระบายสีหลักสิบของชั่วโมงด้วยสีใดก็ได้ ปิดแล้วจะคืนค่ามาตรฐานของระบบ\n4. เวลาลอย: กดค้างเวลาในแถบสถานะเพื่อแสดงเวลาเครือข่าย\n5. การเปลี่ยนมีผลทันที หากไม่ ให้รีสตาร์ท SystemUI หรืออุปกรณ์</string>
     <string name="settings_intro_ok">เริ่มต้น</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">แดง</string>
+    <string name="swatch_orange">ส้ม</string>
+    <string name="swatch_amber">อำพัน</string>
+    <string name="swatch_green">เขียว</string>
+    <string name="swatch_cyan">ไซยาน</string>
+    <string name="swatch_blue">น้ำเงิน</string>
+    <string name="swatch_purple">ม่วง</string>
+    <string name="swatch_pink">ชมพู</string>
+    <string name="swatch_white">ขาว</string>
+    <string name="swatch_grey">เทา</string>
 </resources>

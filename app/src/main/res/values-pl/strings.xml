@@ -77,4 +77,16 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_intro_title">Witaj w Clock Seconds</string>
     <string name="settings_intro_msg">Dziękujemy za zainstalowanie Clock Seconds!\n\n1. Aktywacja: w LSPosed włącz ten moduł i zaznacz «SystemUI», a następnie zrestartuj SystemUI.\n2. Pokaż/ukryj sekundy: dotknij godziny na pasku stanu (lewy górny róg), aby przełączyć. Jeśli koliduje to z opuszczaniem panelu powiadomień, zmień na podwójne dotknięcie w „Gescie przełączania sekund”.\n3. Kolor godziny: pokoloruj cyfrę dziesiątek godziny dowolnym kolorem; po wyłączeniu przywraca domyślne ustawienie systemu.\n4. Zwijana godzina: przytrzymaj godzinę na pasku stanu, aby pokazać czas sieciowy.\n5. Zmiany są natychmiastowe; w przeciwnym razie zrestartuj SystemUI lub urządzenie.</string>
     <string name="settings_intro_ok">Zacznij</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Czerwony</string>
+    <string name="swatch_orange">Pomarańczowy</string>
+    <string name="swatch_amber">Bursztynowy</string>
+    <string name="swatch_green">Zielony</string>
+    <string name="swatch_cyan">Cyjan</string>
+    <string name="swatch_blue">Niebieski</string>
+    <string name="swatch_purple">Purpurowy</string>
+    <string name="swatch_pink">Różowy</string>
+    <string name="swatch_white">Biały</string>
+    <string name="swatch_grey">Szary</string>
 </resources>

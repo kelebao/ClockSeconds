@@ -19,8 +19,7 @@ public class ArcTickDrawable extends Drawable {
     private float mBreath;     // 呼吸强度 0..1（6s 余弦）
     private float mDrift;      // 漂移相位 0..1（30s）
 
-    public ArcTickDrawable(int color, boolean night) {
-        // color 参数保留以兼容调用方；现已改用固定色板，不再使用单色。
+    public ArcTickDrawable(boolean night) {
         mNight = night;
         for (Paint p : new Paint[]{mMinorPaint, mMajorPaint}) {
             p.setStyle(Paint.Style.STROKE);

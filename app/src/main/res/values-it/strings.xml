@@ -77,4 +77,16 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_intro_title">Benvenuto in Clock Seconds</string>
     <string name="settings_intro_msg">Grazie per aver installato Clock Seconds!\n\n1. Attivare: in LSPosed, attiva questo modulo e spunta «SystemUI», quindi riavvia SystemUI.\n2. Mostra/nascondi secondi: tocca l\'ora nella barra di stato (in alto a sinistra) per alternare. Se entra in conflitto con l\'apertura del pannello delle notifiche, passa al doppio tocco in «Gesto di commutazione dei secondi».\n3. Colore dell\'ora: colora la cifra delle decine dell\'ora con qualsiasi colore; disattivandolo si ripristina il valore predefinito di sistema.\n4. Ora fluttuante: tieni premuta l\'ora nella barra di stato per mostrare l\'ora di rete.\n5. Le modifiche sono immediate; in caso contrario, riavvia SystemUI o il dispositivo.</string>
     <string name="settings_intro_ok">Inizia</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Rosso</string>
+    <string name="swatch_orange">Arancione</string>
+    <string name="swatch_amber">Ambra</string>
+    <string name="swatch_green">Verde</string>
+    <string name="swatch_cyan">Ciano</string>
+    <string name="swatch_blue">Blu</string>
+    <string name="swatch_purple">Viola</string>
+    <string name="swatch_pink">Rosa</string>
+    <string name="swatch_white">Bianco</string>
+    <string name="swatch_grey">Grigio</string>
 </resources>

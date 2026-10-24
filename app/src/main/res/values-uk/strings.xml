@@ -77,4 +77,16 @@
     <string name="settings_intro_title">Ласкаво просимо до Clock Seconds</string>
     <string name="settings_intro_msg">Дякуємо за встановлення Clock Seconds!\n\n1. Активація: у LSPosed увімкніть цей модуль і позначте «SystemUI», потім перезапустіть SystemUI.\n2. Показати/сховати секунди: торкніться часу в рядку стану (зверху ліворуч), щоб перемкнути. Якщо це конфліктує з опусканням панелі сповіщень, перейдіть на подвійне торкання в «Жест перемикання секунд».\n3. Колір години: зафарбуйте цифру десятків години будь-яким кольором; вимкнувши, повертається системне значення за замовчуванням.\n4. Плаваючий час: довго натискайте час у рядку стану, щоб показати мережевий час.\n5. Зміни застосовуються миттєво; якщо ні — перезапустіть SystemUI або пристрій.</string>
     <string name="settings_intro_ok">Почати</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Червоний</string>
+    <string name="swatch_orange">Помаранчевивий</string>
+    <string name="swatch_amber">Бурштин</string>
+    <string name="swatch_green">Зелений</string>
+    <string name="swatch_cyan">Блакитний</string>
+    <string name="swatch_blue">Синій</string>
+    <string name="swatch_purple">Фіолетовий</string>
+    <string name="swatch_pink">Рожевий</string>
+    <string name="swatch_white">Білий</string>
+    <string name="swatch_grey">Сірий</string>
 </resources>

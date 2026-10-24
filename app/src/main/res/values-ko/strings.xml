@@ -77,4 +77,16 @@
     <string name="settings_intro_title">Clock Seconds에 오신 것을 환영합니다</string>
     <string name="settings_intro_msg">Clock Seconds를 설치해 주셔서 감사합니다!\n\n1. 활성화: LSPosed에서 이 모듈을 활성화하고 «SystemUI»를 선택한 다음 SystemUI를 재시작하세요.\n2. 초 표시/숨기기: 상태 표시줄의 시간(왼쪽 위)을 탭하여 전환합니다. 알림 패널을 아래로 내리는 동작과 충돌하면 «초 전환 제스처»에서 두 번 탭으로 변경하세요.\n3. 시간 색상: 시간의 십의 자리 숫자를 원하는 색으로 칠할 수 있습니다. 끄면 시스템 기본값으로 돌아갑니다.\n4. 플로팅 시간: 상태 표시줄의 시간을 길게 눌러 네트워크 시간을 표시합니다.\n5. 변경 사항은 즉시 적용됩니다. 적용되지 않으면 SystemUI나 기기를 재시작하세요.</string>
     <string name="settings_intro_ok">시작하기</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">빨강</string>
+    <string name="swatch_orange">주황</string>
+    <string name="swatch_amber">호박</string>
+    <string name="swatch_green">녹</string>
+    <string name="swatch_cyan">시안</string>
+    <string name="swatch_blue">파</string>
+    <string name="swatch_purple">보라</string>
+    <string name="swatch_pink">분홍</string>
+    <string name="swatch_white">하양</string>
+    <string name="swatch_grey">회색</string>
 </resources>

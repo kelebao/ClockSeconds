@@ -77,4 +77,16 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_intro_title">Willkommen bei Clock Seconds</string>
     <string name="settings_intro_msg">Danke für die Installation von Clock Seconds!\n\n1. Aktivieren: Aktiviere in LSPosed dieses Modul und setze den Haken bei „SystemUI“, dann starte SystemUI neu.\n2. Sekunden ein/ausblenden: Tippe auf die Uhrzeit in der Statusleiste (oben links), um zu wechseln. Falls dies mit dem Herunterziehen der Benachrichtigungen kollidiert, stelle in „Geste zum Umschalten der Sekunden“ auf Doppeltippen um.\n3. Stundenfarbe: Färbe die Zehnerstelle der Stunde in eine beliebige Farbe; Aus schaltet auf den Systemstandard zurück.\n4. Schwebende Uhrzeit: Halte die Uhrzeit in der Statusleiste gedrückt, um die Netzwerkzeit anzuzeigen.\n5. Änderungen wirken sofort; falls nicht, starte SystemUI oder das Gerät neu.</string>
     <string name="settings_intro_ok">Los geht\'s</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Rot</string>
+    <string name="swatch_orange">Orange</string>
+    <string name="swatch_amber">Bernstein</string>
+    <string name="swatch_green">Grün</string>
+    <string name="swatch_cyan">Cyan</string>
+    <string name="swatch_blue">Blau</string>
+    <string name="swatch_purple">Lila</string>
+    <string name="swatch_pink">Rosa</string>
+    <string name="swatch_white">Weiß</string>
+    <string name="swatch_grey">Grau</string>
 </resources>

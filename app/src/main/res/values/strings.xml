@@ -78,4 +78,16 @@
     <string name="settings_intro_title">欢迎使用时间显秒</string>
     <string name="settings_intro_msg">感谢安装「时间显秒」模块！\n\n1. 启用模块：在 LSPosed 中勾选本模块并勾选「系统界面(SystemUI)」，重启系统界面后生效。\n2. 显示/隐藏秒数：轻点状态栏左上角的时间即可切换；若与下拉通知栏冲突，可在「切换显示秒数手势」中改为双击。\n3. 小时颜色：可把小时十位数字标为你喜欢的颜色，关闭后恢复系统默认。\n4. 网络时间浮窗：长按状态栏时间弹出，显示网络时间。\n5. 设置即时生效；如未生效，可重启 SystemUI 或设备。</string>
     <string name="settings_intro_ok">开始使用</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">红</string>
+    <string name="swatch_orange">橙</string>
+    <string name="swatch_amber">琥珀</string>
+    <string name="swatch_green">绿</string>
+    <string name="swatch_cyan">青</string>
+    <string name="swatch_blue">蓝</string>
+    <string name="swatch_purple">紫</string>
+    <string name="swatch_pink">粉</string>
+    <string name="swatch_white">白</string>
+    <string name="swatch_grey">灰</string>
 </resources>

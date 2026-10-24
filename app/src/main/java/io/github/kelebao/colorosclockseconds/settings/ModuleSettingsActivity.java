@@ -386,7 +386,7 @@ public final class ModuleSettingsActivity extends Activity {
         // 顶部留白收小；底部留小缝，让网络时间行贴近卡片最下方。
         card.setPadding(dp(18), dp(2), dp(18), dp(6));
         // 底部叠「长弧刻度」（只有刻度、无弧线），把网络时间/提示两行圈在弧中间。
-        ArcTickDrawable arc = new ArcTickDrawable(WAVE_COLOR, night);
+        ArcTickDrawable arc = new ArcTickDrawable(night);
         mArcTicks = arc;
         // card() 已 mPressTilt.register（卡片背景不变、另叠了按压高光前景层）；这里只把刻度弧叠上去。
         card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arc}));
@@ -1267,7 +1267,7 @@ public final class ModuleSettingsActivity extends Activity {
             // 小结绿点：实心圆 + 荧光呼吸光晕（颜色=当前小时色），由 breathTick 驱动。
             BreathSwatchDrawable dot = new BreathSwatchDrawable(color, true, 0x22000000, dp(1));
             colorDotView.setBackground(dot);
-            colorDotView.setContentDescription(hexOf(color));   // 无障碍：读屏播报当前小时颜色号
+            colorDotView.setContentDescription(swatchDesc(color));   // 无障碍：读屏播报「颜色名 + 色号」
             colorDotView.setAlpha(enabled ? 1f : 0.35f);
             mBreathSwatch = dot;
         }
@@ -1292,7 +1292,7 @@ public final class ModuleSettingsActivity extends Activity {
         swatch.setOnClickListener(v -> selectHourColor(color, grid));
         // 无障碍：色块是纯色 View，读屏读不出内容 → 补 contentDescription（色号）；
         // setSelected 让 TalkBack 自动播报“已选中”；setClickable 让它被识别为可操作项。
-        swatch.setContentDescription(hexOf(color));
+        swatch.setContentDescription(swatchDesc(color));
         swatch.setSelected(selected);
         swatch.setClickable(true);
         return swatch;
@@ -1301,6 +1301,32 @@ public final class ModuleSettingsActivity extends Activity {
     /** 颜色转 "#RRGGBB"（用于色块朗读描述与色号显示）。 */
     private static String hexOf(int color) {
         return String.format(Locale.US, "#%06X", color & 0xFFFFFF);
+    }
+
+    /** 色块的无障碍朗读描述：本地化颜色名 + 色号（如「红色 #F44336」）。 */
+    private String swatchDesc(int color) {
+        final String name = colorNameOf(color);
+        final String hex = hexOf(color);
+        return name.isEmpty() ? hex : name + " " + hex;
+    }
+
+    /** 小时颜色的本地化名称（用于 TalkBack 朗读）；未知色返回空串。 */
+    private String colorNameOf(int color) {
+        final int res;
+        switch (color) {
+            case 0xFFF44336: res = R.string.swatch_red; break;
+            case 0xFFFF9800: res = R.string.swatch_orange; break;
+            case 0xFFFFC107: res = R.string.swatch_amber; break;
+            case 0xFF4CAF50: res = R.string.swatch_green; break;
+            case 0xFF00BCD4: res = R.string.swatch_cyan; break;
+            case 0xFF2196F3: res = R.string.swatch_blue; break;
+            case 0xFF9C27B0: res = R.string.swatch_purple; break;
+            case 0xFFE91E63: res = R.string.swatch_pink; break;
+            case 0xFFFFFFFF: res = R.string.swatch_white; break;
+            case 0xFF9E9E9E: res = R.string.swatch_grey; break;
+            default: return "";
+        }
+        return getString(res);
     }
 
     private GradientDrawable swatchDrawable(int color, boolean selected) {

@@ -77,4 +77,16 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_intro_title">Clock Seconds\'a hoş geldiniz</string>
     <string name="settings_intro_msg">Clock Seconds\'ı yüklediğiniz için teşekkürler!\n\n1. Etkinleştirme: LSPosed\'da bu modülü etkinleştirin ve «SystemUI» kutusunu işaretleyin, ardından SystemUI\'ı yeniden başlatın.\n2. Saniyeleri göster/gizle: Durum çubuğundaki saate (sol üst) dokunarak değiştirin. Bu, bildirim panelini aşağı çekmeyle çakışıyorsa, «Saniye geçiş hareketi»nde çift dokunmaya geçin.\n3. Saat rengi: Saatin onlar basamağı rakamını istediğiniz renge boyayın; kapatınca sistem varsayılanına döner.\n4. Yüzen saat: Durum çubuğundaki saate uzun basınca ağ saatini gösterir.\n5. Değişiklikler anındadır; değilse SystemUI\'ı veya cihazı yeniden başlatın.</string>
     <string name="settings_intro_ok">Başla</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Kırmızı</string>
+    <string name="swatch_orange">Turuncu</string>
+    <string name="swatch_amber">Kehribar</string>
+    <string name="swatch_green">Yeşil</string>
+    <string name="swatch_cyan">Camgöbeği</string>
+    <string name="swatch_blue">Mavi</string>
+    <string name="swatch_purple">Mor</string>
+    <string name="swatch_pink">Pembe</string>
+    <string name="swatch_white">Beyaz</string>
+    <string name="swatch_grey">Gri</string>
 </resources>

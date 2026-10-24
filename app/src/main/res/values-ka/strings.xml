@@ -77,4 +77,16 @@
     <string name="settings_intro_title">მოგესალმებით Clock Seconds-ში</string>
     <string name="settings_intro_msg">გმადლობთ, რომ დააყენეთ Clock Seconds!\n\n1. ჩართვა: LSPosed-ში ჩართეთ ეს მოდული და მონიშნეთ «SystemUI», შემდეგ გადატვირთეთ SystemUI.\n2. წამების ჩვენება/დამალვა: დააწკაპუნეთ სტატუსის ზოლის დროს (ზედა მარცხნივ), რომ გადართოთ. თუ ეს ერთმანეთს ეჯახება შეტყობინებების ჩამოსატენის ჩამოწევასთან, გადადით ორმაგ შეხებაზე «წამების გადართვის ჟესტში».\n3. საათის ფერი: საათის ათეულის ციფრს ნებისმიერი ფერი მიანიჭეთ; გამორთვისას სისტემურ ნაგულისხმევზე ბრუნდება.\n4. მცურავი დრო: სტატუსის ზოლის დროს გრძელდაჭერით ნაჩვენები იქნება ქსელის დრო.\n5. ცვლილებები მყისიერად ურთიერთქმედებს; თუ არა — გადატვირთეთ SystemUI ან მოწყობილობა.</string>
     <string name="settings_intro_ok">დაწყება</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">წითელი</string>
+    <string name="swatch_orange">ნარინჯის</string>
+    <string name="swatch_amber">ამბერი</string>
+    <string name="swatch_green">მწვანე</string>
+    <string name="swatch_cyan">ცისფერი</string>
+    <string name="swatch_blue">ლურჯი</string>
+    <string name="swatch_purple">მეწამული</string>
+    <string name="swatch_pink">ვარდისფერი</string>
+    <string name="swatch_white">თეთრი</string>
+    <string name="swatch_grey">ნაცრისფერი</string>
 </resources>

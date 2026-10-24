@@ -77,4 +77,16 @@
     <string name="settings_intro_msg">感謝安裝「時間顯秒」模組！\n\n1. 啟用模組：在 LSPosed 中勾選本模組並勾選「系統介面(SystemUI)」，重新啟動系統介面後生效。\n2. 顯示/隱藏秒數：輕點狀態欄左上角的時間即可切換；若與下拉通知欄衝突，可在「切換顯示秒數手勢」中改為雙擊。\n3. 小時顏色：可把小時十位數字標為你喜歡的顏色，關閉後恢復系統預設。\n4. 網路時間浮窗：長按狀態欄時間彈出，顯示網路時間。\n5. 設定即時生效；如未生效，可重新啟動 SystemUI 或裝置。</string>
     <string name="settings_intro_ok">開始使用</string>
     <string name="launcher_label">時間</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">红</string>
+    <string name="swatch_orange">橙</string>
+    <string name="swatch_amber">琥珀</string>
+    <string name="swatch_green">綠</string>
+    <string name="swatch_cyan">青</string>
+    <string name="swatch_blue">藍</string>
+    <string name="swatch_purple">紫</string>
+    <string name="swatch_pink">粉</string>
+    <string name="swatch_white">白</string>
+    <string name="swatch_grey">灰</string>
 </resources>

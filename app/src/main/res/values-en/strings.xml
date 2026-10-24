@@ -77,4 +77,16 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_intro_msg">Thanks for installing Clock Seconds!\n\n1. Activate: in LSPosed, enable this module and check “SystemUI”, then restart SystemUI.\n2. Show/hide seconds: tap the status-bar time (top left) to toggle. If it conflicts with pulling down the shade, switch to double-tap in “Toggle seconds gesture”.\n3. Hour color: tint the hour tens digit any color; off restores the system default.\n4. Floating time: long-press the status-bar time to show network time.\n5. Changes are immediate; if not, restart SystemUI or the device.</string>
     <string name="settings_intro_ok">Get started</string>
     <string name="launcher_label">Time</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Red</string>
+    <string name="swatch_orange">Orange</string>
+    <string name="swatch_amber">Amber</string>
+    <string name="swatch_green">Green</string>
+    <string name="swatch_cyan">Cyan</string>
+    <string name="swatch_blue">Blue</string>
+    <string name="swatch_purple">Purple</string>
+    <string name="swatch_pink">Pink</string>
+    <string name="swatch_white">White</string>
+    <string name="swatch_grey">Grey</string>
 </resources>

@@ -77,4 +77,16 @@
     <string name="settings_intro_title">به Clock Seconds خوش آمدید</string>
     <string name="settings_intro_msg">از نصب Clock Seconds متشکریم!\n\n1. فعال‌سازی: در LSPosed، این ماژول را فعال کنید و «SystemUI» را علامت بزنید، سپس SystemUI را راه‌اندازی مجدد کنید.\n2. نمایش/مخفی‌سازی ثانیه‌ها: روی زمان نوار وضعیت (بالا سمت چپ) ضربه بزنید تا تغییر کند. اگر با کشیدن سایه اعلان‌ها تداخل دارد، در «روش ضربه برای تغییر ثانیه‌ها» به دو ضربه‌ای تغییر دهید.\n3. رنگ ساعت: رقم دهگان ساعت را به هر رنگی درآورید؛ با غیرفعال کردن به پیش‌فرض سیستم باز می‌گردد.\n4. ساعت شناور: نوار وضعیت را طولانی فشار دهید تا زمان شبکه نمایش داده شود.\n5. تغییرات فوری اعمال می‌شوند؛ در غیر این صورت SystemUI یا دستگاه را راه‌اندازی مجدد کنید.</string>
     <string name="settings_intro_ok">شروع کنید</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">قرمز</string>
+    <string name="swatch_orange">نارنجی</string>
+    <string name="swatch_amber">کهربای</string>
+    <string name="swatch_green">سبز</string>
+    <string name="swatch_cyan">فیروزه‌ای</string>
+    <string name="swatch_blue">آبی</string>
+    <string name="swatch_purple">بنفش</string>
+    <string name="swatch_pink">صورتی</string>
+    <string name="swatch_white">سفید</string>
+    <string name="swatch_grey">خاکستری</string>
 </resources>

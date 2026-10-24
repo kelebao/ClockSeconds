@@ -77,4 +77,16 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_intro_title">Chào mừng đến với Clock Seconds</string>
     <string name="settings_intro_msg">Cảm ơn bạn đã cài đặt Clock Seconds!\n\n1. Kích hoạt: trong LSPosed, bật mô-đun này và đánh dấu «SystemUI», sau đó khởi động lại SystemUI.\n2. Hiện/ẩn giây: nhấn vào giờ trên thanh trạng thái (trên cùng bên trái) để chuyển đổi. Nếu xung đột với thao tác kéo xuống bảng thông báo, hãy chuyển sang nhấn đúp trong «Cử chỉ chuyển đổi giây».\n3. Màu giờ: tô màu chữ số hàng chục của giờ bất kỳ; tắt sẽ khôi phục về mặc định của hệ thống.\n4. Giờ nổi: nhấn giữ giờ trên thanh trạng thái để hiện giờ mạng.\n5. Thay đổi có hiệu lực ngay lập tức; nếu không, hãy khởi động lại SystemUI hoặc thiết bị.</string>
     <string name="settings_intro_ok">Bắt đầu</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Đỏ</string>
+    <string name="swatch_orange">Cam</string>
+    <string name="swatch_amber">Hổ phách</string>
+    <string name="swatch_green">Lục</string>
+    <string name="swatch_cyan">Xanh ngọc</string>
+    <string name="swatch_blue">Xanh dương</string>
+    <string name="swatch_purple">Tím</string>
+    <string name="swatch_pink">Hồng</string>
+    <string name="swatch_white">Trắng</string>
+    <string name="swatch_grey">Xám</string>
 </resources>

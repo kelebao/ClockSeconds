@@ -77,4 +77,16 @@
     <string name="settings_intro_title">Καλώς ήρθατε στο Clock Seconds</string>
     <string name="settings_intro_msg">Ευχαριστούμε που εγκαταστήσατε το Clock Seconds!\n\n1. Ενεργοποίηση: Στο LSPosed, ενεργοποιήστε αυτό το module και επιλέξτε «SystemUI», μετά επανεκκινήστε το SystemUI.\n2. Εμφάνιση/απόκρυψη δευτερολέπτων: Πατήστε την ώρα στη γραμμή κατάστασης (πάνω αριστερά) για εναλλαγή. Αν συγκρούεται με την κάθοδο της σκιάς ειδοποιήσεων, αλλάξτε σε διπλό πάτημα στην «Χειρονομία εναλλαγής δευτερολέπτων».\n3. Χρώμα ώρας: Δώστε στο ψηφίο των δεκάδων της ώρας οποιοδήποτε χρώμα· αν απενεργοποιηθεί, επιστρέφει στις προεπιλογές συστήματος.\n4. Αιωρούμενη ώρα: Πατήστε παρατεταμένα την ώρα στη γραμμή κατάστασης για να δείτε την ώρα δικτύου.\n5. Οι αλλαγές εφαρμόζονται αμέσως· αν όχι, επανεκκινήστε το SystemUI ή τη συσκευή.</string>
     <string name="settings_intro_ok">Ξεκινήστε</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Κόκκινο</string>
+    <string name="swatch_orange">Πορτοκαλί</string>
+    <string name="swatch_amber">Κεχριμπάρι</string>
+    <string name="swatch_green">Πράσινο</string>
+    <string name="swatch_cyan">Κυανό</string>
+    <string name="swatch_blue">Μπλε</string>
+    <string name="swatch_purple">Μωβ</string>
+    <string name="swatch_pink">Ροζ</string>
+    <string name="swatch_white">Λευκό</string>
+    <string name="swatch_grey">Γκρι</string>
 </resources>

@@ -77,4 +77,16 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_intro_title">Selamat datang di Clock Seconds</string>
     <string name="settings_intro_msg">Terima kasih telah menginstal Clock Seconds!\n\n1. Aktifkan: di LSPosed, aktifkan modul ini dan centang «SystemUI», lalu mulai ulang SystemUI.\n2. Tampilkan/sembunyikan detik: ketuk waktu di bilah status (kiri atas) untuk mengalihkan. Jika bentrok dengan menurunkan panel notifikasi, ubah ke ketukan ganda di «Gestur pengalihan detik».\n3. Warna jam: beri warna pada angka puluhan jam sesukanya; saat dimatikan, kembali ke bawaan sistem.\n4. Waktu melayang: tekan lama waktu di bilah status untuk menampilkan waktu jaringan.\n5. Perubahan langsung berlaku; jika tidak, mulai ulang SystemUI atau perangkat.</string>
     <string name="settings_intro_ok">Mulai</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">Merah</string>
+    <string name="swatch_orange">Oranye</string>
+    <string name="swatch_amber">Amber</string>
+    <string name="swatch_green">Hijau</string>
+    <string name="swatch_cyan">Sian</string>
+    <string name="swatch_blue">Biru</string>
+    <string name="swatch_purple">Ungu</string>
+    <string name="swatch_pink">Merah muda</string>
+    <string name="swatch_white">Putih</string>
+    <string name="swatch_grey">Abu-abu</string>
 </resources>

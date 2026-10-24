@@ -77,4 +77,16 @@
     <string name="settings_intro_title">مرحبًا بك في Clock Seconds</string>
     <string name="settings_intro_msg">شكرًا لتثبيت Clock Seconds!\n\n1. التفعيل: في LSPosed، فعّل هذه الوحدة وحدّد «SystemUI»، ثم أعد تشغيل SystemUI.\n2. إظهار/إخفاء الثواني: انقر على وقت شريط الحالة (أعلى اليسار) للتبديل. إذا تعارض مع سحب لوحة الإشعارات، بدّل إلى النقر المزدوج في «إيماءة تبديل الثواني».\n3. لون الساعة: امنح رقم العشرات للساعة أي لون؛ عند الإيقاف تعود للافتراضي النظام.\n4. نافذة الوقت العائمة: اضغط مطولًا على وقت شريط الحالة لإظهار وقت الشبكة.\n5. التغييرات فورية؛ وإلا أعد تشغيل SystemUI أو الجهاز.</string>
     <string name="settings_intro_ok">ابدأ</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">أحمر</string>
+    <string name="swatch_orange">برتقالي</string>
+    <string name="swatch_amber">عنبري</string>
+    <string name="swatch_green">أخضر</string>
+    <string name="swatch_cyan">سماوي</string>
+    <string name="swatch_blue">أزرق</string>
+    <string name="swatch_purple">بنفسجي</string>
+    <string name="swatch_pink">وردي</string>
+    <string name="swatch_white">أبيض</string>
+    <string name="swatch_grey">رمادي</string>
 </resources>
