@@ -23,6 +23,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextUtils;
 import io.github.kelebao.colorosclockseconds.ArcTickDrawable;
 import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
@@ -66,6 +67,7 @@ public final class ModuleSettingsActivity extends Activity {
 
     private static final String PREFS_NAME = "clock_seconds_settings";
     private static final String KEY_AUTO_UPDATE = "auto_update";
+    private static final String PREF_SEEN_INTRO = "seen_intro";
 
     /** 小时十位数字可选颜色（第一项为默认红）。 */
     private static final int[] HOUR_COLORS = {
@@ -144,7 +146,9 @@ public final class ModuleSettingsActivity extends Activity {
         public void run() {
             long now = System.currentTimeMillis();
             if (mBreathSwatch != null) {
-                mBreathSwatch.setBreath(ClockSecondsConfig.breathIntensity(now));
+                // 关闭小时颜色时，色块光晕呼吸也停止（强度归零、光晕不绘制）。
+                mBreathSwatch.setBreath(ClockSecondsConfig.isHourColorEnabled(getContentResolver())
+                        ? ClockSecondsConfig.breathIntensity(now) : 0f);
             }
             if (mArcTicks != null) {
                 mArcTicks.setRotation((now % 35_000L) / 35_000f * 360f);
@@ -185,6 +189,7 @@ public final class ModuleSettingsActivity extends Activity {
         applyStatusBarAppearance();
         reconcileLauncherIcon();
         refreshStatus();
+        maybeShowIntro();
         maybeAutoCheckUpdate();
     }
 
@@ -301,7 +306,7 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void buildPreviewCard(LinearLayout root) {
         LinearLayout card = card();
-        // 顶部留白收小；底部留小缝，让「长按…」提示贴近卡片最下方。
+        // 顶部留白收小；底部留小缝，让网络时间行贴近卡片最下方。
         card.setPadding(dp(18), dp(2), dp(18), dp(6));
         // 底部叠「长弧刻度」（只有刻度、无弧线），把网络时间/提示两行圈在弧中间。
         ArcTickDrawable arc = new ArcTickDrawable(WAVE_COLOR);
@@ -364,15 +369,6 @@ public final class ModuleSettingsActivity extends Activity {
 
         card.addView(netRow);
 
-        // 浮窗入口提示：长按左上角时间显示浮窗时间。
-        TextView floatHint = new TextView(this);
-        floatHint.setText(R.string.settings_float_hint);
-        floatHint.setTextSize(11f);
-        floatHint.setTextColor(text3());
-        floatHint.setGravity(Gravity.CENTER_HORIZONTAL);
-        floatHint.setPadding(0, dp(4), 0, 0);
-        card.addView(floatHint);
-
         root.addView(card);
         updatePreview();
         fetchNetworkTime();
@@ -380,7 +376,9 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 两张并排小卡：切换手势 / 小时颜色。 */
     private void buildStatsRow(LinearLayout root) {
-        LinearLayout row = new LinearLayout(this);
+        // 并排等高行：自定义 EqualHeightRow 双遍测量，把两张卡统一按最高的一张定高，保证下端对称。
+        // （AOSP 的 setMeasureWithLargestChildEnabled 只对 height=0+weight 的子 View 生效，普通 wrap_content 卡无效）
+        EqualHeightRow row = new EqualHeightRow(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -401,6 +399,12 @@ public final class ModuleSettingsActivity extends Activity {
         gestureValue.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         gestureValue.setTextColor(text());
         gestureValue.setPadding(0, dp(6), 0, 0);
+        // 值行占满剩余高度并贴底：与右卡的值行底部对齐；长文案最多两行+省略号，不会撑宽卡片。
+        gestureValue.setGravity(Gravity.BOTTOM | Gravity.START);
+        gestureValue.setMaxLines(2);
+        gestureValue.setEllipsize(TextUtils.TruncateAt.END);
+        gestureValue.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         gestureCard.addView(gestureValue);
         gestureCard.setOnClickListener(v -> showGestureDialog(gestureValue));
         row.addView(gestureCard);
@@ -414,8 +418,11 @@ public final class ModuleSettingsActivity extends Activity {
 
         LinearLayout colorRow = new LinearLayout(this);
         colorRow.setOrientation(LinearLayout.HORIZONTAL);
-        colorRow.setGravity(Gravity.CENTER_VERTICAL);
+        // 贴底：与左卡的值行底部对齐（水平方向仍靠起始边）。
+        colorRow.setGravity(Gravity.BOTTOM | Gravity.START);
         colorRow.setPadding(0, dp(8), 0, 0);
+        colorRow.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         colorDotView = new View(this);
         LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(26), dp(26));
@@ -427,6 +434,11 @@ public final class ModuleSettingsActivity extends Activity {
         colorValueView.setTextSize(16f);
         colorValueView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         colorValueView.setTextColor(text());
+        // 占满色点右侧剩余宽度：长文案省略显示，而不是把卡片撑宽。
+        colorValueView.setMaxLines(1);
+        colorValueView.setEllipsize(TextUtils.TruncateAt.END);
+        colorValueView.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         colorRow.addView(colorValueView);
         colorCard.addView(colorRow);
         row.addView(colorCard);
@@ -938,6 +950,9 @@ public final class ModuleSettingsActivity extends Activity {
         card.addView(divider());
         card.addView(linkRow(R.string.settings_about_licenses,
                 R.string.settings_about_licenses_sum, v -> showLicensesDialog()));
+        card.addView(divider());
+        card.addView(linkRow(R.string.settings_about_guide, R.string.settings_about_guide_sum,
+                v -> showGuideDialog()));
         root.addView(card);
     }
 
@@ -1286,6 +1301,11 @@ public final class ModuleSettingsActivity extends Activity {
         t.setText(textRes);
         t.setTextSize(11f);
         t.setTextColor(text2());
+        // 宽度跟随卡片：长译文在卡内换行（最多三行）+ 省略号，不会把卡片撑宽。
+        t.setMaxLines(3);
+        t.setEllipsize(TextUtils.TruncateAt.END);
+        t.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return t;
     }
 
@@ -1441,6 +1461,33 @@ public final class ModuleSettingsActivity extends Activity {
                 .setTitle(R.string.settings_about_licenses)
                 .setMessage(R.string.licenses_text)
                 .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    /** 首次启动弹出操作说明（看过即不再弹）。 */
+    private void maybeShowIntro() {
+        SharedPreferences sp = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        if (sp.getBoolean(PREF_SEEN_INTRO, false)) {
+            return;
+        }
+        sp.edit().putBoolean(PREF_SEEN_INTRO, true).apply();
+        showGuideDialog();
+    }
+
+    /** 操作说明对话框（首次安装引导与「关于」里的「操作说明」入口共用）。 */
+    private void showGuideDialog() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setPadding(dp(22), dp(10), dp(22), dp(6));
+        TextView msg = new TextView(this);
+        msg.setText(R.string.settings_intro_msg);
+        msg.setTextSize(14f);
+        msg.setLineSpacing(dp(6), 1f);
+        msg.setTextColor(text2());
+        scroll.addView(msg);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_intro_title)
+                .setView(scroll)
+                .setPositiveButton(R.string.settings_intro_ok, null)
                 .show();
     }
 

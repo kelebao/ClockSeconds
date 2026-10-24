@@ -46,7 +46,6 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_sync_time">Sincronizza</string>
     <string name="settings_sync_requested">Ora automatica attiva — sincronizzazione a breve</string>
     <string name="settings_preview_hint">Suggerimento: tocca l\'ora della barra di stato (in alto a sinistra) per mostrare/nascondere i secondi</string>
-    <string name="settings_float_hint">Premitura prolungata sull\'ora in alto a sinistra per mostrare l\'ora fluttuante</string>
     <string name="tile_label">Mostra secondi</string>
     <string name="settings_rule_title">Nome orologio</string>
     <string name="settings_rule_sum">Se l\'orologio non viene rilevato, inserisci il nome della risorsa</string>

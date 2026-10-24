@@ -46,7 +46,6 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_sync_time">Đồng bộ</string>
     <string name="settings_sync_requested">Đã bật tự động chỉnh giờ, hệ thống sẽ đồng bộ ngay</string>
     <string name="settings_preview_hint">Gợi ý: nhấn vào thời gian thanh trạng thái (góc trên bên trái) để hiển thị/ẩn giây</string>
-    <string name="settings_float_hint">Nhấn giữ thời gian góc trên bên trái để hiện thời gian nổi</string>
     <string name="tile_label">Hiện giây</string>
     <string name="settings_rule_title">Tên đồng hồ thanh trạng thái</string>
     <string name="settings_rule_sum">Nếu đồng hồ không tự nhận diện, hãy nhập tên tài nguyên</string>

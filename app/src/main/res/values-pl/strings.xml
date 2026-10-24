@@ -46,7 +46,6 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_sync_time">Synchronizuj</string>
     <string name="settings_sync_requested">Automatyczny czas włączony — wkrótce się zsynchronizuje</string>
     <string name="settings_preview_hint">Wskazówka: dotknij czasu na pasku stanu (lewy górny róg), aby pokazać/ukryć sekundy</string>
-    <string name="settings_float_hint">Długie naciśnięcie czasu w lewym górnym rogu pokazuje płynący czas</string>
     <string name="tile_label">Pokaż sekundy</string>
     <string name="settings_rule_title">Nazwa zegara</string>
     <string name="settings_rule_sum">Jeśli zegar nie jest wykrywany, wpisz nazwę zasobu</string>

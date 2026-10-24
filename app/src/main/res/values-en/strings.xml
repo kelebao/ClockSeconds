@@ -46,7 +46,6 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_sync_time">Sync</string>
     <string name="settings_sync_requested">Auto time enabled — the system will sync shortly</string>
     <string name="settings_preview_hint">Tip: tap the status bar time (top left) to show or hide seconds</string>
-    <string name="settings_float_hint">Long-press the top-left time to show the floating time</string>
     <string name="tile_label">Show Seconds</string>
     <string name="settings_rule_title">Status-bar time name</string>
     <string name="settings_rule_sum">If another device can’t auto-detect the time and seconds don’t show, set it here</string>
@@ -72,4 +71,9 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_launcher_sum">Add a settings shortcut to the home screen; when off, open it from the LSPosed manager</string>
     <string name="settings_launcher_on">Launcher icon shown</string>
     <string name="settings_launcher_off">Launcher icon hidden; reboot for it to disappear from the home screen</string>
+    <string name="settings_about_guide">Usage guide</string>
+    <string name="settings_about_guide_sum">How to use &amp; FAQ</string>
+    <string name="settings_intro_title">Welcome to Clock Seconds</string>
+    <string name="settings_intro_msg">Thanks for installing Clock Seconds!\n\n1. Activate: in LSPosed, enable this module and check “SystemUI”, then restart SystemUI.\n2. Show/hide seconds: tap the status-bar time (top left) to toggle. If it conflicts with pulling down the shade, switch to double-tap in “Toggle seconds gesture”.\n3. Hour color: tint the hour tens digit any color; off restores the system default.\n4. Floating time: long-press the status-bar time to show network time.\n5. Changes are immediate; if not, restart SystemUI or the device.</string>
+    <string name="settings_intro_ok">Get started</string>
 </resources>

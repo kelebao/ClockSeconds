@@ -46,7 +46,6 @@
     <string name="settings_sync_time">同步</string>
     <string name="settings_sync_requested">已開啟自動對時，系統將自動校正</string>
     <string name="settings_preview_hint">提示：點擊狀態欄(左上角)時間即可顯示或關閉秒數</string>
-    <string name="settings_float_hint">長按左上角時間可顯示浮動時間</string>
     <string name="tile_label">時間顯秒</string>
     <string name="settings_rule_title">狀態列時鐘識別名</string>
     <string name="settings_rule_sum">其它廠商機型未能自動識別時鐘時，可在此填寫其資源名</string>
@@ -72,4 +71,9 @@
     <string name="settings_launcher_sum">在桌面產生設定入口；關閉後仍可從 LSPosed 管理器開啟</string>
     <string name="settings_launcher_on">桌面圖示已顯示</string>
     <string name="settings_launcher_off">桌面圖示已隱藏，重啟裝置後圖示才會消失</string>
+    <string name="settings_about_guide">操作說明</string>
+    <string name="settings_about_guide_sum">查看使用方法與常見問題</string>
+    <string name="settings_intro_title">歡迎使用時間顯秒</string>
+    <string name="settings_intro_msg">感謝安裝「時間顯秒」模組！\n\n1. 啟用模組：在 LSPosed 中勾選本模組並勾選「系統介面(SystemUI)」，重新啟動系統介面後生效。\n2. 顯示/隱藏秒數：輕點狀態欄左上角的時間即可切換；若與下拉通知欄衝突，可在「切換顯示秒數手勢」中改為雙擊。\n3. 小時顏色：可把小時十位數字標為你喜歡的顏色，關閉後恢復系統預設。\n4. 網路時間浮窗：長按狀態欄時間彈出，顯示網路時間。\n5. 設定即時生效；如未生效，可重新啟動 SystemUI 或裝置。</string>
+    <string name="settings_intro_ok">開始使用</string>
 </resources>

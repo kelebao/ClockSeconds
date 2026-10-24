@@ -46,7 +46,6 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_sync_time">Sinkronkan</string>
     <string name="settings_sync_requested">Waktu otomatis aktif — akan disinkronkan sebentar lagi</string>
     <string name="settings_preview_hint">Tips: ketuk waktu bilah status (kiri atas) untuk menampilkan atau menyembunyikan detik</string>
-    <string name="settings_float_hint">Tekan lama waktu kiri atas untuk menampilkan waktu mengambang</string>
     <string name="tile_label">Tampilkan detik</string>
     <string name="settings_rule_title">Nama jam status bar</string>
     <string name="settings_rule_sum">Jika jam tidak terdeteksi, masukkan nama sumber</string>

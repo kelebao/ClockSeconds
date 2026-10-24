@@ -46,7 +46,6 @@
     <string name="settings_sync_time">Синхр.</string>
     <string name="settings_sync_requested">Авточас увімкнено — синхронізація скоро відбудеться</string>
     <string name="settings_preview_hint">Підказка: торкніться часу в рядку стану (зверху зліва), щоб показати/сховати секунди</string>
-    <string name="settings_float_hint">Довге натискання на час зверху зліва покаже плаваючий час</string>
     <string name="tile_label">Показувати секунди</string>
     <string name="settings_rule_title">Назва годинника</string>
     <string name="settings_rule_sum">Якщо годинник не визначається, введіть ім\'я ресурсу</string>

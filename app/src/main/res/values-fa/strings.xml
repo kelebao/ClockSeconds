@@ -46,7 +46,6 @@
     <string name="settings_sync_time">همگام‌سازی</string>
     <string name="settings_sync_requested">زمان خودکار فعال شد — به‌زودی همگام می‌شود</string>
     <string name="settings_preview_hint">راهنما: برای نمایش یا مخفی کردن ثانیه، روی زمان نوار وضعیت (بالا سمت چپ) ضربه بزنید</string>
-    <string name="settings_float_hint">فشار طولانی روی زمان بالا سمت چپ، زمان شناور را نمایش می‌دهد</string>
     <string name="tile_label">نمایش ثانیه</string>
     <string name="settings_rule_title">نام ساعت نوار وضعیت</string>
     <string name="settings_rule_sum">اگر ساعت شناسایی نشد، نام منبع را وارد کنید</string>

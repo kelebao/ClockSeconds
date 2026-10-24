@@ -46,7 +46,6 @@
     <string name="settings_sync_time">同步</string>
     <string name="settings_sync_requested">已开启自动对时，系统将自动校准</string>
     <string name="settings_preview_hint">提示：点击状态栏(左上角)时间即可显示或关闭秒数</string>
-    <string name="settings_float_hint">长按左上角时间可显示浮窗时间</string>
     <string name="tile_label">时间显秒</string>
     <string name="settings_rule_title">状态栏时间识别名</string>
     <string name="settings_rule_sum">其他厂商机型未能自动识别时间、无法显示秒数时，可在此设置</string>
@@ -74,4 +73,9 @@
     <string name="launcher_label" translatable="false">TIME</string>
     <string name="settings_launcher_on">桌面图标已显示</string>
     <string name="settings_launcher_off">桌面图标已隐藏，重启设备后图标才会消失</string>
+    <string name="settings_about_guide">操作说明</string>
+    <string name="settings_about_guide_sum">查看使用方法与常见问题</string>
+    <string name="settings_intro_title">欢迎使用时间显秒</string>
+    <string name="settings_intro_msg">感谢安装「时间显秒」模块！\n\n1. 启用模块：在 LSPosed 中勾选本模块并勾选「系统界面(SystemUI)」，重启系统界面后生效。\n2. 显示/隐藏秒数：轻点状态栏左上角的时间即可切换；若与下拉通知栏冲突，可在「切换显示秒数手势」中改为双击。\n3. 小时颜色：可把小时十位数字标为你喜欢的颜色，关闭后恢复系统默认。\n4. 网络时间浮窗：长按状态栏时间弹出，显示网络时间。\n5. 设置即时生效；如未生效，可重启 SystemUI 或设备。</string>
+    <string name="settings_intro_ok">开始使用</string>
 </resources>
