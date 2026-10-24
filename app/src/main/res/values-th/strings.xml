@@ -71,4 +71,10 @@
     <string name="settings_launcher_sum">สร้างทางลัดการตั้งค่าบนหน้าจอหลัก ปิดแล้วยังเปิดได้จากตัวจัดการ LSPosed</string>
     <string name="settings_launcher_on">แสดงไอคอนแล้ว</string>
     <string name="settings_launcher_off">ซ่อนไอคอนแล้ว</string>
+    <string name="launcher_label">นาฬิกา</string>
+    <string name="settings_about_guide">คู่มือการใช้งาน</string>
+    <string name="settings_about_guide_sum">วิธีใช้และคำถามที่พบบ่อย</string>
+    <string name="settings_intro_title">ยินดีต้อนรับสู่ Clock Seconds</string>
+    <string name="settings_intro_msg">ขอบคุณที่ติดตั้ง Clock Seconds!\n\n1. เปิดใช้งาน: ใน LSPosed ให้เปิดโมดูลนี้และทำเครื่องหมาย «SystemUI» แล้วรีสตาร์ท SystemUI\n2. แสดง/ซ่อนวินาที: แตะเวลาในแถบสถานะ (มุมซ้ายบน) เพื่อสลับ หากขัดแย้งกับการดึงแผงการแจ้งเตือน ให้เปลี่ยนเป็นแตะสองครั้งใน «ท่าทางสลับวินาที»\n3. สีชั่วโมง: ระบายสีหลักสิบของชั่วโมงด้วยสีใดก็ได้ ปิดแล้วจะคืนค่ามาตรฐานของระบบ\n4. เวลาลอย: กดค้างเวลาในแถบสถานะเพื่อแสดงเวลาเครือข่าย\n5. การเปลี่ยนมีผลทันที หากไม่ ให้รีสตาร์ท SystemUI หรืออุปกรณ์</string>
+    <string name="settings_intro_ok">เริ่มต้น</string>
 </resources>

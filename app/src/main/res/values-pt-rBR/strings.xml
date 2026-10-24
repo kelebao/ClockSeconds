@@ -71,4 +71,10 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_launcher_sum">Adiciona um atalho para as configurações na tela inicial; se desativado, abra pelo gerenciador do LSPosed</string>
     <string name="settings_launcher_on">Ícone do launcher exibido</string>
     <string name="settings_launcher_off">Ícone do launcher oculto</string>
+    <string name="launcher_label">Relógio</string>
+    <string name="settings_about_guide">Guia de uso</string>
+    <string name="settings_about_guide_sum">Como usar e perguntas frequentes</string>
+    <string name="settings_intro_title">Bem-vindo ao Clock Seconds</string>
+    <string name="settings_intro_msg">Obrigado por instalar o Clock Seconds!\n\n1. Ativar: no LSPosed, ative este módulo e marque «SystemUI», depois reinicie o SystemUI.\n2. Mostrar/ocultar segundos: toque no horário na barra de status (superior esquerda) para alternar. Se houver conflito com descer o painel de notificações, mude para toque duplo em «Gesto de alternar segundos».\n3. Cor da hora: tinga o algarismo das dezenas da hora com qualquer cor; ao desativar, restaura o padrão do sistema.\n4. Hora flutuante: pressione e segure o horário na barra de status para mostrar a hora da rede.\n5. As alterações são imediatas; caso contrário, reinicie o SystemUI ou o dispositivo.</string>
+    <string name="settings_intro_ok">Começar</string>
 </resources>

@@ -71,4 +71,10 @@
     <string name="settings_launcher_sum">მთავარ ეკრანზე პარამეტრების მალსახმობის დამატება; გამორთულისას გახსენით LSPosed მენეჯერიდან</string>
     <string name="settings_launcher_on">ხატული ნაჩვენებია</string>
     <string name="settings_launcher_off">ხატული დამალულია</string>
+    <string name="launcher_label">საათი</string>
+    <string name="settings_about_guide">გამოყენების სახელმძღვანელო</string>
+    <string name="settings_about_guide_sum">როგორ გამოიყენოთ და ხშირად დასმული კითხვები</string>
+    <string name="settings_intro_title">მოგესალმებით Clock Seconds-ში</string>
+    <string name="settings_intro_msg">გმადლობთ, რომ დააყენეთ Clock Seconds!\n\n1. ჩართვა: LSPosed-ში ჩართეთ ეს მოდული და მონიშნეთ «SystemUI», შემდეგ გადატვირთეთ SystemUI.\n2. წამების ჩვენება/დამალვა: დააწკაპუნეთ სტატუსის ზოლის დროს (ზედა მარცხნივ), რომ გადართოთ. თუ ეს ერთმანეთს ეჯახება შეტყობინებების ჩამოსატენის ჩამოწევასთან, გადადით ორმაგ შეხებაზე «წამების გადართვის ჟესტში».\n3. საათის ფერი: საათის ათეულის ციფრს ნებისმიერი ფერი მიანიჭეთ; გამორთვისას სისტემურ ნაგულისხმევზე ბრუნდება.\n4. მცურავი დრო: სტატუსის ზოლის დროს გრძელდაჭერით ნაჩვენები იქნება ქსელის დრო.\n5. ცვლილებები მყისიერად ურთიერთქმედებს; თუ არა — გადატვირთეთ SystemUI ან მოწყობილობა.</string>
+    <string name="settings_intro_ok">დაწყება</string>
 </resources>

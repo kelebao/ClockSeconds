@@ -71,4 +71,10 @@
     <string name="settings_launcher_sum">Добавить ярлык настроек на главный экран; если выключено, открывайте из менеджера LSPosed</string>
     <string name="settings_launcher_on">Значок в лаунчере показан</string>
     <string name="settings_launcher_off">Значок в лаунчере скрыт</string>
+    <string name="launcher_label">Часы</string>
+    <string name="settings_about_guide">Руководство</string>
+    <string name="settings_about_guide_sum">Как использовать и FAQ</string>
+    <string name="settings_intro_title">Добро пожаловать в Clock Seconds</string>
+    <string name="settings_intro_msg">Спасибо за установку Clock Seconds!\n\n1. Активация: в LSPosed включите этот модуль и отметьте «SystemUI», затем перезапустите SystemUI.\n2. Показать/скрыть секунды: нажмите на время в строке состояния (вверху слева), чтобы переключить. Если это конфликтует с опусканием панели уведомлений, переключитесь на двойное нажатие в «Жест переключения секунд».\n3. Цвет часов: раскрасьте цифру десятков часа любым цветом; при отключении восстанавливается системное значение по умолчанию.\n4. Плавающее время: долго нажимайте время в строке состояния, чтобы показать сетевое время.\n5. Изменения применяются мгновенно; если нет — перезапустите SystemUI или устройство.</string>
+    <string name="settings_intro_ok">Начать</string>
 </resources>

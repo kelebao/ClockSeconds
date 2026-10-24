@@ -71,4 +71,10 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_launcher_sum">Ana ekrana ayarlar kısayolu ekle; kapalıyken LSPosed yöneticisinden açılır</string>
     <string name="settings_launcher_on">Başlatıcı simgesi gösterildi</string>
     <string name="settings_launcher_off">Başlatıcı simgesi gizlendi</string>
+    <string name="launcher_label">Saat</string>
+    <string name="settings_about_guide">Kullanım kılavuzu</string>
+    <string name="settings_about_guide_sum">Nasıl kullanılır ve SSS</string>
+    <string name="settings_intro_title">Clock Seconds\'a hoş geldiniz</string>
+    <string name="settings_intro_msg">Clock Seconds\'ı yüklediğiniz için teşekkürler!\n\n1. Etkinleştirme: LSPosed\'da bu modülü etkinleştirin ve «SystemUI» kutusunu işaretleyin, ardından SystemUI\'ı yeniden başlatın.\n2. Saniyeleri göster/gizle: Durum çubuğundaki saate (sol üst) dokunarak değiştirin. Bu, bildirim panelini aşağı çekmeyle çakışıyorsa, «Saniye geçiş hareketi»nde çift dokunmaya geçin.\n3. Saat rengi: Saatin onlar basamağı rakamını istediğiniz renge boyayın; kapatınca sistem varsayılanına döner.\n4. Yüzen saat: Durum çubuğundaki saate uzun basınca ağ saatini gösterir.\n5. Değişiklikler anındadır; değilse SystemUI\'ı veya cihazı yeniden başlatın.</string>
+    <string name="settings_intro_ok">Başla</string>
 </resources>

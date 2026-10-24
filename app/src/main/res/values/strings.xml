@@ -70,7 +70,7 @@
     <string name="settings_launcher_title">桌面显示图标</string>
     <string name="settings_launcher_sum">在桌面生成设置入口；关闭后仍可从 LSPosed 管理器打开</string>
     <!-- 桌面图标显示名：刻意统一为 TIME（品牌标识，不随语言变化） -->
-    <string name="launcher_label" translatable="false">TIME</string>
+    <string name="launcher_label">时间</string>
     <string name="settings_launcher_on">桌面图标已显示</string>
     <string name="settings_launcher_off">桌面图标已隐藏，重启设备后图标才会消失</string>
     <string name="settings_about_guide">操作说明</string>

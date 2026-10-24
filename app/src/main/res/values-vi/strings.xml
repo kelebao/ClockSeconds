@@ -71,4 +71,10 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_launcher_sum">Tạo lối tắt cài đặt trên màn hình chính; khi tắt vẫn mở được từ trình quản lý LSPosed</string>
     <string name="settings_launcher_on">Đã hiện biểu tượng</string>
     <string name="settings_launcher_off">Đã ẩn biểu tượng</string>
+    <string name="launcher_label">Đồng hồ</string>
+    <string name="settings_about_guide">Hướng dẫn sử dụng</string>
+    <string name="settings_about_guide_sum">Cách dùng và FAQ</string>
+    <string name="settings_intro_title">Chào mừng đến với Clock Seconds</string>
+    <string name="settings_intro_msg">Cảm ơn bạn đã cài đặt Clock Seconds!\n\n1. Kích hoạt: trong LSPosed, bật mô-đun này và đánh dấu «SystemUI», sau đó khởi động lại SystemUI.\n2. Hiện/ẩn giây: nhấn vào giờ trên thanh trạng thái (trên cùng bên trái) để chuyển đổi. Nếu xung đột với thao tác kéo xuống bảng thông báo, hãy chuyển sang nhấn đúp trong «Cử chỉ chuyển đổi giây».\n3. Màu giờ: tô màu chữ số hàng chục của giờ bất kỳ; tắt sẽ khôi phục về mặc định của hệ thống.\n4. Giờ nổi: nhấn giữ giờ trên thanh trạng thái để hiện giờ mạng.\n5. Thay đổi có hiệu lực ngay lập tức; nếu không, hãy khởi động lại SystemUI hoặc thiết bị.</string>
+    <string name="settings_intro_ok">Bắt đầu</string>
 </resources>

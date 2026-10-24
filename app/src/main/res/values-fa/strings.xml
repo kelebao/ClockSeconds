@@ -71,4 +71,10 @@
     <string name="settings_launcher_sum">میان‌بر تنظیمات در صفحه اصلی بسازید؛ وقتی خاموش است از مدیر LSPosed باز کنید</string>
     <string name="settings_launcher_on">آیکون لانچر نمایش داده شد</string>
     <string name="settings_launcher_off">آیکون لانچر پنهان شد</string>
+    <string name="launcher_label">ساعت</string>
+    <string name="settings_about_guide">راهنمای استفاده</string>
+    <string name="settings_about_guide_sum">نحوه استفاده و سوالات متداول</string>
+    <string name="settings_intro_title">به Clock Seconds خوش آمدید</string>
+    <string name="settings_intro_msg">از نصب Clock Seconds متشکریم!\n\n1. فعال‌سازی: در LSPosed، این ماژول را فعال کنید و «SystemUI» را علامت بزنید، سپس SystemUI را راه‌اندازی مجدد کنید.\n2. نمایش/مخفی‌سازی ثانیه‌ها: روی زمان نوار وضعیت (بالا سمت چپ) ضربه بزنید تا تغییر کند. اگر با کشیدن سایه اعلان‌ها تداخل دارد، در «روش ضربه برای تغییر ثانیه‌ها» به دو ضربه‌ای تغییر دهید.\n3. رنگ ساعت: رقم دهگان ساعت را به هر رنگی درآورید؛ با غیرفعال کردن به پیش‌فرض سیستم باز می‌گردد.\n4. ساعت شناور: نوار وضعیت را طولانی فشار دهید تا زمان شبکه نمایش داده شود.\n5. تغییرات فوری اعمال می‌شوند؛ در غیر این صورت SystemUI یا دستگاه را راه‌اندازی مجدد کنید.</string>
+    <string name="settings_intro_ok">شروع کنید</string>
 </resources>

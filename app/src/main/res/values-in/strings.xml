@@ -71,4 +71,10 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_launcher_sum">Tambahkan pintasan pengaturan di layar utama; jika mati, buka dari pengelola LSPosed</string>
     <string name="settings_launcher_on">Ikon peluncur ditampilkan</string>
     <string name="settings_launcher_off">Ikon peluncur disembunyikan</string>
+    <string name="launcher_label">Jam</string>
+    <string name="settings_about_guide">Panduan penggunaan</string>
+    <string name="settings_about_guide_sum">Cara menggunakan dan FAQ</string>
+    <string name="settings_intro_title">Selamat datang di Clock Seconds</string>
+    <string name="settings_intro_msg">Terima kasih telah menginstal Clock Seconds!\n\n1. Aktifkan: di LSPosed, aktifkan modul ini dan centang «SystemUI», lalu mulai ulang SystemUI.\n2. Tampilkan/sembunyikan detik: ketuk waktu di bilah status (kiri atas) untuk mengalihkan. Jika bentrok dengan menurunkan panel notifikasi, ubah ke ketukan ganda di «Gestur pengalihan detik».\n3. Warna jam: beri warna pada angka puluhan jam sesukanya; saat dimatikan, kembali ke bawaan sistem.\n4. Waktu melayang: tekan lama waktu di bilah status untuk menampilkan waktu jaringan.\n5. Perubahan langsung berlaku; jika tidak, mulai ulang SystemUI atau perangkat.</string>
+    <string name="settings_intro_ok">Mulai</string>
 </resources>

@@ -71,4 +71,10 @@
     <string name="settings_launcher_sum">إضافة اختصار للإعدادات على الشاشة الرئيسية؛ عند الإيقاف افتحه من مدير LSPosed</string>
     <string name="settings_launcher_on">تم إظهار أيقونة المشغّل</string>
     <string name="settings_launcher_off">تم إخفاء أيقونة المشغّل</string>
+    <string name="launcher_label">الساعة</string>
+    <string name="settings_about_guide">دليل الاستخدام</string>
+    <string name="settings_about_guide_sum">طريقة الاستخدام والأسئلة الشائعة</string>
+    <string name="settings_intro_title">مرحبًا بك في Clock Seconds</string>
+    <string name="settings_intro_msg">شكرًا لتثبيت Clock Seconds!\n\n1. التفعيل: في LSPosed، فعّل هذه الوحدة وحدّد «SystemUI»، ثم أعد تشغيل SystemUI.\n2. إظهار/إخفاء الثواني: انقر على وقت شريط الحالة (أعلى اليسار) للتبديل. إذا تعارض مع سحب لوحة الإشعارات، بدّل إلى النقر المزدوج في «إيماءة تبديل الثواني».\n3. لون الساعة: امنح رقم العشرات للساعة أي لون؛ عند الإيقاف تعود للافتراضي النظام.\n4. نافذة الوقت العائمة: اضغط مطولًا على وقت شريط الحالة لإظهار وقت الشبكة.\n5. التغييرات فورية؛ وإلا أعد تشغيل SystemUI أو الجهاز.</string>
+    <string name="settings_intro_ok">ابدأ</string>
 </resources>

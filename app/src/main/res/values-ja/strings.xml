@@ -71,4 +71,10 @@
     <string name="settings_launcher_sum">ホーム画面に設定へのショートカットを作成。オフでも LSPosed マネージャーから開けます</string>
     <string name="settings_launcher_on">ランチャーのアイコンを表示しました</string>
     <string name="settings_launcher_off">ランチャーのアイコンを非表示にしました</string>
+    <string name="launcher_label">時計</string>
+    <string name="settings_about_guide">使い方ガイド</string>
+    <string name="settings_about_guide_sum">使い方とよくある質問</string>
+    <string name="settings_intro_title">Clock Seconds へようこそ</string>
+    <string name="settings_intro_msg">Clock Seconds をインストールしていただきありがとうございます！\n\n1. 有効化：LSPosed で本モジュールを有効にし、「SystemUI」にチェックを入れてから SystemUI を再起動します。\n2. 秒の表示/非表示：ステータスバーの時刻（左上）をタップして切り替えます。通知パネルを下に引く操作と競合する場合は、「秒表示切り替えジェスチャー」でダブルタップに変更してください。\n3. 時の色：時の十の位の数字を好きな色に着色できます。オフにするとシステム既定に戻ります。\n4. フローティング時刻：ステータスバーの時刻を長押しするとネットワーク時刻が表示されます。\n5. 設定は即時反映されます。反映されない場合は、SystemUI または端末を再起動してください。</string>
+    <string name="settings_intro_ok">使い始める</string>
 </resources>

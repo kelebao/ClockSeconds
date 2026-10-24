@@ -71,4 +71,10 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_launcher_sum">Ajouter un raccourci vers les réglages sur l\'écran d\'accueil ; si désactivé, ouvrez-les depuis le gestionnaire LSPosed</string>
     <string name="settings_launcher_on">Icône du lanceur affichée</string>
     <string name="settings_launcher_off">Icône du lanceur masquée</string>
+    <string name="launcher_label">Horloge</string>
+    <string name="settings_about_guide">Guide d\'utilisation</string>
+    <string name="settings_about_guide_sum">Mode d\'emploi et FAQ</string>
+    <string name="settings_intro_title">Bienvenue dans Clock Seconds</string>
+    <string name="settings_intro_msg">Merci d\'avoir installé Clock Seconds !\n\n1. Activer : dans LSPosed, activez ce module et cochez « SystemUI », puis redémarrez SystemUI.\n2. Afficher/masquer les secondes : touchez l\'heure de la barre d\'état (en haut à gauche) pour basculer. Si cela entre en conflit avec la descente du panneau de notification, passez à un double-toucher dans « Geste de bascule des secondes ».\n3. Couleur des heures : colorez le chiffre des dizaines de l\'heure à votre guise ; à la désactivation, la valeur par défaut du système est restaurée.\n4. Heure flottante : appuyez longuement sur l\'heure de la barre d\'état pour afficher l\'heure réseau.\n5. Les changements sont immédiats ; sinon, redémarrez SystemUI ou l\'appareil.</string>
+    <string name="settings_intro_ok">Commencer</string>
 </resources>
