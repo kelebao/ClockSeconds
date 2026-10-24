@@ -10,7 +10,7 @@
 
 让状态栏时间显示**秒**，单击即切换，小时十位数**常驻标红**。<br>**长按**弹出毛玻璃浮窗实时预览**网络时间**（可拖动、可拉伸）；不依赖任何厂商私有类，已在 ColorOS 15 真机验证，同时覆盖小米、一加、荣耀、vivo、三星 等主流厂商。
 
-[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)

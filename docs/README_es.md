@@ -10,7 +10,7 @@
 
 Muestra los **segundos** en la hora de la barra de estado, alterna con un solo toque y mantén la **decena de la hora en rojo**.<br>Sin clases privadas de fabricante. Verificado en dispositivo real con ColorOS 15; también cubre Xiaomi, OnePlus, Honor, vivo, Samsung y otros fabricantes importantes.
 
-[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)

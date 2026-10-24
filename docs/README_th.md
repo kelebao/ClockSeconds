@@ -10,7 +10,7 @@
 
 แสดง**วินาที**บนเวลาแถบสถานะ เปิด/ปิดด้วยการแตะครั้งเดียว และทำให้**หลักสิบของชั่วโมงเป็นสีแดง**เสมอ<br>ไม่พึ่งพาคลาสส่วนตัวของผู้ผลิตระบบแม้แต่ตัวใด ยืนยันแล้วบนเครื่องจริง ColorOS 15 พร้อมรองรับ Xiaomi, OnePlus, Honor, vivo, Samsung และผู้ผลิตรายใหญ่อื่น ๆ
 
-[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)

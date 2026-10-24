@@ -10,7 +10,7 @@
 
 Show **seconds** in the status bar time, toggle with a single tap, and keep the **hour tens digit in red**.<br>No vendor-private classes involved. Verified on ColorOS 15, and designed to cover Xiaomi, OnePlus, Honor, vivo, Samsung and other major vendors.
 
-[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)

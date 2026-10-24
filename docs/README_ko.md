@@ -10,7 +10,7 @@
 
 상태 표시줄 시간에 **초**를 표시합니다. 한 번 탑으로 전환하고,시간 십의 자리는 **항상 빨강**.<br>제조사私有 클래스에 전혀 의존하지 않으며 ColorOS 15 실기기에서 검증되었습니다.샤오미·원플러스·아너·vivo·삼성 등 주요 제조사도 지원합니다.
 
-[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)

@@ -10,7 +10,7 @@
 
 Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo, Samsung i innych dużych producentów.
 
-[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)

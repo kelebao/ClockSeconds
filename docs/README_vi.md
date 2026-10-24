@@ -10,7 +10,7 @@
 
 Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, và giữ **hàng chục của giờ luôn màu đỏ**.<br>Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo, Samsung và các hãng lớn khác.
 
-[![version](https://img.shields.io/badge/version-1.0.8-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
