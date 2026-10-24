@@ -21,6 +21,8 @@ public class BreathSwatchDrawable extends Drawable {
     private final int mStrokeColor;
     private final float mStrokeWidth;
     private float mIntensity;
+    private RadialGradient mHaloShader;   // 缓存：只在边界变化时重建
+    private int mShaderW = -1, mShaderH = -1;
 
     /** 实心圆半径占色块半径的比例（其余留给荧光光晕）。 */
     private static final float SOLID = 0.70f;
@@ -54,11 +56,19 @@ public class BreathSwatchDrawable extends Drawable {
 
         // 荧光光晕（选中才画，随呼吸明灭）
         if (mSelected && mIntensity > 0.01f) {
-            int rgb = mColor & 0x00FFFFFF;
-            int a = Math.round(0xC0 * mIntensity);
-            mHaloPaint.setShader(new RadialGradient(cx, cy, r,
-                    new int[]{0x00000000, rgb | (a << 24), 0x00000000},
-                    new float[]{0f, 0.86f, 1f}, Shader.TileMode.CLAMP));
+            final int bw = b.width(), bh = b.height();
+            // 缓存 shader：仅边界变化时重建；亮度改用 paint alpha 逐帧控制，
+            // 避免原来每帧 new RadialGradient（~20fps × 每秒 20 次分配）。
+            if (mHaloShader == null || mShaderW != bw || mShaderH != bh) {
+                final int rgb = mColor & 0x00FFFFFF;
+                mHaloShader = new RadialGradient(cx, cy, r,
+                        new int[]{0x00000000, rgb | 0xFF000000, 0x00000000},
+                        new float[]{0f, 0.86f, 1f}, Shader.TileMode.CLAMP);
+                mShaderW = bw;
+                mShaderH = bh;
+            }
+            mHaloPaint.setShader(mHaloShader);
+            mHaloPaint.setAlpha(Math.round(255f * mIntensity));
             canvas.drawCircle(cx, cy, r, mHaloPaint);
         }
 

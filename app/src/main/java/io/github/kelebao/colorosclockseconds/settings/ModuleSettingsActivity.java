@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -32,6 +33,9 @@ import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridLayout;
@@ -105,6 +109,31 @@ public final class ModuleSettingsActivity extends Activity {
     private BreathSwatchDrawable mBreathSwatch;
     /** 预览卡顶部半弧刻度盘 drawable（高频刷新旋转）。 */
     private ArcTickDrawable mArcTicks;
+    private final PressTiltEffect mPressTilt = new PressTiltEffect();   // 全卡片按压倾斜效果
+    private View mPreviewCard;                    // 预览卡：判断是否滚出屏幕，跳过弧的高频刷新
+    private final Rect mTmpVisible = new Rect();
+    // 时间格式化缓存（预览每秒刷新；SimpleDateFormat 仅主线程用，可安全缓存）
+    private final java.text.SimpleDateFormat mFmtSec =
+            new java.text.SimpleDateFormat("HH:mm:ss", Locale.US);
+    private final java.text.SimpleDateFormat mFmtNoSec =
+            new java.text.SimpleDateFormat("HH:mm", Locale.US);
+    private final java.util.Date mNowDate = new java.util.Date();
+    // 配置缓存：避免预览每秒 3 次 Settings.Secure binder 读取；变化由 ContentObserver 推送刷新。
+    private boolean mCfgSeconds;
+    private boolean mCfgHourColorOn;
+    private int mCfgHourColor;
+    private boolean mObserverOk = false;
+    private final android.database.ContentObserver mCfgObserver =
+            new android.database.ContentObserver(new Handler(Looper.getMainLooper())) {
+                @Override
+                public void onChange(boolean selfChange) {
+                    refreshConfigCache();
+                    updatePreview();
+                }
+            };
+    private SoundPool mPressPool;
+    private int mPressSoundId = 0;
+    private boolean mPressSoundReady = false;
     /** 小时颜色卡右下角同心弧（关闭小时颜色时隐藏，避免透出盖住半透明色块）。 */
     private CornerArcsDrawable mCornerArcs;
     /** 虚线分隔线 / 右下角同心弧的固定颜色（浅薰衣草紫 #D4C5FF）。 */
@@ -150,9 +179,11 @@ public final class ModuleSettingsActivity extends Activity {
                 mBreathSwatch.setBreath(ClockSecondsConfig.isHourColorEnabled(getContentResolver())
                         ? ClockSecondsConfig.breathIntensity(now) : 0f);
             }
-            if (mArcTicks != null) {
+            // 预览卡滚出屏幕时跳过弧的高频刷新（省电/省 CPU）；色块光晕照常（它可能在视口内）。
+            if (mArcTicks != null
+                    && (mPreviewCard == null || mPreviewCard.getGlobalVisibleRect(mTmpVisible))) {
                 mArcTicks.setRotation((now % 35_000L) / 35_000f * 360f);
-                // 呼吸灯：6s 余弦呼吸（独立于色块 3s）+ 30s 色相循环/中心漂移
+                // 呼吸灯：6s 余弦呼吸（独立于色块 3s）+ 30s 色板流转/发光中心漂移
                 double bp = (now % 6_000L) / 6_000.0;
                 mArcTicks.setBreath((float) ((1 - Math.cos(bp * 2 * Math.PI)) / 2));
                 mArcTicks.setDrift((now % 30_000L) / 30_000f);
@@ -186,6 +217,8 @@ public final class ModuleSettingsActivity extends Activity {
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         setTitle(R.string.settings_title);
         setContentView(buildContentView());
+        initPressSound();
+        mPressTilt.setOnPressDownListener(this::playPressSound);
         applyStatusBarAppearance();
         reconcileLauncherIcon();
         refreshStatus();
@@ -197,10 +230,44 @@ public final class ModuleSettingsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refreshStatus();
+        refreshConfigCache();
+        registerConfigObserver();
         ticker.removeCallbacks(tick);
         ticker.post(tick);
         ticker.removeCallbacks(breathTick);
         ticker.post(breathTick);
+    }
+
+    /** 读取一次模块配置进缓存（供预览每秒刷新时免 binder 直读）。 */
+    private void refreshConfigCache() {
+        mCfgSeconds = ClockSecondsConfig.isEnabled(getContentResolver());
+        mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
+        mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
+    }
+
+    /** 观察 Settings.Secure 变化（含状态栏点击/磁贴/其它进程代写），变化即刷新缓存并更新预览。 */
+    private void registerConfigObserver() {
+        if (mObserverOk) {
+            return;
+        }
+        try {
+            getContentResolver().registerContentObserver(
+                    Settings.Secure.CONTENT_URI, true, mCfgObserver);
+            mObserverOk = true;
+        } catch (Exception ignored) {
+            // 个别 ROM 可能限制；保持 mObserverOk=false，updatePreview 会退回每秒直读。
+        }
+    }
+
+    private void unregisterConfigObserver() {
+        if (!mObserverOk) {
+            return;
+        }
+        mObserverOk = false;
+        try {
+            getContentResolver().unregisterContentObserver(mCfgObserver);
+        } catch (Exception ignored) {
+        }
     }
 
     @Override
@@ -209,7 +276,16 @@ public final class ModuleSettingsActivity extends Activity {
         ticker.removeCallbacks(tick);
         ticker.removeCallbacks(breathTick);
         ticker.removeCallbacks(hideHint);
+        unregisterConfigObserver();
         unregisterDetectReceiver();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        // 全卡片按压倾斜：统一在此驱动（dispatchTouchEvent 是触摸分发最上游，
+        // 无论落在哪张卡的哪个子 View、是否被消费，UP/CANCEL 必然能收到 → 不会「压下去弹不回」）。
+        mPressTilt.onTouch(ev);
+        return super.dispatchTouchEvent(ev);   // 继续正常分发 → 按钮 onClick、页面滚动不受影响
     }
 
     private void applyStatusBarAppearance() {
@@ -306,11 +382,13 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void buildPreviewCard(LinearLayout root) {
         LinearLayout card = card();
+        mPreviewCard = card;
         // 顶部留白收小；底部留小缝，让网络时间行贴近卡片最下方。
         card.setPadding(dp(18), dp(2), dp(18), dp(6));
         // 底部叠「长弧刻度」（只有刻度、无弧线），把网络时间/提示两行圈在弧中间。
-        ArcTickDrawable arc = new ArcTickDrawable(WAVE_COLOR);
+        ArcTickDrawable arc = new ArcTickDrawable(WAVE_COLOR, night);
         mArcTicks = arc;
+        // card() 已 mPressTilt.register（卡片背景不变、另叠了按压高光前景层）；这里只把刻度弧叠上去。
         card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arc}));
 
         // 提示（在预览时间上方；点击预览后才出现，3 秒后自动收起）。
@@ -334,6 +412,7 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setTextColor(text());
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
         previewView.setOnClickListener(v -> showPreviewHint());
+        previewView.setClickable(true);   // 无障碍：让 TalkBack 识别为可点击项
         previewPlate.addView(previewView);
         card.addView(previewPlate);
 
@@ -347,6 +426,7 @@ public final class ModuleSettingsActivity extends Activity {
         netTimeView.setTextSize(12f);
         netTimeView.setTextColor(text2());
         netTimeView.setOnClickListener(v -> fetchNetworkTime());
+        netTimeView.setClickable(true);   // 无障碍
         netRow.addView(netTimeView);
 
         // 与网络时间有明显误差时才出现「同步」按钮。
@@ -365,6 +445,7 @@ public final class ModuleSettingsActivity extends Activity {
         syncLp.leftMargin = dp(8);
         syncView.setLayoutParams(syncLp);
         syncView.setOnClickListener(v -> syncNetworkTime());
+        syncView.setClickable(true);   // 无障碍
         netRow.addView(syncView);
 
         card.addView(netRow);
@@ -372,6 +453,40 @@ public final class ModuleSettingsActivity extends Activity {
         root.addView(card);
         updatePreview();
         fetchNetworkTime();
+    }
+
+    /** 初始化按压音 SoundPool（自带 press_click.wav，独立于系统「触摸音」开关）。 */
+    private void initPressSound() {
+        mPressPool = new SoundPool.Builder()
+                .setMaxStreams(2)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build())
+                .build();
+        mPressPool.setOnLoadCompleteListener((pool, sampleId, status) -> {
+            if (status == 0 && sampleId == mPressSoundId) {
+                mPressSoundReady = true;
+            }
+        });
+        mPressSoundId = mPressPool.load(this, R.raw.press_click, 1);
+    }
+
+    /** 播放按压音：音量 0.55 的短促「嗒」。 */
+    private void playPressSound() {
+        if (mPressPool != null && mPressSoundReady && mPressSoundId != 0) {
+            mPressPool.play(mPressSoundId, 0.55f, 0.55f, 0, 0, 1f);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mPressPool != null) {
+            mPressPool.release();
+            mPressPool = null;
+            mPressSoundReady = false;
+        }
     }
 
     /** 两张并排小卡：切换手势 / 小时颜色。 */
@@ -569,6 +684,7 @@ public final class ModuleSettingsActivity extends Activity {
         btnBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
         btn.setBackground(btnBg);
         btn.setOnClickListener(v -> showRuleDialog());
+        btn.setClickable(true);   // 无障碍
         row.addView(btn);
 
         card.addView(row);
@@ -971,6 +1087,7 @@ public final class ModuleSettingsActivity extends Activity {
         button.setBackground(bg);
         button.setElevation(dp(2));
         button.setOnClickListener(v -> runUpdateCheck(true));
+        button.setClickable(true);   // 无障碍
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -997,16 +1114,26 @@ public final class ModuleSettingsActivity extends Activity {
         if (previewView == null) {
             return;
         }
-        boolean seconds = ClockSecondsConfig.isEnabled(getContentResolver());
-        String text = new java.text.SimpleDateFormat(
-                seconds ? "HH:mm:ss" : "HH:mm", Locale.US)
-                .format(new java.util.Date());
+        // 已注册观察者 → 用缓存值（免每秒 3 次 binder 读取）；没注册上 → 退回直读，保证状态实时。
+        final boolean seconds;
+        final boolean hourOn;
+        final int hourColor;
+        if (mObserverOk) {
+            seconds = mCfgSeconds;
+            hourOn = mCfgHourColorOn;
+            hourColor = mCfgHourColor;
+        } else {
+            seconds = ClockSecondsConfig.isEnabled(getContentResolver());
+            hourOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
+            hourColor = ClockSecondsConfig.getHourColor(getContentResolver());
+        }
+        mNowDate.setTime(System.currentTimeMillis());
+        String text = (seconds ? mFmtSec : mFmtNoSec).format(mNowDate);
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        if (ClockSecondsConfig.isHourColorEnabled(getContentResolver())
+        if (hourOn
                 && sb.length() >= 2
                 && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
-            sb.setSpan(new ForegroundColorSpan(ClockSecondsConfig.getHourColor(
-                    getContentResolver())), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new ForegroundColorSpan(hourColor), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         previewView.setText(sb);
 
@@ -1140,11 +1267,12 @@ public final class ModuleSettingsActivity extends Activity {
             // 小结绿点：实心圆 + 荧光呼吸光晕（颜色=当前小时色），由 breathTick 驱动。
             BreathSwatchDrawable dot = new BreathSwatchDrawable(color, true, 0x22000000, dp(1));
             colorDotView.setBackground(dot);
+            colorDotView.setContentDescription(hexOf(color));   // 无障碍：读屏播报当前小时颜色号
             colorDotView.setAlpha(enabled ? 1f : 0.35f);
             mBreathSwatch = dot;
         }
         if (colorValueView != null) {
-            colorValueView.setText(String.format(Locale.US, "#%06X", color & 0xFFFFFF));
+            colorValueView.setText(hexOf(color));
             colorValueView.setAlpha(enabled ? 1f : 0.45f);
         }
     }
@@ -1162,7 +1290,17 @@ public final class ModuleSettingsActivity extends Activity {
         swatch.setLayoutParams(lp);
         swatch.setBackground(swatchDrawable(color, selected));
         swatch.setOnClickListener(v -> selectHourColor(color, grid));
+        // 无障碍：色块是纯色 View，读屏读不出内容 → 补 contentDescription（色号）；
+        // setSelected 让 TalkBack 自动播报“已选中”；setClickable 让它被识别为可操作项。
+        swatch.setContentDescription(hexOf(color));
+        swatch.setSelected(selected);
+        swatch.setClickable(true);
         return swatch;
+    }
+
+    /** 颜色转 "#RRGGBB"（用于色块朗读描述与色号显示）。 */
+    private static String hexOf(int color) {
+        return String.format(Locale.US, "#%06X", color & 0xFFFFFF);
     }
 
     private GradientDrawable swatchDrawable(int color, boolean selected) {
@@ -1178,15 +1316,33 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     private void applySwatchEnabled(GridLayout grid, boolean enabled) {
-        for (int i = 0; i < grid.getChildCount(); i++) {
-            View child = grid.getChildAt(i);
-            child.setAlpha(enabled ? 1f : 0.3f);
+        final int current = ClockSecondsConfig.getHourColor(getContentResolver());
+        for (int i = 0; i < grid.getChildCount() && i < HOUR_COLORS.length; i++) {
+            final View child = grid.getChildAt(i);
             child.setClickable(enabled);
+            child.setAlpha(1f);   // 始终不透明：背景三条弧不会从半透明色块透出、盖住色块
+            // 禁用不靠 view alpha（半透明会透出背景弧），而是把色块染成不透明淡彩。
+            child.setBackground(swatchDrawable(swatchColor(HOUR_COLORS[i], enabled), HOUR_COLORS[i] == current));
         }
-        // 关闭小时颜色时隐藏右下角同心弧，避免从半透明色块后透出、看起来盖住色块。
+        // 三条同心弧常显，不再随开关隐藏。
         if (mCornerArcs != null) {
-            mCornerArcs.setAlpha(enabled ? 255 : 0);
+            mCornerArcs.setAlpha(255);
         }
+    }
+
+    /** 禁用态色块色：向卡片底色混合成「不透明淡彩」（替代原来的 view alpha 半透明）。 */
+    private int swatchColor(int color, boolean enabled) {
+        if (enabled) return color;
+        return blendColor(color, night ? DARK_CARD : LIGHT_CARD, 0.68f);
+    }
+
+    private static int blendColor(int a, int b, float t) {
+        final int ar = (a >> 16) & 0xFF, ag = (a >> 8) & 0xFF, ab = a & 0xFF;
+        final int br = (b >> 16) & 0xFF, bg = (b >> 8) & 0xFF, bb = b & 0xFF;
+        final int r = Math.round(ar + (br - ar) * t);
+        final int g = Math.round(ag + (bg - ag) * t);
+        final int bl = Math.round(ab + (bb - ab) * t);
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
     private void selectHourColor(final int color, final GridLayout grid) {
@@ -1197,6 +1353,8 @@ public final class ModuleSettingsActivity extends Activity {
                 for (int i = 0; i < grid.getChildCount() && i < HOUR_COLORS.length; i++) {
                     grid.getChildAt(i).setBackground(
                             swatchDrawable(HOUR_COLORS[i], HOUR_COLORS[i] == color));
+                    // 同步选中态，让 TalkBack 播报哪个色块被选中
+                    grid.getChildAt(i).setSelected(HOUR_COLORS[i] == color);
                 }
                 refreshColorSummary();
                 updatePreview();
@@ -1276,10 +1434,12 @@ public final class ModuleSettingsActivity extends Activity {
         bg.setColor(night ? DARK_CARD : LIGHT_CARD);
         card.setBackground(bg);
         card.setElevation(dp(3));
+        card.setClipToOutline(true);   // 裁剪到圆角轮廓，防止按压高光(前景)溢出到卡片圆角外
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = dp(12);
         card.setLayoutParams(lp);
+        mPressTilt.register(card, accent());
         return card;
     }
 
@@ -1293,6 +1453,8 @@ public final class ModuleSettingsActivity extends Activity {
         card.setBackground(bg);
         card.setElevation(dp(2));
         card.setClickable(true);
+        card.setClipToOutline(true);   // 裁剪到圆角轮廓，防止按压高光溢出圆角
+        mPressTilt.register(card, accent());
         return card;
     }
 

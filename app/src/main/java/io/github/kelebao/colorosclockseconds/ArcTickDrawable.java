@@ -1,7 +1,6 @@
 package io.github.kelebao.colorosclockseconds;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -10,26 +9,26 @@ import android.graphics.drawable.Drawable;
 /**
  * 预览时间卡下方的「长弧刻度」：∩ 拱形、只有刻度、无弧线轮廓。
  * 呼吸灯算法：发光中心偏在 0.60w（向右铺开），亮度随 6s 余弦平缓起伏、中心 30s 极缓漂移；
- * 刻度色相沿弧循环（随时间整体流转），越靠发光中心越亮、越靠两端越淡（外圈透明透出底色）。
+ * 刻度颜色沿固定色板平滑插值循环（绿/青已加深，并含 #715C1F / #0F2350），越靠发光中心越亮、两端越淡。
  */
 public class ArcTickDrawable extends Drawable {
     private final Paint mMinorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mMajorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private int mColor;
-    private float mRotation;   // 旋转角（度）
+    private final boolean mNight;   // 深色主题用提亮色板（否则深色段在深卡片上看不见）
+    private float mRotation;   // 旋转相位（度）
     private float mBreath;     // 呼吸强度 0..1（6s 余弦）
     private float mDrift;      // 漂移相位 0..1（30s）
 
-    public ArcTickDrawable(int color) {
-        mColor = color;
+    public ArcTickDrawable(int color, boolean night) {
+        // color 参数保留以兼容调用方；现已改用固定色板，不再使用单色。
+        mNight = night;
         for (Paint p : new Paint[]{mMinorPaint, mMajorPaint}) {
             p.setStyle(Paint.Style.STROKE);
             p.setStrokeCap(Paint.Cap.ROUND);
-            p.setColor(color);
         }
     }
 
-    /** 旋转角（度）。 */
+    /** 旋转相位（度）——长刻度沿拱缓缓游走。 */
     public void setRotation(float deg) {
         mRotation = deg;
         invalidateSelf();
@@ -41,25 +40,44 @@ public class ArcTickDrawable extends Drawable {
         invalidateSelf();
     }
 
-    /** 漂移相位 0..1（30s 一圈，驱动色相循环 + 中心极缓漂移）。 */
+    /** 漂移相位 0..1（30s，驱动色板流转 + 发光中心极缓漂移）。 */
     public void setDrift(float drift) {
         mDrift = drift;
         invalidateSelf();
     }
 
-    // 橙色色相带（约 18°~48°），循环变色时整体跳过，避免出现橙色。
-    private static final float ORANGE_LO = 18f;
-    private static final float ORANGE_HI = 48f;
-    private static final float ORANGE_W = ORANGE_HI - ORANGE_LO;       // 30°
-    private static final float USABLE_W = 360f - ORANGE_W;             // 330°
+    /** 长弧刻度色板：沿拱平滑插值循环。绿/青已加深，并含指定色 #715C1F(深金橄榄)/#0F2350(深海军蓝)；
+     *  不含亮橙色。相邻色大致按光谱排序，插值过渡自然。 */
+    static final int[] ARC_PALETTE = {
+            0xFFE53935,  // 红
+            0xFFD81B60,  // 玫红
+            0xFF8E24AA,  // 紫
+            0xFF1E88E5,  // 蓝
+            0xFF0F2350,  // 深海军蓝（指定 #0f2350）
+            0xFF00695C,  // 深青（青→深青）
+            0xFF1B5E20,  // 深绿（绿→深绿）
+            0xFF715C1F,  // 深金橄榄（指定 #715c1f）
+    };
 
-    /** 把任意色相映射到「避开橙色带」的可用色弧：起点设在 ORANGE_HI（黄侧），
-     *  环绕一圈到 ORANGE_LO（红侧），中间整段橙色被跳过。 */
-    private static float skipOrange(float hue) {
-        hue = (hue % 360f + 360f) % 360f;
-        float h = hue * USABLE_W / 360f;   // 0..330
-        h = (h + ORANGE_HI) % 360f;        // 平移到 48° 起，环绕后落在 0..18（红侧）
-        return h;
+    /** 深色主题色板：与浅色同色相但整体提亮——否则深绿/深青/海军蓝/橄榄在深色卡片 #241D38 上完全看不见。 */
+    static final int[] ARC_PALETTE_DARK = {
+            0xFFFF7169,  // 亮红
+            0xFFFF6E9E,  // 亮玫红
+            0xFFB794F6,  // 亮紫（贴近深色主题强调色）
+            0xFF6FB5FF,  // 亮蓝
+            0xFF8E9BFF,  // 亮海军蓝（#0F2350 提亮）
+            0xFF4FC3B3,  // 亮青（#00695C 提亮）
+            0xFF7CCB82,  // 亮绿（#1B5E20 提亮）
+            0xFFD8B96B,  // 亮金橄榄（#715C1F 提亮）
+    };
+
+    static int lerpColor(int a, int b, float t) {
+        final int ar = (a >> 16) & 0xFF, ag = (a >> 8) & 0xFF, ab = a & 0xFF;
+        final int br = (b >> 16) & 0xFF, bg = (b >> 8) & 0xFF, bb = b & 0xFF;
+        final int r = Math.round(ar + (br - ar) * t);
+        final int g = Math.round(ag + (bg - ag) * t);
+        final int bl = Math.round(ab + (bb - ab) * t);
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
     @Override
@@ -81,8 +99,7 @@ public class ArcTickDrawable extends Drawable {
         final float glowX = w * 0.60f + w * 0.04f * (float) Math.sin(mDrift * 2 * Math.PI);
         final float cosA = Math.max(-1f, Math.min(1f, (glowX - cx) / R));
         final float glowAng = 270f + (float) Math.toDegrees(Math.asin(cosA));
-        final float baseHue = (mDrift * 360f) % 360f;   // 色相随时间整体流转（30s 一圈）
-        final float breath = 0.72f + 0.28f * mBreath;   // 谷值 0.72 × 渐隐下限 0.70 ≈ 最淡处 50%
+        final float breath = 0.72f + 0.28f * mBreath;
 
         final float majorLen = h * 0.09f;
         final float shortLen = majorLen * 0.4f;
@@ -108,11 +125,13 @@ public class ArcTickDrawable extends Drawable {
             float fade = Math.max(0.70f, 1f - angDist / halfDeg);
             int alpha = Math.round(255f * breath * fade);
 
-            // 沿弧色相渐变 + 随时间整体流转 → 循环变色（避开橙色带；饱和度提高更醒目）
+            // 沿拱在色板里平滑插值取色，整条随时间流转（深色主题换提亮色板）
             float pos = (a - (270f - halfDeg)) / (2f * halfDeg);   // 0..1 沿弧
-            float hue = (baseHue + pos * 130f) % 360f;
-            hue = skipOrange(hue);
-            int col = Color.HSVToColor(new float[]{hue, 0.58f, 1f});
+            final int[] palette = mNight ? ARC_PALETTE_DARK : ARC_PALETTE;
+            float f = pos * palette.length + mDrift * palette.length;
+            f = ((f % palette.length) + palette.length) % palette.length;
+            int i0 = (int) f;
+            int col = lerpColor(palette[i0], palette[(i0 + 1) % palette.length], f - i0);
             col = (col & 0x00FFFFFF) | (alpha << 24);
 
             Paint paint = major ? mMajorPaint : mMinorPaint;
