@@ -71,6 +71,24 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final String SYSTEM_UI = "com.android.systemui";
     private static final String LOG_PREFIX = "ColorOSClockSeconds: ";
 
+    /**
+     * ColorOS 17 原生显秒控制器：ColorOS 17 起系统自带「状态栏显示秒」能力，
+     * 但默认会在 5 分钟后自动关闭。类名见 ColorOS 17 实机（oplus 私有实现）。
+     */
+    private static final String NATIVE_SECONDS_CONTROLLER =
+            "com.oplus.systemui.statusbar.clock.ClockSecondsController";
+    /** ColorOS 17 原生显秒开关（{@code Settings.Secure} 键，1 = 开）。 */
+    private static final String NATIVE_SECONDS_SETTING = "oplus_status_bar_clock_seconds_mode";
+    /** 是否检测到并挂上了 ColorOS 17 原生显秒控制器（仅 SystemUI 进程内有效）。 */
+    private static volatile boolean sNativeSeconds;
+
+    /**
+     * ColorOS 16/17 的 Oplus 时钟实现：{@code setTextWithRedOneStyle} 会在每次时钟更新
+     * （{@code Clock#updateClock}）和状态栏明暗变化（{@code Clock#onDarkChanged}）时重设文本，
+     * 并带上系统自己的「红1」样式。它是覆盖我们自定义小时色的主要来源。
+     */
+    private static final String OPLUS_CLOCK_EX = "com.oplus.systemui.common.clock.OplusClockExImpl";
+
     /** 小时十位数颜色：可在设置页自定义，默认 Material Red 500（见 ClockSecondsConfig）。 */
     private static final int HOUR_COLOR_FALLBACK = ClockSecondsConfig.HOUR_COLOR_DEFAULT;
 
@@ -84,6 +102,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 正在接管刷新的时钟视图 -> 其 1 秒定时器（弱键，视图回收后自动消失）。 */
     private static final Map<TextView, ClockTicker> ACTIVE =
             Collections.synchronizedMap(new WeakHashMap<TextView, ClockTicker>());
+
+    /** 仅 DEBUG：span 探针节流表（每个时钟最多 ~1 次/秒 dump，避免刷屏）。 */
+    private static final Map<TextView, Long> SPAN_DUMP_AT =
+            Collections.synchronizedMap(new WeakHashMap<TextView, Long>());
     /** 已做过一次性配置（宽度 + 切换监听）的视图，避免重复配置。 */
     private static final Set<TextView> CONFIGURED =
             Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
@@ -185,6 +207,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         BASE_TEXT.put(view, (CharSequence) param.args[0]);
                     }
                     logCandidate(view);
+                    // DEBUG 探针：打印每一次命中状态栏时钟的 setText（含调用者），定位颜色覆盖源。
+                    if (isStatusBarClock(view)) {
+                        logProbeSetText(view, param.args != null && param.args.length > 0
+                                ? param.args[0] : null);
+                    }
                     // 自动检测：把任何正在显示时间格式、且非排除类的 TextView 收入候选池。
                     recordCandidate(view);
                     if (!isStatusBarClock(view)) {
@@ -197,6 +224,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     } else {
                         // 不显秒时也要保持小时十位数红色样式（系统每分钟更新 HH:mm 时拦截标红）。
                         applyRedToBaseText(view);
+                        // 系统/其它模块常在 setText 之后（同步或 Handler 异步）再套样式，
+                        // 把补色 post 到本次消息之后执行，保证我们最后写入、不被盖回。
+                        scheduleReapply(view);
                     }
                 } catch (Throwable t) {
                     noteHookError(t);
@@ -213,9 +243,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 }
                 try {
                     TextView view = (TextView) param.thisObject;
-                    // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
-                    if (isStatusBarClock(view) && sSecondsEnabled) {
-                        refreshClock(view);
+                    if (isStatusBarClock(view)) {
+                        // onDraw 时视图必然已布局（width/height > 0），此时刷新边界最可靠：
+                        // configureClockView 在 setText 时缓存，彼时视图可能尚未布局，
+                        // bounds 全 0 → 长按命中区为空 → 长按无反应（C16 实测复现）。
+                        if (view == sClockView) {
+                            refreshClockRect(view);
+                        }
+                        // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
+                        if (sSecondsEnabled) {
+                            refreshClock(view);
+                        }
                     }
                 } catch (Throwable t) {
                     noteHookError(t);
@@ -238,10 +276,152 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
         });
 
+        // ColorOS 17 适配：系统自带状态栏显秒，但 5 分钟后会自动关闭；挂 hook 去掉该限制。
+        installNativeSecondsHooks(lpparam.classLoader);
+
+        // ColorOS 16/17：系统时钟走 OplusClockExImpl#setTextWithRedOneStyle（官方红1样式），
+        // 每次更新/变色都会重设文本、冲掉我们的颜色；在它之后再把小时色盖回去。
+        installOplusClockStyleHook(lpparam.classLoader);
+
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "hook installed in SystemUI; device="
                     + Build.MANUFACTURER + "/" + Build.BRAND
                     + "; process=" + lpparam.processName + "; format=HH:mm:ss");
+        }
+    }
+
+    // ==================================================================
+    // ColorOS 17 原生显秒适配
+    // ==================================================================
+
+    /**
+     * ColorOS 17 起系统自带「状态栏显示秒」，但会在 5 分钟后自动关闭。这里 hook 原生
+     * {@code ClockSecondsController}，让显秒保持常开（不再 5 分钟自动关闭）：
+     * <ul>
+     *   <li>{@code isOplusFiveMinutesActive(long)} → true：让系统认为 5 分钟机制仍在生效，
+     *       不去走「到期关闭」分支；</li>
+     *   <li>{@code scheduleExpiryLocked(int, long)} → null：模式为「开」时跳过到期调度；</li>
+     *   <li>{@code onUserOrModeChanged(int, int, long)} → 到期时间强制 0：永不安排自动关闭。</li>
+     * </ul>
+     * 控制器类不存在（非 ColorOS 17）时静默跳过，完全不影响旧机型。
+     */
+    private static void installNativeSecondsHooks(ClassLoader classLoader) {
+        try {
+            Class<?> controller = Class.forName(NATIVE_SECONDS_CONTROLLER, false, classLoader);
+            XposedBridge.hookAllMethods(controller, "isOplusFiveMinutesActive", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    param.setResult(Boolean.TRUE);
+                }
+            });
+            XposedBridge.hookAllMethods(controller, "scheduleExpiryLocked", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    try {
+                        if (param.args != null && param.args.length >= 1
+                                && ((Number) param.args[0]).intValue() == 1) {
+                            param.setResult(null);
+                        }
+                    } catch (Throwable ignored) {
+                        // 参数异常时交给系统原逻辑
+                    }
+                }
+            });
+            XposedBridge.hookAllMethods(controller, "onUserOrModeChanged", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    try {
+                        if (param.args != null && param.args.length >= 3
+                                && ((Number) param.args[1]).intValue() == 1) {
+                            param.args[2] = 0L;
+                        }
+                    } catch (Throwable ignored) {
+                        // 参数异常时交给系统原逻辑
+                    }
+                }
+            });
+            sNativeSeconds = true;
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "ColorOS 17 native seconds hooks installed");
+            }
+        } catch (Throwable ignored) {
+            // 非 ColorOS 17（无该类）→ 继续走通用的 setText 追加秒路径
+            sNativeSeconds = false;
+        }
+    }
+
+    /**
+     * ColorOS 16/17：hook 系统时钟的 {@code OplusClockExImpl#setTextWithRedOneStyle}。
+     *
+     * <p>系统在每次 {@code Clock#updateClock} / {@code Clock#onDarkChanged} 时都会调用它重设时钟文本，
+     * 并可能带上系统自己的「红1」前景色 Span。我们的 setText after-hook 虽然也会跑，但有时会被它
+     * 随后应用的样式冲掉 → 表现为「自定义小时色一会儿就变回默认」。</p>
+     *
+     * <p>这里在它<b>之后</b>再把小时色盖回去（只上色、不追加秒），保证我们的颜色是最后一次写入。
+     * 类/方法不存在时静默跳过，不影响旧机型。</p>
+     */
+    private static void installOplusClockStyleHook(ClassLoader classLoader) {
+        try {
+            Class<?> clockEx = Class.forName(OPLUS_CLOCK_EX, false, classLoader);
+            XposedBridge.hookAllMethods(clockEx, "setTextWithRedOneStyle", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        TextView view = sClockView;
+                        if (view != null) {
+                            // 系统该方法会 Handler.post 一个异步 Runnable 再 setText 并套「红1」样式，
+                            // 这里同样 post 一次补色，排在它之后执行，保证最后写入的是我们的颜色。
+                            scheduleReapply(view);
+                        }
+                    } catch (Throwable ignored) {
+                        // 上色失败不影响时钟本身
+                    }
+                }
+            });
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "OplusClockEx setTextWithRedOneStyle hook installed");
+            }
+            // 真正的 setText 在 setTextWithRedOneStyle post 出来的异步 Runnable 里执行；
+            // 在它「之后」再补色，才能压过系统随后应用的「红1」样式（这是「一秒就掉」的关键）。
+            try {
+                Class<?> runnable = Class.forName(
+                        OPLUS_CLOCK_EX + "$setTextWithRedOneStyle$1", false, classLoader);
+                XposedBridge.hookAllMethods(runnable, "run", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            TextView view = sClockView;
+                            if (view != null) {
+                                scheduleReapply(view);
+                            }
+                        } catch (Throwable ignored) {
+                            // 忽略
+                        }
+                    }
+                });
+                if (BuildConfig.DEBUG) {
+                    XposedBridge.log(LOG_PREFIX + "OplusClockEx $1#run hook installed");
+                }
+            } catch (Throwable ignored) {
+                // 内部类名随混淆变化 → 跳过
+            }
+        } catch (Throwable ignored) {
+            // 非 Oplus 时钟实现 → 跳过
+        }
+    }
+
+    /**
+     * ColorOS 17：把本模块的显秒开关同步到系统原生显秒键，让系统自身渲染秒。
+     * 非 ColorOS 17（{@link #sNativeSeconds} 为假）时直接返回，不影响旧机型。
+     */
+    private static void mirrorNativeSeconds(ContentResolver cr, boolean enabled) {
+        if (!sNativeSeconds || cr == null) {
+            return;
+        }
+        try {
+            Settings.Secure.putInt(cr, NATIVE_SECONDS_SETTING, enabled ? 1 : 0);
+        } catch (Throwable ignored) {
+            // 写入失败不影响我们自己的 setText 显秒
         }
     }
 
@@ -253,6 +433,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static void configureClockView(TextView view) {
         if (!isStatusBarClock(view)) {
             return;
+        }
+        // 缓存时钟视图与其屏幕边界（供全局 dispatchTouchEvent 监听做点击/长按命中判断）。
+        // 必须放在 CONFIGURED 去重检查之前：WeakHashMap 依赖 equals/hashCode，而部分厂商时钟
+        // （如 Oplus StatClock）覆写了 equals，不同实例会被误判为「已配置」而提前 return，
+        // 导致 sClockView 永远赋值不上 → 长按命中区为空 → 长按无反应（C16 实测复现）。
+        // 不再给时钟挂 OnTouchListener：ColorOS 通知面板会拦截状态栏区域触摸，时钟自身收不到事件；
+        // 全局监听在 dispatchTouchEvent 层命中时钟边界，且不消费事件，下拉通知栏不受影响。
+        try {
+            sClockView = view;
+            refreshClockRect(view);
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "clock view cached; bounds=" + sClockRect
+                        + " gesture=" + ClockSecondsConfig.getGesture(view.getContext().getContentResolver()));
+            }
+        } catch (Throwable ignored) {
+            // 缓存失败不影响显示
         }
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "CONFIG CLOCK: " + resourceName(view)
@@ -287,20 +483,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 // 测量失败不影响核心功能
             }
         }
-
-        // 缓存时钟视图与其屏幕边界（供全局 dispatchTouchEvent 监听做点击/长按命中判断）。
-        // 不再给时钟挂 OnTouchListener：ColorOS 通知面板会拦截状态栏区域触摸，时钟自身收不到事件；
-        // 全局监听在 dispatchTouchEvent 层命中时钟边界，且不消费事件，下拉通知栏不受影响。
-        try {
-            sClockView = view;
-            refreshClockRect(view);
-            if (BuildConfig.DEBUG) {
-                XposedBridge.log(LOG_PREFIX + "clock view cached; bounds=" + sClockRect
-                        + " gesture=" + ClockSecondsConfig.getGesture(view.getContext().getContentResolver()));
-            }
-        } catch (Throwable ignored) {
-            // 缓存失败不影响显示
-        }
     }
 
     /** 刷新时钟视图当前屏幕边界（每次配置时调用，覆盖旋转/状态变化；按下时也会再刷新一次）。 */
@@ -311,9 +493,54 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             synchronized (sClockRectLock) {
                 sClockRect.set(loc[0], loc[1], loc[0] + view.getWidth(), loc[1] + view.getHeight());
             }
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "refreshClockRect: bounds=" + sClockRect
+                        + " size=" + view.getWidth() + "x" + view.getHeight()
+                        + " attached=" + view.isAttachedToWindow());
+            }
         } catch (Throwable ignored) {
             // 视图未布局时拿不到，等下次配置/按下再刷新
         }
+    }
+
+    /**
+     * 从已配置的时钟视图里挑一个「真正在状态栏区域、且已布局」的视图。
+     *
+     * <p>用于修正两种情况：① 首次缓存时视图还没布局（bounds 全 0）；② 误缓存到下拉面板/QS 面板
+     * 的时钟（面板关闭时 0 尺寸，命中区永远为空 → 长按没反应）。状态栏时钟在最上方，取 y 最小者。</p>
+     */
+    private static TextView pickClockView() {
+        TextView best = null;
+        int bestY = Integer.MAX_VALUE;
+        int[] loc = new int[2];
+        int total = 0, laid = 0, inBar = 0;
+        synchronized (CONFIGURED) {
+            for (TextView v : CONFIGURED) {
+                total++;
+                try {
+                    if (!v.isAttachedToWindow() || v.getWidth() <= 0 || v.getHeight() <= 0) {
+                        continue;
+                    }
+                    laid++;
+                    v.getLocationOnScreen(loc);
+                    if (loc[1] < 0 || loc[1] > 220) {   // 只认状态栏区域（顶部 220px 内）
+                        continue;
+                    }
+                    inBar++;
+                    if (loc[1] < bestY) {
+                        bestY = loc[1];
+                        best = v;
+                    }
+                } catch (Throwable ignored) {
+                    // 单个视图异常不影响其它
+                }
+            }
+        }
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "pickClockView: total=" + total + " laid=" + laid
+                    + " inBar=" + inBar + " best=" + (best != null ? resourceName(best) + "@y=" + bestY : "null"));
+        }
+        return best;
     }
 
     /**
@@ -334,11 +561,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             int raw = ev.getAction();
             int action = ev.getActionMasked();
             if (action == MotionEvent.ACTION_DOWN) {
+                // 匹配规则是「任一命中即算」（OR 并集），某些 ROM 会同时匹配到多个时钟视图
+                // （状态栏 + 下拉面板）。每次按下都重新挑一个「真正在状态栏、已布局」的，
+                // 避免 sClockView 被后命中的面板时钟覆盖（那会导致长按命中区为 0 → 没反应）。
+                TextView best = pickClockView();
+                if (best != null) {
+                    sClockView = best;
+                }
                 refreshClockRect(sClockView); // 每次按下刷新边界，覆盖旋转/状态变化
                 float x = ev.getRawX(), y = ev.getRawY();
                 boolean hit;
                 synchronized (sClockRectLock) {
                     hit = sClockRect.contains((int) x, (int) y);
+                }
+                if (BuildConfig.DEBUG) {
+                    XposedBridge.log(LOG_PREFIX + "touch DOWN at (" + x + "," + y + ") rect="
+                            + sClockRect + " hit=" + hit);
                 }
                 if (hit) {
                     // 先清掉可能残留的旧长按任务，防止泄漏累积导致误弹。
@@ -968,6 +1206,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         try {
             sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver());
+            // ColorOS 17：让系统原生显秒开关跟随本模块状态（非 ColorOS 17 时内部直接返回）。
+            mirrorNativeSeconds(context.getContentResolver(), sSecondsEnabled);
             if (!sCustomRuleLoaded) {
                 sCustomRule = ClockSecondsConfig.getClockRule(context.getContentResolver());
                 sCustomRuleLoaded = true;
@@ -992,6 +1232,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         boolean enabled = !ClockSecondsConfig.isEnabled(resolver);
         ClockSecondsConfig.setEnabled(resolver, enabled);
         sSecondsEnabled = enabled;
+        mirrorNativeSeconds(resolver, enabled);
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "seconds toggled -> " + enabled);
         }
@@ -1014,9 +1255,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (base == null) {
             base = view.getText();
         }
+        // 统一裁剪到「时:分」，再追加一个 :ss —— 无论系统/其它模块给的是 HH:mm、
+        // HH:mm:ss，甚至已经出现双秒（19:53:00:02），最终都只会有一个秒。
+        String hhmm = toHourMinute(base);
         int second = (int) ((System.currentTimeMillis() / 1000) % 60);
         String ss = String.format(Locale.US, ":%02d", second);
-        SpannableStringBuilder sb = new SpannableStringBuilder(base);
+        SpannableStringBuilder sb = new SpannableStringBuilder(hhmm);
         sb.append(ss);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
         // 注：状态栏与浮窗的秒数字均保持系统原色；呼吸高亮仅用于设置页预览卡的刻度与色块。
@@ -1034,6 +1278,46 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } finally {
             WRITING_CLOCK.set(false);
         }
+    }
+
+    /**
+     * 只保留「时:分」部分：遇到第二个冒号就截断，去掉可能已存在的秒。
+     * 这样后面再追加一个 :ss，就永远不会出现「双秒」（19:53:00:02）。
+     */
+    private static String toHourMinute(CharSequence base) {
+        if (base == null) {
+            return "";
+        }
+        String s = base.toString();
+        int seen = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == ':' || c == '：') {
+                seen++;
+                if (seen == 2) {
+                    return s.substring(0, i);
+                }
+            }
+        }
+        return s;
+    }
+
+    /**
+     * 统计文本里的冒号数量（含全角）。{@code HH:mm:ss} 有 2 个冒号，用于判断系统是否已经
+     * 自带秒（ColorOS 17 原生显秒），从而避免我们再追加一次秒。
+     */
+    private static int countColons(CharSequence text) {
+        if (text == null) {
+            return 0;
+        }
+        int n = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == ':' || c == '：') {
+                n++;
+            }
+        }
+        return n;
     }
 
     /**
@@ -1061,6 +1345,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 小时部分 = [0, colon)；有且仅有两位数字（含十位）时才着色第一位。
         if (colon >= 2 && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
             int adapted = adaptColorForBackground(color, view.getCurrentTextColor());
+            // 先移除系统（OplusClockExImpl 的 RedOne / 本体色）已加在同一区间的前景色 Span，
+            // 否则两个 ForegroundColorSpan 重叠时会互相压制，导致我们的颜色不生效。
+            ForegroundColorSpan[] old = sb.getSpans(0, 1, ForegroundColorSpan.class);
+            for (ForegroundColorSpan s : old) {
+                sb.removeSpan(s);
+            }
             sb.setSpan(new ForegroundColorSpan(adapted), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
     }
@@ -1131,6 +1421,99 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } finally {
             WRITING_CLOCK.set(false);
         }
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "PROBE color-applied text=[" + sb + "]");
+            logSpans(view, "now");
+            scheduleSpanDump(view);
+        }
+    }
+
+    /**
+     * 仅 DEBUG：打印时钟当前文本上的 {@link ForegroundColorSpan}（范围 + 颜色）。
+     *
+     * <p>用途：如果某个模块在 setText <b>之后</b>直接改 Span（不走 setText，PROBE 抓不到），
+     * 通过「上色后立刻 dump」与「400ms 后再 dump」对比，就能看出我们的颜色是否被替换/移除。</p>
+     */
+    private static void logSpans(TextView view, String tag) {
+        if (!BuildConfig.DEBUG || view == null) {
+            return;
+        }
+        try {
+            CharSequence t = view.getText();
+            if (!(t instanceof Spanned)) {
+                XposedBridge.log(LOG_PREFIX + "SPAN " + tag + " text=[" + t + "] (not Spanned)");
+                return;
+            }
+            Spanned sp = (Spanned) t;
+            ForegroundColorSpan[] arr = sp.getSpans(0, sp.length(), ForegroundColorSpan.class);
+            StringBuilder sb = new StringBuilder();
+            for (ForegroundColorSpan s : arr) {
+                sb.append('[').append(sp.getSpanStart(s)).append('-').append(sp.getSpanEnd(s))
+                        .append(":#").append(Integer.toHexString(s.getForegroundColor())).append(']');
+            }
+            XposedBridge.log(LOG_PREFIX + "SPAN " + tag + " text=[" + t + "] n=" + arr.length + " " + sb);
+        } catch (Throwable ignored) {
+            // 探针本身不影响主流程
+        }
+    }
+
+    /** 仅 DEBUG：上色后 400ms 再 dump 一次 Span（节流 ~1 次/秒），看颜色是否被后续覆盖。 */
+    private static void scheduleSpanDump(final TextView view) {
+        if (!BuildConfig.DEBUG || view == null) {
+            return;
+        }
+        long now = SystemClock.uptimeMillis();
+        Long last = SPAN_DUMP_AT.get(view);
+        if (last != null && now - last < 900L) {
+            return;
+        }
+        SPAN_DUMP_AT.put(view, now);
+        // 在 100ms / 500ms / 1200ms 各 dump 一次，覆盖「一秒内掉色」的时间窗。
+        final long[] delays = {100L, 500L, 1200L};
+        for (final long delay : delays) {
+            view.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        logSpans(view, "delayed+" + delay);
+                    } catch (Throwable ignored) {
+                        // 忽略
+                    }
+                }
+            }, delay);
+        }
+    }
+
+    /**
+     * 把一次「只补色、不追加秒」的写入 post 到当前消息之后执行。
+     *
+     * <p>ColorOS 的 {@code OplusClockExImpl#setTextWithRedOneStyle} 会 {@code Handler.post} 一个异步
+     * Runnable 再 setText 并套系统「红1」样式；其它状态栏模块（如 iOS 状态栏主题）也可能在 setText
+     * 之后同步再套样式。同步的 after-hook 会被这些「后手」覆盖，所以把补色排到本次消息之后再上，
+     * 确保最后一次写入是我们的颜色。</p>
+     */
+    private static void scheduleReapply(final TextView view) {
+        if (view == null) {
+            return;
+        }
+        view.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (isStatusBarClock(view)) {
+                        if (sSecondsEnabled) {
+                            // 显秒开：重走 writeTime（会重新追加秒 + 上色），
+                            // 避免被系统异步 Runnable 的纯文本覆盖后秒也一起丢。
+                            writeTime(view);
+                        } else {
+                            applyRedToBaseText(view);
+                        }
+                    }
+                } catch (Throwable ignored) {
+                    // 补色失败不影响时钟显示
+                }
+            }
+        });
     }
 
     private static void refreshClock(TextView view) {
@@ -1260,10 +1643,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (isClockNameExcluded(name, className)) {
             return false;
         }
-        // 状态栏 / 通知栏头部时钟的资源名或类名特征。
+        // 状态栏时钟的资源名或类名特征。
+        // 注意：不再匹配 header_clock —— 那是下拉通知面板/QS 面板的时钟（三星 QSClockHeaderView /
+        // QSClockPanelView 等），本模块只作用于状态栏时钟。
         return name.equals("clock")
                 || name.equals("status_bar_clock")
-                || name.equals("header_clock")
                 || name.contains("status_clock")
                 || name.contains("clock_text")
                 || className.contains("statusbar.policy.clock")
@@ -1306,12 +1690,47 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 资源名/类名是否落在「状态栏时钟」排除名单（锁屏/AOD/日期/分隔符/通知面板无关控件）。 */
+    /**
+     * 仅 DEBUG 构建的诊断探针：打印每一次「状态栏时钟 setText」的资源名/类名/文本/调用者链。
+     *
+     * <p>用途：当多个模块同时改状态栏时钟时，看 caller 就能知道「谁在我们上色之后又重设了文本」，
+     * 从而定位颜色被覆盖的元凶。发布版（BuildConfig.DEBUG=false）不会打这些日志。</p>
+     */
+    private static void logProbeSetText(TextView view, Object text) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        try {
+            String res = resourceName(view);
+            String cls = view.getClass().getName();
+            String t = text instanceof CharSequence ? text.toString() : String.valueOf(text);
+            StackTraceElement[] st = new Throwable().getStackTrace();
+            StringBuilder caller = new StringBuilder();
+            for (int i = 2; i < st.length && i < 9; i++) {
+                if (i > 2) {
+                    caller.append(" <- ");
+                }
+                caller.append(st[i].getClassName()).append('#').append(st[i].getMethodName());
+            }
+            XposedBridge.log(LOG_PREFIX + "PROBE setText res=" + res + " cls=" + cls
+                    + " text=[" + t + "] caller=" + caller);
+        } catch (Throwable ignored) {
+            // 探针本身绝不影响主流程
+        }
+    }
+
+    /** 资源名/类名是否落在「状态栏时钟」排除名单（锁屏/AOD/日期/分隔符/下拉面板无关控件）。 */
     private static boolean isClockNameExcluded(String name, String className) {
         return name.contains("keyguard") || name.contains("lockscreen")
                 || name.contains("aod") || name.contains("date")
                 || name.contains("separator") || name.startsWith("no_carrier")
                 || name.contains("shade_") || name.contains("quick_setting")
+                || name.contains("header_clock")
+                // 三星 One UI 下拉面板时钟全家：QSClockIndicatorView（res=clock！）/ QSClockHeaderView /
+                // QSClockPanelView / QSClockPopOverImmersiveView，都不是状态栏时钟。
+                // ⚠️ QSClockIndicatorView 的资源名就是 clock，仅靠 name.equals("clock") 会误中它，
+                // 导致 sClockView 指向面板时钟（关闭时 0 尺寸）→ 长按命中区为空。
+                || className.contains("qsclock")
                 || className.contains("keyguard") || className.contains("aod");
     }
 
@@ -1501,6 +1920,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             == -1) {
                         ClockSecondsConfig.setEnabled(cr0, true);
                     }
+                    // ColorOS 17：把显秒开关同步到系统原生键（非 ColorOS 17 时内部直接返回）。
+                    mirrorNativeSeconds(cr0, ClockSecondsConfig.isEnabled(cr0));
                 } catch (Throwable ignored) {
                     // 写入失败不影响后续注册
                 }
@@ -1648,6 +2069,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static void applyEnabledState(ContentResolver cr, boolean enabled) {
         ClockSecondsConfig.setEnabled(cr, enabled);
         sSecondsEnabled = enabled;
+        mirrorNativeSeconds(cr, enabled);
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "seconds set -> " + enabled + " (tile/remote)");
         }
