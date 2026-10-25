@@ -166,6 +166,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 防递归：本模块调用 {@code setText} 时置位，避免 afterHook 再次进入造成死循环。 */
     private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
 
+    /**
+     * 本模块正在构造带色文本（{@code applyHourTensRed} 内部会 removeSpan 替换旧色 span）。
+     * SPAN-THEFT 探针据此排除我们自己的操作，避免误报。
+     */
+    private static final AtomicBoolean APPLYING_STYLE = new AtomicBoolean(false);
+
     /** 已打印过的候选控件（按「资源名|类名」去重），仅 DEBUG 构建用于真机排查识别失败。 */
     private static final Set<String> LOGGED_CANDIDATES =
             Collections.synchronizedSet(new HashSet<>());
@@ -190,6 +196,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static long sLastKeepaliveLog;
     /** 秒数关时补色循环的当前间隔（自适应：稳态拉长至 30s，被洗重置 2s）。 */
     private static long sColorTickDelay = 2_000L;
+    /** SPAN-THEFT 探针日志节流（DEBUG，1s）。 */
+    private static long sLastSpanTheftLog;
 
     // ==================================================================
     // 入口
@@ -322,6 +330,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
         // ColorOS 17 适配：系统自带状态栏显秒，但 5 分钟后会自动关闭；挂 hook 去掉该限制。
         installNativeSecondsHooks(lpparam.classLoader);
+
+        // DEBUG 抓凶探针：若有模块不走 setText 而是直接对时钟文本 removeSpan 洗色，
+        // PROBE setText 看不到它。hook SpannableStringBuilder.removeSpan，仅当移除的是
+        // ForegroundColorSpan 且文本是时钟格式时打印调用栈（1s 节流），直接定位真凶。
+        installSpanTheftProbe();
 
         // ColorOS 16/17：系统时钟走 OplusClockExImpl#setTextWithRedOneStyle（官方红1样式），
         // 每次更新/变色都会重设文本、冲掉我们的颜色；在它之后再把小时色盖回去。
@@ -1660,7 +1673,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             text = text + "\u200B";
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        applyHourTensRed(sb, view, hourColor(view));
+        APPLYING_STYLE.set(true);
+        try {
+            applyHourTensRed(sb, view, hourColor(view));
+        } finally {
+            APPLYING_STYLE.set(false);
+        }
         WRITING_CLOCK.set(true);
         try {
             view.setText(sb);
@@ -1693,8 +1711,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             text = text + "\u200B";
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        applyHourTensRed(sb, view, hourColor(view));
-        // 幂等短路（span 感知）：秒数关时的低频补色循环靠它实现「被洗才补」。
+        APPLYING_STYLE.set(true);
+        try {
+            applyHourTensRed(sb, view, hourColor(view));
+        } finally {
+            APPLYING_STYLE.set(false);
+        }
         // ⚠️ 不能只用 TextUtils.equals：被洗后的纯文本与目标文本字符相同，会误判为
         // 「已上色」而跳过补救（掉色将永远无法恢复）。必须确认当前文本 [0,1) 真的
         // 还带着色 span 才跳过；目标无需上色（单位数小时/小时色关闭）时直接跳过。
@@ -1724,6 +1746,70 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             scheduleSpanDump(view);
         }
         return true;
+    }
+
+    /**
+     * 仅 DEBUG：抓「直接剥 span」的真凶。PROBE setText 只能看到走 setText 的写入，
+     * 若有模块（或系统）绕过 setText 直接 {@code text.removeSpan(...)} 洗掉我们的颜色，
+     * 这里 hook {@code SpannableStringBuilder.removeSpan}：移除的是 ForegroundColorSpan
+     * 且文本是时钟格式时打印完整调用栈（1s 节流），直接定位是谁干的。
+     *
+     * <p>过滤链（性能）：参数类型 → thisObject 类型 → 文本正则 → 节流。removeSpan 是
+     * 系统热方法，但 ForegroundColorSpan 的移除远没那么高频，正则也只对 FCS 移除求值。</p>
+     */
+    private static void installSpanTheftProbe() {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        try {
+            XposedBridge.hookAllMethods(SpannableStringBuilder.class, "removeSpan",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) {
+                            try {
+                                if (WRITING_CLOCK.get() || APPLYING_STYLE.get()) {
+                                    return;   // 我们自己的写入/换 span，跳过
+                                }
+                                if (!(param.args[0] instanceof ForegroundColorSpan)) {
+                                    return;
+                                }
+                                if (!(param.thisObject instanceof SpannableStringBuilder)) {
+                                    return;
+                                }
+                                String text = param.thisObject.toString();
+                                if (!text.matches(".*\\d{1,2}[:：]\\d{2}.*")) {
+                                    return;   // 只关心时钟格式文本
+                                }
+                                long now = SystemClock.uptimeMillis();
+                                if (now - sLastSpanTheftLog < 1000L) {
+                                    return;   // 1s 节流
+                                }
+                                sLastSpanTheftLog = now;
+                                StringBuilder sb = new StringBuilder(
+                                        "SPAN-THEFT: ForegroundColorSpan removed from ["
+                                                + text + "] by:");
+                                StackTraceElement[] st = Thread.currentThread().getStackTrace();
+                                for (StackTraceElement e : st) {
+                                    String cn = e.getClassName();
+                                    if (cn.startsWith("android.") || cn.startsWith("java.")
+                                            || cn.startsWith("de.robv.")
+                                            || cn.startsWith("org.lsposed.")
+                                            || cn.startsWith("io.github.kelebao.")) {
+                                        continue;   // 折叠框架/hook 自身噪声，突出业务调用方
+                                    }
+                                    sb.append("\n    at ").append(cn).append('#')
+                                            .append(e.getMethodName());
+                                }
+                                XposedBridge.log(LOG_PREFIX + sb);
+                            } catch (Throwable ignored) {
+                                // 探针绝不影响主流程
+                            }
+                        }
+                    });
+            XposedBridge.log(LOG_PREFIX + "span-theft probe installed (DEBUG only)");
+        } catch (Throwable t) {
+            XposedBridge.log(LOG_PREFIX + "span-theft probe install failed: " + t);
+        }
     }
 
     /**
@@ -1824,7 +1910,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 } else {
                     SpannableStringBuilder sb =
                             new SpannableStringBuilder(currentSelfDrawTime());
-                    applyHourTensRed(sb, view, hourColor(view));
+                    APPLYING_STYLE.set(true);
+                    try {
+                        applyHourTensRed(sb, view, hourColor(view));
+                    } finally {
+                        APPLYING_STYLE.set(false);
+                    }
                     if (!android.text.TextUtils.equals(view.getText(), sb)) {
                         WRITING_CLOCK.set(true);
                         try {
