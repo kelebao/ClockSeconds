@@ -186,6 +186,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static volatile ViewGroup sSelfDrawParent;
     /** 三星自绘已尝试过且失败（回滚过）→ 不再重试，避免每次分钟更新都折腾。 */
     private static volatile boolean sSelfDrawFailed;
+    /** 低频补色循环的诊断日志节流（DEBUG，~30s 一条）。 */
+    private static long sLastKeepaliveLog;
 
     // ==================================================================
     // 入口
@@ -250,6 +252,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         refreshClock(view);
                     } else {
                         // 不显秒时也要保持小时十位数红色样式（系统每分钟更新 HH:mm 时拦截标红）。
+                        // 同时挂 ticker 走低频补色：ColorOS 17 实测系统/第三方主题模块会在分钟
+                        // 更新路径上同步冲掉我们的 Span，仅靠分钟更新 + 一次性 reapply 救援不及
+                        // （表现为黄色十位一分多钟后变默认黑）。ticker 双模式见 ClockTicker。
+                        installTicker(view);
                         applyRedToBaseText(view);
                         // 系统/其它模块常在 setText 之后（同步或 Handler 异步）再套样式，
                         // 把补色 post 到本次消息之后执行，保证我们最后写入、不被盖回。
@@ -1664,6 +1670,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(base);
         applyHourTensRed(sb, view, hourColor(view));
+        // 幂等短路（span 感知）：秒数关时的低频补色循环靠它实现「被洗才补」。
+        // ⚠️ 不能只用 TextUtils.equals：被洗后的纯文本与目标文本字符相同，会误判为
+        // 「已上色」而跳过补救（掉色将永远无法恢复）。必须确认当前文本 [0,1) 真的
+        // 还带着色 span 才跳过；目标无需上色（单位数小时/小时色关闭）时直接跳过。
+        ForegroundColorSpan[] sbTens = sb.getSpans(0, 1, ForegroundColorSpan.class);
+        if (sbTens.length == 0) {
+            return;   // 没有需要维护的小时十位色
+        }
+        CharSequence cur = view.getText();
+        if (cur instanceof Spanned && cur.length() == sb.length()) {
+            ForegroundColorSpan[] curTens =
+                    ((Spanned) cur).getSpans(0, 1, ForegroundColorSpan.class);
+            if (curTens.length > 0 && android.text.TextUtils.equals(cur, sb)) {
+                return;   // 补色存活且内容一致，稳态零 setText
+            }
+        }
         WRITING_CLOCK.set(true);
         try {
             view.setText(sb);
@@ -1865,10 +1887,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 long delay = 1000L - (System.currentTimeMillis() % 1000L);
                 view.postDelayed(this, Math.max(50L, delay));
             } else {
-                // 已关闭显秒：不再续订，定时器自然停止（下次开启时 installTicker 会重新挂载）。
-                synchronized (ACTIVE) {
-                    ACTIVE.remove(view);
+                // 已关闭显秒：不停轮询，改走「低频补色」模式（2 秒一次 applyRedToBaseText）。
+                // 原因（ColorOS 17 实测）：系统与第三方主题模块（dev.puitheme.StatusBarModule）
+                // 会在分钟更新路径上同步冲掉我们的小时十位 Span；秒数关时原设计无人救援，
+                // 表现为「黄色十位显示一分多钟后变默认黑」。低频补色 + applyRedToBaseText
+                // 内的 equals 短路 = 被洗才补、稳态零 setText，与洗白无条件硬刚。
+                // 熄屏/省电降频到 10 秒（状态栏不可见，省电优先）。
+                long delay = (isPowerSaveMode(ctx) || !isInteractive(ctx)) ? 10_000L : 2_000L;
+                applyRedToBaseText(view);
+                if (BuildConfig.DEBUG) {
+                    long t = SystemClock.uptimeMillis();
+                    if (t - sLastKeepaliveLog > 30_000L) {
+                        sLastKeepaliveLog = t;
+                        XposedBridge.log(LOG_PREFIX + "color-keepalive: seconds off, low-freq reapply running");
+                    }
                 }
+                view.postDelayed(this, delay);
             }
         }
     }
@@ -2352,7 +2386,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 writeTime(clock);
                 installTicker(clock);
             } else {
-                stopTicker(clock);
+                // 秒数关：不停 ticker——双模式自动切到 2 秒低频补色
+                // （ColorOS 17 实测：分钟更新路径上 Span 被同步冲掉，无循环救援则掉色）。
+                installTicker(clock);
                 writeMinuteOnly(clock);
             }
         } else {
