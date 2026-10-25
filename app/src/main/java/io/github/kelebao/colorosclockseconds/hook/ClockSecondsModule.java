@@ -1785,20 +1785,30 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     return;   // 1s 节流
                                 }
                                 sLastSpanTheftLog = now;
+                                StackTraceElement[] st = Thread.currentThread().getStackTrace();
+                                // 第一遍：折叠框架/hook 自身噪声，突出业务调用方。
                                 StringBuilder sb = new StringBuilder(
                                         "SPAN-THEFT: ForegroundColorSpan removed from ["
                                                 + text + "] by:");
-                                StackTraceElement[] st = Thread.currentThread().getStackTrace();
                                 for (StackTraceElement e : st) {
                                     String cn = e.getClassName();
                                     if (cn.startsWith("android.") || cn.startsWith("java.")
                                             || cn.startsWith("de.robv.")
                                             || cn.startsWith("org.lsposed.")
                                             || cn.startsWith("io.github.kelebao.")) {
-                                        continue;   // 折叠框架/hook 自身噪声，突出业务调用方
+                                        continue;
                                     }
                                     sb.append("\n    at ").append(cn).append('#')
                                             .append(e.getMethodName());
+                                }
+                                // 兜底：过滤后一帧不剩（真凶整条链都在框架内部）→ 输出完整栈，
+                                // 否则日志只剩一行空头司令，等于没抓。
+                                if (sb.indexOf("\n    at ") < 0) {
+                                    sb.append(" (all frames filtered, full stack:)");
+                                    for (StackTraceElement e : st) {
+                                        sb.append("\n    at ").append(e.getClassName())
+                                                .append('#').append(e.getMethodName());
+                                    }
                                 }
                                 XposedBridge.log(LOG_PREFIX + sb);
                             } catch (Throwable ignored) {
