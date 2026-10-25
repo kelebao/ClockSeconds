@@ -21,15 +21,19 @@ import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -174,6 +178,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final java.util.List<WeakReference<TextView>> sClockCandidates =
             new java.util.concurrent.CopyOnWriteArrayList<>();
 
+    /** 三星自绘时钟：本模块插入的 HH:mm:ss TextView（{@code null} = 未安装/已回滚）。 */
+    private static volatile TextView sSelfDrawClock;
+    /** 三星自绘时钟的样式来源（任一系统数字位），用于跟随系统文字色（明暗切换）。 */
+    private static volatile TextView sSelfDrawSource;
+    /** 三星自绘时钟所在的容器（数字位的直接父容器）。 */
+    private static volatile ViewGroup sSelfDrawParent;
+    /** 三星自绘已尝试过且失败（回滚过）→ 不再重试，避免每次分钟更新都折腾。 */
+    private static volatile boolean sSelfDrawFailed;
+
     // ==================================================================
     // 入口
     // ==================================================================
@@ -214,6 +227,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     }
                     // 自动检测：把任何正在显示时间格式、且非排除类的 TextView 收入候选池。
                     recordCandidate(view);
+                    // 三星逐位时钟专用：其数字位不渲染 mText（setText 覆写路线无效），
+                    // 命中即尝试安装自绘时钟（内部幂等，非三星视图永不触发）。
+                    if (isSamsungUniformDigit(view)) {
+                        maybeInstallSamsungSelfDraw(view);
+                    }
                     if (!isStatusBarClock(view)) {
                         return;
                     }
@@ -252,6 +270,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 }
                 try {
                     TextView view = (TextView) param.thisObject;
+                    // 三星自绘：数字位 onDraw 时必然已布局（可做位置判断），作为安装触发点；
+                    // 同时把系统数字位的当前文字色同步给自绘时钟（状态栏明暗切换时跟随）。
+                    if (isSamsungUniformDigit(view)) {
+                        maybeInstallSamsungSelfDraw(view);
+                        TextView self = sSelfDrawClock;
+                        if (self != null && view == sSelfDrawSource && self.isAttachedToWindow()) {
+                            self.setTextColor(view.getCurrentTextColor());
+                        }
+                    }
                     if (isStatusBarClock(view)) {
                         // onDraw 时视图必然已布局（width/height > 0），此时刷新边界最可靠：
                         // configureClockView 在 setText 时缓存，彼时视图可能尚未布局，
@@ -550,6 +577,219 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     + " inBar=" + inBar + " best=" + (best != null ? resourceName(best) + "@y=" + bestY : "null"));
         }
         return best;
+    }
+
+    // ==================================================================
+    // 三星 One UI 自绘时钟（逐位架构专用）
+    // ==================================================================
+
+    /**
+     * 是否为三星 uniform 逐位时钟的「数字位」视图。
+     *
+     * <p>三星状态栏时钟 = {@code com.samsung.android.uniform.widget.ClockNonePaddingTextView}，
+     * 一位数字一个 TextView（{@code common_hour10th}/{@code common_hour1st}/{@code common_minute10th}/
+     * {@code common_minute1st}）。这些视图的 onDraw <b>不渲染 mText</b>（自绘内部状态），
+     * 因此「hook setText 覆写文本」路线在三星上完全无效——自定义识别名也一样（实测：
+     * setText(":42") 后 getText() 正常但屏幕无变化，框架对这些视图只调 setText("") 占位）。</p>
+     *
+     * <p>排除：{@code stretch} 变体（锁屏/AOD 大字钟）、日期/天气（{@code common_date} 等）。</p>
+     */
+    private static boolean isSamsungUniformDigit(TextView view) {
+        try {
+            String cn = view.getClass().getName().toLowerCase(Locale.ROOT);
+            if (!cn.contains("samsung.android.uniform.widget")) {
+                return false;
+            }
+            String name = resourceName(view);
+            if (name.isEmpty()) {
+                return false;
+            }
+            if (name.contains("stretch") || name.contains("date") || name.contains("weather")) {
+                return false;   // 锁屏/AOD 大字变体与日期/天气，不碰
+            }
+            return name.contains("hour") || name.contains("minute");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * 三星自绘时钟安装（幂等）：把数字位所在容器内的数字位与冒号全部隐藏，
+     * 插入本模块自绘的 {@code HH:mm:ss} TextView。
+     *
+     * <p><b>为什么必须自绘</b>：三星逐位视图不渲染 mText，覆写文本路线在此架构上无效
+     * （见 {@link #isSamsungUniformDigit}）。自绘后秒数、小时十位红色、长按命中区
+     * （覆盖整个时钟而非窄窄的一位数字）全部收归模块控制，且不受系统每分钟刷新影响。</p>
+     *
+     * <p><b>安全设计</b>：仅三星类名命中时触发，其它 ROM 零影响；任何异常静默回滚
+     * （恢复数字位可见性、移除自绘图），并置 {@link #sSelfDrawFailed} 不再重试；
+     * 插入后 800ms 自检宽度，若容器没给我们的视图排位置（宽度 0）同样回退，
+     * 最坏情况退化为「三星不显秒」而非界面破损。</p>
+     *
+     * <p><b>位置门禁</b>：只处理状态栏区域的时钟（y &lt; 300px），锁屏大钟居中在屏幕中下部，
+     * 不会被误伤；调用方在 onDraw 里触发时可拿到已布局坐标。</p>
+     */
+    private static void maybeInstallSamsungSelfDraw(TextView digit) {
+        try {
+            if (sSelfDrawFailed) {
+                return;
+            }
+            TextView self = sSelfDrawClock;
+            if (self != null) {
+                if (self.isAttachedToWindow() && self.getWidth() > 0) {
+                    return;   // 已装好
+                }
+                rollbackSamsungSelfDraw(false);   // 装了但掉了（容器重建？）→ 卸了重来
+            }
+            // 位置门禁：已布局且在状态栏区域才处理（onDraw 触发时必然已布局）。
+            int[] loc = new int[2];
+            digit.getLocationOnScreen(loc);
+            if (loc[1] > 300) {
+                return;   // 锁屏/AOD 大钟，不碰
+            }
+            ViewParent parent = digit.getParent();
+            if (!(parent instanceof ViewGroup)) {
+                return;
+            }
+            ViewGroup container = (ViewGroup) parent;
+            // 收集同一容器内的全部数字位 + 冒号分隔符（time_divider 是普通 TextView）。
+            List<View> digits = new ArrayList<>();
+            for (int i = 0; i < container.getChildCount(); i++) {
+                View child = container.getChildAt(i);
+                if (!(child instanceof TextView)) {
+                    continue;
+                }
+                if (isSamsungUniformDigit((TextView) child)
+                        || "time_divider".equals(resourceName((TextView) child))) {
+                    digits.add(child);
+                }
+            }
+            if (digits.size() < 2) {
+                return;   // 至少要有小时位 + 分钟位，再等后续 setText/onDraw 触发
+            }
+            View first = digits.get(0);
+            int index = container.indexOfChild(first);
+
+            // 创建自绘时钟，样式从数字位拷贝（字号/字体/颜色/内边距）。
+            TextView clock = new TextView(digit.getContext());
+            clock.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, digit.getTextSize());
+            clock.setTypeface(digit.getTypeface());
+            clock.setTextColor(digit.getCurrentTextColor());
+            clock.setIncludeFontPadding(false);
+            clock.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            if (first.getPaddingLeft() > 0 || first.getPaddingTop() > 0) {
+                clock.setPadding(first.getPaddingLeft(), first.getPaddingTop(),
+                        first.getPaddingRight(), first.getPaddingBottom());
+            }
+            // 布局参数：沿用数字位的边距，宽度改 WRAP_CONTENT（自绘时钟比原来宽，
+            // 固定宽度会把秒数裁掉）。
+            ViewGroup.LayoutParams base = first.getLayoutParams();
+            ViewGroup.LayoutParams lp;
+            if (base instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams mlp =
+                        (ViewGroup.MarginLayoutParams) base;
+                lp = new ViewGroup.MarginLayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                ((ViewGroup.MarginLayoutParams) lp).setMargins(
+                        mlp.leftMargin, mlp.topMargin, mlp.rightMargin, mlp.bottomMargin);
+            } else {
+                lp = new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+            // 先写一次当前时间作为基准文本（writeTime 以其为 base 追加秒）。
+            clock.setText(currentSelfDrawTime());
+            container.addView(clock, index, lp);
+            for (View d : digits) {
+                d.setVisibility(View.GONE);
+            }
+            sSelfDrawClock = clock;
+            sSelfDrawSource = digit;
+            sSelfDrawParent = container;
+            // 自绘时钟即本模块在三星上的目标视图：长按命中区/显秒/红色十位全走它。
+            sClockView = clock;
+            ensureStateLoaded(digit);
+            refreshClockRect(clock);
+            installTicker(clock);
+            refreshClock(clock);
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "SAMSUNG self-draw installed: digits=" + digits.size()
+                        + " container=" + container.getClass().getName()
+                        + " textSize=" + digit.getTextSize() + " y=" + loc[1]);
+            }
+            // 自检：800ms 后若容器没给我们的视图排位置（宽度 0），回滚恢复数字位。
+            clock.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        TextView c = sSelfDrawClock;
+                        if (c != null && c.isAttachedToWindow() && c.getWidth() <= 0) {
+                            XposedBridge.log(LOG_PREFIX + "SAMSUNG self-draw width=0, rollback");
+                            rollbackSamsungSelfDraw(false);
+                        }
+                    } catch (Throwable ignored) {
+                        // 自检失败不影响主流程
+                    }
+                }
+            }, 800L);
+        } catch (Throwable t) {
+            // 任何异常静默回滚，绝不影响 SystemUI
+            rollbackSamsungSelfDraw(true);
+            noteHookError(t);
+        }
+    }
+
+    /** 回滚三星自绘：移除自绘时钟、恢复数字位可见性。permanent=true 时不再重试（异常路径）。 */
+    private static void rollbackSamsungSelfDraw(boolean permanent) {
+        try {
+            TextView clock = sSelfDrawClock;
+            ViewGroup container = sSelfDrawParent;
+            if (clock != null && container != null) {
+                container.removeView(clock);
+            }
+            if (container != null) {
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View child = container.getChildAt(i);
+                    if (child instanceof TextView && child.getVisibility() != View.VISIBLE) {
+                        String name = resourceName((TextView) child);
+                        if (isSamsungUniformDigit((TextView) child)
+                                || "time_divider".equals(name)) {
+                            child.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 回滚失败也不抛
+        }
+        sSelfDrawClock = null;
+        sSelfDrawSource = null;
+        sSelfDrawParent = null;
+        sSelfDrawFailed = permanent;   // 容器重建（旋转等）导致的卸载不标记永久失败，允许重装
+    }
+
+    /** 自绘时钟的基准文本：跟随系统 12/24 制，无前导零（与三星 12 小时制显示一致）。 */
+    private static String currentSelfDrawTime() {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        int h = cal.get(java.util.Calendar.HOUR_OF_DAY);
+        int m = cal.get(java.util.Calendar.MINUTE);
+        boolean h24 = true;
+        try {
+            h24 = android.text.format.DateFormat.is24HourFormat(
+                    sSelfDrawSource != null ? sSelfDrawSource.getContext()
+                            : sClockView != null ? sClockView.getContext() : null);
+        } catch (Throwable ignored) {
+            // 取不到上下文时按 24 制
+        }
+        if (h24) {
+            return String.format(Locale.US, "%02d:%02d", h, m);
+        }
+        int h12 = h % 12;
+        if (h12 == 0) {
+            h12 = 12;
+        }
+        return String.format(Locale.US, "%d:%02d", h12, m);
     }
 
     /**
@@ -1526,6 +1766,30 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     private static void refreshClock(TextView view) {
+        // 三星自绘时钟是本模块自己的 TextView，不是系统状态栏时钟（isStatusBarClock 为 false），
+        // 单独分支：显秒开 → writeTime 追加秒；显秒关 → 纯 HH:mm（均带小时十位红色）。
+        if (view == sSelfDrawClock) {
+            try {
+                if (sSecondsEnabled) {
+                    writeTime(view);
+                } else {
+                    SpannableStringBuilder sb =
+                            new SpannableStringBuilder(currentSelfDrawTime());
+                    applyHourTensRed(sb, view, hourColor(view));
+                    if (!android.text.TextUtils.equals(view.getText(), sb)) {
+                        WRITING_CLOCK.set(true);
+                        try {
+                            view.setText(sb);
+                        } finally {
+                            WRITING_CLOCK.set(false);
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+                // 自绘时钟刷新失败不影响系统
+            }
+            return;
+        }
         if (isStatusBarClock(view) && sSecondsEnabled) {
             writeTime(view);
         }
