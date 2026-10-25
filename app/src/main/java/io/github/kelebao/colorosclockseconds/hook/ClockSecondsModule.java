@@ -217,6 +217,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     if (!isStatusBarClock(view)) {
                         return;
                     }
+                    // 诊断探针：在系统 setText 之后、我们补色之前 dump Span 状态。
+                    // ColorOS 17 的 StatClock 疑似在 setText 层把 CharSequence 洗成非 Spanned
+                    // （实测：我们的 setText(sb) 后 getText() 立刻 not Spanned，而 ColorOS 15 正常）。
+                    // 此处 dump 用于区分两种根因：
+                    //   ① 系统自带「红1」span 也不在 → 系统红1 被我们冲掉 / 系统用非 span 机制画红
+                    //   ② 系统红1 span 在 → 我们的补色多余且有害，应跳过补色让系统渲染
+                    if (BuildConfig.DEBUG) {
+                        logSpans(view, "after-system");
+                    }
                     configureClockView(view);
                     if (sSecondsEnabled) {
                         installTicker(view);
