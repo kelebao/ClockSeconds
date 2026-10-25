@@ -1089,6 +1089,11 @@ public final class ModuleSettingsActivity extends Activity {
         button.setOnClickListener(v -> runUpdateCheck(true));
         button.setClickable(true);   // 无障碍
 
+        // 主按钮「检查更新」也套用按压倾斜 + 高光 + 按压音，与各卡片一致。
+        // 实心强调色底上再叠强调色高光不可见，故传白色 → 35% 径向白光才有反馈。
+        button.setClipToOutline(true);        // 高光裁到胶囊圆角，避免溢出
+        mPressTilt.register(button, 0xFFFFFFFF);
+
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = dp(4);
