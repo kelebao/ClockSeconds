@@ -188,6 +188,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static volatile boolean sSelfDrawFailed;
     /** 低频补色循环的诊断日志节流（DEBUG，~30s 一条）。 */
     private static long sLastKeepaliveLog;
+    /** 秒数关时补色循环的当前间隔（自适应：稳态拉长至 30s，被洗重置 2s）。 */
+    private static long sColorTickDelay = 2_000L;
 
     // ==================================================================
     // 入口
@@ -1652,7 +1654,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (base == null) {
             base = view.getText();
         }
-        SpannableStringBuilder sb = new SpannableStringBuilder(base);
+        // 同 applyRedToBaseText：零宽空格破坏 HH:mm 模式匹配，防 setText 链重建剥 span。
+        String text = base.toString();
+        if (!text.endsWith("\u200B")) {
+            text = text + "\u200B";
+        }
+        SpannableStringBuilder sb = new SpannableStringBuilder(text);
         applyHourTensRed(sb, view, hourColor(view));
         WRITING_CLOCK.set(true);
         try {
@@ -1662,13 +1669,30 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    /** 对系统原文本应用小时十位数红色样式（不显秒时，系统每次更新分钟都会调用）。 */
-    private static void applyRedToBaseText(TextView view) {
+    /**
+     * 对系统原文本应用小时十位数红色样式（不显秒时，系统每次更新分钟都会调用）。
+     *
+     * @return true = 实际执行了 setText；false = 短路跳过（补色已存活/无需上色）。
+     *         秒数关时的低频补色循环据此自适应调整间隔。
+     */
+    private static boolean applyRedToBaseText(TextView view) {
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
             base = view.getText();
         }
-        SpannableStringBuilder sb = new SpannableStringBuilder(base);
+        // ColorOS 17 掉色根因的精确修法：setText 链里存在「模式匹配式重建」——文本匹配
+        // HH:mm 时钟格式时会被剥掉外来 Span 重铸（差分证据：秒数开的 HH:mm:ss 不被洗、
+        // 秒数关的 HH:mm 一洗就没，同一 setText 路径唯一差别是格式）。分钟更新时刻系统
+        // updateClock / 第三方主题模块（dev.puitheme.StatusBarModule，实测同链 hook）形成
+        // 「写入风暴」，单次 scheduleReapply 赛不过最后的系统写入 → 颜色活不过一分钟。
+        // 对策：补一个零宽空格 \u200B 破坏 HH:mm 完整匹配，重建逻辑放过我们的文本，
+        // Span 自然存活。零宽字符不占布局宽度、不可见；系统下次分钟更新给新纯文本，
+        // 由本方法再次追加，自洽。若真凶不是模式匹配，此字符无害，循环兜底。
+        String text = base.toString();
+        if (!text.endsWith("\u200B")) {
+            text = text + "\u200B";
+        }
+        SpannableStringBuilder sb = new SpannableStringBuilder(text);
         applyHourTensRed(sb, view, hourColor(view));
         // 幂等短路（span 感知）：秒数关时的低频补色循环靠它实现「被洗才补」。
         // ⚠️ 不能只用 TextUtils.equals：被洗后的纯文本与目标文本字符相同，会误判为
@@ -1676,14 +1700,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 还带着色 span 才跳过；目标无需上色（单位数小时/小时色关闭）时直接跳过。
         ForegroundColorSpan[] sbTens = sb.getSpans(0, 1, ForegroundColorSpan.class);
         if (sbTens.length == 0) {
-            return;   // 没有需要维护的小时十位色
+            return false;   // 没有需要维护的小时十位色
         }
         CharSequence cur = view.getText();
         if (cur instanceof Spanned && cur.length() == sb.length()) {
             ForegroundColorSpan[] curTens =
                     ((Spanned) cur).getSpans(0, 1, ForegroundColorSpan.class);
-            if (curTens.length > 0 && android.text.TextUtils.equals(cur, sb)) {
-                return;   // 补色存活且内容一致，稳态零 setText
+            // 字符级比较（不用 TextUtils.equals：其对双 Spanned 走 equals 委托，
+            // 而 SpannableStringBuilder 未重写 equals，实例不同恒 false，短路会失效）。
+            if (curTens.length > 0 && cur.toString().contentEquals(sb.toString())) {
+                return false;   // 补色存活且内容一致，稳态零 setText
             }
         }
         WRITING_CLOCK.set(true);
@@ -1697,6 +1723,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             logSpans(view, "now");
             scheduleSpanDump(view);
         }
+        return true;
     }
 
     /**
@@ -1887,19 +1914,25 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 long delay = 1000L - (System.currentTimeMillis() % 1000L);
                 view.postDelayed(this, Math.max(50L, delay));
             } else {
-                // 已关闭显秒：不停轮询，改走「低频补色」模式（2 秒一次 applyRedToBaseText）。
-                // 原因（ColorOS 17 实测）：系统与第三方主题模块（dev.puitheme.StatusBarModule）
-                // 会在分钟更新路径上同步冲掉我们的小时十位 Span；秒数关时原设计无人救援，
-                // 表现为「黄色十位显示一分多钟后变默认黑」。低频补色 + applyRedToBaseText
-                // 内的 equals 短路 = 被洗才补、稳态零 setText，与洗白无条件硬刚。
-                // 熄屏/省电降频到 10 秒（状态栏不可见，省电优先）。
-                long delay = (isPowerSaveMode(ctx) || !isInteractive(ctx)) ? 10_000L : 2_000L;
-                applyRedToBaseText(view);
+                // 已关闭显秒：低频补色模式。零宽空格修法（见 applyRedToBaseText）正常情况下
+                // 已让 Span 存活，每 tick 都短路（wrote=false）→ 间隔自适应拉长
+                // （2s→4s→…→30s 上限），循环衰减成近零开销的心跳；一旦真被洗
+                // （wrote=true）立即重置 2s 高频硬刚。自调优，无需按机型区分。
+                boolean wrote = applyRedToBaseText(view);
+                if (wrote) {
+                    sColorTickDelay = 2_000L;
+                } else if (sColorTickDelay < 30_000L) {
+                    sColorTickDelay = Math.min(sColorTickDelay * 2, 30_000L);
+                }
+                // 熄屏/省电降频（状态栏不可见，省电优先）。
+                long delay = (isPowerSaveMode(ctx) || !isInteractive(ctx))
+                        ? Math.max(sColorTickDelay, 10_000L) : sColorTickDelay;
                 if (BuildConfig.DEBUG) {
                     long t = SystemClock.uptimeMillis();
                     if (t - sLastKeepaliveLog > 30_000L) {
                         sLastKeepaliveLog = t;
-                        XposedBridge.log(LOG_PREFIX + "color-keepalive: seconds off, low-freq reapply running");
+                        XposedBridge.log(LOG_PREFIX + "color-keepalive: seconds off, delay="
+                                + delay + "ms lastWrote=" + wrote);
                     }
                 }
                 view.postDelayed(this, delay);
