@@ -217,12 +217,39 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         XposedBridge.hookAllMethods(TextView.class, "setText", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
-                if (sSelfDisabled || WRITING_CLOCK.get()
+                if (sSelfDisabled || !(param.thisObject instanceof TextView)) {
+                    return;
+                }
+                TextView view = (TextView) param.thisObject;
+                // 抓凶 A（SETTEXT-STRIP）：我们写入的带色文本被 setText 内部洗掉——arg 带着色
+                // span、存入后却没有。「StatClock.setText 覆写重建」「TextView 内部转换」两种
+                // 机制都不走 removeSpan（SPAN-THEFT 抓不到），必须在这里前后对比。
+                // WRITING_CLOCK=true 即本次写入来自我们；调用栈无用（调用者就是我们），
+                // 真凶是 setText 实现本身，故记录 view 类名与前后文本状态即可定位。
+                if (BuildConfig.DEBUG && WRITING_CLOCK.get() && param.args != null
+                        && param.args.length > 0 && param.args[0] instanceof Spanned) {
+                    try {
+                        Spanned arg = (Spanned) param.args[0];
+                        if (arg.getSpans(0, arg.length(), ForegroundColorSpan.class).length > 0) {
+                            CharSequence stored = view.getText();
+                            boolean storedHas = stored instanceof Spanned
+                                    && ((Spanned) stored).getSpans(0, stored.length(),
+                                            ForegroundColorSpan.class).length > 0;
+                            if (!storedHas) {
+                                XposedBridge.log(LOG_PREFIX + "SETTEXT-STRIP: our spanned ["
+                                        + arg + "] lost FCS inside setText; stored=[" + stored
+                                        + "] view=" + view.getClass().getName());
+                            }
+                        }
+                    } catch (Throwable ignored) {
+                        // 探针绝不影响主流程
+                    }
+                }
+                if (WRITING_CLOCK.get()
                         || !(param.thisObject instanceof TextView)) {
                     return;
                 }
                 try {
-                    TextView view = (TextView) param.thisObject;
                     // 配置写入通道与"是否识别到时钟"解耦：任意 TextView 触发时注册一次，
                     // 这样即使某些厂商的时钟 id 没被识别，设置页改颜色/手势也能写进去。
                     registerConfigReceiver(view.getContext());
@@ -236,6 +263,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     if (isStatusBarClock(view)) {
                         logProbeSetText(view, param.args != null && param.args.length > 0
                                 ? param.args[0] : null);
+                        // 抓凶探针 B：hook 时钟真实运行类的 setText（每类一次）。
+                        maybeHookClockViewClass(view);
                     }
                     // 自动检测：把任何正在显示时间格式、且非排除类的 TextView 收入候选池。
                     recordCandidate(view);
@@ -1819,6 +1848,75 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             XposedBridge.log(LOG_PREFIX + "span-theft probe installed (DEBUG only)");
         } catch (Throwable t) {
             XposedBridge.log(LOG_PREFIX + "span-theft probe install failed: " + t);
+        }
+    }
+
+    /** 已挂过抓凶探针的时钟视图类（每类只挂一次）。 */
+    private static final Set<Class<?>> HOOKED_CLOCK_CLASSES =
+            Collections.synchronizedSet(new HashSet<Class<?>>());
+
+    /**
+     * 仅 DEBUG：抓凶探针 B（运行时版）——遇到状态栏时钟视图时，hook 它的**真实运行类**的
+     * setText（每类一次），before/after 各打一行，看这个覆写方法「吃进什么、吐出什么」。
+     *
+     * <p>不用 Class.forName 按类名反射：模块加载时厂商时钟类通常还没加载，forName 易失败；
+     * 且各家时钟类名不同（Oplus StatClock / 小米 MiuiClock / 三星 uniform…）。运行时取
+     * {@code view.getClass()} 通杀所有厂商，且避开 TextView 基类（基类层由 SETTEXT-STRIP
+     * 探针覆盖）。与 SETTEXT-STRIP 配合分层定位：before 带色、after 没有 → 剥色在该覆写层
+     * （或其 super 内）；before/after 都带色 → 剥色在更上层（PROBE caller 链点名）。</p>
+     */
+    private static void maybeHookClockViewClass(TextView view) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        try {
+            Class<?> clazz = view.getClass();
+            if (clazz == TextView.class || clazz == android.widget.TextView.class) {
+                return;   // 基类无需挂（SETTEXT-STRIP 已覆盖）
+            }
+            if (!HOOKED_CLOCK_CLASSES.add(clazz)) {
+                return;   // 已挂过
+            }
+            XposedBridge.log(LOG_PREFIX + "clockclass probe: hooking " + clazz.getName());
+            XposedBridge.hookAllMethods(clazz, "setText", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    try {
+                        if (param.args == null || param.args.length == 0
+                                || !(param.args[0] instanceof CharSequence)) {
+                            return;
+                        }
+                        CharSequence arg = (CharSequence) param.args[0];
+                        boolean fcs = arg instanceof Spanned
+                                && ((Spanned) arg).getSpans(0, arg.length(),
+                                        ForegroundColorSpan.class).length > 0;
+                        XposedBridge.log(LOG_PREFIX + "CLOCKCLASS setText BEFORE: ["
+                                + arg + "] fcs=" + fcs + " ours=" + WRITING_CLOCK.get());
+                    } catch (Throwable ignored) {
+                        // 探针绝不影响主流程
+                    }
+                }
+
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        if (!(param.thisObject instanceof TextView)) {
+                            return;
+                        }
+                        CharSequence stored = ((TextView) param.thisObject).getText();
+                        boolean fcs = stored instanceof Spanned
+                                && ((Spanned) stored).getSpans(0, stored.length(),
+                                        ForegroundColorSpan.class).length > 0;
+                        XposedBridge.log(LOG_PREFIX + "CLOCKCLASS setText AFTER: fcs="
+                                + fcs + " stored=[" + stored + "] ours=" + WRITING_CLOCK.get());
+                    } catch (Throwable ignored) {
+                        // 探针绝不影响主流程
+                    }
+                }
+            });
+            XposedBridge.log(LOG_PREFIX + "clockclass probe installed: " + clazz.getName());
+        } catch (Throwable t) {
+            XposedBridge.log(LOG_PREFIX + "clockclass probe FAILED: " + t);
         }
     }
 
