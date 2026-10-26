@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             "Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un "
             "solo tocco e tieni la **decina dell'ora sempre rossa**.<br>"
-            "Nessuna classe privata del produttore. Verificato su dispositivo reale con "
+            "Il percorso principale usa solo API pubbliche di AOSP (la compatibilità con le classi private del produttore è opzionale, solo per OPPO/OnePlus/realme e saltata se assente). Verificato su dispositivo reale con "
             "ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo, Samsung e gli altri grandi produttori."
         ),
         'h_features': 'Funzioni',
@@ -45,8 +45,8 @@ TEXTS = {
              "Lo stato è salvato in `Settings.Secure`, condiviso tra processi e conservato dopo il riavvio di SystemUI"),
             ('Compatibilità',
              "Verificato su ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); funziona anche così "
-             "com'è su altri produttori con root come Xiaomi / Honor / Redmi / Samsung. Nessuna classe "
-             "privata del produttore, quindi la modalità provvisoria di LSPosed non scatta. "
+             "com'è su altri produttori con root come Xiaomi / Honor / Redmi / Samsung. Il percorso principale usa solo API pubbliche di "
+             "AOSP, quindi la modalità provvisoria di LSPosed non scatta. "
              "Minimo Android 10"),            ('Tile rapida',
              'Aggiungi una tile "Mostra secondi" al pannello, attiva con un tocco'),
             ('Miglioramenti flottante',
@@ -87,7 +87,7 @@ TEXTS = {
         'h_how': 'Come funziona',
         'how_intro': [
             "Il modulo aggancia solo **SystemUI**, usando l'approccio legacy Xposed collaudato,",
-            "e **non tocca mai nessuna classe privata del produttore**, quindi non rompe lo stato "
+            "e **il percorso principale usa solo API pubbliche di AOSP, mentre la compatibilità con le classi private del produttore è opzionale e saltata se assente**, quindi non rompe lo stato "
             "interno del sistema né fa scattare la modalità provvisoria di LSPosed:",
         ],
         'how': [

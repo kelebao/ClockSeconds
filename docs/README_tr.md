@@ -8,7 +8,7 @@
 
 # Saniyeli Zaman（Show Seconds in Time）
 
-Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, zamanın **onlar basamağını kırmızı** tutun.<br>Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda doğrulandı; Xiaomi, OnePlus, Honor, vivo, Samsung ve diğer büyük üreticileri de kapsar.
+Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, zamanın **onlar basamağını kırmızı** tutun.<br>Çekirdek akış yalnızca herkese açık AOSP API kullanır (üreticiye özel sınıf uyumluluğu isteğe bağlıdır, yalnızca OPPO/OnePlus/realme için ve yoksa atlanır). ColorOS 15 üzerinde gerçek cihazda doğrulandı; Xiaomi, OnePlus, Honor, vivo, Samsung ve diğer büyük üreticileri de kapsar.
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapat�
 | adb gerekmez | Ayarlar `Settings.Secure`'e yazılır; `WRITE_SECURE_SETTINGS` izni yoksa otomatik olarak SystemUI'nin işlediği yayına düşer — **adb izni gerekmez** |
 | Arayüz dilleri | Uygulama arayüzü **21 dili** destekler (sistem dilini otomatik izler): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Kalıcılık | Durum `Settings.Secure` içinde saklanır, işlemler arası paylaşılır, SystemUI yeniden başlatıldıktan sonra korunur |
-| Uyumluluk | ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; Xiaomi / Honor / Redmi / Samsung gibi rootlu diğer üreticilerde de olduğu gibi çalışır. Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10 |
+| Uyumluluk | ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; Xiaomi / Honor / Redmi / Samsung gibi rootlu diğer üreticilerde de olduğu gibi çalışır. Çekirdek akış herkese açık AOSP API kullandığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10 |
 | Hızlı döşeme | Bildirim panelinde "Saniye Göster" döşemesi ekleyin, tek dokunuşla aç/kapat |
 | Kayan pencere | Kayan pencerenin konumu ve boyutu **hatırlanır**; zamana **çift dokun** ile saniye aç/kapat |
 | Pil tasarrufu | Tasarruf modu açılınca saniye yenileme durur (saniyeler donar), kapayınca hemen devam eder |
@@ -76,7 +76,7 @@ Saniye açık: `15:06:03` — dakika ve saniye sistem rengini korur
 ## Nasıl Çalışır
 
 Modül yalnızca **SystemUI** sürecine hook uygular, kanıtlanmış legacy Xposed yaklaşımını kullanır
-ve **hiçbir üreticiye özel sınıfa dokunmaz**, bu nedenle sistem iç durumunu bozmaz ve LSPosed güvenlik modunu tetiklemez:
+ve **çekirdek akış yalnızca herkese açık AOSP API kullanır, üreticiye özel sınıf uyumluluğu isteğe bağlıdır ve yoksa atlanır**, bu nedenle sistem iç durumunu bozmaz ve LSPosed güvenlik modunu tetiklemez:
 
 - **Saniyeler**: kararlı `TextView.setText` (after) hook ile sistemin durum çubuğu zamanına yazdığı ham metni önbelleğe alın,
   ardından `TextView.onDraw` (before) hook ile sistem metni ayarladıktan sonra görüntüyü `hamMetin:ss` olarak üzerine yazın,

@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             'Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapatın, '
             'zamanın **onlar basamağını kırmızı** tutun.<br>'
-            'Hiçbir üreticiye özel sınıf kullanılmaz. ColorOS 15 üzerinde gerçek cihazda '
+            'Çekirdek akış yalnızca herkese açık AOSP API kullanır (üreticiye özel sınıf uyumluluğu isteğe bağlıdır, yalnızca OPPO/OnePlus/realme için ve yoksa atlanır). ColorOS 15 üzerinde gerçek cihazda '
             'doğrulandı; Xiaomi, OnePlus, Honor, vivo, Samsung ve diğer büyük üreticileri de kapsar.'
         ),
         'h_features': 'Özellikler',
@@ -43,7 +43,7 @@ TEXTS = {
             ('Uyumluluk',
              'ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; '
              'Xiaomi / Honor / Redmi / Samsung gibi rootlu diğer üreticilerde de olduğu gibi çalışır. '
-             'Üreticiye özel sınıf kullanılmadığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10'),            ('Hızlı döşeme',
+             'Çekirdek akış herkese açık AOSP API kullandığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10'),            ('Hızlı döşeme',
              'Bildirim panelinde "Saniye Göster" döşemesi ekleyin, tek dokunuşla aç/kapat'),
             ('Kayan pencere',
              'Kayan pencerenin konumu ve boyutu **hatırlanır**; zamana **çift dokun** ile saniye aç/kapat'),
@@ -82,7 +82,7 @@ TEXTS = {
         'h_how': 'Nasıl Çalışır',
         'how_intro': [
             'Modül yalnızca **SystemUI** sürecine hook uygular, kanıtlanmış legacy Xposed yaklaşımını kullanır',
-            've **hiçbir üreticiye özel sınıfa dokunmaz**, bu nedenle sistem iç durumunu bozmaz ve '
+            've **çekirdek akış yalnızca herkese açık AOSP API kullanır, üreticiye özel sınıf uyumluluğu isteğe bağlıdır ve yoksa atlanır**, bu nedenle sistem iç durumunu bozmaz ve '
             'LSPosed güvenlik modunu tetiklemez:',
         ],
         'how': [

@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             'Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem '
             'i trzymaj **dziesiątkę godziny na czerwono**.<br>'
-            'Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu '
+            'Główna ścieżka używa wyłącznie publicznych API AOSP (zgodność z prywatnymi klasami producenta jest opcjonalna, tylko dla OPPO/OnePlus/realme i pomijana, gdy jej nie ma). Zweryfikowano na prawdziwym urządzeniu '
             'z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo, Samsung i innych dużych producentów.'
         ),
         'h_features': 'Funkcje',
@@ -45,7 +45,7 @@ TEXTS = {
             ('Zgodność',
              'Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również '
              'od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi / Samsung. '
-             'Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. '
+             'Główna ścieżka używa wyłącznie publicznych API AOSP, więc tryb awaryjny LSPosed nie zostanie wywołany. '
              'Minimum Android 10'),            ('Kafelek',
              'Dodaj kafelek "Pokaż sekundy" do panelu, przełączaj jednym stuknięciem'),
             ('Ulepszony float',
@@ -86,7 +86,7 @@ TEXTS = {
         'h_how': 'Jak to działa',
         'how_intro': [
             'Moduł hakuje tylko **SystemUI**, stosując sprawdzone podejście legacy Xposed,',
-            'i **w ogóle nie dotyka prywatnych klas producenta**, więc nie uszkodzi wewnętrznego '
+            'i **główna ścieżka używa wyłącznie publicznych API AOSP, a zgodność z prywatnymi klasami producenta jest opcjonalna i pomijana, gdy ich nie ma**, więc nie uszkodzi wewnętrznego '
             'stanu systemu ani nie wywoła trybu awaryjnego LSPosed:',
         ],
         'how': [

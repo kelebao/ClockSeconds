@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             "Affichez les **secondes** sur l'heure de la barre d'état, basculez d'un simple "
             "appui et gardez la **dizaine de l'heure en rouge**.<br>"
-            "Aucune classe privée de fabricant. Vérifié sur appareil réel sous ColorOS 15 ; "
+            "Le chemin principal n'utilise que des API publiques d'AOSP (la compatibilité avec les classes privées du fabricant est optionnelle, réservée à OPPO/OnePlus/realme et ignorée si absente). Vérifié sur appareil réel sous ColorOS 15 ; "
             "couvre aussi Xiaomi, OnePlus, Honor, vivo, Samsung et les autres grands fabricants."
         ),
         'h_features': 'Fonctionnalités',
@@ -47,8 +47,8 @@ TEXTS = {
              "L'état est stocké dans `Settings.Secure`, partagé entre les processus et conservé après un redémarrage de SystemUI"),
             ('Compatibilité',
              "Vérifié sur ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) ; fonctionne aussi tel quel "
-             "sur d'autres fabricants rootés comme Xiaomi / Honor / Redmi / Samsung. Aucune classe privée de "
-             "fabricant, donc le mode sans échec de LSPosed n'est pas déclenché. Android 10 minimum"),            ('Tuile rapide',
+             "sur d'autres fabricants rootés comme Xiaomi / Honor / Redmi / Samsung. Le chemin principal n'utilise que des API publiques de "
+             "AOSP, donc le mode sans échec de LSPosed n'est pas déclenché. Android 10 minimum"),            ('Tuile rapide',
              'Ajoutez une tuile "Afficher les secondes" au panneau, basculez d\'un tap'),
             ('Flottant amélioré',
              'Position et taille du flottant **mémorisées**; **double-tap** sur l\'heure bascule aussi'),
@@ -88,7 +88,7 @@ TEXTS = {
         'h_how': 'Comment ça marche',
         'how_intro': [
             "Le module n'accroche que **SystemUI**, en utilisant l'approche legacy Xposed bien rodée,",
-            "et **ne touche jamais aucune classe privée de fabricant** : il ne casse donc jamais "
+            "et **le chemin principal n'utilise que des API publiques d'AOSP, la compatibilité avec les classes privées du fabricant étant optionnelle et ignorée si absente** : il ne casse donc jamais "
             "l'état interne du système ni ne déclenche le mode sans échec de LSPosed :",
         ],
         'how': [

@@ -8,7 +8,7 @@
 
 # 時間顯示秒數（Show Seconds in Time）
 
-讓狀態欄時間顯示**秒**，單擊即切換，小時十位數**常駐標紅**。<br>不依賴任何廠商私有類，已在 ColorOS 15 真機驗證，同時覆蓋小米、一加、榮耀、vivo、三星 等主要廠商。
+讓狀態欄時間顯示**秒**，單擊即切換，小時十位數**常駐標紅**。<br>核心鏈路只用 AOSP 公開 API（私有類相容僅 OPPO/一加/真我，可選且可跳過），已在 ColorOS 15 真機驗證，同時覆蓋小米、一加、榮耀、vivo、三星 等主要廠商。
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@
 | 免 adb 授權 | 所有設定寫入優先走 `Settings.Secure`，無 `WRITE_SECURE_SETTINGS` 權限時自動改走廣播由 SystemUI 代寫——**無需 adb 授權**即可正常使用全部功能 |
 | 介面語言 | 應用內介面已適應 **21 種語言**（跟隨系統語言自動切換）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 持久化 | 狀態存於 `Settings.Secure`，跨程序共享，重啟 SystemUI 後保持 |
-| 適應範圍 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真機驗證；小米 / 榮耀 / 紅米 / 三星 等有 root 的其它廠商同步生效。不依賴任何廠商私有類，避免觸發 LSPosed 安全模式。最低支援 Android 10 |
+| 適應範圍 | ColorOS 15 / 16 / 17（OPPO / 一加 / 真我）已真機驗證；小米 / 榮耀 / 紅米 / 三星 等有 root 的其它廠商同步生效。核心鏈路只用 AOSP 公開 API（私有類相容僅 OPPO/一加/真我，可選且可跳過），因此不會觸發 LSPosed 安全模式。最低支援 Android 10 |
 | 下拉磁貼 | 下拉通知欄新增「時間顯秒」磁貼，一鍵開關顯秒（無需打開設定頁） |
 | 浮窗增強 | 浮窗位置與尺寸**自動記憶**（下次長按按記憶恢復）；**雙擊**浮窗時間也可切換顯秒 |
 | 省電自適應 | 系統開啟省電模式時自動暫停秒級重新整理（狀態列秒數凍結），退出省電立即恢復 |
@@ -76,7 +76,7 @@
 ## 工作原理
 
 模組只 hook **SystemUI** 一個程序，採用穩妥的 legacy Xposed 範式，
-**完全不觸碰任何廠商私有類**，因而不會破壞系統內部狀態、不會觸發 LSPosed 安全模式：
+**核心鏈路只走 AOSP 公開 API，私有類相容可選、找不到即跳過**，因而不會破壞系統內部狀態、不會觸發 LSPosed 安全模式：
 
 - **顯秒**：hook 穩定的 `TextView.setText`（after）快取系統在狀態欄時間上给出的原始文字，
   再 hook `TextView.onDraw`（before）在系統已設好文字之後覆寫顯示 `原始文字:ss`，

@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             'Mostre os **segundos** na hora da barra de status, alterne com um único toque '
             'e mantenha a **dezena da hora em vermelho**.<br>'
-            'Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; '
+            'O caminho principal usa apenas APIs públicas do AOSP (a compatibilidade com classes privadas do fabricante é opcional, só para OPPO/OnePlus/realme e ignorada quando ausente). Verificado em dispositivo real com ColorOS 15; '
             'também cobre Xiaomi, OnePlus, Honor, vivo, Samsung e outros grandes fabricantes.'
         ),
         'h_features': 'Recursos',
@@ -44,8 +44,8 @@ TEXTS = {
              'O estado é salvo em `Settings.Secure`, compartilhado entre processos e mantido após reinícios do SystemUI'),
             ('Compatibilidade',
              'Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto '
-             'em outros fabricantes com root como Xiaomi / Honor / Redmi / Samsung. Sem classes privadas de '
-             'fabricante, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo'),            ('Tile rápido',
+             'em outros fabricantes com root como Xiaomi / Honor / Redmi / Samsung. O caminho principal usa apenas APIs públicas do '
+             'AOSP, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo'),            ('Tile rápido',
              'Adicione um tile "Mostrar segundos" no painel, alterne com um toque'),
             ('Flutuante aprimorado',
              'Posição e tamanho do flutuante são **lembrados**; **toque duplo** na hora também alterna'),
@@ -85,7 +85,7 @@ TEXTS = {
         'h_how': 'Como funciona',
         'how_intro': [
             'O módulo só hooka o **SystemUI**, usando a abordagem legacy Xposed bem testada,',
-            'e **nunca toca em nenhuma classe privada de fabricante**, então não quebra o estado '
+            'e **o caminho principal usa apenas APIs públicas do AOSP, e a compatibilidade com classes privadas do fabricante é opcional e ignorada quando ausente**, então não quebra o estado '
             'interno do sistema nem aciona o modo de segurança do LSPosed:',
         ],
         'how': [

@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             'Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, '
             'và giữ **hàng chục của giờ luôn màu đỏ**.<br>'
-            'Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật '
+            'Luồng chính chỉ dùng API công khai của AOSP (tương thích lớp私有 chỉ là tùy chọn, dành cho OPPO/OnePlus/realme và bỏ qua nếu không có). Đã xác minh trên máy thật '
             'ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo, Samsung và các hãng lớn khác.'
         ),
         'h_features': 'Tính năng',
@@ -42,7 +42,7 @@ TEXTS = {
              'Trạng thái lưu trong `Settings.Secure`, dùng chung giữa các tiến trình, giữ nguyên sau khi khởi động lại SystemUI'),
             ('Phạm vi tương thích',
              'Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay '
-             'trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Không dùng lớp私有 của hãng nên '
+             'trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Luồng chính chỉ dùng API công khai của AOSP nên '
              'không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10'),            ('Ô vuông nhanh',
              'Thêm ô "Hiện giây" vào bảng thông báo, bật/tắt bằng một chạm'),
             ('Cải tiến float',
@@ -82,7 +82,7 @@ TEXTS = {
         'h_how': 'Nguyên lý hoạt động',
         'how_intro': [
             'Module chỉ hook **một tiến trình SystemUI**, theo mẫu legacy Xposed vững chắc,',
-            '**hoàn toàn không chạm vào bất kỳ lớp私有 nào của nhà sản xuất**, nên không phá vỡ '
+            '**luồng chính chỉ dùng API công khai của AOSP, còn tương thích lớp私有 là tùy chọn và bỏ qua nếu không có**, nên không phá vỡ '
             'trạng thái nội bộ hệ thống và không kích hoạt chế độ an toàn LSPosed:',
         ],
         'how': [

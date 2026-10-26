@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             'Show **seconds** in the status bar time, toggle with a single tap, '
             'and keep the **hour tens digit in red**.<br>'
-            'No vendor-private classes involved. Verified on ColorOS 15, '
+            'Core path uses only public AOSP APIs (vendor-private compatibility is optional, OPPO/OnePlus/realme only, and skipped when absent). Verified on ColorOS 15, '
             'and designed to cover Xiaomi, OnePlus, Honor, vivo, Samsung and other major vendors.'
         ),
         'h_features': 'Features',
@@ -43,7 +43,7 @@ TEXTS = {
              'State is stored in `Settings.Secure`, shared across processes, survives SystemUI restarts'),
             ('Compatibility',
              'Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box '
-             'on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. No vendor-private classes, '
+             'on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. The core path uses only public AOSP APIs (vendor-private compatibility is optional, OPPO/OnePlus/realme only, and skipped when absent), '
              'so LSPosed safe mode will not be triggered. Minimum Android 10'),            ('Quick tile',
              'Add a "Show Seconds" tile to the notification shade to toggle seconds in one tap'),
             ('Float upgrade',
@@ -82,7 +82,7 @@ TEXTS = {
         'h_how': 'How It Works',
         'how_intro': [
             'The module hooks **SystemUI** only, using the well-tested legacy Xposed approach,',
-            'and **never touches any vendor-private class**, so system internal state is never broken '
+            'and **the core path uses only public AOSP APIs, with vendor-private compatibility optional and skipped when absent**, so system internal state is never broken '
             'and LSPosed safe mode is never triggered:',
         ],
         'how': [

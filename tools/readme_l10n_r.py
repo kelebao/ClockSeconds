@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             'Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, '
             'dan buat **puluhan waktu tetap merah**.<br>'
-            'Tanpa kelas privat vendor mana pun. Terverifikasi di perangkat nyata dengan '
+            'Jalur inti hanya memakai API publik AOSP (kompatibilitas kelas privat vendor bersifat opsional, hanya untuk OPPO/OnePlus/realme dan dilewati bila tidak ada). Terverifikasi di perangkat nyata dengan '
             'ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, Samsung, dan vendor besar lainnya.'
         ),
         'h_features': 'Fitur',
@@ -43,7 +43,7 @@ TEXTS = {
              'Status disimpan di `Settings.Secure`, dibagi antar proses, dan bertahan setelah SystemUI dimulai ulang'),
             ('Kompatibilitas',
              'Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi '
-             'di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Tanpa kelas privat vendor, '
+             'di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Jalur inti hanya memakai API publik AOSP, '
              'sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10'),            ('Tile cepat',
              'Tambahkan tile "Tampilkan detik" ke panel, alihkan dengan satu ketuk'),
             ('Float ditingkatkan',
@@ -84,7 +84,7 @@ TEXTS = {
         'h_how': 'Cara kerja',
         'how_intro': [
             'Modul hanya meng-hook **SystemUI**, dengan pendekatan legacy Xposed yang sudah teruji,',
-            'dan **sama sekali tidak menyentuh kelas privat vendor mana pun**, sehingga tidak '
+            'dan **jalur inti hanya memakai API publik AOSP, sedangkan kompatibilitas kelas privat vendor bersifat opsional dan dilewati bila tidak ada**, sehingga tidak '
             'merusak status internal sistem dan tidak memicu mode aman LSPosed:',
         ],
         'how': [

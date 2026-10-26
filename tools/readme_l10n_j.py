@@ -7,7 +7,7 @@ TEXTS = {
         'tagline': (
             'Zeigt **Sekunden** in der Statusleisten-Zeit an, Umschalten mit einmaligem Tippen, '
             'und die **Zehnerstelle der Stunde bleibt rot**.<br>'
-            'Keine herstellereigenen privaten Klassen nötig. Auf einem echten Gerät mit '
+            'Der Kernpfad nutzt ausschließlich öffentliche AOSP-APIs (hersteller-private Kompatibilität ist optional, nur für OPPO/OnePlus/realme und wird übersprungen, wenn nicht vorhanden). Auf einem echten Gerät mit '
             'ColorOS 15 verifiziert; deckt ebenfalls Xiaomi, OnePlus, Honor, vivo, Samsung und '
             'andere große Hersteller ab.'
         ),
@@ -46,7 +46,7 @@ TEXTS = {
             ('Kompatibilität',
              'Auf ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) auf echtem Gerät verifiziert; '
              'funktioniert auch auf anderen gerooteten Herstellern wie Xiaomi / Honor / Redmi / Samsung. '
-             'Keine herstellereigenen privaten Klassen, daher wird der LSPosed-Sicherheitsmodus '
+             'Der Kernpfad nutzt ausschließlich öffentliche AOSP-APIs, daher wird der LSPosed-Sicherheitsmodus '
              'nicht ausgelöst. Mindestens Android 10'),            ('Schnellkachel',
              'Füge eine "Sekunden anzeigen"-Kachel zum Benachrichtigungsbereich hinzu, mit einem Tipp umschalten'),
             ('Float verbessert',
@@ -87,7 +87,7 @@ TEXTS = {
         'h_how': 'Funktionsweise',
         'how_intro': [
             'Das Modul hookt nur **SystemUI** und nutzt den bewährten Legacy-Xposed-Ansatz,',
-            '**berührt keinerlei herstellereigene private Klassen** und beschädigt daher nie den '
+            '**der Kernpfad nutzt ausschließlich öffentliche AOSP-APIs, und hersteller-private Kompatibilität ist optional und wird bei Fehlen übersprungen**. Das beschädigt daher nie den '
             'internen Systemzustand oder löst den LSPosed-Sicherheitsmodus aus:',
         ],
         'how': [

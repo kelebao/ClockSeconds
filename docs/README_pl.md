@@ -8,7 +8,7 @@
 
 # Sekundy w czasie（Show Seconds in Time）
 
-Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Żadnych prywatnych klas producenta. Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo, Samsung i innych dużych producentów.
+Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzymaj **dziesiątkę godziny na czerwono**.<br>Główna ścieżka używa wyłącznie publicznych API AOSP (zgodność z prywatnymi klasami producenta jest opcjonalna, tylko dla OPPO/OnePlus/realme i pomijana, gdy jej nie ma). Zweryfikowano na prawdziwym urządzeniu z ColorOS 15; obsługuje też Xiaomi, OnePlus, Honor, vivo, Samsung i innych dużych producentów.
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Pokaż **sekundy** w czasie paska stanu, przełączaj jednym dotknięciem i trzy
 | Bez adb | Ustawienia zapisują się w `Settings.Secure`; bez uprawnienia `WRITE_SECURE_SETTINGS` moduł automatycznie przechodzi na broadcast obsługiwany przez SystemUI — **bez uprawnień adb** |
 | Języki interfejsu | Interfejs aplikacji jest przetłumaczony na **21 języków** (automatycznie podąża za językiem systemu): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Trwałość | Stan zapisywany jest w `Settings.Secure`, współdzielony między procesami i przetrwa restarty SystemUI |
-| Zgodność | Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi / Samsung. Bez prywatnych klas producenta, więc tryb awaryjny LSPosed nie zostanie wywołany. Minimum Android 10 |
+| Zgodność | Zweryfikowano na ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); działa również od razu u innych producentów z rootem, takich jak Xiaomi / Honor / Redmi / Samsung. Główna ścieżka używa wyłącznie publicznych API AOSP, więc tryb awaryjny LSPosed nie zostanie wywołany. Minimum Android 10 |
 | Kafelek | Dodaj kafelek "Pokaż sekundy" do panelu, przełączaj jednym stuknięciem |
 | Ulepszony float | Pozycja i rozmiar okna są **zapamiętywane**; **podwójne stuknięcie** czasu też przełącza |
 | Oszczędzanie energii | W trybie oszczędzania odświeżanie co sekundę pauzuje (sekundy zamrożone), po wyłączeniu wznawia |
@@ -76,7 +76,7 @@ Sekundy włączone: `15:06:03` — minuty i sekundy zachowują kolor systemowy
 ## Jak to działa
 
 Moduł hakuje tylko **SystemUI**, stosując sprawdzone podejście legacy Xposed,
-i **w ogóle nie dotyka prywatnych klas producenta**, więc nie uszkodzi wewnętrznego stanu systemu ani nie wywoła trybu awaryjnego LSPosed:
+i **główna ścieżka używa wyłącznie publicznych API AOSP, a zgodność z prywatnymi klasami producenta jest opcjonalna i pomijana, gdy ich nie ma**, więc nie uszkodzi wewnętrznego stanu systemu ani nie wywoła trybu awaryjnego LSPosed:
 
 - **Sekundy**: hak stabilnego `TextView.setText` (after) buforuje surowy tekst, który system kładzie na czas paska stanu,
   potem hak `TextView.onDraw` (before) nadpisuje wyświetlanie wartością `surowyTekst:ss` po tym, jak system ustawił tekst,

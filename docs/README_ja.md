@@ -8,7 +8,7 @@
 
 # 時刻の秒表示（Show Seconds in Time）
 
-ステータスバーの時刻に**秒**を表示。ワンタップで切り替え、時の十の位は**常に赤**。<br>ベンダー固有クラスには一切依存せず、ColorOS 15 の実機で検証済み。Xiaomi・OnePlus・Honor・vivo・Samsung など主要メーカーにも対応。
+ステータスバーの時刻に**秒**を表示。ワンタップで切り替え、時の十の位は**常に赤**。<br>コア処理は AOSP の公開 API のみを使用し（ベンダー固有クラス互換は OPPO/OnePlus/realme 限定の任意機能で、無ければスキップ）、ColorOS 15 の実機で検証済み。Xiaomi・OnePlus・Honor・vivo・Samsung など主要メーカーにも対応。
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@
 | adb 不要 | 設定は `Settings.Secure` へ書き込み。`WRITE_SECURE_SETTINGS` がない場合は自動的にブロードキャストにフォールバックし SystemUI が代行——**adb 承認は不要**です |
 | UI 言語 | アプリ UI は **21 言語**に対応（システム言語に自動追従）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული |
 | 永続化 | 状態は `Settings.Secure` に保存。プロセス間で共有され、SystemUI 再起動後も維持 |
-| 対応範囲 | ColorOS 15 / 16 / 17（OPPO / OnePlus / realme）は実機検証済み。Xiaomi / Honor / Redmi / Samsung など root 取得済みの他メーカーでもそのまま動作。ベンダー固有クラスに依存しないため LSPosed セーフモードは誘発しません。最低 Android 10 |
+| 対応範囲 | ColorOS 15 / 16 / 17（OPPO / OnePlus / realme）は実機検証済み。Xiaomi / Honor / Redmi / Samsung など root 取得済みの他メーカーでもそのまま動作。コア処理は AOSP の公開 API のみを使用するため LSPosed セーフモードは誘発しません。最低 Android 10 |
 | クイックタイル | 通知シェードに「秒表示」タイルを追加し、ワンタップで切替 |
 | フロート強化 | フロートの位置とサイズを**記憶**（次回長押しで復元）；フロートの時刻を**ダブルタップ**でも秒表示切替 |
 | 省電対応 | 省電モードONで秒更新を一時停止（秒が停止）；OFFで即座に再開 |
@@ -76,7 +76,7 @@
 ## 動作の仕組み
 
 モジュールが hook するのは **SystemUI** のみ。実績のある legacy Xposed の手法を用い、
-**ベンダー固有クラスには一切触れない**ため、システム内部状態を壊すことも LSPosed セーフモードを誘発することもありません：
+**コア処理は AOSP の公開 API のみで、ベンダー固有クラス互換は任意・無ければスキップする**ため、システム内部状態を壊すことも LSPosed セーフモードを誘発することもありません：
 
 - **秒表示**：安定した `TextView.setText`（after）を hook してシステムがステータスバーの時刻に設定した素の文字列をキャッシュし、
   次に `TextView.onDraw`（before）を hook して、システムが文字列を設定した後に表示を `素の文字列:ss` で上書きします。

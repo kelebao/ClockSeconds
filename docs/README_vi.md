@@ -8,7 +8,7 @@
 
 # Hiển thị giây（Show Seconds in Time）
 
-Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, và giữ **hàng chục của giờ luôn màu đỏ**.<br>Không dùng bất kỳ lớp私有 nào của nhà sản xuất. Đã xác minh trên máy thật ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo, Samsung và các hãng lớn khác.
+Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, và giữ **hàng chục của giờ luôn màu đỏ**.<br>Luồng chính chỉ dùng API công khai của AOSP (tương thích lớp私有 chỉ là tùy chọn, dành cho OPPO/OnePlus/realme và bỏ qua nếu không có). Đã xác minh trên máy thật ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo, Samsung và các hãng lớn khác.
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng
 | Không cần adb | Cài đặt ghi vào `Settings.Secure`; nếu không có quyền `WRITE_SECURE_SETTINGS`, module tự chuyển sang broadcast do SystemUI xử lý — **không cần cấp quyền adb** |
 | Ngôn ngữ giao diện | Giao diện ứng dụng đã hỗ trợ **21 ngôn ngữ** (tự động theo ngôn ngữ hệ thống): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Lưu trữ bền vững | Trạng thái lưu trong `Settings.Secure`, dùng chung giữa các tiến trình, giữ nguyên sau khi khởi động lại SystemUI |
-| Phạm vi tương thích | Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Không dùng lớp私有 của hãng nên không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10 |
+| Phạm vi tương thích | Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Luồng chính chỉ dùng API công khai của AOSP nên không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10 |
 | Ô vuông nhanh | Thêm ô "Hiện giây" vào bảng thông báo, bật/tắt bằng một chạm |
 | Cải tiến float | Vị trí & kích thước float được **nhớ**; **nhấn đúp** thời gian cũng bật/tắt giây |
 | Tiết kiệm pin | Bật tiết kiệm pin thì tạm dừng làm mới từng giây (giây đông cứng), tắt thì phục hồi ngay |
@@ -76,7 +76,7 @@ Bật giây: `15:06:03` — phút và giây giữ màu hệ thống
 ## Nguyên lý hoạt động
 
 Module chỉ hook **một tiến trình SystemUI**, theo mẫu legacy Xposed vững chắc,
-**hoàn toàn không chạm vào bất kỳ lớp私有 nào của nhà sản xuất**, nên không phá vỡ trạng thái nội bộ hệ thống và không kích hoạt chế độ an toàn LSPosed:
+**luồng chính chỉ dùng API công khai của AOSP, còn tương thích lớp私有 là tùy chọn và bỏ qua nếu không có**, nên không phá vỡ trạng thái nội bộ hệ thống và không kích hoạt chế độ an toàn LSPosed:
 
 - **Hiển thị giây**: hook `TextView.setText` (after) ổn định để lưu văn bản gốc mà hệ thống đặt lên thời gian thanh trạng thái,
   sau đó hook `TextView.onDraw` (before) để ghi đè hiển thị thành `văn bản gốc:ss` ngay sau khi hệ thống đã đặt xong văn bản,

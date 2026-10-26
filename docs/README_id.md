@@ -8,7 +8,7 @@
 
 # Detik pada Waktu（Show Seconds in Time）
 
-Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan buat **puluhan waktu tetap merah**.<br>Tanpa kelas privat vendor mana pun. Terverifikasi di perangkat nyata dengan ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, Samsung, dan vendor besar lainnya.
+Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan buat **puluhan waktu tetap merah**.<br>Jalur inti hanya memakai API publik AOSP (kompatibilitas kelas privat vendor bersifat opsional, hanya untuk OPPO/OnePlus/realme dan dilewati bila tidak ada). Terverifikasi di perangkat nyata dengan ColorOS 15; juga mencakup Xiaomi, OnePlus, Honor, vivo, Samsung, dan vendor besar lainnya.
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan b
 | Tanpa adb | Setelan ditulis ke `Settings.Secure`; tanpa izin `WRITE_SECURE_SETTINGS` modul beralih ke broadcast yang diproses SystemUI — **tidak perlu izin adb** |
 | Bahasa antarmuka | Antarmuka aplikasi diterjemahkan ke **21 bahasa** (otomatis mengikuti bahasa sistem): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistensi | Status disimpan di `Settings.Secure`, dibagi antar proses, dan bertahan setelah SystemUI dimulai ulang |
-| Kompatibilitas | Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Tanpa kelas privat vendor, sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10 |
+| Kompatibilitas | Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Jalur inti hanya memakai API publik AOSP, sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10 |
 | Tile cepat | Tambahkan tile "Tampilkan detik" ke panel, alihkan dengan satu ketuk |
 | Float ditingkatkan | Posisi & ukuran float **diingat**; **ketuk ganda** waktu juga mengalihkan |
 | Sadar hemat baterai | Saat mode hemat aktif, penyegaran per detik dijeda (detik membeku), saat mati langsung dilanjut |
@@ -76,7 +76,7 @@ Detik hidup: `15:06:03` — menit dan detik mempertahankan warna sistem
 ## Cara kerja
 
 Modul hanya meng-hook **SystemUI**, dengan pendekatan legacy Xposed yang sudah teruji,
-dan **sama sekali tidak menyentuh kelas privat vendor mana pun**, sehingga tidak merusak status internal sistem dan tidak memicu mode aman LSPosed:
+dan **jalur inti hanya memakai API publik AOSP, sedangkan kompatibilitas kelas privat vendor bersifat opsional dan dilewati bila tidak ada**, sehingga tidak merusak status internal sistem dan tidak memicu mode aman LSPosed:
 
 - **Detik**: hook `TextView.setText` (after) yang stabil untuk menyimpan mentahan teks yang sistem berikan pada waktu bilah status,
   lalu hook `TextView.onDraw` (before) untuk menimpa tampilan dengan `mentahanTeks:ss` setelah sistem selesai mengatur teks,

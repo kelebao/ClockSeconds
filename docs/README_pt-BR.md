@@ -8,7 +8,7 @@
 
 # Segundos na hora（Show Seconds in Time）
 
-Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>Sem classes privadas de fabricante. Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo, Samsung e outros grandes fabricantes.
+Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>O caminho principal usa apenas APIs públicas do AOSP (a compatibilidade com classes privadas do fabricante é opcional, só para OPPO/OnePlus/realme e ignorada quando ausente). Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo, Samsung e outros grandes fabricantes.
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Mostre os **segundos** na hora da barra de status, alterne com um único toque e
 | Sem adb | As configurações vão para `Settings.Secure`; sem a permissão `WRITE_SECURE_SETTINGS` o módulo usa um broadcast tratado pelo SystemUI — **não precisa de adb** |
 | Idiomas da interface | A interface do app está traduzida em **21 idiomas** (segue o idioma do sistema automaticamente): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistência | O estado é salvo em `Settings.Secure`, compartilhado entre processos e mantido após reinícios do SystemUI |
-| Compatibilidade | Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto em outros fabricantes com root como Xiaomi / Honor / Redmi / Samsung. Sem classes privadas de fabricante, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo |
+| Compatibilidade | Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto em outros fabricantes com root como Xiaomi / Honor / Redmi / Samsung. O caminho principal usa apenas APIs públicas do AOSP, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo |
 | Tile rápido | Adicione um tile "Mostrar segundos" no painel, alterne com um toque |
 | Flutuante aprimorado | Posição e tamanho do flutuante são **lembrados**; **toque duplo** na hora também alterna |
 | Economia de bateria | Com economia ativa, a atualização por segundo pausa (segundos congelam), ao desativar retoma |
@@ -76,7 +76,7 @@ Segundos ativados: `15:06:03` — minutos e segundos mantêm a cor do sistema
 ## Como funciona
 
 O módulo só hooka o **SystemUI**, usando a abordagem legacy Xposed bem testada,
-e **nunca toca em nenhuma classe privada de fabricante**, então não quebra o estado interno do sistema nem aciona o modo de segurança do LSPosed:
+e **o caminho principal usa apenas APIs públicas do AOSP, e a compatibilidade com classes privadas do fabricante é opcional e ignorada quando ausente**, então não quebra o estado interno do sistema nem aciona o modo de segurança do LSPosed:
 
 - **Segundos**: hook do estável `TextView.setText` (after) para cachear o texto bruto que o sistema coloca na hora da barra de status,
   depois hook do `TextView.onDraw` (before) para sobrescrever a exibição com `textoBruto:ss` depois que o sistema tiver definido o texto,

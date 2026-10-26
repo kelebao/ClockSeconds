@@ -8,7 +8,7 @@
 
 # Show Seconds in Time（时间显示秒数）
 
-Show **seconds** in the status bar time, toggle with a single tap, and keep the **hour tens digit in red**.<br>No vendor-private classes involved. Verified on ColorOS 15, and designed to cover Xiaomi, OnePlus, Honor, vivo, Samsung and other major vendors.
+Show **seconds** in the status bar time, toggle with a single tap, and keep the **hour tens digit in red**.<br>Core path uses only public AOSP APIs (vendor-private compatibility is optional, OPPO/OnePlus/realme only, and skipped when absent). Verified on ColorOS 15, and designed to cover Xiaomi, OnePlus, Honor, vivo, Samsung and other major vendors.
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Show **seconds** in the status bar time, toggle with a single tap, and keep the 
 | No adb needed | Settings are written to `Settings.Secure` when permitted; without `WRITE_SECURE_SETTINGS` the module automatically falls back to a broadcast handled by SystemUI — **no adb grant required** |
 | UI languages | The app UI is localized into **21 languages** (follows the system language automatically): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistence | State is stored in `Settings.Secure`, shared across processes, survives SystemUI restarts |
-| Compatibility | Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. No vendor-private classes, so LSPosed safe mode will not be triggered. Minimum Android 10 |
+| Compatibility | Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. The core path uses only public AOSP APIs (vendor-private compatibility is optional, OPPO/OnePlus/realme only, and skipped when absent), so LSPosed safe mode will not be triggered. Minimum Android 10 |
 | Quick tile | Add a "Show Seconds" tile to the notification shade to toggle seconds in one tap |
 | Float upgrade | Float window position & size are **remembered**; **double-tap** the time to also toggle seconds |
 | Power-save aware | When battery saver is on, per-second refresh pauses (seconds freeze); resumes instantly when off |
@@ -76,7 +76,7 @@ Seconds on: `15:06:03` — minutes and seconds keep the system color
 ## How It Works
 
 The module hooks **SystemUI** only, using the well-tested legacy Xposed approach,
-and **never touches any vendor-private class**, so system internal state is never broken and LSPosed safe mode is never triggered:
+and **the core path uses only public AOSP APIs, with vendor-private compatibility optional and skipped when absent**, so system internal state is never broken and LSPosed safe mode is never triggered:
 
 - **Seconds**: hook the stable `TextView.setText` (after) to cache the raw text the system puts on the status bar time,
   then hook `TextView.onDraw` (before) to overwrite the display with `rawText:ss` after the system has set it,

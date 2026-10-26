@@ -8,7 +8,7 @@
 
 # Secondi sull'ora（Show Seconds in Time）
 
-Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un solo tocco e tieni la **decina dell'ora sempre rossa**.<br>Nessuna classe privata del produttore. Verificato su dispositivo reale con ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo, Samsung e gli altri grandi produttori.
+Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un solo tocco e tieni la **decina dell'ora sempre rossa**.<br>Il percorso principale usa solo API pubbliche di AOSP (la compatibilità con le classi private del produttore è opzionale, solo per OPPO/OnePlus/realme e saltata se assente). Verificato su dispositivo reale con ColorOS 15; copre anche Xiaomi, OnePlus, Honor, vivo, Samsung e gli altri grandi produttori.
 
 [![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
@@ -33,7 +33,7 @@ Mostra i **secondi** sull'ora della barra di stato, attiva/disattiva con un solo
 | Senza adb | Le impostazioni vengono scritte in `Settings.Secure`; senza il permesso `WRITE_SECURE_SETTINGS` il modulo passa automaticamente a un broadcast gestito da SystemUI — **nessuna autorizzazione adb** |
 | Lingue dell'interfaccia | L'interfaccia dell'app è tradotta in **21 lingue** (segue automaticamente la lingua di sistema): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
 | Persistenza | Lo stato è salvato in `Settings.Secure`, condiviso tra processi e conservato dopo il riavvio di SystemUI |
-| Compatibilità | Verificato su ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); funziona anche così com'è su altri produttori con root come Xiaomi / Honor / Redmi / Samsung. Nessuna classe privata del produttore, quindi la modalità provvisoria di LSPosed non scatta. Minimo Android 10 |
+| Compatibilità | Verificato su ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); funziona anche così com'è su altri produttori con root come Xiaomi / Honor / Redmi / Samsung. Il percorso principale usa solo API pubbliche di AOSP, quindi la modalità provvisoria di LSPosed non scatta. Minimo Android 10 |
 | Tile rapida | Aggiungi una tile "Mostra secondi" al pannello, attiva con un tocco |
 | Miglioramenti flottante | Posizione e dimensione del flottante **memorizzate**; **doppio tocco** sull'ora alterna |
 | Risparmio energetico | Con il risparmio attivo, l'aggiornamento al secondo si mette in pausa (secondi fermi), riprende all'uscita |
@@ -76,7 +76,7 @@ Secondi attivati: `15:06:03` — minuti e secondi mantengono il colore di sistem
 ## Come funziona
 
 Il modulo aggancia solo **SystemUI**, usando l'approccio legacy Xposed collaudato,
-e **non tocca mai nessuna classe privata del produttore**, quindi non rompe lo stato interno del sistema né fa scattare la modalità provvisoria di LSPosed:
+e **il percorso principale usa solo API pubbliche di AOSP, mentre la compatibilità con le classi private del produttore è opzionale e saltata se assente**, quindi non rompe lo stato interno del sistema né fa scattare la modalità provvisoria di LSPosed:
 
 - **Secondi**: aggancia lo stabile `TextView.setText` (after) per mettere in cache il testo grezzo che il sistema mette sull'ora della barra di stato,
   poi aggancia `TextView.onDraw` (before) per sovrascrivere la visualizzazione con `testoGrezzo:ss` dopo che il sistema ha impostato il testo,
