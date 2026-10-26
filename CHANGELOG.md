@@ -2,6 +2,34 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
+## v1.1.0（测试线 versionCode 11 ~ 36）— ColorOS 17 掉色根治、原生显秒常开、自证诊断
+
+> **状态：未发布。** 测试线从 vc11 累积到 vc36 的全部改动归在本段；正式发版时本段即为 v1.1.0 的更新内容。
+
+### 修复
+
+- **ColorOS 17 显秒后小时十位颜色被系统"洗"回去（反馈最多的问题）**：根因是系统 `StatClock` / `setTextWithRedOneStyle` 以及部分第三方主题模块会按 `HH:mm(:ss)` 的模式重新生成时钟文本，把原来的 `ForegroundColorSpan` 一并剥掉。修法是在写入的文本末尾补一个**零宽空格 `U+200B`**，破坏模式匹配，让 Span 得以存活。
+- **幂等判断不再只看文字**：`TextUtils.equals` 会把「文字没变、但 Span 被剥了」误判成「无需重写」而跳过；改为 `contentEquals` + Span 感知判断，Span 丢了就补。
+- **关掉显秒后小时十位的颜色处理**：区分两种情况——分钟跳变引起的正常重绘不再被误判成「掉色」；真掉色则立刻补回。
+- **显秒开启后的保色改为自适应节流**：从 2s 起，本轮没掉色就把间隔翻倍（4s / 8s / … 最多 30s）；一旦判定真掉色立即回到 2s。连续两次掉色后进入 **5 分钟冷却并自动停表**，不再长期每秒 setText 空烧；系统省电模式或熄屏时拉长到 ≥10s。守卫状态改为**按视图隔离**（此前的共享静态字段会让多个候选视图互相干扰，导致部分机型节流参数错乱）。
+- **「关了显秒再打开，秒数不再跳动」**：状态栏时钟被候选池接管的那条分支没有挂上 ticker，已补 `installTicker`。
+- **三星 One UI 单击状态栏无反应**：Samsung 分支此前把自己绘制的时钟当成了触摸目标，改为恢复真实 `TextView` 作为 `sClockView`。
+- **长按状态栏时钟无反应**：修正候选视图缓存顺序、改用 `onDraw` 时机刷新、排除误命中下拉面板里的 qsclock。
+- **简体中文本地化**：补 `values-zh-rCN`（85 个键，键集与基线一致）。
+
+### 新增
+
+- **ColorOS 17 原生「显示秒」强制常开**：反射 hook 系统 `ClockSecondsController` 的 `isOplusFiveMinutesActive` / `scheduleExpiryLocked` / `onUserOrModeChanged`，让系统自带的「显示秒（5 分钟后自动收回）」不再被收回；同时 hook `OplusClockExImpl#setTextWithRedOneStyle`（含内部类 `$1#run`），把文本重新夺回。**这些私有类找不到时静默跳过，不影响其它厂商机型，也不会因为系统改类名而崩溃。**
+- **设置页「激活状态」卡**：与 SystemUI 进程内的模块做 PING/PONG 心跳，通过 `Settings.Secure` 的 `coloros_clock_seconds_active`（格式 `时间戳|versionName|versionCode`）判断模块是否真的跑起来了，不用再靠用户猜「要不要重启」。
+- **App 内一键重启 SystemUI**：省掉插线跑 adb 的步骤，重启后自动轮询心跳确认生效。
+- **颜色体检（colorCheck）**：一键检查当前时钟视图的 Span 是否健在，掉色时直接给结论。
+- **诊断卡白话化 + 时钟探测（测试）卡**：把「为什么没生效」翻译成人话；可列出候选时钟视图、逐个试勾即时生效。这两张卡**只在 debug/probe 版本出现**（`if (BuildConfig.DEBUG)`），发布版不含。
+- **设置页交互补全**：卡片按压反馈、刷新提示、一键生效。
+
+### 适配说明
+
+- 私有类 hook 依赖 ColorOS 17 的实际类结构，逐版本可能变化；找不到即降级为「只用 TextView 层方案」，功能不缺失，只是原生开关不再被强制常开。
+
 ## v1.0.9（versionCode 10）— 桌面入口、背景板呼吸灯与省电优化
 
 ### 新增功能
