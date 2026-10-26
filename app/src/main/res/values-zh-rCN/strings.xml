@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="module_name">时间显秒</string>
+    <string name="module_description">在状态栏时间显示秒，点击时间可切换显秒开关，并把小时十位数标红。</string>
+
+    <string name="settings_title">时间显秒</string>
+    <string name="settings_status_title">当前状态</string>
+    <string name="settings_enabled">显秒：已开启</string>
+    <string name="settings_disabled">显秒：已关闭</string>
+    <string name="settings_gesture_title">切换显示秒数手势</string>
+    <string name="settings_gesture_click">单击时间</string>
+    <string name="settings_gesture_long_press">长按时间</string>
+    <string name="settings_hint">提示：设置立即生效；若未生效可重启 SystemUI 或重启设备。若单击与下拉通知栏冲突，请改用双击手势。</string>
+    <string name="settings_refresh">刷新状态</string>
+    <string name="settings_section_general">常规</string>
+    <string name="settings_update_auto">自动检查更新</string>
+    <string name="settings_update_auto_sum">应用启动时自动检测新版本</string>
+    <string name="settings_update_check">检查更新</string>
+    <string name="settings_update_open">获取更新</string>
+    <string name="settings_update_open_sum">从 GitHub 获取最新版本</string>
+    <string name="settings_section_about">关于模块</string>
+    <string name="settings_about_version">版本：%1$s（%2$d）</string>
+    <string name="settings_about_github">GitHub</string>
+    <string name="settings_about_github_sum">在 GitHub 上查看源码</string>
+    <string name="settings_about_licenses">开放源代码</string>
+    <string name="settings_about_licenses_sum">查看使用的第三方开源库</string>
+    <string name="update_checking">正在检查更新…</string>
+    <string name="update_latest">已是最新版本</string>
+    <string name="update_failed">检查更新失败，请检查网络或稍后重试</string>
+    <string name="update_dialog_title">发现新版本</string>
+    <string name="update_dialog_msg">发现新版本 %1$s（当前 %2$s），是否前往更新页面？</string>
+    <string name="update_go">前往更新</string>
+    <string name="update_later">稍后再说</string>
+    <string name="licenses_text">Xposed API（de.robv.android.xposed:api:82）：Apache License 2.0
+本模块源码：MIT © kelebao</string>
+    <string name="settings_color_title">小时颜色</string>
+    <string name="settings_color_hint">点击色块切换，立即生效</string>
+    <string name="settings_write_failed">写入失败：请确认模块已在系统界面中生效，或用 adb 授予 WRITE_SECURE_SETTINGS</string>
+    <string name="settings_color_enable">启用小时颜色</string>
+    <string name="settings_color_enable_sum">关闭后恢复系统默认样式</string>
+    <string name="settings_gesture_hint">在状态栏时间上用此手势开关显秒</string>
+    <string name="settings_gesture_applied">已切换为%1$s，立即生效；若未生效可重启 SystemUI</string>
+    <string name="settings_gesture_double_tap">双击时间</string>
+    <string name="settings_network_time">网络时间 %1$s（本地 %2$s）</string>
+    <string name="settings_network_time_fail">网络时间获取失败，点按重试</string>
+    <string name="settings_sync_time">同步</string>
+    <string name="settings_sync_requested">已开启自动对时，系统将自动校准</string>
+    <string name="settings_preview_hint">提示：点击状态栏(左上角)时间即可显示或关闭秒数</string>
+    <string name="tile_label">时间显秒</string>
+    <string name="settings_rule_title">状态栏时间识别名</string>
+    <string name="settings_rule_sum">其他厂商机型未能自动识别时间、无法显示秒数时，可在此设置</string>
+    <string name="settings_rule_set">设置</string>
+    <string name="settings_rule_msg">若其它厂商机型未能自动识别状态栏时间，可手动填写时间控件的资源名（如 clock），留空则使用内置规则。</string>
+    <string name="settings_rule_apply">应用</string>
+    <string name="settings_rule_reset">恢复默认</string>
+    <string name="settings_rule_applied">识别规则已保存，重启 SystemUI 后生效</string>
+    <string name="settings_rule_detect">自动检测</string>
+    <string name="settings_rule_detecting">正在检测状态栏时间…</string>
+    <string name="settings_rule_detected">已识别：%1$s</string>
+    <string name="settings_rule_detect_fail">未识别到状态栏时间，请尝试手动设置或重启后重试</string>
+    <string name="settings_rule_current">当前：%1$s</string>
+    <string name="settings_rule_builtin">内置规则</string>
+    <string name="settings_rule_detected_builtin">识别状态栏时间成功，已使用内置规则，无需额外设置</string>
+    <string name="settings_rule_detected_custom">识别状态栏时间成功，已自动配置，重启 SystemUI 后生效</string>
+    <string name="settings_rule_dialog_desc">不懂设置？点下方「自动检测」即可一键完成。也可手动填写时间控件的资源名，留空则使用内置规则。</string>
+    <string name="settings_rule_or_manual">或手动填写时间控件资源名</string>
+    <string name="settings_rule_confirm_title">识别名可能无效</string>
+    <string name="settings_rule_confirm_msg">「%1$s」看起来不像时间控件的资源名（通常包含 clock 或 time），可能无法生效。建议先点「自动检测」。仍要保存吗？</string>
+    <string name="settings_rule_confirm_save">仍要保存</string>
+    <string name="settings_launcher_title">桌面显示图标</string>
+    <string name="settings_launcher_sum">在桌面生成设置入口；关闭后仍可从 LSPosed 管理器打开</string>
+    <!-- 桌面图标显示名：刻意统一为 TIME（品牌标识，不随语言变化） -->
+    <string name="launcher_label">时间</string>
+    <string name="settings_launcher_on">桌面图标已显示</string>
+    <string name="settings_launcher_off">桌面图标已隐藏，重启设备后图标才会消失</string>
+    <string name="settings_about_guide">操作说明</string>
+    <string name="settings_about_guide_sum">查看使用方法与常见问题</string>
+    <string name="settings_intro_title">欢迎使用时间显秒</string>
+    <string name="settings_intro_msg">感谢安装「时间显秒」模块！\n\n1. 启用模块：在 LSPosed 中勾选本模块并勾选「系统界面(SystemUI)」，重启系统界面后生效。\n2. 显示/隐藏秒数：轻点状态栏左上角的时间即可切换；若与下拉通知栏冲突，可在「切换显示秒数手势」中改为双击。\n3. 小时颜色：可把小时十位数字标为你喜欢的颜色，关闭后恢复系统默认。\n4. 网络时间浮窗：长按状态栏时间弹出，显示网络时间。\n5. 设置即时生效；如未生效，可重启 SystemUI 或设备。</string>
+    <string name="settings_intro_ok">开始使用</string>
+
+    <!-- 小时颜色色块的无障碍朗读名（颜色名） -->
+    <string name="swatch_red">红</string>
+    <string name="swatch_orange">橙</string>
+    <string name="swatch_amber">琥珀</string>
+    <string name="swatch_green">绿</string>
+    <string name="swatch_cyan">青</string>
+    <string name="swatch_blue">蓝</string>
+    <string name="swatch_purple">紫</string>
+    <string name="swatch_pink">粉</string>
+    <string name="swatch_white">白</string>
+    <string name="swatch_grey">灰</string>
+</resources>

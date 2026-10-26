@@ -20,8 +20,9 @@ RES = os.path.join(ROOT, 'app', 'src', 'main', 'res')
 
 def check_strings():
     paths = sorted(glob.glob(os.path.join(RES, 'values*', 'strings.xml')))
-    if len(paths) != 21:
-        print('ERROR: expected 21 strings.xml, found %d' % len(paths))
+    # values + 21 个语言目录（简体中文自 1.1.0 起显式落到 values-zh-rCN，不再只靠 values 兜底）
+    if len(paths) != 22:
+        print('ERROR: expected 22 strings.xml, found %d' % len(paths))
         return False
     key_sets = {}
     for p in paths:
