@@ -300,6 +300,14 @@ public final class ModuleSettingsActivity extends Activity {
         maybeAutoCheckUpdate();
     }
 
+    /**
+     * 回到前台：刷新状态并（重新）注册 SystemUI 回传用的三个接收器。
+     *
+     * <p>{@code UnspecifiedRegisterReceiverFlag}：API &lt; 33 没有带 flags 的
+     * registerReceiver 重载，下面三个接收器均已按版本显式分流（&gt;=33 走
+     * RECEIVER_EXPORTED，&lt;33 走旧 2 参重载、旧系统默认导出），属预期写法。</p>
+     */
+    @android.annotation.SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onResume() {
         super.onResume();
