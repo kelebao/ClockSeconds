@@ -86,6 +86,33 @@ public final class ClockSecondsConfig {
     public static final String CLOCK_RULE_KEY = "coloros_clock_seconds_clock_rule";
 
     /**
+     * 测试卡片（诊断用）：模块检测到的候选时钟清单（JSON 数组
+     * {@code [{"k":key,"l":label}, ...]}），由 SystemUI 写入、设置页读取展示。
+     * key = 类名|资源名|父容器类名，label = 资源名 · 简类名。
+     */
+    public static final String CLOCK_TEST_LIST_KEY = "coloros_clock_seconds_clock_list";
+
+    /**
+     * 测试卡片：用户对候选时钟的启用/停用选择（JSON 对象 {@code {key:bool}}）。
+     * 由 SystemUI 经广播写入；模块据此决定是否接管该时钟（缺省视为启用）。
+     */
+    public static final String CLOCK_TEST_ENABLED_KEY = "coloros_clock_seconds_clock_enabled";
+
+    /** 设置页 → SystemUI：切换某个候选时钟的启用状态（配合 {@link #EXTRA_CLOCK_KEY} / {@link #EXTRA_CLOCK_ENABLED}）。 */
+    public static final String ACTION_SET_CLOCK_TEST =
+            "io.github.kelebao.colorosclockseconds.action.SET_CLOCK_TEST";
+    /** String extra：候选时钟的稳定 key（类名|资源名|父容器类名）。 */
+    public static final String EXTRA_CLOCK_KEY = "clock_key";
+    /** int extra：1 = 启用（接管显秒/标红），0 = 停用。 */
+    public static final String EXTRA_CLOCK_ENABLED = "clock_enabled";
+    /**
+     * String extra：设置页写入的「全部候选时钟启用选择」JSON 对象 {@code {key:bool}}。
+     * 与单键 {@link #EXTRA_CLOCK_KEY} / {@link #EXTRA_CLOCK_ENABLED} 并存：SystemUI 优先采用本
+     * extra 作为权威全量映射（避免「设置页无 WRITE_SECURE_SETTINGS 时只发单键、丢失其它勾选状态」）。
+     */
+    public static final String EXTRA_CLOCK_ENABLED_MAP = "clock_enabled_map";
+
+    /**
      * 设置页 → SystemUI 的配置广播。
      *
      * <p>设置页运行在普通应用进程，没有 {@code WRITE_SECURE_SETTINGS}；而模块在 SystemUI
@@ -118,6 +145,19 @@ public final class ClockSecondsConfig {
     /** boolean extra：true = 命中内置规则（无需自定义，立即生效）；false = 写入自定义识别名（需重启 SystemUI）。 */
     public static final String EXTRA_DETECTED_BUILTIN = "detected_builtin";
 
+    /**
+     * 设置页 → SystemUI：仅重新扫描并发布候选时钟清单（测试卡片「刷新列表」用）。
+     *
+     * <p>与 {@link #ACTION_DETECT_CLOCK}（改识别规则）分离，避免刷新列表时误触发「自动检测」
+     * 的 Toast 与规则写入。模块收到后强制重发 {@link #CLOCK_TEST_LIST_KEY}（忽略节流），
+     * 再以 {@link #ACTION_REFRESH_CLOCK_LIST_RESULT} 回传，设置页据此重读并刷新 UI。</p>
+     */
+    public static final String ACTION_REFRESH_CLOCK_LIST =
+            "io.github.kelebao.colorosclockseconds.action.REFRESH_CLOCK_LIST";
+    /** SystemUI → 设置页：候选清单已重新发布到 Secure，可重读。 */
+    public static final String ACTION_REFRESH_CLOCK_LIST_RESULT =
+            "io.github.kelebao.colorosclockseconds.action.REFRESH_CLOCK_LIST_RESULT";
+
     /** 设置页 → SystemUI 写入小时颜色。 */
     public static final String ACTION_SET_HOUR_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR";
@@ -138,6 +178,40 @@ public final class ClockSecondsConfig {
     public static final String EXTRA_GESTURE = "gesture";
     public static final String EXTRA_ENABLED = "enabled";
 
+    /** 设置页 → SystemUI 重启自身（免 adb 重新加载模块）。 */
+    public static final String ACTION_RESTART_SYSTEMUI =
+            "io.github.kelebao.colorosclockseconds.action.RESTART_SYSTEMUI";
+    /** 设置页 → SystemUI 跑一次性全量诊断（候选时钟 / 命中区 / 上次触摸结论）。 */
+    public static final String ACTION_RUN_DIAGNOSTIC =
+            "io.github.kelebao.colorosclockseconds.action.RUN_DIAGNOSTIC";
+    /** SystemUI → 设置页：回传诊断结果 JSON。 */
+    public static final String ACTION_DIAG_RESULT =
+            "io.github.kelebao.colorosclockseconds.action.DIAG_RESULT";
+    /** Secure 键：SystemUI 写入的诊断快照 JSON（双保险，app 也可回读）。 */
+    public static final String CLOCK_DIAG_KEY = "coloros_clock_seconds_diag";
+    /** String extra：诊断结果 JSON（随 {@link #ACTION_DIAG_RESULT} 回传 / 或读者从 Secure 读取）。 */
+    public static final String EXTRA_DIAG_JSON = "diag_json";
+
+    /**
+     * 设置页 → SystemUI：探测模块是否「已激活」（已注入 SystemUI 且正在运行）。
+     * 模块收到后回传 {@link #ACTION_PONG_MODULE} 证明存活。
+     */
+    public static final String ACTION_PING_MODULE =
+            "io.github.kelebao.colorosclockseconds.action.PING_MODULE";
+    /** SystemUI → 设置页：回应 {@link #ACTION_PING_MODULE}，证明模块已激活。 */
+    public static final String ACTION_PONG_MODULE =
+            "io.github.kelebao.colorosclockseconds.action.PONG_MODULE";
+    /** Secure 键：模块注入 SystemUI 时写入心跳（格式 `时间戳|versionName|versionCode`），供设置页兜底判定。 */
+    public static final String MODULE_ACTIVE_KEY = "coloros_clock_seconds_active";
+    /** String extra：PONG 回传的模块版本名。 */
+    public static final String EXTRA_MODULE_VERSION = "module_version";
+    /** int extra：PONG 回传的模块 versionCode。 */
+    public static final String EXTRA_MODULE_VERSION_CODE = "module_version_code";
+    /** long extra：PONG 回传的心跳时间戳（毫秒）。 */
+    public static final String EXTRA_ACTIVE_TS = "active_ts";
+    /** int extra：PONG 回传的当前显秒开关（1 = 开启，0 = 关闭）。 */
+    public static final String EXTRA_SECONDS_ON = "seconds_on";
+
     /** 开关「开启」取值。 */
     public static final int MODE_ENABLED = 1;
 
@@ -155,6 +229,39 @@ public final class ClockSecondsConfig {
     /** 切换显秒开关（仅写入模块键）。运行在 SystemUI 进程内时具备写入权限。 */
     public static void setEnabled(ContentResolver resolver, boolean enabled) {
         Settings.Secure.putInt(resolver, MODULE_SECONDS_KEY, enabled ? MODE_ENABLED : 0);
+    }
+
+    // ------------------------------------------------------------------
+    // 模块激活心跳（模块注入 SystemUI 时写入，设置页据此兜底判定是否激活）
+    // 格式：时间戳(毫秒)|versionName|versionCode
+    // ------------------------------------------------------------------
+
+    /** 写入心跳（仅 SystemUI 进程内调用，具备写入权限）。 */
+    public static void writeActiveHeartbeat(ContentResolver resolver, String versionName, int versionCode) {
+        String hb = System.currentTimeMillis() + "|" + versionName + "|" + versionCode;
+        Settings.Secure.putString(resolver, MODULE_ACTIVE_KEY, hb);
+    }
+
+    /** 读取心跳原始串（无则返回空串）。 */
+    public static String readActiveHeartbeat(ContentResolver resolver) {
+        String v = Settings.Secure.getString(resolver, MODULE_ACTIVE_KEY);
+        return v == null ? "" : v;
+    }
+
+    /** 解析心跳时间戳（毫秒）；格式错误或为空返回 0。 */
+    public static long parseActiveTs(String heartbeat) {
+        if (heartbeat == null || heartbeat.isEmpty()) {
+            return 0;
+        }
+        int i = heartbeat.indexOf('|');
+        if (i <= 0) {
+            return 0;
+        }
+        try {
+            return Long.parseLong(heartbeat.substring(0, i));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     /** 读取切换手势偏好（默认单击；旧版「长按切换」值归一为单击）。 */

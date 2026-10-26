@@ -119,6 +119,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      */
     private static final Map<TextView, CharSequence> BASE_TEXT =
             Collections.synchronizedMap(new WeakHashMap<TextView, CharSequence>());
+    /**
+     * 我们上次写入的「可见文本」（去掉零宽空格）。用于区分：
+     * 可见文本没变却没颜色 = 真掉色（被洗）；可见文本变了 = 正常分钟跳变。只有前者才续期兜底窗口。
+     */
+    private static final Map<TextView, String> LAST_WRITTEN =
+            Collections.synchronizedMap(new WeakHashMap<TextView, String>());
 
     /**
      * 状态栏时钟视图（首次识别后缓存）与其当前屏幕边界。ColorOS 上通知面板会拦截状态栏区域的触摸，
@@ -128,6 +134,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static volatile TextView sClockView;
     private static final android.graphics.Rect sClockRect = new android.graphics.Rect();
     private static final Object sClockRectLock = new Object();
+    // 诊断用：记录最近一次按下的坐标、时间与命中结论（供「运行诊断」一次性输出，无需逐条翻 logcat）。
+    private static float sLastTouchX = -1, sLastTouchY = -1;
+    private static long sLastTouchTime = 0L;
+    private static boolean sLastHit = false;
 
     /** 长按弹出浮窗的按住时长（毫秒）。Android 长按标准 500ms。 */
     private static final long LONG_PRESS_MS = 500L;
@@ -184,18 +194,28 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final java.util.List<WeakReference<TextView>> sClockCandidates =
             new java.util.concurrent.CopyOnWriteArrayList<>();
 
-    /** 三星自绘时钟：本模块插入的 HH:mm:ss TextView（{@code null} = 未安装/已回滚）。 */
-    private static volatile TextView sSelfDrawClock;
-    /** 三星自绘时钟的样式来源（任一系统数字位），用于跟随系统文字色（明暗切换）。 */
-    private static volatile TextView sSelfDrawSource;
-    /** 三星自绘时钟所在的容器（数字位的直接父容器）。 */
-    private static volatile ViewGroup sSelfDrawParent;
-    /** 三星自绘已尝试过且失败（回滚过）→ 不再重试，避免每次分钟更新都折腾。 */
-    private static volatile boolean sSelfDrawFailed;
+    /**
+     * 测试卡片（诊断用）：模块实时检测到的候选时钟清单。
+     * key = {@code 类名|资源名|父容器类名}（稳定且能区分状态栏/通知栏同名时钟），
+     * value = 给人看的标签（资源名 · 简类名）。由 SystemUI 在检测到时钟时写入 Secure，设置页读取展示。
+     */
+    private static final java.util.Map<String, String> sClockInfo =
+            new java.util.concurrent.ConcurrentHashMap<>();
+    /** 用户对候选时钟的启用选择（key -> 是否接管）。缺省视为启用。仅 SystemUI 进程内有效，从 Secure 加载。 */
+    private static volatile java.util.Map<String, Boolean> sClockEnabled = new java.util.HashMap<>();
+    /**
+     * Secure 配置监听：任何途径（App 直写 Secure / 广播 / adb）改了显秒或时钟开关，
+     * 都同步到内存并即时应用，防止「App 有 WRITE_SECURE_SETTINGS 直写、不广播」导致的状态漂移。
+     */
+    private static android.database.ContentObserver sSecureObserver;
+    /** 候选清单是否脏（有新增时钟待发布），配合节流避免每次 setText 都写 Secure。 */
+    private static final AtomicBoolean sClockListDirty = new AtomicBoolean(false);
+    /** 上次发布候选清单的时间戳（uptime 毫秒），用于节流（≥1.5s 才重写一次）。 */
+    private static long sLastListPublish;
     /** 低频补色循环的诊断日志节流（DEBUG，~30s 一条）。 */
     private static long sLastKeepaliveLog;
-    /** 秒数关时补色循环的当前间隔（自适应：稳态拉长至 30s，被洗重置 2s）。 */
-    private static long sColorTickDelay = 2_000L;
+    /** 兜底冷却窗口：连续这么久无掉色就停掉周期补色（自适应省电，不掉色的设备 ticker 基本一直停着）。 */
+    private static final long COLOR_COOLDOWN_MS = 5 * 60 * 1000L;
     /** SPAN-THEFT 探针日志节流（DEBUG，1s）。 */
     private static long sLastSpanTheftLog;
 
@@ -266,14 +286,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         // 抓凶探针 B：hook 时钟真实运行类的 setText（每类一次）。
                         maybeHookClockViewClass(view);
                     }
-                    // 自动检测：把任何正在显示时间格式、且非排除类的 TextView 收入候选池。
+                    // 自动检测：把任何正在显示时间格式、且非排除类的 TextView 收入候选池
+                    // （同时登记到测试卡片清单，供设置页逐项勾选定位状态栏时钟）。
                     recordCandidate(view);
-                    // 三星逐位时钟专用：其数字位不渲染 mText（setText 覆写路线无效），
-                    // 命中即尝试安装自绘时钟（内部幂等，非三星视图永不触发）。
-                    if (isSamsungUniformDigit(view)) {
-                        maybeInstallSamsungSelfDraw(view);
-                    }
-                    if (!isStatusBarClock(view)) {
+                    // 非状态栏时钟，或用户在测试卡片里停用了该时钟 → 不接管（不显秒、不标红）。
+                    if (!isStatusBarClock(view) || !isClockEnabled(view)) {
                         return;
                     }
                     // 诊断探针：在系统 setText 之后、我们补色之前 dump Span 状态。
@@ -289,15 +306,20 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     if (sSecondsEnabled) {
                         installTicker(view);
                         refreshClock(view);
+                        // 系统/第三方主题模块（如 dev.puitheme.StatusBarModule）常在 setText 之后
+                        // （同步或 Handler 异步）再重设纯文本、洗掉我们的颜色 span；
+                        // 把补色 post 到本次消息之后再执行，保证我们最后写入、不被盖回。
+                        scheduleReapply(view);
                     } else {
                         // 不显秒时也要保持小时十位数红色样式（系统每分钟更新 HH:mm 时拦截标红）。
-                        // 同时挂 ticker 走低频补色：ColorOS 17 实测系统/第三方主题模块会在分钟
-                        // 更新路径上同步冲掉我们的 Span，仅靠分钟更新 + 一次性 reapply 救援不及
-                        // （表现为黄色十位一分多钟后变默认黑）。ticker 双模式见 ClockTicker。
-                        installTicker(view);
-                        applyRedToBaseText(view);
-                        // 系统/其它模块常在 setText 之后（同步或 Handler 异步）再套样式，
-                        // 把补色 post 到本次消息之后执行，保证我们最后写入、不被盖回。
+                        // 自适应兜底：本次 setText 若发现颜色缺失（被洗）→ 立即补色并"唤醒/续期"守护窗口；
+                        // 若颜色仍在（wrote=false）→ 不强制装 ticker，让它能按冷却窗口自动停（省电）。
+                        // scheduleReapply 兜系统/第三方模块异步二次写。
+                        int wrote = applyRedToBaseText(view);
+                        if (wrote == 2) {
+                            // 传感器：异步二次写把颜色洗掉了 → 唤醒/续期本视图守护窗口并装兜底 ticker。
+                            installTicker(view);
+                        }
                         scheduleReapply(view);
                     }
                 } catch (Throwable t) {
@@ -317,13 +339,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     TextView view = (TextView) param.thisObject;
                     // 三星自绘：数字位 onDraw 时必然已布局（可做位置判断），作为安装触发点；
                     // 同时把系统数字位的当前文字色同步给自绘时钟（状态栏明暗切换时跟随）。
-                    if (isSamsungUniformDigit(view)) {
-                        maybeInstallSamsungSelfDraw(view);
-                        TextView self = sSelfDrawClock;
-                        if (self != null && view == sSelfDrawSource && self.isAttachedToWindow()) {
-                            self.setTextColor(view.getCurrentTextColor());
-                        }
-                    }
                     if (isStatusBarClock(view)) {
                         // onDraw 时视图必然已布局（width/height > 0），此时刷新边界最可靠：
                         // configureClockView 在 setText 时缓存，彼时视图可能尚未布局，
@@ -630,217 +645,332 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     // ==================================================================
-    // 三星 One UI 自绘时钟（逐位架构专用）
+    // 测试卡片（诊断）：候选时钟清单与逐项启用
     // ==================================================================
 
-    /**
-     * 是否为三星 uniform 逐位时钟的「数字位」视图。
-     *
-     * <p>三星状态栏时钟 = {@code com.samsung.android.uniform.widget.ClockNonePaddingTextView}，
-     * 一位数字一个 TextView（{@code common_hour10th}/{@code common_hour1st}/{@code common_minute10th}/
-     * {@code common_minute1st}）。这些视图的 onDraw <b>不渲染 mText</b>（自绘内部状态），
-     * 因此「hook setText 覆写文本」路线在三星上完全无效——自定义识别名也一样（实测：
-     * setText(":42") 后 getText() 正常但屏幕无变化，框架对这些视图只调 setText("") 占位）。</p>
-     *
-     * <p>排除：{@code stretch} 变体（锁屏/AOD 大字钟）、日期/天气（{@code common_date} 等）。</p>
-     */
-    private static boolean isSamsungUniformDigit(TextView view) {
+    /** 候选时钟的稳定 key：类名|资源名|父容器类名（能区分状态栏/通知栏同名时钟）。 */
+    private static String clockKey(TextView view) {
         try {
-            String cn = view.getClass().getName().toLowerCase(Locale.ROOT);
-            if (!cn.contains("samsung.android.uniform.widget")) {
-                return false;
-            }
-            String name = resourceName(view);
-            if (name.isEmpty()) {
-                return false;
-            }
-            if (name.contains("stretch") || name.contains("date") || name.contains("weather")) {
-                return false;   // 锁屏/AOD 大字变体与日期/天气，不碰
-            }
-            return name.contains("hour") || name.contains("minute");
+            String cn = view.getClass().getName();
+            String rn = resourceName(view);
+            ViewParent p = view.getParent();
+            String pn = p != null ? p.getClass().getName() : "?";
+            return cn + "|" + rn + "|" + pn;
         } catch (Throwable t) {
-            return false;
+            return view.getClass().getName() + "|?|?";
+        }
+    }
+
+    /** 候选时钟给人看的标签：资源名 · 简类名。 */
+    private static String clockLabel(TextView view) {
+        try {
+            String rn = resourceName(view);
+            String simple = view.getClass().getSimpleName();
+            return (rn.isEmpty() ? "?" : rn) + " · " + simple;
+        } catch (Throwable t) {
+            return view.getClass().getSimpleName();
+        }
+    }
+
+    /** 该时钟是否被用户启用（测试卡片勾选）。缺省（无记录）视为启用。 */
+    private static boolean isClockEnabled(TextView view) {
+        Boolean v = sClockEnabled.get(clockKey(view));
+        return v == null || v;
+    }
+
+    /** 把当前候选清单发布到 Secure（设置页读取）。节流：≥1.5s 才重写一次；force=true 时忽略节流（用户主动刷新）。 */
+    private static void publishClockList(ContentResolver cr) {
+        publishClockList(cr, false);
+    }
+
+    private static void publishClockList(ContentResolver cr, boolean force) {
+        try {
+            long now = SystemClock.uptimeMillis();
+            if (!force && now - sLastListPublish < 1500L) {
+                return;
+            }
+            sLastListPublish = now;
+            org.json.JSONArray arr = new org.json.JSONArray();
+            for (java.util.Map.Entry<String, String> e : sClockInfo.entrySet()) {
+                org.json.JSONObject o = new org.json.JSONObject();
+                o.put("k", e.getKey());
+                o.put("l", e.getValue());
+                arr.put(o);
+            }
+            Settings.Secure.putString(cr, ClockSecondsConfig.CLOCK_TEST_LIST_KEY, arr.toString());
+        } catch (Throwable ignored) {
+            // 发布失败不影响显秒
+        }
+    }
+
+    /** 从 Secure 读取用户对候选时钟的启用选择（JSON 对象 key->bool）。 */
+    private static java.util.Map<String, Boolean> loadClockEnabledMap(ContentResolver cr) {
+        java.util.Map<String, Boolean> map = new java.util.HashMap<>();
+        try {
+            String s = Settings.Secure.getString(cr, ClockSecondsConfig.CLOCK_TEST_ENABLED_KEY);
+            if (s != null && !s.isEmpty()) {
+                org.json.JSONObject obj = new org.json.JSONObject(s);
+                java.util.Iterator<String> it = obj.keys();
+                while (it.hasNext()) {
+                    String k = it.next();
+                    map.put(k, obj.getBoolean(k));
+                }
+            }
+        } catch (Throwable ignored) {
+            // 解析失败按全启用处理
+        }
+        return map;
+    }
+
+    /** 把用户对候选时钟的启用选择写回 Secure（JSON 对象 key->bool）。 */
+    private static void writeClockEnabledMap(ContentResolver cr,
+                                             java.util.Map<String, Boolean> map) {
+        try {
+            org.json.JSONObject obj = new org.json.JSONObject();
+            for (java.util.Map.Entry<String, Boolean> e : map.entrySet()) {
+                obj.put(e.getKey(), e.getValue());
+            }
+            Settings.Secure.putString(cr, ClockSecondsConfig.CLOCK_TEST_ENABLED_KEY, obj.toString());
+        } catch (Throwable ignored) {
+            // 写入失败不影响显秒
         }
     }
 
     /**
-     * 三星自绘时钟安装（幂等）：把数字位所在容器内的数字位与冒号全部隐藏，
-     * 插入本模块自绘的 {@code HH:mm:ss} TextView。
-     *
-     * <p><b>为什么必须自绘</b>：三星逐位视图不渲染 mText，覆写文本路线在此架构上无效
-     * （见 {@link #isSamsungUniformDigit}）。自绘后秒数、小时十位红色、长按命中区
-     * （覆盖整个时钟而非窄窄的一位数字）全部收归模块控制，且不受系统每分钟刷新影响。</p>
-     *
-     * <p><b>安全设计</b>：仅三星类名命中时触发，其它 ROM 零影响；任何异常静默回滚
-     * （恢复数字位可见性、移除自绘图），并置 {@link #sSelfDrawFailed} 不再重试；
-     * 插入后 800ms 自检宽度，若容器没给我们的视图排位置（宽度 0）同样回退，
-     * 最坏情况退化为「三星不显秒」而非界面破损。</p>
-     *
-     * <p><b>位置门禁</b>：只处理状态栏区域的时钟（y &lt; 300px），锁屏大钟居中在屏幕中下部，
-     * 不会被误伤；调用方在 onDraw 里触发时可拿到已布局坐标。</p>
+     * 用户对某候选时钟的启用状态变更后，立即对当前已配置/候选时钟重算：
+     * 停用的停 ticker 并还原系统原文本；新启用的立即接管（配置+显秒）。
      */
-    private static void maybeInstallSamsungSelfDraw(TextView digit) {
-        try {
-            if (sSelfDrawFailed) {
-                return;
-            }
-            TextView self = sSelfDrawClock;
-            if (self != null) {
-                if (self.isAttachedToWindow() && self.getWidth() > 0) {
-                    return;   // 已装好
+    private static void applyClockTestToActive(ContentResolver cr) {
+        sClockEnabled = loadClockEnabledMap(cr);
+        // 已配置时钟：停用的还原并移出，启用的补上显秒。
+        synchronized (CONFIGURED) {
+            for (TextView v : new ArrayList<>(CONFIGURED)) {
+                try {
+                    if (!isClockEnabled(v)) {
+                        stopTicker(v);
+                        CharSequence base = BASE_TEXT.get(v);
+                        if (base != null) {
+                            WRITING_CLOCK.set(true);
+                            try {
+                                v.setText(base);
+                            } finally {
+                                WRITING_CLOCK.set(false);
+                            }
+                        }
+                        CONFIGURED.remove(v);
+                    } else if (sSecondsEnabled && isStatusBarClock(v)) {
+                        installTicker(v);
+                        refreshClock(v);
+                    }
+                } catch (Throwable ignored) {
+                    // 单个视图异常不影响其它
                 }
-                rollbackSamsungSelfDraw(false);   // 装了但掉了（容器重建？）→ 卸了重来
             }
-            // 位置门禁：已布局且在状态栏区域才处理（onDraw 触发时必然已布局）。
+        }
+        // 候选池中所有被停用的时钟（含尚未进入 CONFIGURED 的）：停 ticker + 还原系统原文本，
+        // 确保「全部关闭」后不再残留秒/小时颜色（= 系统默认观感）。
+        for (WeakReference<TextView> ref : sClockCandidates) {
+            TextView v = ref.get();
+            if (v != null && !isClockEnabled(v)) {
+                try {
+                    stopTicker(v);
+                    CharSequence base = BASE_TEXT.get(v);
+                    if (base != null) {
+                        WRITING_CLOCK.set(true);
+                        try {
+                            v.setText(base);
+                        } finally {
+                            WRITING_CLOCK.set(false);
+                        }
+                    }
+                    synchronized (CONFIGURED) {
+                        CONFIGURED.remove(v);
+                    }
+                } catch (Throwable ignored) {
+                    // 单个视图异常不影响其它
+                }
+            }
+        }
+        // 候选池里尚未配置但被启用且符合状态栏规则的时钟：立即接管。
+        for (WeakReference<TextView> ref : sClockCandidates) {
+            TextView v = ref.get();
+            if (v != null && isStatusBarClock(v) && isClockEnabled(v)
+                    && sSecondsEnabled && !CONFIGURED.contains(v)) {
+                try {
+                    configureClockView(v);
+                    // 关键：停用时 stopTicker 已把秒表移除，重新启用必须重新装秒表，
+                    // 否则只写一次秒（refreshClock）不会继续跳动，要等下一次系统 setText
+                    // （最长约 1 分钟）才恢复 → 表现为「关闭再打开后秒数有时不动」。
+                    installTicker(v);
+                    refreshClock(v);
+                } catch (Throwable ignored) {
+                    // 单个视图异常不影响其它
+                }
+            }
+        }
+        publishClockList(cr);
+    }
+
+    /**
+     * 一次性全量诊断：收集候选时钟（资源名/类名/父容器/尺寸/坐标/是否状态栏/是否启用/是否配置/是否被选中）、
+     * 当前命中区、最近一次按下的命中结论，并给出「未识别 / 边界错 / 正常」的结论。
+     * 由 {@link ClockSecondsConfig#ACTION_RUN_DIAGNOSTIC} 触发，结果写 Secure 并回传广播给设置页。
+     */
+    private static org.json.JSONObject buildDiagnostic(ContentResolver cr) {
+        org.json.JSONObject root = new org.json.JSONObject();
+        try {
+            root.put("secondsEnabled", sSecondsEnabled);
+            root.put("gesture", ClockSecondsConfig.getGesture(cr));
+            root.put("lastTouchX", (int) sLastTouchX);
+            root.put("lastTouchY", (int) sLastTouchY);
+            root.put("lastTouchTime", sLastTouchTime);
+            root.put("lastHit", sLastHit);
+
+            // 候选时钟清单（每个命中「数字:数字」时间格式的非排除 TextView）。
+            org.json.JSONArray arr = new org.json.JSONArray();
             int[] loc = new int[2];
-            digit.getLocationOnScreen(loc);
-            if (loc[1] > 300) {
-                return;   // 锁屏/AOD 大钟，不碰
-            }
-            ViewParent parent = digit.getParent();
-            if (!(parent instanceof ViewGroup)) {
-                return;
-            }
-            ViewGroup container = (ViewGroup) parent;
-            // 收集同一容器内的全部数字位 + 冒号分隔符（time_divider 是普通 TextView）。
-            List<View> digits = new ArrayList<>();
-            for (int i = 0; i < container.getChildCount(); i++) {
-                View child = container.getChildAt(i);
-                if (!(child instanceof TextView)) {
+            int statusBarCount = 0;
+            for (WeakReference<TextView> ref : sClockCandidates) {
+                TextView v = ref.get();
+                if (v == null) {
                     continue;
                 }
-                if (isSamsungUniformDigit((TextView) child)
-                        || "time_divider".equals(resourceName((TextView) child))) {
-                    digits.add(child);
+                try {
+                    org.json.JSONObject o = new org.json.JSONObject();
+                    int w = v.getWidth(), h = v.getHeight();
+                    boolean attached = v.isAttachedToWindow();
+                    boolean laid = w > 0 && h > 0;
+                    boolean sb = isStatusBarClockBuiltin(v);
+                    boolean en = isClockEnabled(v);
+                    boolean conf;
+                    synchronized (CONFIGURED) {
+                        conf = CONFIGURED.contains(v);
+                    }
+                    v.getLocationOnScreen(loc);
+                    o.put("key", clockKey(v));
+                    o.put("label", clockLabel(v));
+                    o.put("res", resourceName(v));
+                    o.put("cls", v.getClass().getName());
+                    ViewParent p = v.getParent();
+                    o.put("parent", p != null ? p.getClass().getName() : "?");
+                    o.put("w", w);
+                    o.put("h", h);
+                    o.put("x", loc[0]);
+                    o.put("y", loc[1]);
+                    o.put("attached", attached);
+                    o.put("laidOut", laid);
+                    o.put("isStatusBar", sb);
+                    o.put("enabled", en);
+                    o.put("configured", conf);
+                    o.put("picked", (v == sClockView));
+                    arr.put(o);
+                    if (sb && laid) {
+                        statusBarCount++;
+                    }
+                } catch (Throwable ignored) {
+                    // 单个视图异常不影响其它
                 }
             }
-            if (digits.size() < 2) {
-                return;   // 至少要有小时位 + 分钟位，再等后续 setText/onDraw 触发
-            }
-            View first = digits.get(0);
-            int index = container.indexOfChild(first);
+            root.put("candidates", arr);
+            root.put("candidateCount", arr.length());
+            root.put("statusBarLaidCount", statusBarCount);
 
-            // 创建自绘时钟，样式从数字位拷贝（字号/字体/颜色/内边距）。
-            TextView clock = new TextView(digit.getContext());
-            clock.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, digit.getTextSize());
-            clock.setTypeface(digit.getTypeface());
-            clock.setTextColor(digit.getCurrentTextColor());
-            clock.setIncludeFontPadding(false);
-            clock.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            if (first.getPaddingLeft() > 0 || first.getPaddingTop() > 0) {
-                clock.setPadding(first.getPaddingLeft(), first.getPaddingTop(),
-                        first.getPaddingRight(), first.getPaddingBottom());
+            // 当前命中区（每次按下重选的最上方状态栏时钟）。
+            TextView best = pickClockView();
+            org.json.JSONObject pr = new org.json.JSONObject();
+            synchronized (sClockRectLock) {
+                pr.put("rect", sClockRect.flattenToString());
             }
-            // 布局参数：沿用数字位的边距，宽度改 WRAP_CONTENT（自绘时钟比原来宽，
-            // 固定宽度会把秒数裁掉）。
-            ViewGroup.LayoutParams base = first.getLayoutParams();
-            ViewGroup.LayoutParams lp;
-            if (base instanceof ViewGroup.MarginLayoutParams) {
-                ViewGroup.MarginLayoutParams mlp =
-                        (ViewGroup.MarginLayoutParams) base;
-                lp = new ViewGroup.MarginLayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT);
-                ((ViewGroup.MarginLayoutParams) lp).setMargins(
-                        mlp.leftMargin, mlp.topMargin, mlp.rightMargin, mlp.bottomMargin);
+            pr.put("pickedKey", best != null ? clockKey(best) : "null");
+            pr.put("pickedLabel", best != null ? clockLabel(best) : "null");
+            pr.put("pickedEmpty", best == null);
+            root.put("pick", pr);
+
+            // 颜色/span 体检：检查模块实际接管的状态栏时钟文本是否还带「小时颜色」span。
+            // 用于在 App 内直接判断 ColorOS 17 掉色（span 被系统 setText 重建时洗掉），无需抓 logcat。
+            org.json.JSONObject cc = new org.json.JSONObject();
+            TextView colorClock = sClockView != null ? sClockView : best;
+            boolean hourColorOn = ClockSecondsConfig.isHourColorEnabled(cr);
+            cc.put("hourColorEnabled", hourColorOn);
+            if (colorClock == null) {
+                cc.put("applicable", false);
+                cc.put("state", "no_clock");
             } else {
-                lp = new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT);
-            }
-            // 先写一次当前时间作为基准文本（writeTime 以其为 base 追加秒）。
-            clock.setText(currentSelfDrawTime());
-            container.addView(clock, index, lp);
-            for (View d : digits) {
-                d.setVisibility(View.GONE);
-            }
-            sSelfDrawClock = clock;
-            sSelfDrawSource = digit;
-            sSelfDrawParent = container;
-            // 自绘时钟即本模块在三星上的目标视图：长按命中区/显秒/红色十位全走它。
-            sClockView = clock;
-            ensureStateLoaded(digit);
-            refreshClockRect(clock);
-            installTicker(clock);
-            refreshClock(clock);
-            if (BuildConfig.DEBUG) {
-                XposedBridge.log(LOG_PREFIX + "SAMSUNG self-draw installed: digits=" + digits.size()
-                        + " container=" + container.getClass().getName()
-                        + " textSize=" + digit.getTextSize() + " y=" + loc[1]);
-            }
-            // 自检：800ms 后若容器没给我们的视图排位置（宽度 0），回滚恢复数字位。
-            clock.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        TextView c = sSelfDrawClock;
-                        if (c != null && c.isAttachedToWindow() && c.getWidth() <= 0) {
-                            XposedBridge.log(LOG_PREFIX + "SAMSUNG self-draw width=0, rollback");
-                            rollbackSamsungSelfDraw(false);
-                        }
-                    } catch (Throwable ignored) {
-                        // 自检失败不影响主流程
+                CharSequence ct = colorClock.getText();
+                String ctText = ct == null ? "" : ct.toString().replace("\u200B", "");
+                boolean isSpanned = ct instanceof Spanned;
+                boolean hasSpan = false;
+                int spanColor = -1, spanStart = -1, spanEnd = -1;
+                if (isSpanned) {
+                    Spanned sp = (Spanned) ct;
+                    ForegroundColorSpan[] fs = sp.getSpans(0, sp.length(),
+                            ForegroundColorSpan.class);
+                    if (fs.length > 0) {
+                        hasSpan = true;
+                        spanColor = fs[0].getForegroundColor();
+                        spanStart = sp.getSpanStart(fs[0]);
+                        spanEnd = sp.getSpanEnd(fs[0]);
                     }
                 }
-            }, 800L);
+                boolean clockEnabled = isClockEnabled(colorClock);
+                String state;
+                if (!clockEnabled) {
+                    state = "disabled";        // 测试卡里已关闭：不接管、不上色（正常）
+                } else if (!hourColorOn) {
+                    state = "hour_color_off";  // 小时颜色总开关关闭：不上色（正常）
+                } else if (!isSpanned) {
+                    state = "stripped";        // 文本被洗成非 Spanned = ColorOS 17 掉色典型
+                } else if (!hasSpan) {
+                    state = "no_span";         // 是 Spanned 但没有颜色 span = 掉色/未上色
+                } else {
+                    state = "ok";
+                }
+                cc.put("applicable", true);
+                cc.put("state", state);
+                cc.put("isSpanned", isSpanned);
+                cc.put("hasColorSpan", hasSpan);
+                cc.put("spanColor", spanColor);
+                cc.put("spanStart", spanStart);
+                cc.put("spanEnd", spanEnd);
+                cc.put("expectedColor", ClockSecondsConfig.getHourColor(cr));
+                cc.put("text", ctText.length() > 16 ? ctText.substring(0, 16) : ctText);
+            }
+            root.put("colorCheck", cc);
+
+            // 结论：分三层定位根因。
+            String verdict;
+            if (arr.length() == 0) {
+                verdict = "未检测到任何候选时钟：模块可能未注入 SystemUI，或当前没有显示「数字:数字」"
+                        + "时间格式的 TextView 被 setText 命中（先确认模块已在 LSPosed 启用并勾选 SystemUI）。";
+            } else if (statusBarCount == 0) {
+                verdict = "状态栏时钟未被识别：内置规则与自定义规则都未命中任何「已布局」的时钟视图"
+                        + "（资源名不在内置名单、或类名被排除如 qsclock/keyguard/aod）。"
+                        + "建议：到「时钟识别」卡片点「自动检测」或手动填写状态栏时钟的资源名。";
+            } else if (best == null) {
+                verdict = "状态栏时钟已识别但命中区为空（pickClockView 返回 null）：所有候选时钟都未布局"
+                        + "（bounds 全 0）或被下拉面板时钟覆盖（sClockView 指向了面板时钟）。";
+            } else {
+                synchronized (sClockRectLock) {
+                    verdict = "状态栏时钟识别正常，命中区=" + sClockRect.flattenToString()
+                            + "。若点击仍无反应：① 检查手势设置（当前="
+                            + (ClockSecondsConfig.getGesture(cr) == ClockSecondsConfig.GESTURE_CLICK
+                                ? "单击" : "双击")
+                            + "）；② 最近一次按下 hit=" + sLastHit
+                            + " @(" + (int) sLastTouchX + "," + (int) sLastTouchY + ")"
+                            + "，若 hit=false 说明触摸点没落进命中区（边界算错或被面板拦截）。";
+                }
+            }
+            root.put("verdict", verdict);
         } catch (Throwable t) {
-            // 任何异常静默回滚，绝不影响 SystemUI
-            rollbackSamsungSelfDraw(true);
-            noteHookError(t);
+            try {
+                root.put("error", String.valueOf(t));
+            } catch (Throwable ignored) {
+                // 诊断自身异常不影响返回
+            }
         }
+        return root;
     }
 
-    /** 回滚三星自绘：移除自绘时钟、恢复数字位可见性。permanent=true 时不再重试（异常路径）。 */
-    private static void rollbackSamsungSelfDraw(boolean permanent) {
-        try {
-            TextView clock = sSelfDrawClock;
-            ViewGroup container = sSelfDrawParent;
-            if (clock != null && container != null) {
-                container.removeView(clock);
-            }
-            if (container != null) {
-                for (int i = 0; i < container.getChildCount(); i++) {
-                    View child = container.getChildAt(i);
-                    if (child instanceof TextView && child.getVisibility() != View.VISIBLE) {
-                        String name = resourceName((TextView) child);
-                        if (isSamsungUniformDigit((TextView) child)
-                                || "time_divider".equals(name)) {
-                            child.setVisibility(View.VISIBLE);
-                        }
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-            // 回滚失败也不抛
-        }
-        sSelfDrawClock = null;
-        sSelfDrawSource = null;
-        sSelfDrawParent = null;
-        sSelfDrawFailed = permanent;   // 容器重建（旋转等）导致的卸载不标记永久失败，允许重装
-    }
-
-    /** 自绘时钟的基准文本：跟随系统 12/24 制，无前导零（与三星 12 小时制显示一致）。 */
-    private static String currentSelfDrawTime() {
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        int h = cal.get(java.util.Calendar.HOUR_OF_DAY);
-        int m = cal.get(java.util.Calendar.MINUTE);
-        boolean h24 = true;
-        try {
-            h24 = android.text.format.DateFormat.is24HourFormat(
-                    sSelfDrawSource != null ? sSelfDrawSource.getContext()
-                            : sClockView != null ? sClockView.getContext() : null);
-        } catch (Throwable ignored) {
-            // 取不到上下文时按 24 制
-        }
-        if (h24) {
-            return String.format(Locale.US, "%02d:%02d", h, m);
-        }
-        int h12 = h % 12;
-        if (h12 == 0) {
-            h12 = 12;
-        }
-        return String.format(Locale.US, "%d:%02d", h12, m);
-    }
 
     /**
      * 全局触摸监听（由 {@code View.dispatchTouchEvent} 触发）。判断按下点是否落在状态栏时钟边界内，
@@ -873,6 +1003,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 synchronized (sClockRectLock) {
                     hit = sClockRect.contains((int) x, (int) y);
                 }
+                // 记录最近一次按下的坐标、时间与命中结论，供「运行诊断」一次性输出。
+                sLastTouchX = x;
+                sLastTouchY = y;
+                sLastTouchTime = System.currentTimeMillis();
+                sLastHit = hit;
                 if (BuildConfig.DEBUG) {
                     XposedBridge.log(LOG_PREFIX + "touch DOWN at (" + x + "," + y + ") rect="
                             + sClockRect + " hit=" + hit);
@@ -1535,12 +1670,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "seconds toggled -> " + enabled);
         }
-        if (enabled) {
-            writeTime(view);
-            installTicker(view);
-        } else {
-            stopTicker(view);
-            writeMinuteOnly(view);
+        // 该时钟已被用户停用：不写文本/颜色（仅更新全局显秒内存态）。
+        if (isClockEnabled(view)) {
+            if (enabled) {
+                writeTime(view);
+                installTicker(view);
+            } else {
+                stopTicker(view);
+                writeMinuteOnly(view);
+            }
         }
     }
 
@@ -1559,8 +1697,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String hhmm = toHourMinute(base);
         int second = (int) ((System.currentTimeMillis() / 1000) % 60);
         String ss = String.format(Locale.US, ":%02d", second);
-        SpannableStringBuilder sb = new SpannableStringBuilder(hhmm);
-        sb.append(ss);
+        String text = hhmm + ss;
+        // 零宽空格破坏 HH:mm:ss 模式匹配：ColorOS 17 的 StatClock / setTextWithRedOneStyle 以及
+        // 第三方状态栏主题模块（如 dev.puitheme.StatusBarModule）会按 HH:mm(:ss) 模式重建文本，
+        // 重建时剥掉外来 Span → 显秒开时自定义颜色被反复洗掉（用户反馈「颜色闪没 1~2 秒」）。
+        // 与显秒关闭路径（applyRedToBaseText）同款修法：末尾加 \u200B，模式不再匹配，Span 得以存活。
+        // 零宽字符不占宽度、不可见，系统下次更新会给新纯文本，由本方法再次追加，自洽。
+        if (!text.endsWith("\u200B")) {
+            text = text + "\u200B";
+        }
+        SpannableStringBuilder sb = new SpannableStringBuilder(text);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
         // 注：状态栏与浮窗的秒数字均保持系统原色；呼吸高亮仅用于设置页预览卡的刻度与色块。
         applyHourTensRed(sb, view, hourColor(view));
@@ -1719,10 +1865,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /**
      * 对系统原文本应用小时十位数红色样式（不显秒时，系统每次更新分钟都会调用）。
      *
-     * @return true = 实际执行了 setText；false = 短路跳过（补色已存活/无需上色）。
-     *         秒数关时的低频补色循环据此自适应调整间隔。
+     * @return 0 = 无需写入（补色已存活 / 无需上色）；1 = 写了（文本变了，如正常分钟更新）；
+     *         2 = 写了且是「真掉色」（文本字符一致但颜色 span 被洗掉了）。
+     *         只有 2 才用于续期"兜底守护窗口"，避免分钟跳变被误判成掉色。
      */
-    private static boolean applyRedToBaseText(TextView view) {
+    private static int applyRedToBaseText(TextView view) {
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
             base = view.getText();
@@ -1751,30 +1898,38 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 还带着色 span 才跳过；目标无需上色（单位数小时/小时色关闭）时直接跳过。
         ForegroundColorSpan[] sbTens = sb.getSpans(0, 1, ForegroundColorSpan.class);
         if (sbTens.length == 0) {
-            return false;   // 没有需要维护的小时十位色
+            return 0;   // 没有需要维护的小时十位色
         }
         CharSequence cur = view.getText();
-        if (cur instanceof Spanned && cur.length() == sb.length()) {
+        // 已有我们上色的文本（精确匹配含零宽空格）→ 稳态短路、零 setText。
+        if (cur instanceof Spanned && cur.length() == sb.length()
+                && cur.toString().contentEquals(sb.toString())) {
             ForegroundColorSpan[] curTens =
                     ((Spanned) cur).getSpans(0, 1, ForegroundColorSpan.class);
-            // 字符级比较（不用 TextUtils.equals：其对双 Spanned 走 equals 委托，
-            // 而 SpannableStringBuilder 未重写 equals，实例不同恒 false，短路会失效）。
-            if (curTens.length > 0 && cur.toString().contentEquals(sb.toString())) {
-                return false;   // 补色存活且内容一致，稳态零 setText
+            if (curTens.length > 0) {
+                LAST_WRITTEN.put(view, cur.toString().replace("\u200B", ""));
+                return 0;
             }
         }
+        // 需要写入。区分「正常分钟跳变(1)」与「真掉色(2)」：看可见文本是否与我们上次写的一致。
+        //  - 可见文本变了 → 分钟跳变，属正常更新，不续期兜底；
+        //  - 可见文本没变却没颜色 → 被洗（真掉色），续期兜底。
+        String curVisible = cur == null ? "" : cur.toString().replace("\u200B", "");
+        String last = LAST_WRITTEN.get(view);
+        int code = (last != null && last.equals(curVisible)) ? 2 : 1;
         WRITING_CLOCK.set(true);
         try {
             view.setText(sb);
         } finally {
             WRITING_CLOCK.set(false);
         }
+        LAST_WRITTEN.put(view, curVisible);
         if (BuildConfig.DEBUG) {
-            XposedBridge.log(LOG_PREFIX + "PROBE color-applied text=[" + sb + "]");
+            XposedBridge.log(LOG_PREFIX + "PROBE color-applied text=[" + sb + "] strip=" + code);
             logSpans(view, "now");
             scheduleSpanDump(view);
         }
-        return true;
+        return code;
     }
 
     /**
@@ -1992,13 +2147,18 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             @Override
             public void run() {
                 try {
-                    if (isStatusBarClock(view)) {
+                    // 用户已停用该时钟时不再补色/补秒，避免「全关仍有颜色」。
+                    if (isStatusBarClock(view) && isClockEnabled(view)) {
                         if (sSecondsEnabled) {
                             // 显秒开：重走 writeTime（会重新追加秒 + 上色），
                             // 避免被系统异步 Runnable 的纯文本覆盖后秒也一起丢。
                             writeTime(view);
                         } else {
-                            applyRedToBaseText(view);
+                            int wrote = applyRedToBaseText(view);
+                            if (wrote == 2) {
+                                // 传感器：异步二次写把颜色洗掉了 → 续期本视图守护窗口并唤醒兜底。
+                                installTicker(view);
+                            }
                         }
                     }
                 } catch (Throwable ignored) {
@@ -2009,36 +2169,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     private static void refreshClock(TextView view) {
-        // 三星自绘时钟是本模块自己的 TextView，不是系统状态栏时钟（isStatusBarClock 为 false），
-        // 单独分支：显秒开 → writeTime 追加秒；显秒关 → 纯 HH:mm（均带小时十位红色）。
-        if (view == sSelfDrawClock) {
-            try {
-                if (sSecondsEnabled) {
-                    writeTime(view);
-                } else {
-                    SpannableStringBuilder sb =
-                            new SpannableStringBuilder(currentSelfDrawTime());
-                    APPLYING_STYLE.set(true);
-                    try {
-                        applyHourTensRed(sb, view, hourColor(view));
-                    } finally {
-                        APPLYING_STYLE.set(false);
-                    }
-                    if (!android.text.TextUtils.equals(view.getText(), sb)) {
-                        WRITING_CLOCK.set(true);
-                        try {
-                            view.setText(sb);
-                        } finally {
-                            WRITING_CLOCK.set(false);
-                        }
-                    }
-                }
-            } catch (Throwable ignored) {
-                // 自绘时钟刷新失败不影响系统
-            }
-            return;
-        }
-        if (isStatusBarClock(view) && sSecondsEnabled) {
+        if (isStatusBarClock(view) && isClockEnabled(view) && sSecondsEnabled) {
             writeTime(view);
         }
     }
@@ -2054,6 +2185,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
             ClockTicker ticker = new ClockTicker(view);
             ACTIVE.put(view, ticker);
+            // 显秒关：给该时钟单独启动/续期守护窗口（窗口内稳定无掉色才会自动停）。
+            // 注意：守护截止时间按"视图"独立保存，避免多个时钟共享一个静态导致
+            // 一个时钟停了把其它时钟的守护窗口也误重置（旧版共享静态会导致 ticker 永不自动停）。
+            if (!sSecondsEnabled) {
+                ticker.guardUntil = SystemClock.uptimeMillis() + COLOR_COOLDOWN_MS;
+            }
             // View.post 在 SystemUI 早于主 Looper 准备好时也是安全的：Android 会把动作排队到视图挂载后执行。
             view.post(ticker);
         }
@@ -2072,6 +2209,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final class ClockTicker implements Runnable {
         private final WeakReference<TextView> reference;
         private long firstDetachedAt;
+        /** 本视图补色兜底间隔（自适应：稳态拉长至 30s，被洗重置 2s）。 */
+        private long tickDelay = 2_000L;
+        /** 本视图的守护冷却截止时间（uptimeMillis）；窗口内一直没掉色 → 自动停掉本 ticker。0=未启用。 */
+        private long guardUntil = 0L;
 
         ClockTicker(TextView view) {
             reference = new WeakReference<>(view);
@@ -2081,6 +2222,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         public void run() {
             TextView view = reference.get();
             if (view == null) {
+                return;
+            }
+            // 该时钟已被用户停用（测试卡片取消勾选）：停止轮询并退出，不再补秒/补色。
+            // 这样「全部关闭」后状态栏时间会回到系统默认观感（不残留秒/小时颜色）。
+            if (!isClockEnabled(view)) {
+                synchronized (ACTIVE) {
+                    ACTIVE.remove(view);
+                }
                 return;
             }
             if (!view.isAttachedToWindow()) {
@@ -2113,19 +2262,38 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 long delay = 1000L - (System.currentTimeMillis() % 1000L);
                 view.postDelayed(this, Math.max(50L, delay));
             } else {
-                // 已关闭显秒：低频补色模式。零宽空格修法（见 applyRedToBaseText）正常情况下
-                // 已让 Span 存活，每 tick 都短路（wrote=false）→ 间隔自适应拉长
-                // （2s→4s→…→30s 上限），循环衰减成近零开销的心跳；一旦真被洗
-                // （wrote=true）立即重置 2s 高频硬刚。自调优，无需按机型区分。
-                boolean wrote = applyRedToBaseText(view);
-                if (wrote) {
-                    sColorTickDelay = 2_000L;
-                } else if (sColorTickDelay < 30_000L) {
-                    sColorTickDelay = Math.min(sColorTickDelay * 2, 30_000L);
+                // 已关闭显秒：自适应兜底补色。
+                //  · 掉色(wrote=2) → 2s 高频硬刚 + 续期本视图守护窗口；
+                //  · 稳定(wrote=0/1) → 间隔自适应拉长（2→4→…→30s）；
+                //  · 本视图冷却窗口(5分钟)内一直稳定 → 自动停掉本 ticker，只靠 setText 钩子 / scheduleReapply
+                //    当"传感器"；一旦再掉色会重新唤醒。不掉色的设备 ticker 基本一直停着，最省电。
+                int wrote = applyRedToBaseText(view);
+                long now = SystemClock.uptimeMillis();
+                if (guardUntil == 0L) {
+                    // 刚进入显秒关（或从显秒开切回）：启动本视图一个新的守护窗口，避免用过期窗口立刻停。
+                    guardUntil = now + COLOR_COOLDOWN_MS;
+                }
+                if (wrote == 2) {
+                    // 真掉色（文本没变但颜色被洗）：2s 高频硬刚 + 续期本视图守护窗口。
+                    tickDelay = 2_000L;
+                    guardUntil = now + COLOR_COOLDOWN_MS;
+                } else if (now >= guardUntil) {
+                    // 本视图冷却窗口内始终没掉色 → 停掉兜底（移除本 ticker，不再 postDelayed）。
+                    synchronized (ACTIVE) {
+                        ACTIVE.remove(view);
+                    }
+                    guardUntil = 0L;
+                    if (BuildConfig.DEBUG) {
+                        XposedBridge.log(LOG_PREFIX + "color-guard stopped (stable "
+                                + (COLOR_COOLDOWN_MS / 1000L) + "s)");
+                    }
+                    return;
+                } else if (tickDelay < 30_000L) {
+                    tickDelay = Math.min(tickDelay * 2, 30_000L);
                 }
                 // 熄屏/省电降频（状态栏不可见，省电优先）。
                 long delay = (isPowerSaveMode(ctx) || !isInteractive(ctx))
-                        ? Math.max(sColorTickDelay, 10_000L) : sColorTickDelay;
+                        ? Math.max(tickDelay, 10_000L) : tickDelay;
                 if (BuildConfig.DEBUG) {
                     long t = SystemClock.uptimeMillis();
                     if (t - sLastKeepaliveLog > 30_000L) {
@@ -2296,6 +2464,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 }
             }
             sClockCandidates.add(new WeakReference<>(view));
+            // 登记到测试卡片清单（key 稳定、标签可读），并节流发布到 Secure 供设置页读取。
+            sClockInfo.put(clockKey(view), clockLabel(view));
+            if (view.getContext() != null) {
+                publishClockList(view.getContext().getContentResolver());
+            }
         } catch (Throwable ignored) {
             // 记录失败不影响系统
         }
@@ -2461,6 +2634,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     }
                     // ColorOS 17：把显秒开关同步到系统原生键（非 ColorOS 17 时内部直接返回）。
                     mirrorNativeSeconds(cr0, ClockSecondsConfig.isEnabled(cr0));
+                    // 测试卡片：启动时加载用户对候选时钟的启用选择，并发布一次当前清单。
+                    sClockEnabled = loadClockEnabledMap(cr0);
+                    publishClockList(cr0);
+                    // 激活检测：写入心跳时间戳，供设置页兜底判定模块已注入 SystemUI。
+                    ClockSecondsConfig.writeActiveHeartbeat(cr0,
+                            BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
                 } catch (Throwable ignored) {
                     // 写入失败不影响后续注册
                 }
@@ -2471,8 +2650,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
                 filter.addAction(ClockSecondsConfig.ACTION_DETECT_CLOCK);
+                filter.addAction(ClockSecondsConfig.ACTION_REFRESH_CLOCK_LIST);
                 filter.addAction(ClockSecondsConfig.ACTION_SYNC_TIME);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_NET_OFFSET);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_TEST);
+                filter.addAction(ClockSecondsConfig.ACTION_RESTART_SYSTEMUI);
+                filter.addAction(ClockSecondsConfig.ACTION_RUN_DIAGNOSTIC);
+                filter.addAction(ClockSecondsConfig.ACTION_PING_MODULE);
                 BroadcastReceiver receiver = new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context ctx, Intent intent) {
@@ -2528,8 +2712,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         for (WeakReference<TextView> ref : sClockCandidates) {
                                             TextView v = ref.get();
                                             if (v != null && isStatusBarClock(v)
+                                                    && isClockEnabled(v)
                                                     && !CONFIGURED.contains(v)) {
                                                 configureClockView(v);
+                                                // 同样要装秒表，否则只写一次秒、不继续跳动。
+                                                installTicker(v);
                                                 refreshClock(v);
                                             }
                                         }
@@ -2553,6 +2740,21 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     XposedBridge.log(LOG_PREFIX + "DETECT builtin=" + builtinName
                                             + " reported=" + reported);
                                 }
+                            } else if (ClockSecondsConfig.ACTION_REFRESH_CLOCK_LIST.equals(action)) {
+                                // 测试卡片「刷新列表」：强制重发候选清单（忽略节流），让设置页拿到最新候选。
+                                publishClockList(cr, true);
+                                try {
+                                    Intent res = new Intent(
+                                            ClockSecondsConfig.ACTION_REFRESH_CLOCK_LIST_RESULT);
+                                    res.setPackage(ClockSecondsConfig.MODULE_PACKAGE);
+                                    ctx.sendBroadcast(res);
+                                } catch (Throwable ignored) {
+                                    // 回传失败不影响已发布的清单
+                                }
+                                if (BuildConfig.DEBUG) {
+                                    XposedBridge.log(LOG_PREFIX + "REFRESH_LIST published="
+                                            + sClockInfo.size());
+                                }
                             } else if (ClockSecondsConfig.ACTION_SYNC_TIME.equals(action)) {
                                 // 应用无权直接改系统时钟（SET_TIME 是系统权限），
                                 // 打开系统「自动设置时间」让系统自己向网络校准。
@@ -2562,6 +2764,117 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 // 设置页测得的网络时间偏移（浮窗显示网络时间用）。
                                 ClockSecondsConfig.setNetOffset(cr, intent.getLongExtra(
                                         ClockSecondsConfig.EXTRA_NET_OFFSET, 0L));
+                            } else if (ClockSecondsConfig.ACTION_SET_CLOCK_TEST.equals(action)) {
+                                // 测试卡片：切换某候选时钟的启用/停用。
+                                // 优先采用设置页发来的「全量启用映射」extra（权威、避免单键丢失其它勾选）；
+                                // 缺省时回退到「读 Secure + 单键 put」以保持旧路径兼容。
+                                java.util.Map<String, Boolean> map;
+                                String fullMap = intent.getStringExtra(
+                                        ClockSecondsConfig.EXTRA_CLOCK_ENABLED_MAP);
+                                if (fullMap != null && !fullMap.isEmpty()) {
+                                    map = new java.util.HashMap<>();
+                                    try {
+                                        org.json.JSONObject o = new org.json.JSONObject(fullMap);
+                                        java.util.Iterator<String> it = o.keys();
+                                        while (it.hasNext()) {
+                                            String k = it.next();
+                                            map.put(k, o.getBoolean(k));
+                                        }
+                                    } catch (Throwable ignored) {
+                                        map = null;
+                                    }
+                                } else {
+                                    map = null;
+                                }
+                                if (map == null) {
+                                    String ck = intent.getStringExtra(
+                                            ClockSecondsConfig.EXTRA_CLOCK_KEY);
+                                    boolean en = intent.getIntExtra(
+                                            ClockSecondsConfig.EXTRA_CLOCK_ENABLED, 1) == 1;
+                                    if (ck == null || ck.isEmpty()) {
+                                        return;
+                                    }
+                                    map = loadClockEnabledMap(cr);
+                                    map.put(ck, en);
+                                }
+                                if (map == null || map.isEmpty()) {
+                                    return;
+                                }
+                                writeClockEnabledMap(cr, map);
+                                applyClockTestToActive(cr);
+                                if (BuildConfig.DEBUG) {
+                                    XposedBridge.log(LOG_PREFIX + "CLOCK-TEST applied map=" + map);
+                                }
+                            } else if (ClockSecondsConfig.ACTION_RESTART_SYSTEMUI.equals(action)) {
+                                // 设置页请求重启 SystemUI 以重新加载模块（免 adb）。
+                                // 常规：killProcess + System.exit 结束自身，系统自动拉起 SystemUI。
+                                // 兜底：部分厂商会拦截自杀，800ms 后若进程仍存活，用 root 强杀。
+                                if (BuildConfig.DEBUG) {
+                                    XposedBridge.log(LOG_PREFIX + "RESTART SYSTEMUI requested");
+                                }
+                                try {
+                                    final android.os.Handler rh = new android.os.Handler(
+                                            android.os.Looper.getMainLooper());
+                                    rh.postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // 仍活着 → killProcess 被拦截，尝试 root 兜底。
+                                            try {
+                                                Runtime.getRuntime().exec(new String[]{
+                                                        "su", "-c", "killall com.android.systemui"});
+                                            } catch (Throwable ignored) {
+                                                // 无 root 则放弃
+                                            }
+                                        }
+                                    }, 800L);
+                                } catch (Throwable ignored) {
+                                    // 兜底安排失败不影响主路径
+                                }
+                                android.os.Process.killProcess(android.os.Process.myPid());
+                                System.exit(0);
+                            } else if (ClockSecondsConfig.ACTION_RUN_DIAGNOSTIC.equals(action)) {
+                                // 设置页请求一次性全量诊断：候选时钟 / 命中区 / 上次触摸结论。
+                                try {
+                                    org.json.JSONObject diag = buildDiagnostic(cr);
+                                    try {
+                                        Settings.Secure.putString(cr,
+                                                ClockSecondsConfig.CLOCK_DIAG_KEY, diag.toString());
+                                    } catch (Throwable ignored) {
+                                        // Secure 写入失败不影响回传广播
+                                    }
+                                    Intent res = new Intent(ClockSecondsConfig.ACTION_DIAG_RESULT);
+                                    res.setPackage(ClockSecondsConfig.MODULE_PACKAGE);
+                                    res.putExtra(ClockSecondsConfig.EXTRA_DIAG_JSON, diag.toString());
+                                    ctx.sendBroadcast(res);
+                                    if (BuildConfig.DEBUG) {
+                                        XposedBridge.log(LOG_PREFIX + "DIAG: " + diag.toString());
+                                    }
+                                } catch (Throwable t) {
+                                    XposedBridge.log(LOG_PREFIX + "DIAG failed: " + t);
+                                }
+                            } else if (ClockSecondsConfig.ACTION_PING_MODULE.equals(action)) {
+                                // 设置页探测模块激活：刷新心跳并回传 PONG，证明模块已注入并正在运行。
+                                try {
+                                    ClockSecondsConfig.writeActiveHeartbeat(cr,
+                                            BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
+                                } catch (Throwable ignored2) {
+                                    // 心跳写入失败不影响回传
+                                }
+                                try {
+                                    Intent res = new Intent(ClockSecondsConfig.ACTION_PONG_MODULE);
+                                    res.setPackage(ClockSecondsConfig.MODULE_PACKAGE);
+                                    res.putExtra(ClockSecondsConfig.EXTRA_MODULE_VERSION,
+                                            BuildConfig.VERSION_NAME);
+                                    res.putExtra(ClockSecondsConfig.EXTRA_MODULE_VERSION_CODE,
+                                            BuildConfig.VERSION_CODE);
+                                    res.putExtra(ClockSecondsConfig.EXTRA_ACTIVE_TS,
+                                            System.currentTimeMillis());
+                                    res.putExtra(ClockSecondsConfig.EXTRA_SECONDS_ON,
+                                            ClockSecondsConfig.isEnabled(cr) ? 1 : 0);
+                                    ctx.sendBroadcast(res);
+                                } catch (Throwable ignored2) {
+                                    // 回传失败不影响模块运行
+                                }
                             }
                         } catch (Throwable ignored) {
                             // 写入失败不影响系统界面
@@ -2595,6 +2908,47 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 }
                 // 注册成功后才置位：万一首次注册抛异常，下次还有机会重试。
                 sConfigReceiverRegistered = true;
+                // 额外注册 Secure 监听：App 有 WRITE_SECURE_SETTINGS 时会直接写 Secure（不广播），
+                // 只靠广播会让模块内存态漂移（表现为「改了显秒/开关，状态栏没反应」）。
+                // 监听后无论谁改 Secure，都立即同步 sSecondsEnabled / sClockEnabled 并应用。
+                if (sSecureObserver == null) {
+                    try {
+                        final ContentResolver ocr = context.getContentResolver();
+                        sSecureObserver = new android.database.ContentObserver(
+                                new android.os.Handler(android.os.Looper.getMainLooper())) {
+                            @Override
+                            public void onChange(boolean selfChange, android.net.Uri uri) {
+                                try {
+                                    String key = uri != null ? uri.getLastPathSegment() : null;
+                                    if (ClockSecondsConfig.MODULE_SECONDS_KEY.equals(key)) {
+                                        boolean en = ClockSecondsConfig.isEnabled(ocr);
+                                        sSecondsEnabled = en;
+                                        TextView clock = sClockView;
+                                        if (clock != null && isClockEnabled(clock)) {
+                                            if (en) {
+                                                writeTime(clock);
+                                                installTicker(clock);
+                                            } else {
+                                                installTicker(clock);
+                                                writeMinuteOnly(clock);
+                                            }
+                                        }
+                                    } else if (ClockSecondsConfig.CLOCK_TEST_ENABLED_KEY.equals(key)) {
+                                        applyClockTestToActive(ocr);
+                                    }
+                                } catch (Throwable ignored2) {
+                                    // 同步失败不影响系统
+                                }
+                            }
+                        };
+                        ocr.registerContentObserver(android.provider.Settings.Secure.getUriFor(
+                                ClockSecondsConfig.MODULE_SECONDS_KEY), false, sSecureObserver);
+                        ocr.registerContentObserver(android.provider.Settings.Secure.getUriFor(
+                                ClockSecondsConfig.CLOCK_TEST_ENABLED_KEY), false, sSecureObserver);
+                    } catch (Throwable ignored2) {
+                        // 监听注册失败不影响广播路径
+                    }
+                }
             } catch (Throwable ignored) {
                 // 注册失败只影响"未用 adb 授权时的设置写入"，不影响显秒与点击切换
             }
@@ -2613,7 +2967,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             XposedBridge.log(LOG_PREFIX + "seconds set -> " + enabled + " (tile/remote)");
         }
         TextView clock = sClockView;
-        if (clock != null) {
+        // 已停用的时钟：只更新内存态，不写文本/颜色（尊重测试卡片开关）。
+        if (clock != null && isClockEnabled(clock)) {
             if (enabled) {
                 writeTime(clock);
                 installTicker(clock);
@@ -2638,7 +2993,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      */
     private static void refreshClockNow() {
         TextView clock = sClockView;
-        if (clock == null) {
+        // 该时钟已被用户停用：不写文本/颜色（否则改小时颜色等操作会绕过开关重新上色）。
+        if (clock == null || !isClockEnabled(clock)) {
             return;
         }
         try {

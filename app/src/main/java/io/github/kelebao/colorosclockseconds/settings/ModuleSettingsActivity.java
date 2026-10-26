@@ -8,6 +8,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.BroadcastReceiver;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -46,7 +47,17 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import android.util.Pair;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import io.github.kelebao.colorosclockseconds.BuildConfig;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
@@ -143,6 +154,49 @@ public final class ModuleSettingsActivity extends Activity {
     private TextView syncView;
     private TextView colorValueView;
     private View colorDotView;
+    private LinearLayout mClockTestList;          // 测试卡片：候选时钟列表容器
+    private final Map<String, Boolean> mClockEnabled = new HashMap<>();  // 测试卡片：key -> 是否启用
+    private TextView mDiagView;                   // 诊断卡片：结果展示
+    /** 测试卡片「刷新列表」按钮（保持引用以便刷新时改文字：刷新中/刷新完成）。 */
+    private TextView mRefreshBtn;
+    /** 刷新请求是否在途（结果广播与兜底定时器二者只收尾一次）。 */
+    private boolean mRefreshPending;
+    /** 接收 SystemUI 回传的「候选清单已重发」事件（跨 UID，同签名广播）。 */
+    private final BroadcastReceiver mRefreshReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (ClockSecondsConfig.ACTION_REFRESH_CLOCK_LIST_RESULT.equals(intent.getAction())) {
+                finishClockRefresh();
+            }
+        }
+    };
+    /** 诊断是否在途（结果广播或超时兜底，只收尾一次）。 */
+    private boolean mDiagPending;
+    /** 诊断超时兜底：模块未就绪时避免一直停在「诊断中…」。 */
+    private final Runnable mDiagTimeout = () -> {
+        if (mDiagPending && mDiagView != null) {
+            mDiagPending = false;
+            mDiagView.setText("⚠ 诊断超时：模块没有响应。\n"
+                    + "常见原因：① SystemUI 正在重启，稍后重试；"
+                    + "② LSPosed 因 SystemUI 反复崩溃进入「安全模式」（会停用所有模块）"
+                    + "——此时请重启手机恢复，并到 LSPosed 确认本模块已启用。\n"
+                    + "提示：不要频繁点「重启 SystemUI」，连续强杀可能触发安全模式。");
+        }
+    };
+    /** 接收 SystemUI 回传的一次性诊断结果（同签名广播，仅本应用能收）。 */
+    private final BroadcastReceiver mDiagReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (ClockSecondsConfig.ACTION_DIAG_RESULT.equals(intent.getAction())) {
+                mDiagPending = false;
+                mPingHandler.removeCallbacks(mDiagTimeout);
+                String json = intent.getStringExtra(ClockSecondsConfig.EXTRA_DIAG_JSON);
+                if (json != null) {
+                    renderDiagnostic(json);
+                }
+            }
+        }
+    };
     /** 当前识别规则摘要（"内置规则" 或 "自定义：clock"）。 */
     private TextView ruleSummaryView;
     /** 自动检测开关：避免检测广播未到达时重复点击。 */
@@ -150,6 +204,26 @@ public final class ModuleSettingsActivity extends Activity {
             new java.util.concurrent.atomic.AtomicBoolean(false);
     /** 接收 SystemUI 回传的自动检测结果。 */
     private android.content.BroadcastReceiver mDetectReceiver;
+
+    /** 接收 SystemUI 回传的 PING 应答（证明模块已激活并正在运行）。 */
+    private final android.content.BroadcastReceiver mPingReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (ClockSecondsConfig.ACTION_PONG_MODULE.equals(intent.getAction())) {
+                String ver = intent.getStringExtra(ClockSecondsConfig.EXTRA_MODULE_VERSION);
+                int on = intent.getIntExtra(ClockSecondsConfig.EXTRA_SECONDS_ON, -1);
+                onModulePong(ver, on == 1);
+            }
+        }
+    };
+    /** 激活状态：0=检测中, 1=已激活, 2=未激活。 */
+    private static final int ACTIVE_CHECKING = 0;
+    private static final int ACTIVE_YES = 1;
+    private static final int ACTIVE_NO = 2;
+    private View mActiveDot;
+    private TextView mActiveText;
+    private final Handler mPingHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mPingTimeout = () -> setActiveState(ACTIVE_NO, null, false);
 
     /** 网络时间相对本地的偏移（毫秒，网络 - 本地）；Long.MIN_VALUE 表示还没取到。 */
     private long netDriftMs = Long.MIN_VALUE;
@@ -236,6 +310,54 @@ public final class ModuleSettingsActivity extends Activity {
         ticker.post(tick);
         ticker.removeCallbacks(breathTick);
         ticker.post(breathTick);
+        // 返回前台时重新读取 SystemUI 检测到的候选时钟清单（此时 SystemUI 多半已发布最新列表）。
+        if (mClockTestList != null) {
+            refreshClockTestList();
+        }
+        // 诊断结果回传广播：由 SystemUI（不同 UID，且未被我们的签名证书签名）发出。
+        // 必须用 RECEIVER_EXPORTED 才能跨 UID 送达（RECEIVER_NOT_EXPORTED 在 API33+ 会丢弃其它 App 的广播）；
+        // 但不能要求 CONFIG_PERMISSION——SystemUI 是 OEM 签名，并不持有我们模块的 signature 权限，
+        // 要求该权限反而会把 PONG/诊断回传全部丢弃。广播已用 setPackage(本应用) 定向，第三方无法截获，无需权限。
+        // 前台注册，离开注销。
+        try {
+            IntentFilter f = new IntentFilter(ClockSecondsConfig.ACTION_DIAG_RESULT);
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                registerReceiver(mDiagReceiver, f, null,
+                        null, Context.RECEIVER_EXPORTED);
+            } else {
+                // API<33 无 RECEIVER_EXPORTED/权限 overload（已被移除），且旧系统 receiver 默认导出，
+                // SystemUI 的定向广播可正常送达。
+                registerReceiver(mDiagReceiver, f);
+            }
+        } catch (Throwable ignored) {
+            // 注册失败不影响其它功能
+        }
+        // 刷新列表回传接收器：SystemUI（不同 UID）发出，同理用 EXPORTED + null 权限（见上）。
+        try {
+            IntentFilter rf = new IntentFilter(ClockSecondsConfig.ACTION_REFRESH_CLOCK_LIST_RESULT);
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                registerReceiver(mRefreshReceiver, rf, null,
+                        null, Context.RECEIVER_EXPORTED);
+            } else {
+                registerReceiver(mRefreshReceiver, rf);
+            }
+        } catch (Throwable ignored) {
+            // 注册失败不影响其它功能
+        }
+        // 激活检测：注册 PONG 接收器（同上，跨 UID 用 EXPORTED，不要求签名权限）并触发一次探测。
+        try {
+            IntentFilter pf = new IntentFilter(ClockSecondsConfig.ACTION_PONG_MODULE);
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                registerReceiver(mPingReceiver, pf, null,
+                        null, Context.RECEIVER_EXPORTED);
+            } else {
+                // API<33 无 RECEIVER_EXPORTED/权限 overload；旧系统 receiver 默认导出，定向广播可送达。
+                registerReceiver(mPingReceiver, pf);
+            }
+        } catch (Throwable ignored) {
+            // 注册失败不影响其它功能
+        }
+        pingModule();
     }
 
     /** 读取一次模块配置进缓存（供预览每秒刷新时免 binder 直读）。 */
@@ -278,6 +400,22 @@ public final class ModuleSettingsActivity extends Activity {
         ticker.removeCallbacks(hideHint);
         unregisterConfigObserver();
         unregisterDetectReceiver();
+        try {
+            unregisterReceiver(mDiagReceiver);
+        } catch (Throwable ignored) {
+            // 未注册或已注销，忽略
+        }
+        try {
+            unregisterReceiver(mRefreshReceiver);
+        } catch (Throwable ignored) {
+            // 未注册或已注销，忽略
+        }
+        mPingHandler.removeCallbacks(mPingTimeout);
+        try {
+            unregisterReceiver(mPingReceiver);
+        } catch (Throwable ignored) {
+            // 未注册或已注销，忽略
+        }
     }
 
     @Override
@@ -336,9 +474,15 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         buildHeader(root);
+        buildActivationCard(root);
         buildPreviewCard(root);
         buildStatsRow(root);
         buildColorCard(root);
+        // 时钟探测（测试）与诊断与工具两张卡片仅用于排查问题，留 debug/probe 版；发布版不需要。
+        if (BuildConfig.DEBUG) {
+            buildClockTestCard(root);
+            buildDiagnosticCard(root);
+        }
         buildAdvancedCard(root);
         buildLauncherCard(root);
         buildUpdateCard(root);
@@ -639,6 +783,668 @@ public final class ModuleSettingsActivity extends Activity {
                 }
             });
         });
+    }
+
+    /**
+     * 测试卡片（诊断）：列出模块检测到的候选时钟，逐个勾选，找出「唯独哪个时钟让状态栏显示秒」。
+     * 取消勾选的时钟模块不再接管（不显秒、不标红），可直接关掉通知栏/锁屏等误命中的时钟。
+     */
+    private void buildClockTestCard(LinearLayout root) {
+        // 本卡片屏蔽整卡按压：只有「刷新列表」按钮保留按压反馈。
+        LinearLayout card = cardNoPress();
+
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setOrientation(LinearLayout.HORIZONTAL);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = new TextView(this);
+        title.setText("时钟探测（测试）");
+        title.setTextSize(15f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        title.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        titleRow.addView(title);
+
+        // 刷新按钮：让 SystemUI 重新扫描并发布候选清单，再重读刷新（显示「刷新中/刷新完成」提示）。
+        TextView refresh = new TextView(this);
+        refresh.setText("刷新列表");
+        refresh.setTextSize(12f);
+        refresh.setTextColor(accent());
+        refresh.setPadding(dp(10), dp(6), dp(10), dp(6));
+        GradientDrawable rbg = new GradientDrawable();
+        rbg.setCornerRadius(dp(999));
+        rbg.setColor(night ? 0x33A98CFF : 0x336C4CF1);
+        refresh.setBackground(rbg);
+        mRefreshBtn = refresh;
+        // 卡片整体不再按压，仅「刷新列表」按钮保留按压反馈（裁到胶囊圆角，避免高光溢出）。
+        refresh.setClipToOutline(true);
+        mPressTilt.register(refresh, accent());
+        refresh.setOnClickListener(v -> refreshClockList());
+        titleRow.addView(refresh);
+        card.addView(titleRow);
+
+        TextView sub = new TextView(this);
+        sub.setText("模块会自动识别状态栏候选时钟。逐個勾选/取消，观察状态栏与通知栏秒数变化，"
+                + "找出真正控制状态栏的那个；通知栏等不需要的取消勾选即可。");
+        sub.setTextSize(11f);
+        sub.setTextColor(text2());
+        sub.setPadding(0, dp(6), 0, 0);
+        card.addView(sub);
+
+        mClockTestList = new LinearLayout(this);
+        mClockTestList.setOrientation(LinearLayout.VERTICAL);
+        mClockTestList.setPadding(0, dp(10), 0, 0);
+        card.addView(mClockTestList);
+
+        root.addView(card);
+        refreshClockTestList();
+    }
+
+    /** 触发 SystemUI 重新扫描并发布候选清单，同时切换按钮文案为「刷新中…」。 */
+    private void refreshClockList() {
+        mRefreshPending = true;
+        if (mRefreshBtn != null) {
+            mRefreshBtn.setText("刷新中…");
+            mRefreshBtn.setTextColor(accent());   // 复位颜色（防止上次「刷新完成」的红色残留）
+        }
+        try {
+            Intent it = new Intent(ClockSecondsConfig.ACTION_REFRESH_CLOCK_LIST);
+            it.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            sendBroadcast(it);
+        } catch (Throwable t) {
+            mRefreshPending = false;
+            if (mRefreshBtn != null) {
+                mRefreshBtn.setText("刷新列表");
+            }
+            Toast.makeText(this, "刷新失败：" + t.getMessage(), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // 兜底：即便 SystemUI 的结果广播未回（跨进程偶发丢失），也主动重读并收尾，
+        // 保证按钮不会一直停在「刷新中…」。
+        if (mRefreshBtn != null) {
+            mRefreshBtn.postDelayed(this::finishClockRefresh, 900L);
+        }
+    }
+
+    /** 收尾一次刷新：重读候选清单、按钮显示「刷新完成」，1.5s 后还原「刷新列表」。 */
+    private void finishClockRefresh() {
+        if (!mRefreshPending) {
+            return;
+        }
+        mRefreshPending = false;
+        refreshClockTestList();
+        if (mRefreshBtn != null) {
+            mRefreshBtn.setText("刷新完成");
+            mRefreshBtn.setTextColor(0xFFE53935);   // 红色提醒「已刷新」
+            mRefreshBtn.postDelayed(() -> {
+                if (mRefreshBtn != null) {
+                    mRefreshBtn.setText("刷新列表");
+                    mRefreshBtn.setTextColor(accent());  // 恢复强调色
+                }
+            }, 1500L);
+        }
+    }
+
+    /** 从 SystemUI 读取候选清单与启用选择，重建列表行。 */
+    private void refreshClockTestList() {
+        List<Pair<String, String>> list = loadClockTestList();
+        mClockEnabled.clear();
+        for (Pair<String, String> e : list) {
+            mClockEnabled.put(e.first, true);
+        }
+        Map<String, Boolean> stored = loadClockEnabledMap();
+        for (Map.Entry<String, Boolean> e : stored.entrySet()) {
+            mClockEnabled.put(e.getKey(), e.getValue());
+        }
+        mClockTestList.removeAllViews();
+        if (list.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("尚未检测到时钟。请先让状态栏/通知栏时间显示出来，再点「刷新列表」。");
+            empty.setTextSize(12f);
+            empty.setTextColor(text3());
+            empty.setPadding(0, dp(4), 0, 0);
+            mClockTestList.addView(empty);
+            return;
+        }
+        for (Pair<String, String> e : list) {
+            mClockTestList.addView(makeClockTestRow(e.first, e.second));
+        }
+    }
+
+    /** 一行：标签 + 开关。开关直接写 Secure（有权限）或经广播让 SystemUI 代写。 */
+    private LinearLayout makeClockTestRow(final String key, String label) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(8), 0, dp(8));
+
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(12f);
+        tv.setTextColor(text());
+        tv.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(tv);
+
+        final Switch sw = new Switch(this);
+        boolean on = mClockEnabled.getOrDefault(key, true);
+        sw.setChecked(on);
+        styleSwitch(sw);
+        sw.setOnCheckedChangeListener((v, checked) -> applyClockTest(key, checked));
+        row.addView(sw);
+        return row;
+    }
+
+    /** 写入某候选时钟的启用/停用选择（本地合并后写 Secure，无权限则走广播）。 */
+    private void applyClockTest(final String key, final boolean enabled) {
+        mClockEnabled.put(key, enabled);
+        JSONObject obj = new JSONObject();
+        try {
+            for (Map.Entry<String, Boolean> e : mClockEnabled.entrySet()) {
+                obj.put(e.getKey(), e.getValue());
+            }
+        } catch (Throwable ignored) {
+            // 构建 JSON 失败不打断交互
+        }
+        String json = obj.toString();
+        // 始终以广播把「全量启用映射」发给 SystemUI（即便本应用恰好有 WRITE_SECURE_SETTINGS 也发，
+        // 不再 return 提前返回），避免 SystemUI 未收到通知、或只收到单键而丢失其它勾选状态。
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("ClockSeconds",
+                    "applyClockTest key=" + key + " enabled=" + enabled + " map=" + json);
+        }
+        try {
+            Intent it = new Intent(ClockSecondsConfig.ACTION_SET_CLOCK_TEST)
+                    .putExtra(ClockSecondsConfig.EXTRA_CLOCK_KEY, key)
+                    .putExtra(ClockSecondsConfig.EXTRA_CLOCK_ENABLED, enabled ? 1 : 0)
+                    .putExtra(ClockSecondsConfig.EXTRA_CLOCK_ENABLED_MAP, json);
+            it.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            sendBroadcast(it);
+        } catch (Throwable t) {
+            Toast.makeText(this, "切换失败：" + t.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** 读取候选时钟清单：Secure 中的 JSON 数组 [{"k":key,"l":label}]。 */
+    private List<Pair<String, String>> loadClockTestList() {
+        List<Pair<String, String>> out = new ArrayList<>();
+        try {
+            String s = Settings.Secure.getString(getContentResolver(),
+                    ClockSecondsConfig.CLOCK_TEST_LIST_KEY);
+            if (s != null && !s.isEmpty()) {
+                JSONArray arr = new JSONArray(s);
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject o = arr.getJSONObject(i);
+                    out.add(new Pair<>(o.getString("k"), o.getString("l")));
+                }
+            }
+        } catch (Throwable ignored) {
+            // 读取失败按空列表处理
+        }
+        return out;
+    }
+
+    /** 读取用户对候选时钟的启用选择：Secure 中的 JSON 对象 {key:bool}。 */
+    private Map<String, Boolean> loadClockEnabledMap() {
+        Map<String, Boolean> m = new HashMap<>();
+        try {
+            String s = Settings.Secure.getString(getContentResolver(),
+                    ClockSecondsConfig.CLOCK_TEST_ENABLED_KEY);
+            if (s != null && !s.isEmpty()) {
+                JSONObject o = new JSONObject(s);
+                Iterator<String> it = o.keys();
+                while (it.hasNext()) {
+                    String k = it.next();
+                    m.put(k, o.getBoolean(k));
+                }
+            }
+        } catch (Throwable ignored) {
+            // 读取失败按全启用处理
+        }
+        return m;
+    }
+
+    // ==================================================================
+    // 诊断卡片：一键重启 SystemUI + 一次性全量诊断（无需翻 logcat）
+    // ==================================================================
+
+    private void buildDiagnosticCard(LinearLayout root) {
+        // 本卡片屏蔽整卡按压：只有「重启 SystemUI / 运行诊断」按钮保留按压反馈。
+        LinearLayout card = cardNoPress();
+        card.setPadding(dp(18), dp(16), dp(18), dp(16));
+
+        TextView title = new TextView(this);
+        title.setText("诊断与工具");
+        title.setTextSize(15f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        card.addView(title);
+
+        TextView hint = new TextView(this);
+        hint.setText("一键诊断可一次性定位「时钟未识别 / 边界算错 / 触摸被拦截」；重启 SystemUI 免 adb 重新加载模块。"
+                + "诊断前先让状态栏时钟显示出来，最好点一下状态栏再点「运行诊断」。");
+        hint.setTextSize(11f);
+        hint.setTextColor(text2());
+        hint.setPadding(0, dp(4), 0, dp(10));
+        hint.setLineSpacing(dp(2), 1f);
+        card.addView(hint);
+
+        // 按钮行：重启 / 诊断。
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView restartBtn = pillButton("重启 SystemUI");
+        restartBtn.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f) {{
+            setMarginEnd(dp(8));
+        }});
+        restartBtn.setOnClickListener(v -> {
+            // 记录重启前的心跳时间戳，用于重启后确认模块真的重新加载了。
+            long beforeTs = ClockSecondsConfig.parseActiveTs(
+                    ClockSecondsConfig.readActiveHeartbeat(getContentResolver()));
+            try {
+                Intent it = new Intent(ClockSecondsConfig.ACTION_RESTART_SYSTEMUI);
+                it.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+                sendBroadcast(it);
+                Toast.makeText(this, "正在重启 SystemUI…", Toast.LENGTH_SHORT).show();
+            } catch (Throwable t) {
+                Toast.makeText(this, "重启失败：" + t.getMessage(), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            pollRestartConfirm(beforeTs, 0);
+        });
+        row.addView(restartBtn);
+        restartBtn.setClipToOutline(true);
+        mPressTilt.register(restartBtn, 0xFFFFFFFF);   // 实心强调色底：白色高光才有反馈
+
+        TextView diagBtn = pillButton("运行诊断");
+        diagBtn.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        diagBtn.setOnClickListener(v -> {
+            mDiagPending = true;
+            if (mDiagView != null) {
+                mDiagView.setText("诊断中…（让状态栏时钟显示出来后，点一下状态栏再点这里）");
+            }
+            // 超时兜底：模块未就绪时避免一直停在「诊断中…」。
+            mPingHandler.removeCallbacks(mDiagTimeout);
+            mPingHandler.postDelayed(mDiagTimeout, 5000L);
+            try {
+                Intent it = new Intent(ClockSecondsConfig.ACTION_RUN_DIAGNOSTIC);
+                it.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+                sendBroadcast(it);
+            } catch (Throwable t) {
+                mDiagPending = false;
+                mPingHandler.removeCallbacks(mDiagTimeout);
+                Toast.makeText(this, "诊断失败：" + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        row.addView(diagBtn);
+        diagBtn.setClipToOutline(true);
+        mPressTilt.register(diagBtn, 0xFFFFFFFF);   // 实心强调色底：白色高光才有反馈
+        card.addView(row);
+
+        // 更新后一键生效：重启 SystemUI（模块新代码）+ 重开本应用（界面新代码），免手动两步。
+        TextView fullRestartBtn = new TextView(this);
+        fullRestartBtn.setText("更新后一键生效（重启系统界面 + 重开应用）");
+        fullRestartBtn.setTextSize(12f);
+        fullRestartBtn.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        fullRestartBtn.setTextColor(accent());
+        fullRestartBtn.setGravity(Gravity.CENTER);
+        fullRestartBtn.setPadding(dp(14), dp(10), dp(14), dp(10));
+        GradientDrawable frBg = new GradientDrawable();
+        frBg.setCornerRadius(dp(999));
+        frBg.setColor(night ? 0x33A98CFF : 0x336C4CF1);
+        fullRestartBtn.setBackground(frBg);
+        fullRestartBtn.setClickable(true);
+        fullRestartBtn.setClipToOutline(true);
+        mPressTilt.register(fullRestartBtn, accent());
+        LinearLayout.LayoutParams frLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        frLp.topMargin = dp(10);
+        fullRestartBtn.setLayoutParams(frLp);
+        fullRestartBtn.setOnClickListener(v -> showFullRestartDialog());
+        card.addView(fullRestartBtn);
+
+        mDiagView = new TextView(this);
+        mDiagView.setTextSize(11f);
+        mDiagView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+        mDiagView.setTextColor(text2());
+        mDiagView.setPadding(dp(8), dp(10), dp(8), dp(4));
+        GradientDrawable diagBg = new GradientDrawable();
+        diagBg.setCornerRadius(dp(10));
+        diagBg.setColor(night ? 0xFF1A1A22 : 0xFFF2F2F7);
+        mDiagView.setBackground(diagBg);
+        mDiagView.setText("点「运行诊断」查看结果。");
+        card.addView(mDiagView);
+
+        root.addView(card);
+    }
+
+    // ==================================================================
+    // 激活状态卡片：一键探测模块是否已注入 SystemUI 并正在运行
+    // ==================================================================
+
+    private void buildActivationCard(LinearLayout root) {
+        LinearLayout card = card();
+        card.setPadding(dp(18), dp(14), dp(18), dp(14));
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+
+        mActiveDot = new View(this);
+        int dotSize = dp(12);
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL);
+        dot.setColor(0xFFFFB300);
+        dot.setSize(dotSize, dotSize);
+        mActiveDot.setBackground(dot);
+        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dotSize, dotSize);
+        dotLp.setMarginEnd(dp(10));
+        mActiveDot.setLayoutParams(dotLp);
+        row.addView(mActiveDot);
+
+        mActiveText = new TextView(this);
+        mActiveText.setTextSize(13f);
+        mActiveText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        mActiveText.setTextColor(text());
+        mActiveText.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        mActiveText.setText("正在检测模块状态…");
+        row.addView(mActiveText);
+
+        TextView recheck = pillButton("重新检测");
+        recheck.setTextSize(12f);
+        recheck.setPadding(dp(14), dp(6), dp(14), dp(6));
+        recheck.setOnClickListener(v -> pingModule());
+        row.addView(recheck);
+
+        card.addView(row);
+        root.addView(card);
+        setActiveState(ACTIVE_CHECKING, null, false);
+    }
+
+    /** 向 SystemUI 发 PING；2.5s 内未收到 PONG 即判未激活。 */
+    private void pingModule() {
+        setActiveState(ACTIVE_CHECKING, null, false);
+        mPingHandler.removeCallbacks(mPingTimeout);
+        try {
+            Intent it = new Intent(ClockSecondsConfig.ACTION_PING_MODULE);
+            it.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            sendBroadcast(it);
+        } catch (Throwable t) {
+            setActiveState(ACTIVE_NO, null, false);
+            return;
+        }
+        mPingHandler.postDelayed(mPingTimeout, 2500);
+    }
+
+    /** 收到 SystemUI 的 PONG：模块确实在运行。 */
+    private void onModulePong(String version, boolean secondsOn) {
+        mPingHandler.removeCallbacks(mPingTimeout);
+        setActiveState(ACTIVE_YES, version, secondsOn);
+    }
+
+    private void setActiveState(int state, String version, boolean secondsOn) {
+        int color;
+        String msg;
+        if (state == ACTIVE_YES) {
+            color = 0xFF4CAF50;
+            StringBuilder sb = new StringBuilder("模块已激活");
+            if (version != null && !version.isEmpty()) {
+                sb.append(" · v").append(version);
+            }
+            sb.append("（显秒").append(secondsOn ? "开" : "关").append("）");
+            msg = sb.toString();
+        } else if (state == ACTIVE_NO) {
+            color = 0xFFE53935;
+            msg = "未激活（请在 LSPosed 勾选「系统界面」后重启）";
+        } else {
+            color = 0xFFFFB300;
+            msg = "正在检测模块状态…";
+        }
+        if (mActiveDot != null && mActiveDot.getBackground() instanceof GradientDrawable) {
+            ((GradientDrawable) mActiveDot.getBackground()).setColor(color);
+        }
+        if (mActiveText != null) {
+            mActiveText.setText(msg);
+        }
+        // DEBUG 构建把本地判定结果打到 logcat，便于 adb 读取验证 PONG 是否真正送达应用
+        // （uiautomator dump 因持续呼吸灯动画无法稳定抓帧，改用 logcat 信号更可靠）。
+        if (BuildConfig.DEBUG) {
+            String tag = "ClockSeconds";
+            String code = (state == ACTIVE_YES) ? "ACTIVE_YES" : (state == ACTIVE_NO) ? "ACTIVE_NO" : "ACTIVE_CHECKING";
+            android.util.Log.d(tag, "[activation] state=" + code + " msg=" + msg
+                    + " ver=" + (version != null ? version : "") + " secondsOn=" + secondsOn);
+        }
+    }
+
+    /** 统一药丸按钮样式（同「自动检测」主按钮）。 */
+    private TextView pillButton(String text) {
+        TextView b = new TextView(this);
+        b.setText(text);
+        b.setTextSize(13f);
+        b.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        b.setTextColor(0xFFFFFFFF);
+        b.setGravity(Gravity.CENTER);
+        b.setPadding(dp(14), dp(10), dp(14), dp(10));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(999));
+        bg.setColor(accent());
+        b.setBackground(bg);
+        b.setClickable(true);
+        return b;
+    }
+
+    /** 把 SystemUI 回传的诊断 JSON 渲染成易读文本。 */
+    private void renderDiagnostic(String json) {
+        if (mDiagView == null) {
+            return;
+        }
+        try {
+            JSONObject d = new JSONObject(json);
+            StringBuilder sb = new StringBuilder();
+            String doneTime = new java.text.SimpleDateFormat("HH:mm:ss",
+                    java.util.Locale.getDefault()).format(new java.util.Date());
+            sb.append("✅ 诊断完成 ").append(doneTime).append("\n\n");
+
+            int n = d.optInt("candidateCount", 0);
+            int sbLaid = d.optInt("statusBarLaidCount", 0);
+            JSONObject pick = d.optJSONObject("pick");
+            boolean pickedEmpty = pick == null || pick.optBoolean("pickedEmpty", true);
+            boolean lastHit = d.optBoolean("lastHit", false);
+            boolean secondsOn = d.optBoolean("secondsEnabled", false);
+            int gesture = d.optInt("gesture", ClockSecondsConfig.GESTURE_CLICK);
+
+            // 一句话结论（尽量说人话，不堆术语）
+            String conclusion;
+            if (n == 0) {
+                conclusion = "没有检测到任何时钟，模块可能没生效。请确认 LSPosed 里已启用本模块并勾选"
+                        + "「系统界面」，然后重启 SystemUI。";
+            } else if (sbLaid == 0) {
+                conclusion = "检测到时间控件，但没认出哪个是状态栏时钟。可到「时钟识别」点「自动检测」试试。";
+            } else if (pickedEmpty) {
+                conclusion = "认出了状态栏时钟，但它现在没有位置信息（可能还没显示出来）。"
+                        + "先下拉一次通知栏，再点「运行诊断」。";
+            } else if (!lastHit) {
+                conclusion = "状态栏时钟识别正常，但上次点击没落在时钟上。点时间时请按准「时:分」数字区域。";
+            } else {
+                conclusion = "一切正常：状态栏时钟已识别，点击能命中。";
+            }
+            sb.append("【结论】\n").append(conclusion).append("\n\n");
+
+            // 状态栏时钟概况
+            sb.append("【状态栏时钟】\n");
+            sb.append("识别到 ").append(n).append(" 个时间控件，其中状态栏 ")
+                    .append(sbLaid).append(" 个。\n");
+            if (pick != null && !pickedEmpty) {
+                String label = pick.optString("pickedLabel", "");
+                if (!label.isEmpty() && !"null".equals(label)) {
+                    sb.append("当前接管：").append(label).append("\n");
+                }
+                String rectPlain = plainRect(pick.optString("rect", ""));
+                if (!rectPlain.isEmpty()) {
+                    sb.append("点击有效范围：").append(rectPlain).append("\n");
+                }
+            }
+            sb.append("点击手势：")
+                    .append(gesture == ClockSecondsConfig.GESTURE_CLICK ? "单击" : "双击").append("\n");
+            sb.append("显秒：").append(secondsOn ? "已开启" : "已关闭").append("\n\n");
+
+            // 颜色体检：直接判断小时颜色是否还在（ColorOS 17 掉色可一眼看出，无需抓日志）
+            JSONObject cc = d.optJSONObject("colorCheck");
+            if (cc != null) {
+                sb.append("【颜色体检】\n");
+                String st = cc.optString("state", "");
+                String msg;
+                if ("ok".equals(st)) {
+                    msg = "颜色正常 ✓（十位数带色 " + colorHex(cc.optInt("spanColor", -1)) + "）";
+                } else if ("stripped".equals(st)) {
+                    msg = "⚠ 颜色被系统洗掉了（掉色）：文本已变成纯文本，颜色丢失";
+                } else if ("no_span".equals(st)) {
+                    msg = "⚠ 颜色丢失：文本还在，但颜色标记被去掉了（掉色）";
+                } else if ("disabled".equals(st)) {
+                    msg = "该时钟已在测试卡里关闭，不接管、不上色（正常）";
+                } else if ("hour_color_off".equals(st)) {
+                    msg = "小时颜色总开关已关闭，不上色（正常）";
+                } else if ("no_clock".equals(st)) {
+                    msg = "暂未识别到状态栏时钟，无法检测颜色";
+                } else {
+                    msg = "未知状态：" + st;
+                }
+                sb.append(msg).append("\n");
+                if (cc.optBoolean("applicable", false)) {
+                    String txt = cc.optString("text", "");
+                    if (!txt.isEmpty()) {
+                        sb.append("当前文本：").append(txt).append("\n");
+                    }
+                }
+                sb.append("\n");
+            }
+
+            // 上次点击（含时间，时分秒）
+            sb.append("【上次点击】\n");
+            long t = d.optLong("lastTouchTime", 0L);
+            if (t > 0) {
+                String touchTime = new java.text.SimpleDateFormat("HH:mm:ss",
+                        java.util.Locale.getDefault()).format(new java.util.Date(t));
+                sb.append("时间：").append(touchTime).append("\n");
+            } else {
+                sb.append("时间：暂无（还没点过状态栏时间）\n");
+            }
+            int tx = d.optInt("lastTouchX", -1), ty = d.optInt("lastTouchY", -1);
+            if (tx >= 0 && ty >= 0) {
+                sb.append("位置：(").append(tx).append(", ").append(ty).append(")\n");
+            }
+            sb.append("是否点中时钟：").append(lastHit ? "是 ✓" : "否 ✗（没按到时钟上）").append("\n\n");
+
+            // 识别到的时钟清单（简要，供普通用户判断哪个是状态栏时钟）
+            JSONArray arr = d.optJSONArray("candidates");
+            if (arr != null && arr.length() > 0) {
+                sb.append("【识别到的时钟】\n");
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject o = arr.getJSONObject(i);
+                    sb.append(i + 1).append(". ").append(o.optString("label", "未知"));
+                    if (o.optBoolean("isStatusBar")) {
+                        sb.append("（状态栏）");
+                    }
+                    sb.append(o.optBoolean("enabled") ? " — 已启用" : " — 已关闭").append("\n");
+                }
+            }
+            mDiagView.setText(sb.toString());
+        } catch (Throwable t) {
+            mDiagView.setText("解析失败：" + t + "\n" + json);
+        }
+    }
+
+    /** 把命中区 "57,22,278,126" / "Rect(57, 22 - 278, 126)" 转成「横向 a~b，纵向 c~d」。 */
+    private static String plainRect(String s) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("-?\\d+").matcher(s);
+            java.util.List<Integer> nums = new java.util.ArrayList<>();
+            while (m.find() && nums.size() < 4) {
+                nums.add(Integer.parseInt(m.group()));
+            }
+            if (nums.size() == 4) {
+                return "横向 " + nums.get(0) + "~" + nums.get(2)
+                        + "，纵向 " + nums.get(1) + "~" + nums.get(3);
+            }
+        } catch (Throwable ignored) {
+            // 解析失败则原样返回
+        }
+        return s;
+    }
+
+    /** ARGB int → "#AARRGGBB"。 */
+    private static String colorHex(int c) {
+        return String.format(java.util.Locale.US, "#%08X", c);
+    }
+
+    /**
+     * 重启后轮询心跳：SystemUI 重新加载模块会写新的心跳时间戳，据此确认「真的重启了」。
+     * 最多等约 12 秒；成功则提示并顺带刷新激活状态。
+     */
+    private void pollRestartConfirm(final long beforeTs, final int attempt) {
+        mPingHandler.postDelayed(() -> {
+            long now = ClockSecondsConfig.parseActiveTs(
+                    ClockSecondsConfig.readActiveHeartbeat(getContentResolver()));
+            if (now > beforeTs) {
+                Toast.makeText(this, "SystemUI 已重启 ✓", Toast.LENGTH_SHORT).show();
+                pingModule();
+            } else if (attempt < 12) {
+                pollRestartConfirm(beforeTs, attempt + 1);
+            } else {
+                Toast.makeText(this, "重启未确认，请稍候查看激活状态，或手动重启 SystemUI",
+                        Toast.LENGTH_LONG).show();
+            }
+        }, 1000L);
+    }
+
+    /**
+     * 「更新后一键生效」：确认后重启 SystemUI（让模块新代码生效）并重开本应用（让界面新代码生效）。
+     * 仅在升级安装新版本后需要；平时改设置/开关时钟无需重启。
+     */
+    private void showFullRestartDialog() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("更新后一键生效")
+                .setMessage("将重启系统界面（让模块新代码生效）并重新打开本应用（让界面新代码生效）。\n\n"
+                        + "仅升级安装新版本后需要；平时改设置、开关时钟、刷新、诊断都无需重启。\n\n"
+                        + "⚠ 请勿连续多次使用：频繁强杀 SystemUI 会让 LSPosed 判定「崩溃过多」进入安全模式，"
+                        + "届时所有模块会被停用，需重启手机才能恢复。")
+                .setNegativeButton("取消", null)
+                .setPositiveButton("确定重启", (d, w) -> {
+                    try {
+                        Intent it = new Intent(ClockSecondsConfig.ACTION_RESTART_SYSTEMUI);
+                        it.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+                        sendBroadcast(it);
+                    } catch (Throwable ignored) {
+                        // 广播失败也继续重开应用
+                    }
+                    Toast.makeText(this, "正在重启系统界面并重开应用…", Toast.LENGTH_SHORT).show();
+                    // 稍等再重开应用，避免与系统界面重启抢资源。
+                    mPingHandler.postDelayed(this::relaunchApp, 600L);
+                })
+                .show();
+    }
+
+    /** 重新打开本应用（新进程加载新代码）。 */
+    private void relaunchApp() {
+        try {
+            Intent re = new Intent(this, ModuleSettingsActivity.class);
+            re.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(re);
+        } catch (Throwable ignored) {
+            // 启动失败则仅退出，用户手动重开
+        }
+        // 稍等让新 Activity 启动请求生效，再结束当前进程。
+        mPingHandler.postDelayed(() -> {
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(0);
+        }, 250L);
     }
 
     private void buildAdvancedCard(LinearLayout root) {
@@ -1474,6 +2280,24 @@ public final class ModuleSettingsActivity extends Activity {
         return card;
     }
 
+    /** 同 {@link #card()}，但**不**注册按压倾斜效果（卡片背景按压无反馈，只让内部按钮自带按压）。 */
+    private LinearLayout cardNoPress() {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(18), dp(18), dp(18), dp(18));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(24));
+        bg.setColor(night ? DARK_CARD : LIGHT_CARD);
+        card.setBackground(bg);
+        card.setElevation(dp(3));
+        card.setClipToOutline(true);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(12);
+        card.setLayoutParams(lp);
+        return card;
+    }
+
     private LinearLayout statCard() {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
@@ -1712,6 +2536,14 @@ public final class ModuleSettingsActivity extends Activity {
         try {
             Settings.Secure.putInt(getContentResolver(), key, value);
             guarded.accept(true);
+            // 双保险：即便直写成功，也广播一次让 SystemUI 模块即时感知。
+            // 否则模块只靠「广播」更新内存态，而 App 有 WRITE_SECURE_SETTINGS 时直写不广播 → 状态漂移。
+            try {
+                broadcast.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+                sendBroadcast(broadcast);
+            } catch (Throwable ignored2) {
+                // 广播失败不影响直写结果
+            }
             return;
         } catch (SecurityException ignored) {
             // 无 WRITE_SECURE_SETTINGS：走广播路径
