@@ -1747,7 +1747,9 @@ public final class ModuleSettingsActivity extends Activity {
         }
         // 暗端 0.06 会让光晕整段熄灭再亮回来，真机上读成「闪烁」不是呼吸（vc111 反馈）；
         // 0.30 起步既保留明显的明暗差，又保证任何时刻光晕都在、数字始终像在发光。
-        final ValueAnimator anim = ValueAnimator.ofFloat(0.30f, 1f);
+        // 谷底 0.55：配合 DigitGlowDrawable 里的 1.7 次方曲线，视觉最暗约 0.36 亮度 ——
+        // 再不亮到「熄灭」，也不会亮到「没在呼吸」。
+        final ValueAnimator anim = ValueAnimator.ofFloat(0.55f, 1f);
         anim.setDuration(GLOW_PERIOD_MS);
         anim.setRepeatCount(ValueAnimator.INFINITE);
         anim.setRepeatMode(ValueAnimator.REVERSE);
@@ -1763,7 +1765,7 @@ public final class ModuleSettingsActivity extends Activity {
         });
         mGlowAnim = anim;
         if (BuildConfig.DEBUG) {
-            android.util.Log.d("CS-GLOW", "glowLoop start floor=0.30 period=" + GLOW_PERIOD_MS);
+            android.util.Log.d("CS-GLOW", "glowLoop start floor=0.55 period=" + GLOW_PERIOD_MS);
         }
         anim.start();
     }

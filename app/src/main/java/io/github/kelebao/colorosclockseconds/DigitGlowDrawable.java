@@ -19,12 +19,12 @@ import android.graphics.drawable.Drawable;
  */
 public class DigitGlowDrawable extends Drawable {
 
-    /** 外雾半径（相对字号）。 */
-    private static final float BLUR_WIDE = 0.30f;
-    /** 中层光（相对字号）：贴着笔画的一圈亮色，负责让「在发光」这件事一眼能看出来。 */
-    private static final float BLUR_MID = 0.15f;
-    /** 芯光半径（相对字号）。 */
-    private static final float BLUR_CORE = 0.08f;
+    /** 外雾半径（相对字号）：最外圈的大范围柔光，负责「整块区域在发亮」。 */
+    private static final float BLUR_WIDE = 0.60f;
+    /** 中层光（相对字号）：贴着笔画外扩的一圈，是光晕的主体。 */
+    private static final float BLUR_MID = 0.26f;
+    /** 芯光半径（相对字号）：紧贴笔画边缘的亮边，让「发光源是字形」看得出来。 */
+    private static final float BLUR_CORE = 0.09f;
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -78,7 +78,8 @@ public class DigitGlowDrawable extends Drawable {
 
     /** 光晕要向外扩多少像素（调用方据此给 View 留边，否则会被裁掉）。 */
     public static float pad(float textSize) {
-        return textSize * 0.42f;
+        // 外雾半径 0.60 倍字号，模糊会向两侧各扩约 1.5 倍半径，留 0.92 倍字号才不被裁。
+        return textSize * 0.92f;
     }
 
     @Override
@@ -107,25 +108,31 @@ public class DigitGlowDrawable extends Drawable {
         final int g = (color >> 8) & 0xFF;
         final int b = color & 0xFF;
 
-        // 三个通道都按满亮度算：呼吸的「亮端」直接顶到 alpha 上限，暗端几乎灭掉，
-        // 这样一呼一吸的亮度差才够大（之前暗端留了 0.42，看着像没在呼吸）。
-        final int ra = Math.round(200f * breath);
-        final int ga = Math.round(255f * breath);
-        final int ba = Math.round(255f * breath);
+        // 由外向内三层叠加：每往里一层半径减半、亮度加倍，叠出来的效果就是
+        // 「光从笔画里渗出来、越贴近字形越亮」，而不是一块均匀的雾。
+        // alpha 全部乘 breath，呼吸时整团光一起起落。
+        // 呼吸曲线用 breath 的 1.7 次方：峰顶几乎不变，谷底压得更低，
+        // 肉眼看到的明暗落差从约 9% 拉到 30% 以上，才像「呼吸」而不是「常亮」。
+        final float curve = (float) Math.pow(breath, 1.7);
 
+        // 外雾用最浓的一层：光晕要从笔画一直渗到半个字号以外，才有「发光」的体积感。
         paint.setMaskFilter(wideFilter);
-        paint.setColor(Color.argb(ra, r, g, b));
+        paint.setColor(Color.argb(Math.round(86f * curve), r, g, b));
         canvas.drawText(glyph, penX, baseline, paint);
 
         paint.setMaskFilter(midFilter);
-        paint.setColor(Color.argb(ga, r, g, b));
+        paint.setColor(Color.argb(Math.round(132f * curve), r, g, b));
         canvas.drawText(glyph, penX, baseline, paint);
 
         paint.setMaskFilter(coreFilter);
-        paint.setColor(Color.argb(Math.round(240f * breath), r, g, b));
+        paint.setColor(Color.argb(Math.round(190f * curve), r, g, b));
         canvas.drawText(glyph, penX, baseline, paint);
 
+        // 最内层：笔画自身的提亮（白，不加色相），只留薄薄一层，
+        // 太厚会把字形糊成实心白块，反而看不出「光从字里出来」。
         paint.setMaskFilter(null);
+        paint.setColor(Color.argb(Math.round(70f * curve), 255, 255, 255));
+        canvas.drawText(glyph, penX, baseline, paint);
     }
 
     @Override
