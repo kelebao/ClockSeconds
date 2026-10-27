@@ -1828,11 +1828,13 @@ public final class ModuleSettingsActivity extends Activity {
         final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mGlowView.getLayoutParams();
         lp.width = w;
         lp.height = h;
-        // 光晕与下划线共用「未抬高」的墨迹中心：数字自己抬走（LiftSpan 只改绘制基线），
-        // 光晕和线都留在原位 —— 两者永远同心，不会再出现「一个跟上去了、一个没动」
-        // （vc112 用户要求「线保持原来位置」，并反馈光晕与线不一致）。
+        // 光晕跟着数字一起抬高：LiftSpan 只改绘制基线、墨迹框是「未抬高」的，
+        // 这里必须补上抬起量，否则数字抬上去、光晕留在下面，两者错开半个字。
+        // 下划线则相反 —— 用户明确要求「线保持原来位置，不用也抬高」（vc112），
+        // 所以 positionMark() 不补这个偏移，两者分工不同。
         lp.leftMargin = Math.round(mSelInk.centerX() - w / 2f) - previewPlate.getPaddingLeft();
-        lp.topMargin = Math.round(mSelInk.centerY() - h / 2f) - previewPlate.getPaddingTop();
+        lp.topMargin = Math.round(mSelInk.centerY() - h / 2f) - previewPlate.getPaddingTop()
+                - mLiftNow;
         mGlowView.setLayoutParams(lp);
         mGlowDrawable.setGlyph(glyph, size, previewView.getTypeface());
         if (BuildConfig.DEBUG) {
@@ -1847,7 +1849,7 @@ public final class ModuleSettingsActivity extends Activity {
                     + " cx=" + Math.round(mSelInk.centerX()) + " cy=" + Math.round(mSelInk.centerY())
                     + " glowBox=" + w + "x" + h + "@" + Math.round(mSelInk.centerX() - w / 2f)
                     + "," + Math.round(mSelInk.centerY() - h / 2f)
-                    + " lp=" + lp.leftMargin + "," + lp.topMargin
+                    + " lp=" + lp.leftMargin + "," + lp.topMargin + " lift=" + mLiftNow
                     + " pv=" + pv[0] + "," + pv[1] + " plate=" + pl[0] + "," + pl[1]
                     + " glow=" + gp[0] + "," + gp[1]
                     + " padL=" + previewPlate.getPaddingLeft() + " padT=" + previewPlate.getPaddingTop());
