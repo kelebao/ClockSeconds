@@ -96,6 +96,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 小时十位数颜色：可在设置页自定义，默认 Material Red 500（见 ClockSecondsConfig）。 */
     private static final int HOUR_COLOR_FALLBACK = ClockSecondsConfig.HOUR_COLOR_DEFAULT;
 
+    /**
+     * 六位数字颜色缓存（下标 = slot，-1 = 跟随系统）。{@code null} = 尚未加载。
+     *
+     * <p>每次写时钟都要用颜色，若每帧读 6 个 Secure 键会产生大量 binder 往返；因此进程内缓存，
+     * 仅在首次使用与收到 {@code SET_DIGIT_COLOR / SET_HOUR_COLOR} 广播时刷新。</p>
+     */
+    private static volatile int[] sDigitColors;
+    /** 无上色目标时复用的空数组（避免每帧分配）。 */
+    private static final int[] NO_STARTS = new int[0];
+
     /** 进程内缓存的显秒开关（默认开启）；点击切换与首次遇到时钟时刷新。 */
     private static volatile boolean sSecondsEnabled;
     private static volatile boolean sStateLoaded;
@@ -177,7 +187,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final AtomicBoolean WRITING_CLOCK = new AtomicBoolean(false);
 
     /**
-     * 本模块正在构造带色文本（{@code applyHourTensRed} 内部会 removeSpan 替换旧色 span）。
+     * 本模块正在构造带色文本（{@code applyDigitColors} 内部会 removeSpan 替换旧色 span）。
      * SPAN-THEFT 探针据此排除我们自己的操作，避免误报。
      */
     private static final AtomicBoolean APPLYING_STYLE = new AtomicBoolean(false);
@@ -932,7 +942,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 cc.put("spanColor", spanColor);
                 cc.put("spanStart", spanStart);
                 cc.put("spanEnd", spanEnd);
-                cc.put("expectedColor", ClockSecondsConfig.getHourColor(cr));
+                cc.put("expectedColor", ClockSecondsConfig.getDigitColors(cr)[0]);
+                cc.put("expectedDigitColors",
+                        java.util.Arrays.toString(ClockSecondsConfig.getDigitColors(cr)));
                 cc.put("text", ctText.length() > 16 ? ctText.substring(0, 16) : ctText);
             }
             root.put("colorCheck", cc);
@@ -1563,23 +1575,29 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             long netNow = System.currentTimeMillis() + offsetMs;
             String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
             SpannableStringBuilder sb = new SpannableStringBuilder(text);
-            // 小时颜色用进程内缓存（设置变更经广播更新），首次读取一次。
+            // 数字颜色用进程内缓存（设置变更经广播更新），首次读取一次。
             if (!sFloatColorLoaded) {
                 try {
-                    sFloatHourColor = ClockSecondsConfig.getHourColor(
-                            context.getContentResolver());
                     sFloatHourColorEnabled = ClockSecondsConfig.isHourColorEnabled(
                             context.getContentResolver());
+                    reloadDigitColors(context);
                     sFloatColorLoaded = true;
                 } catch (Throwable ignored) {
                     // 读不到用默认值
                 }
             }
-            if (sFloatHourColorEnabled
-                    && sb.length() >= 2
-                    && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
-                sb.setSpan(new ForegroundColorSpan(sFloatHourColor), 0, 1,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (sFloatHourColorEnabled) {
+                int[] colors = digitColors(tv);
+                int systemTextColor = tv.getCurrentTextColor();
+                for (int i = 0; i < sb.length(); i++) {
+                    int slot = ClockSecondsConfig.slotOfChar(sb, i);
+                    if (slot < 0 || slot >= colors.length
+                            || colors[slot] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                        continue;
+                    }
+                    sb.setSpan(new ForegroundColorSpan(colors[slot]), i, i + 1,
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             }
             // 自适应字号：取宽高允许的较小值，保证 "HH:mm:ss" 完整放进窗口。
             try {
@@ -1709,7 +1727,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
         // 注：状态栏与浮窗的秒数字均保持系统原色；呼吸高亮仅用于设置页预览卡的刻度与色块。
-        applyHourTensRed(sb, view, hourColor(view));
+        applyDigitColors(sb, view);
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
                     + (base instanceof android.text.Spannable));
@@ -1766,38 +1784,88 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
-     * 仅把「小时十位数」着色，其余文字（分钟、秒）保持系统原色。颜色来自设置页（默认红色）。
-     * 小时在文本开头、冒号之前；当其为两位数字（如 13、05）时，第一位即十位数，着色；
-     * 无前导零的单位数小时（如 9:45）没有十位，不着色。
+     * 按「每个数字位独立取色」为时钟文本上色：时十 / 时个 / 分十 / 分个 / 秒十 / 秒个
+     * （位映射见 {@link ClockSecondsConfig#slotOfChar}）。颜色 -1 表示跟随系统（不上色）。
+     * 颜色来自设置页，默认仅「时十」为红色（Material Red 500）。
      *
      * <p>可读性适配：状态栏背景会随应用切换明暗（系统时钟文字色随之变黑/变白）。
      * 背景为浅色（系统文字为深色）而所选颜色又很亮时（如白色、黄色），直接上色会看不见，
      * 因此把过亮的颜色压暗，保证在浅色状态栏上仍然清晰。</p>
+     *
+     * @return 本次上色的字符起始下标（空数组 = 无需/无位上色），供掉色判定使用
      */
-    private static void applyHourTensRed(SpannableStringBuilder sb, TextView view, int color) {
+    private static int[] applyDigitColors(SpannableStringBuilder sb, TextView view) {
         if (!hourColorEnabled(view)) {
             // 总开关关闭：恢复系统默认样式，不加任何 Span。
-            return;
+            return NO_STARTS;
         }
-        int colon = -1;
+        int[] colors = digitColors(view);
+        int systemTextColor = view.getCurrentTextColor();
+        int[] starts = new int[sb.length()];
+        int n = 0;
         for (int i = 0; i < sb.length(); i++) {
-            char c = sb.charAt(i);
-            if (c == ':' || c == '：') {
-                colon = i;
-                break;
+            int slot = ClockSecondsConfig.slotOfChar(sb, i);
+            if (slot < 0 || slot >= colors.length) {
+                continue;
             }
-        }
-        // 小时部分 = [0, colon)；有且仅有两位数字（含十位）时才着色第一位。
-        if (colon >= 2 && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
-            int adapted = adaptColorForBackground(color, view.getCurrentTextColor());
-            // 先移除系统（OplusClockExImpl 的 RedOne / 本体色）已加在同一区间的前景色 Span，
-            // 否则两个 ForegroundColorSpan 重叠时会互相压制，导致我们的颜色不生效。
-            ForegroundColorSpan[] old = sb.getSpans(0, 1, ForegroundColorSpan.class);
+            int color = colors[slot];
+            // 先移除这一位上的外来前景色 Span（OplusClockExImpl 的 RedOne / 本体色、主题模块塞进来的色、
+            // 以及上一轮自己加的），否则两个 ForegroundColorSpan 重叠时会互相压制，我们的颜色不生效。
+            // 注意：这一步必须在「跟随系统」判断之前做 —— 别的模块会给某些位加一个**透明色 (#0)**
+            // 的 ForegroundColorSpan，留着就等于把这一位从状态栏上抹掉（用户反馈：点「跟随系统」后
+            // 那一位数字看不见了）。剥掉之后由系统文字色正常渲染。
+            ForegroundColorSpan[] old = sb.getSpans(i, i + 1, ForegroundColorSpan.class);
             for (ForegroundColorSpan s : old) {
                 sb.removeSpan(s);
             }
-            sb.setSpan(new ForegroundColorSpan(adapted), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                continue;   // 该位跟随系统，去掉外来着色后交给系统文字色
+            }
+            int adapted = adaptColorForBackground(color, systemTextColor);
+            sb.setSpan(new ForegroundColorSpan(adapted), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            starts[n++] = i;
         }
+        if (n == 0) {
+            return NO_STARTS;
+        }
+        int[] result = new int[n];
+        System.arraycopy(starts, 0, result, 0, n);
+        return result;
+    }
+
+    /** 读取六位颜色缓存（首次或广播变更后读取，避免每秒 6 次 binder）。 */
+    private static int[] digitColors(TextView view) {
+        int[] cached = sDigitColors;
+        if (cached != null) {
+            return cached;
+        }
+        return reloadDigitColors(view.getContext());
+    }
+
+    /** 从 Secure 重读六位颜色并更新缓存。 */
+    private static int[] reloadDigitColors(Context ctx) {
+        int[] colors;
+        try {
+            colors = ClockSecondsConfig.getDigitColors(ctx.getContentResolver());
+        } catch (Throwable t) {
+            colors = new int[ClockSecondsConfig.DIGIT_COUNT];
+            for (int i = 0; i < colors.length; i++) {
+                colors[i] = ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+            }
+            colors[0] = HOUR_COLOR_FALLBACK;
+        }
+        sDigitColors = colors;
+        return colors;
+    }
+
+    /** 目标文本所有已配置颜色的位是否仍带着前景色 Span（掉色判定用）。 */
+    private static boolean hasAllColorSpans(Spanned sp, int[] starts) {
+        for (int start : starts) {
+            if (sp.getSpans(start, start + 1, ForegroundColorSpan.class).length == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1818,16 +1886,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 (int) (Color.blue(color) * 0.42f));
     }
 
-    /** 读取用户配置的小时颜色；任何异常都退回默认红色，绝不影响时钟显示。 */
-    private static int hourColor(TextView view) {
-        try {
-            return ClockSecondsConfig.getHourColor(view.getContext().getContentResolver());
-        } catch (Throwable t) {
-            return HOUR_COLOR_FALLBACK;
-        }
-    }
-
-    /** 小时颜色总开关（默认启用）；读取失败按启用处理，保持原有观感。 */
+    /** 颜色总开关（默认启用）；读取失败按启用处理，保持原有观感。 */
     private static boolean hourColorEnabled(TextView view) {
         try {
             return ClockSecondsConfig.isHourColorEnabled(view.getContext().getContentResolver());
@@ -1850,7 +1909,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
         APPLYING_STYLE.set(true);
         try {
-            applyHourTensRed(sb, view, hourColor(view));
+            applyDigitColors(sb, view);
         } finally {
             APPLYING_STYLE.set(false);
         }
@@ -1863,7 +1922,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
-     * 对系统原文本应用小时十位数红色样式（不显秒时，系统每次更新分钟都会调用）。
+     * 对系统原文本应用各数字位的自定义颜色（不显秒时，系统每次更新分钟都会调用）。
      *
      * @return 0 = 无需写入（补色已存活 / 无需上色）；1 = 写了（文本变了，如正常分钟更新）；
      *         2 = 写了且是「真掉色」（文本字符一致但颜色 span 被洗掉了）。
@@ -1888,28 +1947,25 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
         APPLYING_STYLE.set(true);
+        int[] starts;
         try {
-            applyHourTensRed(sb, view, hourColor(view));
+            starts = applyDigitColors(sb, view);
         } finally {
             APPLYING_STYLE.set(false);
         }
         // ⚠️ 不能只用 TextUtils.equals：被洗后的纯文本与目标文本字符相同，会误判为
-        // 「已上色」而跳过补救（掉色将永远无法恢复）。必须确认当前文本 [0,1) 真的
-        // 还带着色 span 才跳过；目标无需上色（单位数小时/小时色关闭）时直接跳过。
-        ForegroundColorSpan[] sbTens = sb.getSpans(0, 1, ForegroundColorSpan.class);
-        if (sbTens.length == 0) {
-            return 0;   // 没有需要维护的小时十位色
+        // 「已上色」而跳过补救（掉色将永远无法恢复）。必须确认当前文本每一个已配置颜色
+        // 的位置真的还带着 span 才跳过；目标无需上色（全部跟随系统/颜色开关关闭）时直接跳过。
+        if (starts.length == 0) {
+            return 0;   // 没有需要维护的颜色
         }
         CharSequence cur = view.getText();
         // 已有我们上色的文本（精确匹配含零宽空格）→ 稳态短路、零 setText。
         if (cur instanceof Spanned && cur.length() == sb.length()
-                && cur.toString().contentEquals(sb.toString())) {
-            ForegroundColorSpan[] curTens =
-                    ((Spanned) cur).getSpans(0, 1, ForegroundColorSpan.class);
-            if (curTens.length > 0) {
-                LAST_WRITTEN.put(view, cur.toString().replace("\u200B", ""));
-                return 0;
-            }
+                && cur.toString().contentEquals(sb.toString())
+                && hasAllColorSpans((Spanned) cur, starts)) {
+            LAST_WRITTEN.put(view, cur.toString().replace("\u200B", ""));
+            return 0;
         }
         // 需要写入。区分「正常分钟跳变(1)」与「真掉色(2)」：看可见文本是否与我们上次写的一致。
         //  - 可见文本变了 → 分钟跳变，属正常更新，不续期兜底；
@@ -2646,6 +2702,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
@@ -2664,9 +2721,20 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             String action = intent.getAction();
                             ContentResolver cr = ctx.getContentResolver();
                             if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
-                                ClockSecondsConfig.setHourColor(cr, intent.getIntExtra(
+                                // 旧接口：等同「设置 0 号位（时十）颜色」，兼容老的设置页广播。
+                                ClockSecondsConfig.setDigitColor(cr, 0, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));
-                                sFloatHourColor = ClockSecondsConfig.getHourColor(cr);
+                                reloadDigitColors(ctx);
+                                sFloatHourColor = sDigitColors[0];
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_DIGIT_COLOR.equals(action)) {
+                                // 新接口：任意一位数字取色（slot 见 ClockSecondsConfig.slotOfChar）。
+                                int slot = intent.getIntExtra(ClockSecondsConfig.EXTRA_SLOT, 0);
+                                ClockSecondsConfig.setDigitColor(cr, slot, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_COLOR,
+                                        ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
+                                reloadDigitColors(ctx);
+                                sFloatHourColor = sDigitColors[0];
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED.equals(action)) {
                                 ClockSecondsConfig.setHourColorEnabled(cr, intent.getIntExtra(

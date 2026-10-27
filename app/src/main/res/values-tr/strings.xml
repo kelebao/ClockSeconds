@@ -89,4 +89,15 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="swatch_pink">Pembe</string>
     <string name="swatch_white">Beyaz</string>
     <string name="swatch_grey">Gri</string>
+    <string name="settings_digit_title">Rakam renkleri</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Saat, dakika ve saniye rakamlarını ayrı ayrı renklendirin — önizlemede bir rakama dokunun</string>
+    <string name="settings_digit_preset">Hazır renkler</string>
+    <string name="settings_digit_palette">Palet</string>
+    <string name="settings_digit_follow">Sistemi izle</string>
+    <string name="settings_digit_done">Bitti</string>
+    <string name="settings_digit_slots">Saat onlar,Saat birler,Dakika onlar,Dakika birler,Saniye onlar,Saniye birler</string>
+    <string name="settings_digit_editing">Düzenleniyor: %1$s</string>
+    <string name="settings_digit_summary">Saat %1$s · Dakika %2$s · Saniye %3$s</string>
+    <string name="settings_cancel">İptal</string>
 </resources>

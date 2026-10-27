@@ -89,4 +89,15 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="swatch_pink">Hồng</string>
     <string name="swatch_white">Trắng</string>
     <string name="swatch_grey">Xám</string>
+    <string name="settings_digit_title">Màu chữ số</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Tô màu riêng từng chữ số giờ, phút, giây — chạm vào chữ số trong bản xem trước</string>
+    <string name="settings_digit_preset">Màu có sẵn</string>
+    <string name="settings_digit_palette">Bảng màu</string>
+    <string name="settings_digit_follow">Theo hệ thống</string>
+    <string name="settings_digit_done">Xong</string>
+    <string name="settings_digit_slots">Hàng chục giờ,Hàng đơn vị giờ,Hàng chục phút,Hàng đơn vị phút,Hàng chục giây,Hàng đơn vị giây</string>
+    <string name="settings_digit_editing">Đang chỉnh: %1$s</string>
+    <string name="settings_digit_summary">Giờ %1$s · Phút %2$s · Giây %3$s</string>
+    <string name="settings_cancel">Hủy</string>
 </resources>

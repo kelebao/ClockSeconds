@@ -89,4 +89,15 @@
     <string name="swatch_pink">ვარდისფერი</string>
     <string name="swatch_white">თეთრი</string>
     <string name="swatch_grey">ნაცრისფერი</string>
+    <string name="settings_digit_title">ციფრების ფერები</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">საათის, წუთისა და წამის თითოეული ციფრის ცალკე შეფერადება — შეეხეთ ციფრს გადახედვაში</string>
+    <string name="settings_digit_preset">მზა ფერები</string>
+    <string name="settings_digit_palette">პალიტრა</string>
+    <string name="settings_digit_follow">სისტემის მიხედვით</string>
+    <string name="settings_digit_done">დასრულება</string>
+    <string name="settings_digit_slots">ათეულები სთ,ერთეულები სთ,ათეულები წთ,ერთეულები წთ,ათეულები წმ,ერთეულები წმ</string>
+    <string name="settings_digit_editing">რედაქტირება: %1$s</string>
+    <string name="settings_digit_summary">სთ %1$s · წთ %2$s · წმ %3$s</string>
+    <string name="settings_cancel">გაუქმება</string>
 </resources>

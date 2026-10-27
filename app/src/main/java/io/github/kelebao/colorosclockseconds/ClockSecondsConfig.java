@@ -165,6 +165,11 @@ public final class ClockSecondsConfig {
             "io.github.kelebao.colorosclockseconds.action.SET_GESTURE";
     public static final String ACTION_SET_HOUR_COLOR_ENABLED =
             "io.github.kelebao.colorosclockseconds.action.SET_HOUR_COLOR_ENABLED";
+    /** 设置页 → SystemUI 写入某一位数字颜色（含 {@link #EXTRA_COLOR} 与 {@link #EXTRA_SLOT}）。 */
+    public static final String ACTION_SET_DIGIT_COLOR =
+            "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_COLOR";
+    /** int extra：数字位 slot（0..5，见 {@link #slotOfChar}）。 */
+    public static final String EXTRA_SLOT = "slot";
     /** 一键对时：让 SystemUI 打开系统「自动设置时间」。 */
     public static final String ACTION_SYNC_TIME =
             "io.github.kelebao.colorosclockseconds.action.SYNC_TIME";
@@ -295,6 +300,80 @@ public final class ClockSecondsConfig {
         Settings.Secure.putInt(resolver, HOUR_COLOR_ENABLED_KEY, enabled ? 1 : 0);
     }
 
+    // ==================================================================
+    // 六个数字位独立取色（时十 / 时个 / 分十 / 分个 / 秒十 / 秒个）
+    // ==================================================================
+
+    /** 可独立取色的数字位个数：时(2) + 分(2) + 秒(2)。 */
+    public static final int DIGIT_COUNT = 6;
+
+    /**
+     * 哨兵值：该位「跟随系统」（不上色，继承系统时钟文字色）。
+     *
+     * <p>必须是 0 而不是 -1：预设里的纯白 {@code 0xFFFFFFFF} 在 int 上就是 -1，
+     * 用 -1 当哨兵会让「跟随系统」与「纯白」再也分不开（设置页白色色块永远显示为选中）。</p>
+     */
+    public static final int DIGIT_COLOR_FOLLOW = 0;
+
+    /** 每一位的颜色键（下标即 slot，见 {@link #slotOfChar}）。 */
+    public static final String[] DIGIT_COLOR_KEYS = {
+            "coloros_clock_seconds_digit_color_0",
+            "coloros_clock_seconds_digit_color_1",
+            "coloros_clock_seconds_digit_color_2",
+            "coloros_clock_seconds_digit_color_3",
+            "coloros_clock_seconds_digit_color_4",
+            "coloros_clock_seconds_digit_color_5",
+    };
+
+    /** 六位颜色的中文位名（用于设置页摘要，如「时十」「秒个」）。 */
+    public static final String[] DIGIT_LABELS = {"时十", "时个", "分十", "分个", "秒十", "秒个"};
+
+    /**
+     * 读取某一位的颜色。
+     *
+     * <p>兼容旧版：老用户只存过「小时颜色」单色键（{@link #HOUR_COLOR_KEY}），
+     * 未写新的分位键时 0 号位（时十）回落到旧键，其余位默认「跟随系统」。</p>
+     */
+    public static int getDigitColor(ContentResolver resolver, int slot) {
+        if (resolver == null || slot < 0 || slot >= DIGIT_COUNT) {
+            return DIGIT_COLOR_FOLLOW;
+        }
+        if (Settings.Secure.getString(resolver, DIGIT_COLOR_KEYS[slot]) == null) {
+            return slot == 0 ? getHourColor(resolver) : DIGIT_COLOR_FOLLOW;
+        }
+        return Settings.Secure.getInt(resolver, DIGIT_COLOR_KEYS[slot], DIGIT_COLOR_FOLLOW);
+    }
+
+    /** 写入某一位的颜色。0 号位同时写旧键，兼容浮窗/诊断等仍读 {@link #HOUR_COLOR_KEY} 的路径。 */
+    public static void setDigitColor(ContentResolver resolver, int slot, int color) {
+        if (resolver == null || slot < 0 || slot >= DIGIT_COUNT) {
+            return;
+        }
+        Settings.Secure.putInt(resolver, DIGIT_COLOR_KEYS[slot], color);
+        if (slot == 0) {
+            setHourColor(resolver, color);
+        }
+    }
+
+    /** 一次读出六位颜色（下标即 slot；-1 = 跟随系统）。 */
+    public static int[] getDigitColors(ContentResolver resolver) {
+        int[] colors = new int[DIGIT_COUNT];
+        for (int i = 0; i < DIGIT_COUNT; i++) {
+            colors[i] = getDigitColor(resolver, i);
+        }
+        return colors;
+    }
+
+    /** 是否有任意一位配置了颜色（用于设置页摘要与诊断）。 */
+    public static boolean hasAnyDigitColor(ContentResolver resolver) {
+        for (int c : getDigitColors(resolver)) {
+            if (c != DIGIT_COLOR_FOLLOW) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ------------------------------------------------------------------
     // 呼吸强度（用于选中色块的荧光呼吸光晕；6s 一个平滑明暗周期）
     // ------------------------------------------------------------------
@@ -390,6 +469,64 @@ public final class ClockSecondsConfig {
             s = 0;
         }
         return String.format(Locale.US, ":%02d", s);
+    }
+
+    /**
+     * 文本下标 → 数字位 slot（0 时十 / 1 时个 / 2 分十 / 3 分个 / 4 秒十 / 5 秒个）。
+     *
+     * <p>约定文本形如 {@code HH:mm}、{@code HH:mm:ss}（可含结尾零宽空格），冒号分隔三个字段；
+     * 每个字段内第 1 个数字是「十位」、第 2 个是「个位」。无前导零的单位数小时（如 {@code 9:41}）
+     * 那一位属于「时个位」。</p>
+     *
+     * @param text  时钟文本
+     * @param index 字符下标
+     * @return 0..5；非数字字符、冒号或超出三个字段时返回 -1
+     */
+    public static int slotOfChar(CharSequence text, int index) {
+        if (text == null || index < 0 || index >= text.length()) {
+            return -1;
+        }
+        if (!Character.isDigit(text.charAt(index))) {
+            return -1;
+        }
+        int field = 0;
+        for (int i = 0; i < index; i++) {
+            if (isFieldSeparator(text.charAt(i))) {
+                field++;
+            }
+        }
+        if (field > 2) {
+            return -1;
+        }
+        int start = index;
+        while (start > 0 && !isFieldSeparator(text.charAt(start - 1))) {
+            start--;
+        }
+        int end = index;
+        while (end + 1 < text.length() && !isFieldSeparator(text.charAt(end + 1))) {
+            end++;
+        }
+        int digits = 0;
+        int posInField = -1;
+        for (int i = start; i <= end; i++) {
+            if (Character.isDigit(text.charAt(i))) {
+                if (i == index) {
+                    posInField = digits;
+                }
+                digits++;
+            }
+        }
+        if (posInField < 0) {
+            return -1;
+        }
+        // 单位数小时（如 9:41）没有十位，那一位置就是「时个位」。
+        int effective = (field == 0 && digits == 1) ? 1 : Math.min(posInField, 1);
+        return field * 2 + effective;
+    }
+
+    /** 字段分隔符：半角与全角冒号。 */
+    private static boolean isFieldSeparator(char c) {
+        return c == ':' || c == '：';
     }
 
     /** 文本开头是否为「两位数字」小时（用于仅标红十位，如 13 的 1、05 的 0）。 */

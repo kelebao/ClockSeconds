@@ -89,4 +89,15 @@
     <string name="swatch_pink">صورتی</string>
     <string name="swatch_white">سفید</string>
     <string name="swatch_grey">خاکستری</string>
+    <string name="settings_digit_title">رنگ ارقام</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">رنگ هر رقم ساعت، دقیقه و ثانیه را جداگانه تنظیم کنید — روی رقم در پیش‌نمایش بزنید</string>
+    <string name="settings_digit_preset">رنگ‌های آماده</string>
+    <string name="settings_digit_palette">پالت رنگ</string>
+    <string name="settings_digit_follow">پیروی از سیستم</string>
+    <string name="settings_digit_done">پایان</string>
+    <string name="settings_digit_slots">دهگان ساعت,یکان ساعت,دهگان دقیقه,یکان دقیقه,دهگان ثانیه,یکان ثانیه</string>
+    <string name="settings_digit_editing">در حال ویرایش: %1$s</string>
+    <string name="settings_digit_summary">ساعت %1$s · دقیقه %2$s · ثانیه %3$s</string>
+    <string name="settings_cancel">انصراف</string>
 </resources>

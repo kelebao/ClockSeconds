@@ -90,4 +90,15 @@
     <string name="swatch_pink">粉</string>
     <string name="swatch_white">白</string>
     <string name="swatch_grey">灰</string>
+    <string name="settings_digit_title">数字颜色</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">时分秒分别取色，点预览里的数字即可选中</string>
+    <string name="settings_digit_preset">预设</string>
+    <string name="settings_digit_palette">调色盘</string>
+    <string name="settings_digit_follow">跟随系统</string>
+    <string name="settings_digit_done">完成</string>
+    <string name="settings_digit_slots">时十,时个,分十,分个,秒十,秒个</string>
+    <string name="settings_digit_editing">正在编辑：%1$s</string>
+    <string name="settings_digit_summary">时 %1$s · 分 %2$s · 秒 %3$s</string>
+    <string name="settings_cancel">取消</string>
 </resources>

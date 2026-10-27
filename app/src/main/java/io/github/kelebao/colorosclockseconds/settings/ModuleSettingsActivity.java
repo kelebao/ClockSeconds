@@ -1,5 +1,6 @@
 package io.github.kelebao.colorosclockseconds.settings;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -13,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -24,11 +26,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.text.SpannableStringBuilder;
+import android.text.TextPaint;
 import android.text.Spanned;
 import android.text.TextUtils;
 import io.github.kelebao.colorosclockseconds.ArcTickDrawable;
 import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
+import io.github.kelebao.colorosclockseconds.DigitGlowDrawable;
+import io.github.kelebao.colorosclockseconds.HsvPickerView;
 import io.github.kelebao.colorosclockseconds.WavyLineView;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ForegroundColorSpan;
@@ -133,6 +138,26 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean mCfgSeconds;
     private boolean mCfgHourColorOn;
     private int mCfgHourColor;
+    // 六位数字各自的颜色（-1 = 跟随系统）；由 ContentObserver / 取色后重新读取刷新。
+    private int[] mCfgDigitColors = new int[ClockSecondsConfig.DIGIT_COUNT];
+    /** 预览卡是否处于「逐位取色」展开态。 */
+    private boolean mDigitsExpanded;
+    private int mFitGuard;
+    /** 正在编辑的数字位（0..5 = 时十/时个/分十/分个/秒十/秒个）。 */
+    private int mSelSlot;
+    /** 选中位背后的呼吸光晕（普通 View + DigitGlowDrawable）。 */
+    private View mGlowView;
+    private DigitGlowDrawable mGlowDrawable;
+    /** 当前光晕的颜色（换位取色时才重建 drawable）。 */
+    private int mGlowColor = Integer.MIN_VALUE;
+    /** 预览卡下方「切换手势 / 小时颜色」两张统计卡（展开取色时让位隐藏）。 */
+    private View mStatsRow;
+    /** 数字颜色卡内的部件：色块网格、正在编辑行、摘要行、开关、完成胶囊。 */
+    private GridLayout mDigitGrid;
+    private TextView mDigitEditingView;
+    private TextView mDigitSummaryView;
+    private TextView mDigitDoneView;
+    private Switch mDigitSwitch;
     private boolean mObserverOk = false;
     private final android.database.ContentObserver mCfgObserver =
             new android.database.ContentObserver(new Handler(Looper.getMainLooper())) {
@@ -222,6 +247,12 @@ public final class ModuleSettingsActivity extends Activity {
     private static final int ACTIVE_NO = 2;
     private View mActiveDot;
     private TextView mActiveText;
+    /** 「模块已激活」卡片：检测到已激活就整卡隐藏，只在未激活时才提示。 */
+    private View mActivationCard;
+    /** 卡片列根容器：展开/收起时对它做 ChangeBounds 过渡，下面的卡片不跳。 */
+    private LinearLayout mColumn;
+    /** 展开态下「正在取色的那一位」是否放大强调（设完颜色立刻复原）。 */
+    private boolean mDigitEmphasized;
     private final Handler mPingHandler = new Handler(Looper.getMainLooper());
     private final Runnable mPingTimeout = () -> setActiveState(ACTIVE_NO, null, false);
 
@@ -252,6 +283,11 @@ public final class ModuleSettingsActivity extends Activity {
                 // 关闭小时颜色时，色块光晕呼吸也停止（强度归零、光晕不绘制）。
                 mBreathSwatch.setBreath(ClockSecondsConfig.isHourColorEnabled(getContentResolver())
                         ? ClockSecondsConfig.breathIntensity(now) : 0f);
+            }
+            // 逐位取色时：选中数字的光晕跟着呼吸（起始就有弱光晕，不是从 0 开始）。
+            if (mDigitsExpanded && mGlowDrawable != null && mGlowView != null
+                    && mGlowView.getVisibility() == View.VISIBLE) {
+                mGlowDrawable.setBreath(ClockSecondsConfig.breathIntensity(now));
             }
             // 预览卡滚出屏幕时跳过弧的高频刷新（省电/省 CPU）；色块光晕照常（它可能在视口内）。
             if (mArcTicks != null
@@ -373,6 +409,11 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgSeconds = ClockSecondsConfig.isEnabled(getContentResolver());
         mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
+        mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+        if (mDigitGrid != null) {
+            // 回到前台 / 状态栏改了颜色：同步色块选中环与摘要行。
+            refreshDigitSwatches();
+        }
     }
 
     /** 观察 Settings.Secure 变化（含状态栏点击/磁贴/其它进程代写），变化即刷新缓存并更新预览。 */
@@ -449,6 +490,30 @@ public final class ModuleSettingsActivity extends Activity {
     // 页面骨架
     // ==================================================================
 
+    /** 展开态字距（em）。数字之间拉得更开。 */
+    private static final float EXPAND_SPACING = 0.12f;
+    /** 选中数字放大倍数。 */
+    private static final float SEL_SCALE = 1.22f;
+    /** 布局变化平滑时长。 */
+    private static final long LAYOUT_ANIM_MS = 240L;
+
+    /**
+     * 展开/收起时让卡片位置平滑过渡：ChangeBounds 只负责「谁去哪儿」，
+     * 预览卡自身的尺寸由字号动画逐帧撑开，所以把它排除，避免两套动画打架。
+     */
+    private void beginSmoothLayout() {
+        if (mColumn == null) {
+            return;
+        }
+        android.transition.ChangeBounds cb = new android.transition.ChangeBounds();
+        cb.setDuration(LAYOUT_ANIM_MS);
+        cb.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        if (mPreviewCard != null) {
+            cb.excludeTarget(mPreviewCard, true);
+        }
+        android.transition.TransitionManager.beginDelayedTransition(mColumn, cb);
+    }
+
     private ScrollView buildContentView() {
         ScrollView scroll = new ScrollView(this);
         GradientDrawable bg = new GradientDrawable(
@@ -478,6 +543,7 @@ public final class ModuleSettingsActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(18), dp(18), dp(18), dp(28));
+        mColumn = root;
         scroll.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -558,15 +624,47 @@ public final class ModuleSettingsActivity extends Activity {
         previewPlate = new FrameLayout(this);
         previewPlate.setPadding(dp(22), dp(2), dp(22), dp(14));
 
+        // 选中数字的呼吸光晕：先加 = 画在文字下面；默认隐藏，展开取色时才出现。
+        mGlowView = new View(this);
+        mGlowView.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
+        mGlowView.setVisibility(View.GONE);
+        mGlowView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        previewPlate.addView(mGlowView);
+
         previewView = new TextView(this);
         previewView.setTextSize(44f);
         previewView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         previewView.setTextColor(text());
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
-        previewView.setOnClickListener(v -> showPreviewHint());
+        // 点一下展开成逐位取色；展开后再点就选中被点的那一位数字。
+        previewView.setOnClickListener(v -> {
+            if (!mDigitsExpanded) {
+                expandDigits();
+            }
+        });
+        previewView.setOnTouchListener((v, ev) -> {
+            if (ev.getActionMasked() == MotionEvent.ACTION_UP) {
+                if (!mDigitsExpanded) {
+                    expandDigits();
+                } else {
+                    pickDigitAt(ev.getX(), ev.getY());
+                }
+            }
+            return false;   // 不吃事件：点击/长按/无障碍仍按原样传递
+        });
         previewView.setClickable(true);   // 无障碍：让 TalkBack 识别为可点击项
         previewPlate.addView(previewView);
         card.addView(previewPlate);
+
+        // 展开取色时才出现的「完成」胶囊：点一下收起，下面两张统计卡回归。
+        mDigitDoneView = pillButton(getString(R.string.settings_digit_done));
+        LinearLayout.LayoutParams doneLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        doneLp.gravity = Gravity.CENTER_HORIZONTAL;
+        mDigitDoneView.setLayoutParams(doneLp);
+        mDigitDoneView.setVisibility(View.GONE);
+        mDigitDoneView.setOnClickListener(v -> collapseDigits());
+        card.addView(mDigitDoneView);
 
         // 网络时间对比：点一下重新获取（HTTP Date 头，按 RTT 折半校正）。
         LinearLayout netRow = new LinearLayout(this);
@@ -710,69 +808,126 @@ public final class ModuleSettingsActivity extends Activity {
         colorCard.addView(colorRow);
         row.addView(colorCard);
 
+        mStatsRow = row;
         root.addView(row);
         refreshColorSummary();
     }
 
+    /**
+     * 数字颜色卡：时分秒六位数字分别取色。
+     *
+     * <p>「取哪一位」不在卡里点，而是点上面预览卡里的数字（{@link #pickDigitAt}）；
+     * 卡片只负责给「正在编辑的那一位」换颜色：预设 10 色、调色盘、跟随系统。
+     * 布局沿用原来小时颜色卡的做法（圆角卡 + 右下同心弧 + 5 列色块网格 + 胶囊按钮）。</p>
+     */
     private void buildColorCard(LinearLayout root) {
+        // 卡片在 setContentView 阶段构建，早于 onResume 的 refreshConfigCache，
+        // 因此这里先直读一次配置，否则色块与摘要会停在默认值（全 0 / 关闭态）。
+        mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
+        mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
+        mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+
         LinearLayout card = card();
 
-        // 右下角三条同心半弧装饰（参考支付卡片），固定浅薰衣草紫。
+        // 右下角三条同心半弧装饰，固定浅薰衣草紫。
         CornerArcsDrawable arcs = new CornerArcsDrawable(WAVE_COLOR, dp(2));
         mCornerArcs = arcs;
         card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arcs}));
 
-        LinearLayout switchRow = new LinearLayout(this);
-        switchRow.setOrientation(LinearLayout.HORIZONTAL);
-        switchRow.setGravity(Gravity.CENTER_VERTICAL);
+        // 标题行：标题 + NEW 徽章 + 右侧总开关（关掉后状态栏恢复系统默认样式）。
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setOrientation(LinearLayout.HORIZONTAL);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        LinearLayout texts = new LinearLayout(this);
-        texts.setOrientation(LinearLayout.VERTICAL);
-        texts.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         TextView title = new TextView(this);
-        title.setText(R.string.settings_color_enable);
+        title.setText(R.string.settings_digit_title);
         title.setTextSize(15f);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setTextColor(text());
-        texts.addView(title);
+        titleRow.addView(title);
+
+        TextView badge = new TextView(this);
+        badge.setText(R.string.settings_digit_new);
+        badge.setTextSize(9f);
+        badge.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        badge.setTextColor(accent());
+        badge.setPadding(dp(6), dp(1), dp(6), dp(1));
+        GradientDrawable badgeBg = new GradientDrawable();
+        badgeBg.setCornerRadius(dp(999));
+        badgeBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
+        badge.setBackground(badgeBg);
+        LinearLayout.LayoutParams badgeLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        badgeLp.leftMargin = dp(6);
+        badge.setLayoutParams(badgeLp);
+        titleRow.addView(badge);
+
+        View spacer = new View(this);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        titleRow.addView(spacer);
+
+        mDigitSwitch = new Switch(this);
+        mDigitSwitch.setChecked(ClockSecondsConfig.isHourColorEnabled(getContentResolver()));
+        styleSwitch(mDigitSwitch);
+        titleRow.addView(mDigitSwitch);
+        card.addView(titleRow);
+
         TextView sub = new TextView(this);
-        sub.setText(R.string.settings_color_enable_sum);
+        sub.setText(R.string.settings_digit_sum);
         sub.setTextSize(11f);
         sub.setTextColor(text2());
-        sub.setPadding(0, dp(3), 0, 0);
-        texts.addView(sub);
-        switchRow.addView(texts);
+        sub.setPadding(0, dp(4), 0, 0);
+        card.addView(sub);
 
-        final Switch colorSwitch = new Switch(this);
-        colorSwitch.setChecked(ClockSecondsConfig.isHourColorEnabled(getContentResolver()));
-        styleSwitch(colorSwitch);
-        switchRow.addView(colorSwitch);
-        card.addView(switchRow);
+        // 「正在编辑：时十」——点上面预览里的数字即可切换这一行。
+        mDigitEditingView = new TextView(this);
+        mDigitEditingView.setTextSize(11f);
+        mDigitEditingView.setTextColor(accent());
+        mDigitEditingView.setPadding(0, dp(10), 0, 0);
+        card.addView(mDigitEditingView);
 
-        final GridLayout grid = new GridLayout(this);
-        grid.setColumnCount(5);
-        grid.setPadding(0, dp(14), 0, 0);
-        int current = ClockSecondsConfig.getHourColor(getContentResolver());
+        TextView preset = new TextView(this);
+        preset.setText(R.string.settings_digit_preset);
+        preset.setTextSize(11f);
+        preset.setTextColor(text3());
+        preset.setPadding(0, dp(10), 0, 0);
+        card.addView(preset);
+
+        mDigitGrid = new GridLayout(this);
+        mDigitGrid.setColumnCount(5);
+        mDigitGrid.setPadding(0, dp(6), 0, 0);
         for (int color : HOUR_COLORS) {
-            grid.addView(makeSwatch(color, color == current, grid));
+            mDigitGrid.addView(makeSwatch(color, color == slotColor(mSelSlot), mDigitGrid));
         }
-        card.addView(grid);
-        applySwatchEnabled(grid, colorSwitch.isChecked());
+        card.addView(mDigitGrid);
 
-        TextView hint = new TextView(this);
-        hint.setText(R.string.settings_color_hint);
-        hint.setTextSize(11f);
-        hint.setTextColor(text3());
-        hint.setPadding(0, dp(10), 0, 0);
-        card.addView(hint);
+        // 胶囊：调色盘（自绘 HSV）/ 跟随系统（清掉该位颜色）。
+        LinearLayout pillRow = new LinearLayout(this);
+        pillRow.setOrientation(LinearLayout.HORIZONTAL);
+        pillRow.setPadding(0, dp(12), 0, 0);
+        TextView paletteBtn = pillButton(getString(R.string.settings_digit_palette));
+        paletteBtn.setOnClickListener(v -> showPaletteDialog(mSelSlot));
+        pillRow.addView(paletteBtn);
+        TextView followBtn = pillButton(getString(R.string.settings_digit_follow));
+        LinearLayout.LayoutParams followLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        followLp.leftMargin = dp(8);
+        followBtn.setLayoutParams(followLp);
+        followBtn.setOnClickListener(v -> applyDigitColor(mSelSlot, ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
+        pillRow.addView(followBtn);
+        card.addView(pillRow);
 
-        // 秒数字「呼吸」高亮已改为「背景板呼吸」且常开、无开关（见预览背景板与浮窗背景板）。
+        // 底部摘要：时 #2196F3 · 分 跟随系统 · 秒 #FF5252
+        mDigitSummaryView = new TextView(this);
+        mDigitSummaryView.setTextSize(11f);
+        mDigitSummaryView.setTextColor(text3());
+        mDigitSummaryView.setPadding(0, dp(10), 0, 0);
+        card.addView(mDigitSummaryView);
 
         root.addView(card);
 
         final boolean[] reverting = {false};
-        colorSwitch.setOnCheckedChangeListener((v, checked) -> {
+        mDigitSwitch.setOnCheckedChangeListener((v, checked) -> {
             if (reverting[0]) {
                 return;
             }
@@ -780,17 +935,415 @@ public final class ModuleSettingsActivity extends Activity {
                     .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
             applyConfig(ClockSecondsConfig.HOUR_COLOR_ENABLED_KEY, checked ? 1 : 0, intent, ok -> {
                 if (ok) {
-                    applySwatchEnabled(grid, checked);
+                    mCfgHourColorOn = checked;
+                    refreshDigitSwatches();
                     refreshColorSummary();
                     updatePreview();
                 } else {
                     reverting[0] = true;
-                    colorSwitch.setChecked(!checked);
+                    mDigitSwitch.setChecked(!checked);
                     reverting[0] = false;
                     toastWriteFailed();
                 }
             });
         });
+        refreshDigitSwatches();
+    }
+
+    // ==================================================================
+    // 数字颜色：预览卡展开取色 / 六位分别上色
+    // ==================================================================
+
+    /** 点预览时间：展开成逐位取色（数字放大拉开，下方两张统计卡让位）。 */
+    private void expandDigits() {
+        if (mDigitsExpanded || previewView == null) {
+            return;
+        }
+        mDigitsExpanded = true;
+        if (mStatsRow != null) {
+            mStatsRow.setVisibility(View.GONE);
+        }
+        if (mDigitDoneView != null) {
+            mDigitDoneView.setVisibility(View.VISIBLE);
+        }
+        if (previewHintView != null) {
+            previewHintView.setVisibility(View.INVISIBLE);
+        }
+        mFitGuard = 0;
+        if (mGlowView != null) {
+            mGlowView.setVisibility(View.GONE);   // 展开过程中先不亮，完全展开后再点亮
+        }
+        beginSmoothLayout();
+        animateDigits(true);
+        refreshDigitSwatches();
+        previewView.postDelayed(this::fitExpandedText, 300L);
+        previewView.setContentDescription(getString(R.string.settings_digit_sum));
+    }
+
+    /** 「完成」：收起预览，下面两张统计卡回归。 */
+    private void collapseDigits() {
+        if (!mDigitsExpanded) {
+            return;
+        }
+        mDigitsExpanded = false;
+        mDigitEmphasized = false;
+        beginSmoothLayout();
+        if (mStatsRow != null) {
+            mStatsRow.setVisibility(View.VISIBLE);
+        }
+        if (mDigitDoneView != null) {
+            mDigitDoneView.setVisibility(View.GONE);
+        }
+        if (mGlowView != null) {
+            mGlowView.setVisibility(View.GONE);
+        }
+        animateDigits(false);
+    }
+
+    /** 展开/收起动画：字号 44sp → 刚好占满卡片宽度的最大字号，字距 0 → EXPAND_SPACING（约 260ms，数字像被拉开）。 */
+    private void animateDigits(final boolean expand) {
+        if (previewView == null) {
+            return;
+        }
+        // 起点读当前真实字号（fitExpandedText 可能已经把展开字号收小过），终点按展开/收起算，
+        // 这样来回切换不会跳变。
+        final float base = sp(44);
+        final float from = previewView.getTextSize();
+        final float to = expand ? expandedTextSizePx() : base;
+        final float spacingFrom = previewView.getLetterSpacing();
+        final float spacingTo = expand ? EXPAND_SPACING : 0f;
+        ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
+        anim.setDuration(260L);
+        anim.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        anim.addUpdateListener(a -> {
+            final float t = (float) a.getAnimatedValue();
+            previewView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, from + (to - from) * t);
+            previewView.setLetterSpacing(spacingFrom + (spacingTo - spacingFrom) * t);
+            // 动画期间不追光晕：等数字完全展开再点亮呼吸灯（否则一路上抖着追字）。
+        });
+        anim.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                if (expand && mDigitsExpanded) {
+                    positionGlow();
+                }
+            }
+        });
+        anim.start();
+    }
+
+    /**
+     * 展开态的字号（px）：按预览卡可用宽度解出「8 个字符 + 字距刚好放得下」的最大值。
+     * 固定 70sp 在 411dp 宽的机器上会把「秒」挤到第二行，所以按实测字宽反推。
+     */
+    private float expandedTextSizePx() {
+        final float maxPx = sp(70);
+        if (previewView == null) {
+            return maxPx;
+        }
+        final int avail = previewView.getWidth()
+                - previewView.getPaddingLeft() - previewView.getPaddingRight();
+        if (avail <= 0) {
+            return sp(52);
+        }
+        // 同样用副本：不要动 TextView 自己的 TextPaint（见 positionGlow 的注释）。
+        final android.text.TextPaint tp = new android.text.TextPaint(previewView.getPaint());
+        tp.setTextSize(100f);
+        final CharSequence txt = previewView.getText();
+        final String sample = (txt == null || txt.length() == 0) ? "00:00:00" : txt.toString();
+        final float perUnit = tp.measureText(sample) / 100f;   // 每 1px 字号对应的宽度
+        final int gaps = Math.max(0, sample.length() - 1);
+        // 0.90：Layout 里的字距/字形留白比 measureText 略宽，再加上「选中位放大 1.22 倍」，
+        // 留的余量比原来更多，避免「秒」被挤到第二行；
+        // 万一仍然换行，expandDigits 末尾的 fitExpandedText() 会再按实测行数收一次。
+        final float size = 0.90f * avail / (perUnit + EXPAND_SPACING * gaps);
+        return Math.max(sp(38), Math.min(maxPx, size));
+    }
+
+    /**
+     * 展开动画结束后按「实际行数」收尾：只要还换行就把字号再降 8%，最多三次。
+     * 解析式估算已经留了余量，这一步只是兜底（某些机型字体更宽）。
+     */
+    private void fitExpandedText() {
+        if (!mDigitsExpanded || previewView == null || mFitGuard >= 3) {
+            return;
+        }
+        final android.text.Layout layout = previewView.getLayout();
+        if (layout == null) {
+            return;
+        }
+        if (layout.getLineCount() <= 1) {
+            positionGlow();
+            return;
+        }
+        mFitGuard++;
+        final float next = Math.max(sp(38), previewView.getTextSize() * 0.92f);
+        previewView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, next);
+        previewView.post(this::fitExpandedText);
+    }
+
+    /** sp → px。 */
+    private float sp(float value) {
+        return value * getResources().getDisplayMetrics().scaledDensity;
+    }
+
+    /** 展开态下点预览：命中的是第几位数字，就切到那一位。 */
+    private void pickDigitAt(float x, float y) {
+        if (previewView == null) {
+            return;
+        }
+        final android.text.Layout layout = previewView.getLayout();
+        if (layout == null) {
+            return;
+        }
+        final CharSequence text = previewView.getText();
+        final float lx = Math.max(0f, x - previewView.getTotalPaddingLeft());
+        final float ly = Math.max(0f, y - previewView.getTotalPaddingTop());
+        final int line = layout.getLineForVertical(Math.round(ly));
+        final int offset = layout.getOffsetForHorizontal(line, lx);
+        // 点在数字右半边时 offset 会落到下一个字符（冒号/下一位），再往回校准一次。
+        int slot = ClockSecondsConfig.slotOfChar(text, offset);
+        if (slot < 0 && offset > 0) {
+            slot = ClockSecondsConfig.slotOfChar(text, offset - 1);
+        }
+        if (slot < 0 || slot >= ClockSecondsConfig.DIGIT_COUNT) {
+            return;   // 点在冒号或空白处：保持当前选中位
+        }
+        mSelSlot = slot;
+        mDigitEmphasized = true;   // 选中的这一位先放大；设完颜色会复原
+        refreshDigitSwatches();
+        updatePreview();           // 放大靠 RelativeSizeSpan，要重排一次
+        if (previewView != null) {
+            previewView.post(this::positionGlow);
+        }
+    }
+
+    /**
+     * 把光晕对齐到「正在取色的那一位数字」的墨迹上。
+     *
+     * <p>光晕画的是同一个字形的模糊副本（见 DigitGlowDrawable），所以这里必须用
+     * Layout 的笔位 + 行基线算出该字的墨迹中心，View 大小按墨迹 + 模糊外扩留够；
+     * 位置或字形一变就重新 setBounds（展开动画每帧都会走这里）。</p>
+     */
+    private void positionGlow() {
+        if (mGlowView == null || previewView == null || previewPlate == null || !mDigitsExpanded) {
+            return;
+        }
+        final android.text.Layout layout = previewView.getLayout();
+        final CharSequence text = previewView.getText();
+        if (layout == null || text == null) {
+            return;
+        }
+        final int idx = indexOfSlot(mSelSlot);
+        if (idx < 0 || idx >= text.length()) {
+            mGlowView.setVisibility(View.GONE);
+            return;
+        }
+        if (slotColor(mSelSlot) == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            // 跟随系统 = 不发光：这一位取的是系统文字色，光晕反而显脏。
+            mGlowView.setVisibility(View.GONE);
+            return;
+        }
+        final int line = layout.getLineForOffset(idx);
+        final String glyph = String.valueOf(text.charAt(idx));
+        final float size = previewView.getTextSize() * (mDigitEmphasized ? SEL_SCALE : 1f);
+        // 必须用 paint 的【副本】量墨迹：previewView.getPaint() 返回的是 TextView 内部那个
+        // TextPaint 实例，直接 setTextSize() 会(e1) 改掉预览本身的字号、(e2) 让下一帧
+        // getTextSize() 读到放大后的值再乘 SEL_SCALE —— 每次刷新乘 1.22，几百毫秒内
+        // 指数暴涨、数字换行、卡片撑爆屏幕（vc39 真机事故）。
+        final TextPaint tp = new TextPaint(previewView.getPaint());
+        tp.setTextSize(size);
+        final Rect ink = new Rect();
+        tp.getTextBounds(glyph, 0, glyph.length(), ink);
+        // 笔位 + 行基线 → 该字墨迹中心的绝对坐标（相对 previewPlate）
+        final float penX = previewView.getLeft() + previewView.getTotalPaddingLeft()
+                + layout.getPrimaryHorizontal(idx);
+        final float baseline = previewView.getTop() + previewView.getTotalPaddingTop()
+                + layout.getLineBaseline(line);
+        final float cx = penX + (ink.left + ink.right) / 2f;
+        final float cy = baseline + (ink.top + ink.bottom) / 2f;
+        final float pad = DigitGlowDrawable.blurExtent(size);
+        final int w = Math.max(dp(8), Math.round(ink.width() + pad * 2f));
+        final int h = Math.max(dp(8), Math.round(ink.height() + pad * 2f));
+        final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mGlowView.getLayoutParams();
+        lp.width = w;
+        lp.height = h;
+        lp.leftMargin = Math.round(cx - w / 2f) - previewPlate.getPaddingLeft();
+        lp.topMargin = Math.round(cy - h / 2f) - previewPlate.getPaddingTop();
+        mGlowView.setLayoutParams(lp);
+        final int color = adaptPreviewColor(slotColor(mSelSlot));
+        if (mGlowDrawable == null || mGlowColor != color) {
+            mGlowColor = color;
+            mGlowDrawable = new DigitGlowDrawable(color);
+            mGlowView.setBackground(mGlowDrawable);
+        }
+        mGlowDrawable.setGlyph(glyph, size, previewView.getTypeface());
+        mGlowView.setVisibility(View.VISIBLE);
+    }
+
+    /** 预览文本里第 slot 位数字的字符下标（预览是实时文本，不能缓存）。 */
+    private int indexOfSlot(int slot) {
+        final CharSequence text = previewView == null ? null : previewView.getText();
+        if (text == null) {
+            return -1;
+        }
+        for (int i = 0; i < text.length(); i++) {
+            if (ClockSecondsConfig.slotOfChar(text, i) == slot) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 预览里的颜色也要按背景压暗：亮色在浅底上看不清，与状态栏 adaptColorForBackground
+     * 用同一套规则（浅底 + 亮色 → 各通道 ×0.42），保证「预览看到的 = 状态栏显示的」。
+     */
+    private int adaptPreviewColor(int color) {
+        if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            return text();
+        }
+        final int system = text();
+        if (Color.luminance(system) >= 0.5f) {      // 深色主题（浅字深底）：原色即可
+            return color;
+        }
+        if (Color.luminance(color) <= 0.55f) {      // 本身够深：不用压
+            return color;
+        }
+        final int r = Math.round(((color >> 16) & 0xFF) * 0.42f);
+        final int g = Math.round(((color >> 8) & 0xFF) * 0.42f);
+        final int b = Math.round((color & 0xFF) * 0.42f);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
+    /** 给「正在编辑的那一位」设色（-1 = 跟随系统），写 Secure 设置并由 SystemUI 立即生效。 */
+    private void applyDigitColor(final int slot, final int color) {
+        if (slot < 0 || slot >= ClockSecondsConfig.DIGIT_COUNT) {
+            return;
+        }
+        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR)
+                .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
+                .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
+        applyConfig(ClockSecondsConfig.DIGIT_COLOR_KEYS[slot], color, intent, ok -> {
+            if (!ok) {
+                toastWriteFailed();
+                return;
+            }
+            mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+            // 取色即视为启用：否则选了颜色看不到效果（开关只负责整体启停）。
+            if (!mCfgHourColorOn && mDigitSwitch != null && !mDigitSwitch.isChecked()) {
+                mDigitSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
+            }
+            mDigitEmphasized = false;   // 颜色设好 → 数字回到展开态原大小
+            refreshDigitSwatches();
+            refreshColorSummary();
+            updatePreview();
+            if (previewView != null) {
+                previewView.post(this::positionGlow);
+            }
+        });
+    }
+
+    /** 刷新预设色块的选中环 + 「正在编辑」行 + 底部摘要。 */
+    private void refreshDigitSwatches() {
+        final boolean enabled = mCfgHourColorOn;
+        final int current = slotColor(mSelSlot);
+        if (mDigitGrid != null) {
+            for (int i = 0; i < mDigitGrid.getChildCount() && i < HOUR_COLORS.length; i++) {
+                final View child = mDigitGrid.getChildAt(i);
+                child.setClickable(enabled);
+                final boolean selected = HOUR_COLORS[i] == current;
+                child.setBackground(swatchDrawable(swatchColor(HOUR_COLORS[i], enabled), selected));
+                child.setSelected(selected);
+            }
+        }
+        if (mCornerArcs != null) {
+            mCornerArcs.setAlpha(255);
+        }
+        if (mDigitEditingView != null) {
+            mDigitEditingView.setText(getString(R.string.settings_digit_editing, slotName(mSelSlot)));
+        }
+        if (mDigitSummaryView != null) {
+            mDigitSummaryView.setText(getString(R.string.settings_digit_summary,
+                    fieldLabel(0, 1), fieldLabel(2, 3), fieldLabel(4, 5)));
+        }
+    }
+
+    /** 某一位当前的颜色（-1 = 跟随系统）。 */
+    private int slotColor(int slot) {
+        if (mCfgDigitColors == null || slot < 0 || slot >= mCfgDigitColors.length) {
+            return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+        }
+        return mCfgDigitColors[slot];
+    }
+
+    /** 位名（时十/时个/分十/分个/秒十/秒个），随语言走 settings_digit_slots 的逗号分隔列表。 */
+    private String slotName(int slot) {
+        final String[] parts = getString(R.string.settings_digit_slots).split(",");
+        if (slot >= 0 && slot < parts.length && parts[slot].trim().length() > 0) {
+            return parts[slot].trim();
+        }
+        return ClockSecondsConfig.DIGIT_LABELS[
+                Math.max(0, Math.min(ClockSecondsConfig.DIGIT_LABELS.length - 1, slot))];
+    }
+
+    /** 单个字段（时/分/秒）的摘要文案：两位数同色显示一个色号，不同色显示 a/b。 */
+    private String fieldLabel(int a, int b) {
+        final String left = colorLabel(slotColor(a));
+        final String right = colorLabel(slotColor(b));
+        return left.equals(right) ? left : left + "/" + right;
+    }
+
+    private String colorLabel(int color) {
+        return color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                ? getString(R.string.settings_digit_follow) : hexOf(color);
+    }
+
+    /** 调色盘：自绘 HSV 面板 + 色相条，确定后立即生效。 */
+    private void showPaletteDialog(final int slot) {
+        final LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(18), dp(14), dp(18), dp(2));
+
+        final HsvPickerView panel = new HsvPickerView(this, HsvPickerView.MODE_SV);
+        panel.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
+        final HsvPickerView hueBar = new HsvPickerView(this, HsvPickerView.MODE_HUE);
+        LinearLayout.LayoutParams hueLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(26));
+        hueLp.topMargin = dp(14);
+        hueBar.setLayoutParams(hueLp);
+        box.addView(panel);
+        box.addView(hueBar);
+
+        final TextView hex = new TextView(this);
+        hex.setTextSize(13f);
+        hex.setTextColor(text2());
+        hex.setPadding(0, dp(12), 0, 0);
+        box.addView(hex);
+
+        // 起始色：该位当前色；跟随系统时从默认红起步。
+        int start = slotColor(slot);
+        if (start == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            start = HOUR_COLORS[0];
+        }
+        panel.setColor(start);
+        hueBar.setColor(start);
+        final Runnable syncHex = () -> hex.setText(swatchDesc(panel.getColor()));
+        panel.setOnColorChanged(c -> syncHex.run());
+        hueBar.setOnColorChanged(c -> {
+            panel.setHue(hueBar.getHue());
+            syncHex.run();
+        });
+        syncHex.run();
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_digit_palette)
+                .setView(box)
+                .setNegativeButton(R.string.settings_cancel, null)
+                .setPositiveButton(R.string.settings_rule_apply,
+                        (dialog, which) -> applyDigitColor(slot, panel.getColor()))
+                .show();
     }
 
     /**
@@ -1170,6 +1723,9 @@ public final class ModuleSettingsActivity extends Activity {
 
         card.addView(row);
         root.addView(card);
+        mActivationCard = card;
+        // 默认隐藏：已激活时不占位置；只有真检测出未激活，setActiveState 才把它放出来。
+        card.setVisibility(View.GONE);
         setActiveState(ACTIVE_CHECKING, null, false);
     }
 
@@ -1217,6 +1773,16 @@ public final class ModuleSettingsActivity extends Activity {
         }
         if (mActiveText != null) {
             mActiveText.setText(msg);
+        }
+        // 已激活 → 整张卡收掉（用户明确要求：激活了就别显示）；未激活 → 才提示。
+        if (mActivationCard != null) {
+            if (state == ACTIVE_YES || state == ACTIVE_NO) {
+                final int want = (state == ACTIVE_YES) ? View.GONE : View.VISIBLE;
+                if (mActivationCard.getVisibility() != want) {
+                    beginSmoothLayout();
+                    mActivationCard.setVisibility(want);
+                }
+            }
         }
         // DEBUG 构建把本地判定结果打到 logcat，便于 adb 读取验证 PONG 是否真正送达应用
         // （uiautomator dump 因持续呼吸灯动画无法稳定抓帧，改用 logcat 信号更可靠）。
@@ -1933,35 +2499,57 @@ public final class ModuleSettingsActivity extends Activity {
         if (previewView == null) {
             return;
         }
-        // 已注册观察者 → 用缓存值（免每秒 3 次 binder 读取）；没注册上 → 退回直读，保证状态实时。
+        // 已注册观察者 → 用缓存值（免每秒多次 binder 读取）；没注册上 → 退回直读，保证状态实时。
         final boolean seconds;
         final boolean hourOn;
-        final int hourColor;
         if (mObserverOk) {
             seconds = mCfgSeconds;
             hourOn = mCfgHourColorOn;
-            hourColor = mCfgHourColor;
         } else {
             seconds = ClockSecondsConfig.isEnabled(getContentResolver());
             hourOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
-            hourColor = ClockSecondsConfig.getHourColor(getContentResolver());
+        }
+        if (mCfgDigitColors == null || mCfgDigitColors.length < ClockSecondsConfig.DIGIT_COUNT) {
+            mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
         }
         mNowDate.setTime(System.currentTimeMillis());
-        String text = (seconds ? mFmtSec : mFmtNoSec).format(mNowDate);
-        SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        if (hourOn
-                && sb.length() >= 2
-                && Character.isDigit(sb.charAt(0)) && Character.isDigit(sb.charAt(1))) {
-            sb.setSpan(new ForegroundColorSpan(hourColor), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        final String text = (seconds ? mFmtSec : mFmtNoSec).format(mNowDate);
+        final SpannableStringBuilder sb = new SpannableStringBuilder(text);
+        if (hourOn) {
+            // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
+            for (int i = 0; i < sb.length(); i++) {
+                final int slot = ClockSecondsConfig.slotOfChar(sb, i);
+                if (slot < 0) {
+                    continue;
+                }
+                final int color = mCfgDigitColors[slot];
+                if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                    continue;
+                }
+                sb.setSpan(new ForegroundColorSpan(adaptPreviewColor(color)), i, i + 1,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        // 展开取色时把「正在编辑的那一位」放大一点，一眼能看出在对哪位上色。
+        if (mDigitsExpanded && mDigitEmphasized && mSelSlot >= 0) {
+            for (int i = 0; i < sb.length(); i++) {
+                if (ClockSecondsConfig.slotOfChar(sb, i) == mSelSlot) {
+                    sb.setSpan(new android.text.style.RelativeSizeSpan(SEL_SCALE), i, i + 1,
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    break;
+                }
+            }
         }
         previewView.setText(sb);
 
         // 状态胶囊也每秒跟随：用户在状态栏点击切换后，页面能立刻反映真实状态。
         if (chipView != null) {
-            chipView.setText(seconds
-                    ? R.string.settings_enabled : R.string.settings_disabled);
+            chipView.setText(seconds ? R.string.settings_enabled : R.string.settings_disabled);
         }
         updateNetworkTimeLine();
+        if (mDigitsExpanded) {
+            positionGlow();
+        }
     }
 
     /** 网络时间 = 本地时间 + 采样得到的偏移，每秒跟着走。 */
@@ -2108,7 +2696,7 @@ public final class ModuleSettingsActivity extends Activity {
         lp.setMargins(dp(5), dp(5), dp(5), dp(5));
         swatch.setLayoutParams(lp);
         swatch.setBackground(swatchDrawable(color, selected));
-        swatch.setOnClickListener(v -> selectHourColor(color, grid));
+        swatch.setOnClickListener(v -> applyDigitColor(mSelSlot, color));
         // 无障碍：色块是纯色 View，读屏读不出内容 → 补 contentDescription（色号）；
         // setSelected 让 TalkBack 自动播报“已选中”；setClickable 让它被识别为可操作项。
         swatch.setContentDescription(swatchDesc(color));
@@ -2160,22 +2748,7 @@ public final class ModuleSettingsActivity extends Activity {
         return d;
     }
 
-    private void applySwatchEnabled(GridLayout grid, boolean enabled) {
-        final int current = ClockSecondsConfig.getHourColor(getContentResolver());
-        for (int i = 0; i < grid.getChildCount() && i < HOUR_COLORS.length; i++) {
-            final View child = grid.getChildAt(i);
-            child.setClickable(enabled);
-            child.setAlpha(1f);   // 始终不透明：背景三条弧不会从半透明色块透出、盖住色块
-            // 禁用不靠 view alpha（半透明会透出背景弧），而是把色块染成不透明淡彩。
-            child.setBackground(swatchDrawable(swatchColor(HOUR_COLORS[i], enabled), HOUR_COLORS[i] == current));
-        }
-        // 三条同心弧常显，不再随开关隐藏。
-        if (mCornerArcs != null) {
-            mCornerArcs.setAlpha(255);
-        }
-    }
-
-    /** 禁用态色块色：向卡片底色混合成「不透明淡彩」（替代原来的 view alpha 半透明）。 */
+        /** 禁用态色块色：向卡片底色混合成「不透明淡彩」（替代原来的 view alpha 半透明）。 */
     private int swatchColor(int color, boolean enabled) {
         if (enabled) return color;
         return blendColor(color, night ? DARK_CARD : LIGHT_CARD, 0.68f);
@@ -2190,26 +2763,7 @@ public final class ModuleSettingsActivity extends Activity {
         return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
-    private void selectHourColor(final int color, final GridLayout grid) {
-        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_HOUR_COLOR)
-                .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
-        applyConfig(ClockSecondsConfig.HOUR_COLOR_KEY, color, intent, ok -> {
-            if (ok) {
-                for (int i = 0; i < grid.getChildCount() && i < HOUR_COLORS.length; i++) {
-                    grid.getChildAt(i).setBackground(
-                            swatchDrawable(HOUR_COLORS[i], HOUR_COLORS[i] == color));
-                    // 同步选中态，让 TalkBack 播报哪个色块被选中
-                    grid.getChildAt(i).setSelected(HOUR_COLORS[i] == color);
-                }
-                refreshColorSummary();
-                updatePreview();
-            } else {
-                toastWriteFailed();
-            }
-        });
-    }
-
-    private CharSequence makeGestureItem(int titleRes, String hint) {
+        private CharSequence makeGestureItem(int titleRes, String hint) {
         String title = getString(titleRes);
         SpannableStringBuilder sb = new SpannableStringBuilder(title);
         sb.append("\n");

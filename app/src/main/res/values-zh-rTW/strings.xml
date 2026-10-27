@@ -89,4 +89,15 @@
     <string name="swatch_pink">粉</string>
     <string name="swatch_white">白</string>
     <string name="swatch_grey">灰</string>
+    <string name="settings_digit_title">數字顏色</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">時分秒分別取色，點預覽裡的數字即可選中</string>
+    <string name="settings_digit_preset">預設</string>
+    <string name="settings_digit_palette">調色盤</string>
+    <string name="settings_digit_follow">跟隨系統</string>
+    <string name="settings_digit_done">完成</string>
+    <string name="settings_digit_slots">時十,時個,分十,分個,秒十,秒個</string>
+    <string name="settings_digit_editing">正在編輯：%1$s</string>
+    <string name="settings_digit_summary">時 %1$s · 分 %2$s · 秒 %3$s</string>
+    <string name="settings_cancel">取消</string>
 </resources>

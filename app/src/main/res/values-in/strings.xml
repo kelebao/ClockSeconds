@@ -89,4 +89,15 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="swatch_pink">Merah muda</string>
     <string name="swatch_white">Putih</string>
     <string name="swatch_grey">Abu-abu</string>
+    <string name="settings_digit_title">Warna angka</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Warnai setiap angka jam, menit, dan detik secara terpisah — ketuk angka di pratinjau</string>
+    <string name="settings_digit_preset">Prasetel</string>
+    <string name="settings_digit_palette">Palet</string>
+    <string name="settings_digit_follow">Ikuti sistem</string>
+    <string name="settings_digit_done">Selesai</string>
+    <string name="settings_digit_slots">Puluhan jam,Satuan jam,Puluhan menit,Satuan menit,Puluhan detik,Satuan detik</string>
+    <string name="settings_digit_editing">Mengedit: %1$s</string>
+    <string name="settings_digit_summary">Jam %1$s · Menit %2$s · Detik %3$s</string>
+    <string name="settings_cancel">Batal</string>
 </resources>

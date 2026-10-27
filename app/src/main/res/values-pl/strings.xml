@@ -89,4 +89,15 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="swatch_pink">Różowy</string>
     <string name="swatch_white">Biały</string>
     <string name="swatch_grey">Szary</string>
+    <string name="settings_digit_title">Kolory cyfr</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Koloruj każdą cyfrę godzin, minut i sekund osobno — dotknij cyfry w podglądzie</string>
+    <string name="settings_digit_preset">Gotowe zestawy</string>
+    <string name="settings_digit_palette">Paleta</string>
+    <string name="settings_digit_follow">Jak w systemie</string>
+    <string name="settings_digit_done">Gotowe</string>
+    <string name="settings_digit_slots">Dziesiątki godz,Jednostki godz,Dziesiątki min,Jednostki min,Dziesiątki sek,Jednostki sek</string>
+    <string name="settings_digit_editing">Edycja: %1$s</string>
+    <string name="settings_digit_summary">Godz %1$s · Min %2$s · Sek %3$s</string>
+    <string name="settings_cancel">Anuluj</string>
 </resources>

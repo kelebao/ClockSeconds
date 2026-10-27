@@ -89,4 +89,15 @@
     <string name="swatch_pink">ชมพู</string>
     <string name="swatch_white">ขาว</string>
     <string name="swatch_grey">เทา</string>
+    <string name="settings_digit_title">สีตัวเลข</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">กำหนดสีแยกทีละหลักของชั่วโมง นาที วินาที — แตะตัวเลขในตัวอย่าง</string>
+    <string name="settings_digit_preset">สีสำเร็จรูป</string>
+    <string name="settings_digit_palette">จานสี</string>
+    <string name="settings_digit_follow">ตามระบบ</string>
+    <string name="settings_digit_done">เสร็จสิ้น</string>
+    <string name="settings_digit_slots">หลักสิบชั่วโมง,หลักหน่วยชั่วโมง,หลักสิบนาที,หลักหน่วยนาที,หลักสิบวินาที,หลักหน่วยวินาที</string>
+    <string name="settings_digit_editing">กำลังแก้ไข: %1$s</string>
+    <string name="settings_digit_summary">ชั่วโมง %1$s · นาที %2$s · วินาที %3$s</string>
+    <string name="settings_cancel">ยกเลิก</string>
 </resources>

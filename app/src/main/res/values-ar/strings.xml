@@ -89,4 +89,15 @@
     <string name="swatch_pink">وردي</string>
     <string name="swatch_white">أبيض</string>
     <string name="swatch_grey">رمادي</string>
+    <string name="settings_digit_title">ألوان الأرقام</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">لوّن كل رقم من الساعة والدقيقة والثانية على حدة — اضغط على الرقم في المعاينة</string>
+    <string name="settings_digit_preset">ألوان جاهزة</string>
+    <string name="settings_digit_palette">لوحة الألوان</string>
+    <string name="settings_digit_follow">اتّباع النظام</string>
+    <string name="settings_digit_done">تم</string>
+    <string name="settings_digit_slots">عشرات الساعة,آحاد الساعة,عشرات الدقيقة,آحاد الدقيقة,عشرات الثانية,آحاد الثانية</string>
+    <string name="settings_digit_editing">التعديل: %1$s</string>
+    <string name="settings_digit_summary">الساعة %1$s · الدقيقة %2$s · الثانية %3$s</string>
+    <string name="settings_cancel">إلغاء</string>
 </resources>

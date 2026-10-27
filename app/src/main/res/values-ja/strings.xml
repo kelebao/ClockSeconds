@@ -89,4 +89,15 @@
     <string name="swatch_pink">ピンク</string>
     <string name="swatch_white">白</string>
     <string name="swatch_grey">グレー</string>
+    <string name="settings_digit_title">数字の色</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">時・分・秒の各数字ごとに色を設定。プレビュー内の数字をタップして選択します</string>
+    <string name="settings_digit_preset">プリセット</string>
+    <string name="settings_digit_palette">カラーパレット</string>
+    <string name="settings_digit_follow">システムに従う</string>
+    <string name="settings_digit_done">完了</string>
+    <string name="settings_digit_slots">時十,時一,分十,分一,秒十,秒一</string>
+    <string name="settings_digit_editing">編集中：%1$s</string>
+    <string name="settings_digit_summary">時 %1$s · 分 %2$s · 秒 %3$s</string>
+    <string name="settings_cancel">キャンセル</string>
 </resources>

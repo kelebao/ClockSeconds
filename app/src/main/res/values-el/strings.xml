@@ -89,4 +89,15 @@
     <string name="swatch_pink">Ροζ</string>
     <string name="swatch_white">Λευκό</string>
     <string name="swatch_grey">Γκρι</string>
+    <string name="settings_digit_title">Χρώματα ψηφίων</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Χρωματίστε κάθε ψηφίο ώρας, λεπτού και δευτερολέπτου ξεχωριστά — πατήστε ένα ψηφίο στην προεπισκόπηση</string>
+    <string name="settings_digit_preset">Έτοιμα χρώματα</string>
+    <string name="settings_digit_palette">Παλέτα</string>
+    <string name="settings_digit_follow">Ακολούθηση συστήματος</string>
+    <string name="settings_digit_done">Τέλος</string>
+    <string name="settings_digit_slots">Δεκάδες ώρας,Μονάδες ώρας,Δεκάδες λεπτού,Μονάδες λεπτού,Δεκάδες δευτ.,Μονάδες δευτ.</string>
+    <string name="settings_digit_editing">Επεξεργασία: %1$s</string>
+    <string name="settings_digit_summary">Ώρα %1$s · Λεπτό %2$s · Δευτ. %3$s</string>
+    <string name="settings_cancel">Άκυρο</string>
 </resources>

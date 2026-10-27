@@ -89,4 +89,15 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="swatch_pink">Rosa</string>
     <string name="swatch_white">Weiß</string>
     <string name="swatch_grey">Grau</string>
+    <string name="settings_digit_title">Ziffernfarben</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Jede Ziffer von Stunde, Minute und Sekunde einzeln färben – im Vorschaufenster auf eine Ziffer tippen</string>
+    <string name="settings_digit_preset">Vorlagen</string>
+    <string name="settings_digit_palette">Palette</string>
+    <string name="settings_digit_follow">Systemeinstellung folgen</string>
+    <string name="settings_digit_done">Fertig</string>
+    <string name="settings_digit_slots">Std-Zehner,Std-Einer,Min-Zehner,Min-Einer,Sek-Zehner,Sek-Einer</string>
+    <string name="settings_digit_editing">Bearbeiten: %1$s</string>
+    <string name="settings_digit_summary">Std %1$s · Min %2$s · Sek %3$s</string>
+    <string name="settings_cancel">Abbrechen</string>
 </resources>

@@ -89,4 +89,15 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="swatch_pink">Rosa</string>
     <string name="swatch_white">Blanco</string>
     <string name="swatch_grey">Gris</string>
+    <string name="settings_digit_title">Colores de dígitos</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Colorea cada dígito de hora, minuto y segundo por separado: toca un dígito en la vista previa</string>
+    <string name="settings_digit_preset">Preajustes</string>
+    <string name="settings_digit_palette">Paleta</string>
+    <string name="settings_digit_follow">Seguir el sistema</string>
+    <string name="settings_digit_done">Listo</string>
+    <string name="settings_digit_slots">Decenas de hora,Unidades de hora,Decenas de minuto,Unidades de minuto,Decenas de segundo,Unidades de segundo</string>
+    <string name="settings_digit_editing">Editando: %1$s</string>
+    <string name="settings_digit_summary">Hora %1$s · Min %2$s · Seg %3$s</string>
+    <string name="settings_cancel">Cancelar</string>
 </resources>

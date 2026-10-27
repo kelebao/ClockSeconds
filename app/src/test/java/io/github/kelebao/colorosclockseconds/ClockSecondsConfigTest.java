@@ -57,4 +57,46 @@ public class ClockSecondsConfigTest {
         // 开头是字母 / 非数字，不算。
         assertFalse(ClockSecondsConfig.hasTwoDigitHour("AM9:45"));
     }
+
+    @Test
+    public void slotOfChar_mapsEachDigitInHhMmSs() {
+        String t = "23:41:52";
+        // 时十 / 时个 / 分十 / 分个 / 秒十 / 秒个
+        assertEquals(0, ClockSecondsConfig.slotOfChar(t, 0));
+        assertEquals(1, ClockSecondsConfig.slotOfChar(t, 1));
+        assertEquals(2, ClockSecondsConfig.slotOfChar(t, 3));
+        assertEquals(3, ClockSecondsConfig.slotOfChar(t, 4));
+        assertEquals(4, ClockSecondsConfig.slotOfChar(t, 6));
+        assertEquals(5, ClockSecondsConfig.slotOfChar(t, 7));
+    }
+
+    @Test
+    public void slotOfChar_ignoresSeparatorsAndTrailingZeroWidth() {
+        String t = "23:41:52\u200B";
+        // 冒号不是数字位。
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(t, 2));
+        // 结尾零宽空格不影响秒个位判定。
+        assertEquals(5, ClockSecondsConfig.slotOfChar(t, 7));
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(t, t.length() - 1));
+        // 越界/空/null。
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(t, -1));
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(t, 99));
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(null, 0));
+    }
+
+    @Test
+    public void slotOfChar_singleDigitHour_isHourOnes() {
+        // 单位数小时（无前导零）：那一位是「时个位」(1)，不是「时十位」(0)。
+        assertEquals(1, ClockSecondsConfig.slotOfChar("9:41", 0));
+        assertEquals(2, ClockSecondsConfig.slotOfChar("9:41", 2));
+        assertEquals(3, ClockSecondsConfig.slotOfChar("9:41", 3));
+    }
+
+    @Test
+    public void slotOfChar_hourMinuteOnly_hasNoSecondSlots() {
+        assertEquals(0, ClockSecondsConfig.slotOfChar("23:41", 0));
+        assertEquals(3, ClockSecondsConfig.slotOfChar("23:41", 4));
+        // 只有两个字段时，不存在秒位。
+        assertEquals(-1, ClockSecondsConfig.slotOfChar("23:41", 5));
+    }
 }

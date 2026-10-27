@@ -89,4 +89,15 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="swatch_pink">Rosa</string>
     <string name="swatch_white">Bianco</string>
     <string name="swatch_grey">Grigio</string>
+    <string name="settings_digit_title">Colori delle cifre</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Colora singolarmente ogni cifra di ore, minuti e secondi: tocca una cifra nell’anteprima</string>
+    <string name="settings_digit_preset">Preimpostati</string>
+    <string name="settings_digit_palette">Tavolozza</string>
+    <string name="settings_digit_follow">Segui il sistema</string>
+    <string name="settings_digit_done">Fine</string>
+    <string name="settings_digit_slots">Decine ore,Unità ore,Decine minuti,Unità minuti,Decine secondi,Unità secondi</string>
+    <string name="settings_digit_editing">Modifica: %1$s</string>
+    <string name="settings_digit_summary">Ora %1$s · Min %2$s · Sec %3$s</string>
+    <string name="settings_cancel">Annulla</string>
 </resources>

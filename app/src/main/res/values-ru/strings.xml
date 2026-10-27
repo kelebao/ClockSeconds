@@ -89,4 +89,15 @@
     <string name="swatch_pink">Розовый</string>
     <string name="swatch_white">Белый</string>
     <string name="swatch_grey">Серый</string>
+    <string name="settings_digit_title">Цвета цифр</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Цвет каждой цифры часов, минут и секунд отдельно — нажмите цифру в предпросмотре</string>
+    <string name="settings_digit_preset">Пресеты</string>
+    <string name="settings_digit_palette">Палитра</string>
+    <string name="settings_digit_follow">Как в системе</string>
+    <string name="settings_digit_done">Готово</string>
+    <string name="settings_digit_slots">Часы-десятки,Часы-единицы,Минуты-десятки,Минуты-единицы,Секунды-десятки,Секунды-единицы</string>
+    <string name="settings_digit_editing">Изменение: %1$s</string>
+    <string name="settings_digit_summary">Часы %1$s · Минуты %2$s · Секунды %3$s</string>
+    <string name="settings_cancel">Отмена</string>
 </resources>

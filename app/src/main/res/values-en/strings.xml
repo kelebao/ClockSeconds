@@ -89,4 +89,15 @@ Source code of this module: MIT © kelebao</string>
     <string name="swatch_pink">Pink</string>
     <string name="swatch_white">White</string>
     <string name="swatch_grey">Grey</string>
+    <string name="settings_digit_title">Digit colors</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Color each digit of hours, minutes and seconds separately — tap a digit in the preview to pick it</string>
+    <string name="settings_digit_preset">Presets</string>
+    <string name="settings_digit_palette">Palette</string>
+    <string name="settings_digit_follow">Follow system</string>
+    <string name="settings_digit_done">Done</string>
+    <string name="settings_digit_slots">H tens,H ones,M tens,M ones,S tens,S ones</string>
+    <string name="settings_digit_editing">Editing: %1$s</string>
+    <string name="settings_digit_summary">Hour %1$s · Min %2$s · Sec %3$s</string>
+    <string name="settings_cancel">Cancel</string>
 </resources>

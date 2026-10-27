@@ -89,4 +89,15 @@
     <string name="swatch_pink">Рожевий</string>
     <string name="swatch_white">Білий</string>
     <string name="swatch_grey">Сірий</string>
+    <string name="settings_digit_title">Кольори цифр</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">Колір кожної цифри годин, хвилин і секунд окремо — торкніться цифри в попередньому перегляді</string>
+    <string name="settings_digit_preset">Набори</string>
+    <string name="settings_digit_palette">Палітра</string>
+    <string name="settings_digit_follow">Як у системі</string>
+    <string name="settings_digit_done">Готово</string>
+    <string name="settings_digit_slots">Години-десятки,Години-одиниці,Хвилини-десятки,Хвилини-одиниці,Секунди-десятки,Секунди-одиниці</string>
+    <string name="settings_digit_editing">Редагування: %1$s</string>
+    <string name="settings_digit_summary">Години %1$s · Хвилини %2$s · Секунди %3$s</string>
+    <string name="settings_cancel">Скасувати</string>
 </resources>

@@ -89,4 +89,15 @@
     <string name="swatch_pink">분홍</string>
     <string name="swatch_white">하양</string>
     <string name="swatch_grey">회색</string>
+    <string name="settings_digit_title">숫자 색상</string>
+    <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum">시·분·초 숫자를 각각 지정할 수 있습니다. 미리보기에서 숫자를 눌러 선택하세요</string>
+    <string name="settings_digit_preset">프리셋</string>
+    <string name="settings_digit_palette">색상 팔레트</string>
+    <string name="settings_digit_follow">시스템 따르기</string>
+    <string name="settings_digit_done">완료</string>
+    <string name="settings_digit_slots">시십,시일,분십,분일,초십,초일</string>
+    <string name="settings_digit_editing">편집 중: %1$s</string>
+    <string name="settings_digit_summary">시 %1$s · 분 %2$s · 초 %3$s</string>
+    <string name="settings_cancel">취소</string>
 </resources>
