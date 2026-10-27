@@ -612,6 +612,11 @@ public final class ModuleSettingsActivity extends Activity {
     private void buildPreviewCard(LinearLayout root) {
         LinearLayout card = card();
         mPreviewCard = card;
+        // 卡片这一层也必须关掉裁剪：光晕 View 用负 margin 伸出 previewPlate，
+        // 一旦这一层还按 padding 裁剪，光晕就会被切出一条垂直硬边
+        // （真机实测硬边正好落在 padding 左沿 x=126，vc131~vc137 反复复现）。
+        card.setClipChildren(false);
+        card.setClipToPadding(false);
         // 顶部留白收小；底部留小缝，让网络时间行贴近卡片最下方。
         card.setPadding(dp(18), dp(2), dp(18), dp(6));
         // 底部叠「长弧刻度」（只有刻度、无弧线），把网络时间/提示两行圈在弧中间。
@@ -642,10 +647,19 @@ public final class ModuleSettingsActivity extends Activity {
         // 选中那位的呼吸光晕：先加 = 画在文字下层；默认隐藏，展开取色时才点亮。
         // previewPlate 关掉裁剪，光晕才能糊出字形边界（否则被自己/父容器切成方块）。
         previewPlate.setClipChildren(false);
+        // 关键：ViewGroup 默认 clipToPadding=true，即使关了 clipChildren，
+        // 子 View 的绘制仍会被裁到 padding 内 —— 光晕就会被切出一个带直角的方框
+        // （vc131~vc136 反复复现的根因，左边界正好等于 plate 的 padding 左沿）。
+        previewPlate.setClipToPadding(false);
         mGlowView = new View(this);
         mGlowView.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
         mGlowView.setVisibility(View.GONE);
         mGlowView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        // 不开硬件层：光晕现在是 RadialGradient 纯色圆（不依赖 BlurMaskFilter），
+        // 硬件加速下直接画即可，开层反而多一次离屏拷贝。
+        mGlowView.setLayerType(View.LAYER_TYPE_NONE, null);
+        mGlowView.setClipToOutline(false);
+        mGlowView.setOutlineProvider(null);
         mGlowDrawable = new DigitGlowDrawable();
         mGlowView.setBackground(mGlowDrawable);
         previewPlate.addView(mGlowView);
@@ -1747,9 +1761,8 @@ public final class ModuleSettingsActivity extends Activity {
         }
         // 暗端 0.06 会让光晕整段熄灭再亮回来，真机上读成「闪烁」不是呼吸（vc111 反馈）；
         // 0.30 起步既保留明显的明暗差，又保证任何时刻光晕都在、数字始终像在发光。
-        // 谷底 0.55：配合 DigitGlowDrawable 里的 1.7 次方曲线，视觉最暗约 0.36 亮度 ——
-        // 再不亮到「熄灭」，也不会亮到「没在呼吸」。
-        final ValueAnimator anim = ValueAnimator.ofFloat(0.55f, 1f);
+        // 谷底 0.42 → 峰值 1.0：雾在 0.30 时会淡到看不出形状，抬到 0.42 才既有呼吸又不散架。
+        final ValueAnimator anim = ValueAnimator.ofFloat(0.42f, 1f);
         anim.setDuration(GLOW_PERIOD_MS);
         anim.setRepeatCount(ValueAnimator.INFINITE);
         anim.setRepeatMode(ValueAnimator.REVERSE);
@@ -1765,7 +1778,7 @@ public final class ModuleSettingsActivity extends Activity {
         });
         mGlowAnim = anim;
         if (BuildConfig.DEBUG) {
-            android.util.Log.d("CS-GLOW", "glowLoop start floor=0.55 period=" + GLOW_PERIOD_MS);
+            android.util.Log.d("CS-GLOW", "glowLoop start floor=0.42 period=" + GLOW_PERIOD_MS);
         }
         anim.start();
     }
