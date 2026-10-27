@@ -108,14 +108,21 @@ public class DigitGlowDrawable extends Drawable {
         final int g = (color >> 8) & 0xFF;
         final int b = color & 0xFF;
 
-        // 由外向内三层叠加：每往里一层半径减半、亮度加倍，叠出来的效果就是
+        // 由外向内三层叠加：每往里一层半径减半、亮度递增，叠出来的效果就是
         // 「光从笔画里渗出来、越贴近字形越亮」，而不是一块均匀的雾。
         // alpha 全部乘 breath，呼吸时整团光一起起落。
-        // 呼吸曲线用 breath 的 1.7 次方：峰顶几乎不变，谷底压得更低，
-        // 肉眼看到的明暗落差从约 9% 拉到 30% 以上，才像「呼吸」而不是「常亮」。
+        //
+        // 呼吸形状用两个曲线分段合成（用户要求「最亮部分拉到最亮」）：
+        //   - 光晕部分走 breath^1.7：峰顶几乎不变、谷底压得更低，明暗落差才看得出来；
+        //   - 芯光与笔画提亮走 breath^0.55：峰顶比线性更早顶到 255，最亮那一档停留更久，
+        //     观感是「吸到顶时"啪"地亮透」，而不是缓慢爬升到九成就回落。
         final float curve = (float) Math.pow(breath, 1.7);
+        final float hot = (float) Math.pow(breath, 0.45);
+        // 笔画提亮层不能全程都压白，否则谷底时字的下半截会糊成实心白块（真机踩过）。
+        // 让它只在接近峰顶时才真正上量：hot^3 在谷底约 0.44、峰顶 1.0。
+        final float flash = hot * hot * hot;
 
-        // 外雾用最浓的一层：光晕要从笔画一直渗到半个字号以外，才有「发光」的体积感。
+        // 外雾：光晕要从笔画一直渗到半个字号以外，才有「发光」的体积感。
         paint.setMaskFilter(wideFilter);
         paint.setColor(Color.argb(Math.round(86f * curve), r, g, b));
         canvas.drawText(glyph, penX, baseline, paint);
@@ -124,14 +131,16 @@ public class DigitGlowDrawable extends Drawable {
         paint.setColor(Color.argb(Math.round(132f * curve), r, g, b));
         canvas.drawText(glyph, penX, baseline, paint);
 
+        // 亮边：这一层决定「光的边界有多实」，峰值直接给满 255。
         paint.setMaskFilter(coreFilter);
-        paint.setColor(Color.argb(Math.round(190f * curve), r, g, b));
+        paint.setColor(Color.argb(Math.min(255, Math.round(255f * hot)), r, g, b));
         canvas.drawText(glyph, penX, baseline, paint);
 
-        // 最内层：笔画自身的提亮（白，不加色相），只留薄薄一层，
-        // 太厚会把字形糊成实心白块，反而看不出「光从字里出来」。
+        // 最内层：笔画自身的提亮（白，不加色相）。峰顶直接给满 255 纯白 ——
+        // 用户要的「最亮部分拉到最亮」就落在这层：吸到顶时笔画中心是真的白。
+        // 谷底靠 flash=hot^3 把这一层几乎收干净，字形保持自己的颜色不被糊掉。
         paint.setMaskFilter(null);
-        paint.setColor(Color.argb(Math.round(70f * curve), 255, 255, 255));
+        paint.setColor(Color.argb(Math.min(255, Math.round(255f * flash)), 255, 255, 255));
         canvas.drawText(glyph, penX, baseline, paint);
     }
 
