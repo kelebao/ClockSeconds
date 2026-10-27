@@ -1,41 +1,30 @@
 package io.github.kelebao.colorosclockseconds;
 
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.RadialGradient;
 import android.graphics.Rect;
-import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
 /**
  * 预览卡里「选中那位数字自己在发光」的一层呼吸光晕。
  *
- * <p><b>为什么不用 BlurMaskFilter：</b>ColorOS 的硬件加速渲染下，View 背景绘制里的
- * {@code BlurMaskFilter} 会被直接忽略——把半径从 0.85 字号改到 3.0 字号，屏幕上光晕一个像素都不变
- * （vc135 真机实测）。所以这里改用 {@code RadialGradient} 做柔光：渐变在硬件加速下必定生效，
- * 而且衰减曲线可以自己控制，比模糊更容易调出参考图那种「从笔画渗出去的一团绿气」。</p>
- *
- * <p>做法是两层同心径向渐变：
- * 外层大范围、低透明度，负责整片雾场；内层贴着字形、透明度略高，把紧贴笔画的那一段撑住。
- * 两层都用 SRC_OVER 叠加，字形本身由上层 TextView 画，所以字保持原本的颜色不会被冲淡。</p>
+ * <p>不是往后面垫一块色板，而是把同一个字形模糊两遍画在数字底下：外层是大半径的低透明度
+ * 光雾，内层是小半径的高透明度芯光。数字本身由 TextView 画在上面，于是看起来只有笔画在
+ * 发亮，不会出现一块方形色斑（真机上垫色板会被父容器裁出硬边）。</p>
  */
 public class DigitGlowDrawable extends Drawable {
 
-    /** 外层雾半径（相对字号）。 */
-    private static final float RADIUS_WIDE = 0.62f;
-    /** 内层贴边光半径（相对字号）。 */
-    private static final float RADIUS_INNER = 0.32f;
-
-    /** 外层雾峰值 alpha。 */
-    private static final float ALPHA_WIDE = 125f;
-    /** 内层贴边光峰值 alpha。 */
-    private static final float ALPHA_INNER = 175f;
+    /** 外雾半径（相对字号）。 */
+    private static final float BLUR_WIDE = 0.30f;
+    /** 中层光（相对字号）：贴着笔画的一圈亮色，负责让「在发光」这件事一眼能看出来。 */
+    private static final float BLUR_MID = 0.15f;
+    /** 芯光半径（相对字号）。 */
+    private static final float BLUR_CORE = 0.08f;
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -46,20 +35,20 @@ public class DigitGlowDrawable extends Drawable {
     /** 呼吸强度 0..1，由 Activity 的动画每帧推进。 */
     private float breath = 1f;
 
-    private Shader wideShader;
-    private Shader innerShader;
-    private int shaderColor = 0;
-    private float shaderFor = -1f;
-    private float shaderRadiusFor = -1f;
+    private BlurMaskFilter wideFilter;
+    private BlurMaskFilter midFilter;
+    private BlurMaskFilter coreFilter;
+    private float filtersFor = -1f;
 
     public DigitGlowDrawable() {
-        paint.setStyle(Paint.Style.FILL);
+        // 用左对齐 + 墨迹框自己算偏移：光晕必须和真实字形严丝合缝地重叠，
+        // 只按「行盒」居中会让模糊出来的字整体偏下半格，看起来像重影。
+        paint.setTextAlign(Paint.Align.LEFT);
     }
 
     public void setColor(int value) {
         if (color != value) {
             color = value;
-            shaderColor = 0;
             invalidateSelf();
         }
     }
@@ -74,7 +63,7 @@ public class DigitGlowDrawable extends Drawable {
         textSize = size;
         typeface = tf;
         if (changed) {
-            shaderFor = -1f;
+            filtersFor = -1f;
             invalidateSelf();
         }
     }
@@ -89,66 +78,54 @@ public class DigitGlowDrawable extends Drawable {
 
     /** 光晕要向外扩多少像素（调用方据此给 View 留边，否则会被裁掉）。 */
     public static float pad(float textSize) {
-        return textSize * RADIUS_WIDE;
-    }
-
-    private void ensureShaders(float w, float h) {
-        if (wideShader != null && shaderColor == color
-                && Math.abs(shaderFor - w) < 0.5f && Math.abs(shaderRadiusFor - h) < 0.5f) {
-            return;
-        }
-        final float rw = Math.min(w, h) / 2f;
-        final float ri = rw * (RADIUS_INNER / RADIUS_WIDE);
-        wideShader = buildShader(rw);
-        innerShader = buildShader(ri);
-        shaderColor = color;
-        shaderFor = w;
-        shaderRadiusFor = h;
-    }
-
-    /** 由中心向外连续衰减的径向渐变：中心满强度，边界处精确收到 0，所以不会出现硬边方框。 */
-    private Shader buildShader(float radius) {
-        final int r = (color >> 16) & 0xFF;
-        final int g = (color >> 8) & 0xFF;
-        final int b = color & 0xFF;
-        final int core = Color.argb(255, r, g, b);
-        final int mid = Color.argb(150, r, g, b);
-        final int far = Color.argb(0, r, g, b);
-        return new RadialGradient(0f, 0f, Math.max(1f, radius),
-                new int[]{core, mid, far},
-                new float[]{0f, 0.45f, 1f},
-                Shader.TileMode.CLAMP);
+        return textSize * 0.42f;
     }
 
     @Override
     public void draw(Canvas canvas) {
-        final Rect bounds = getBounds();
-        if (bounds.width() <= 0 || bounds.height() <= 0) {
+        if (glyph.length() == 0 || textSize <= 0f) {
             return;
         }
-        ensureShaders(bounds.width(), bounds.height());
-        final float cx = bounds.exactCenterX();
-        final float cy = bounds.exactCenterY();
+        if (filtersFor != textSize) {
+            wideFilter = new BlurMaskFilter(textSize * BLUR_WIDE, BlurMaskFilter.Blur.NORMAL);
+            midFilter = new BlurMaskFilter(textSize * BLUR_MID, BlurMaskFilter.Blur.NORMAL);
+            coreFilter = new BlurMaskFilter(textSize * BLUR_CORE, BlurMaskFilter.Blur.NORMAL);
+            filtersFor = textSize;
+        }
+        paint.setTypeface(typeface);
+        paint.setTextSize(textSize);
+        paint.setTextAlign(Paint.Align.LEFT);
+        final Rect ink = new Rect();
+        paint.getTextBounds(glyph, 0, glyph.length(), ink);
+        final float cx = getBounds().width() / 2f;
+        final float cy = getBounds().height() / 2f;
+        // 让「墨迹框中心」落在 View 中心，与 Activity 里用墨迹框摆位保持一致。
+        final float penX = cx - (ink.left + ink.right) / 2f;
+        final float baseline = cy - (ink.top + ink.bottom) / 2f;
 
-        // 两层同心柔光。每层 alpha 由 shader 自带的渐变给形状、由 breath 给强度：
-        // 外层走 breath^1.6（谷底收得干净），内层走 breath^1.2（峰值更亮、跟得更紧）。
-        final float wide = (float) Math.pow(breath, 1.6);
-        final float inner = (float) Math.pow(breath, 1.2);
+        final int r = (color >> 16) & 0xFF;
+        final int g = (color >> 8) & 0xFF;
+        final int b = color & 0xFF;
 
-        canvas.save();
-        canvas.translate(cx, cy);
+        // 三个通道都按满亮度算：呼吸的「亮端」直接顶到 alpha 上限，暗端几乎灭掉，
+        // 这样一呼一吸的亮度差才够大（之前暗端留了 0.42，看着像没在呼吸）。
+        final int ra = Math.round(200f * breath);
+        final int ga = Math.round(255f * breath);
+        final int ba = Math.round(255f * breath);
 
-        paint.setShader(wideShader);
-        paint.setAlpha(Math.round(ALPHA_WIDE * wide));
-        canvas.drawCircle(0f, 0f, Math.min(bounds.width(), bounds.height()) / 2f, paint);
+        paint.setMaskFilter(wideFilter);
+        paint.setColor(Color.argb(ra, r, g, b));
+        canvas.drawText(glyph, penX, baseline, paint);
 
-        paint.setShader(innerShader);
-        paint.setAlpha(Math.round(ALPHA_INNER * inner));
-        final float rw = Math.min(bounds.width(), bounds.height()) / 2f;
-        canvas.drawCircle(0f, 0f, rw * (RADIUS_INNER / RADIUS_WIDE), paint);
+        paint.setMaskFilter(midFilter);
+        paint.setColor(Color.argb(ga, r, g, b));
+        canvas.drawText(glyph, penX, baseline, paint);
 
-        paint.setShader(null);
-        canvas.restore();
+        paint.setMaskFilter(coreFilter);
+        paint.setColor(Color.argb(Math.round(240f * breath), r, g, b));
+        canvas.drawText(glyph, penX, baseline, paint);
+
+        paint.setMaskFilter(null);
     }
 
     @Override

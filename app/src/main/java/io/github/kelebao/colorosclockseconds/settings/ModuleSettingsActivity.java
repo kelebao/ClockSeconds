@@ -655,8 +655,8 @@ public final class ModuleSettingsActivity extends Activity {
         mGlowView.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
         mGlowView.setVisibility(View.GONE);
         mGlowView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        // 不开硬件层：光晕现在是 RadialGradient 纯色圆（不依赖 BlurMaskFilter），
-        // 硬件加速下直接画即可，开层反而多一次离屏拷贝。
+        // 光晕走 BlurMaskFilter + drawText（vc103 的形态）：硬件加速下 drawText 上的
+        // MaskFilter 是被完整支持的，直接画即可，开硬件层反而多一次离屏拷贝。
         mGlowView.setLayerType(View.LAYER_TYPE_NONE, null);
         mGlowView.setClipToOutline(false);
         mGlowView.setOutlineProvider(null);
