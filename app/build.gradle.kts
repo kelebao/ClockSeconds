@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.kelebao.colorosclockseconds"
         minSdk = 29
         targetSdk = 35
-        versionCode = 141
-        versionName = "1.2.0-test.20261028-0205"
+        versionCode = 142
+        versionName = "1.2.0-test.20261028-0208"
     }
 
     signingConfigs {

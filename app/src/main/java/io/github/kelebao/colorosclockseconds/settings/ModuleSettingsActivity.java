@@ -673,7 +673,12 @@ public final class ModuleSettingsActivity extends Activity {
 
         previewView = new TextView(this);
         previewView.setTextSize(44f);
+        // 数字用「中粗 + 假粗」两层叠出更敦实的笔画：sans-serif-medium 在展开成 6 位大字时
+        // 笔画偏细、跟状态栏那组粗数字对不上（用户要求「散开的 6 个数字变粗点」）。
+        // 假粗（FakeBold）是在字形上再描一道边，比直接换 Typeface.BOLD 更可控——
+        // 后者会把数字换成另一套字形（数字宽度、字距都会变，等宽 tnum 也会被破坏）。
         previewView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        previewView.getPaint().setFakeBoldText(true);
         // 等宽数字：否则「1」比别的数字窄，秒数一跳整行就左右抖，下划线和发光会跟着抖。
         previewView.setFontFeatureSettings("tnum");
         previewView.setTextColor(text());
