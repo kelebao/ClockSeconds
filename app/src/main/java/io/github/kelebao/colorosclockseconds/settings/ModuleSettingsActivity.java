@@ -176,8 +176,32 @@ public final class ModuleSettingsActivity extends Activity {
             new android.database.ContentObserver(new Handler(Looper.getMainLooper())) {
                 @Override
                 public void onChange(boolean selfChange) {
+                    final boolean wasSeconds = mCfgSeconds;
+                    final int wasLen = previewView == null || previewView.getText() == null
+                            ? 0 : previewView.getText().length();
                     refreshConfigCache();
                     updatePreview();
+                    // 显秒开关被「外部」改掉（用户在状态栏点时间、切磁贴、别的进程代写 secure 表）时，
+                    // 预览文本长度会在 {5 位「02:08」, 8 位「02:08:07」} 之间跳变。展开态的
+                    // 字号 / 字距 / 下划线 / 光晕全是按「当时那一串字符的宽度」反解出来的
+                    // （见 computeExpandedMetrics / measurePerUnitWidth），字符数一变，
+                    // 旧指标就全部失效 —— 真机反馈：「没显秒时设置颜色，再手动点状态栏开显秒，
+                    // 预览卡里的数字就错乱」。这里发现长度变了就整套重排。
+                    // 本页自己写配置时（applyConfig 回调）调用前已手动同步过 mCfgSeconds，
+                    // wasSeconds 与刷新后的值相同，不会误触发。
+                    final int nowLen = previewView == null || previewView.getText() == null
+                            ? 0 : previewView.getText().length();
+                    if (mDigitsExpanded && (wasSeconds != mCfgSeconds || wasLen != nowLen)) {
+                        relayoutExpanded();
+                    }
+                    // 展开态下字号/字距一变，整行可能重新变成两行（虽然设了 singleLine，
+                    // 但 Layout 仍会按宽度换行再被裁掉）。此时画面是「数字错位」，必须收紧重排。
+                    // 注意：这里不能用 this::fitExpandedText —— 方法引用在匿名内部类里解析的是
+                    // ContentObserver 的 this，编译期直接报「找不到符号」（vc143 踩过）。
+                    if (mDigitsExpanded) {
+                        final ModuleSettingsActivity self = ModuleSettingsActivity.this;
+                        previewView.post(() -> self.fitExpandedText());
+                    }
                 }
             };
     private SoundPool mPressPool;
@@ -1499,6 +1523,48 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     /**
+     * 展开态下字符数变了（显秒开关被外部切换：5 位 ⇄ 8 位）时的整套重排。
+     *
+     * <p>为什么必须重排：展开态的排版指标全是「按当前这串字符的宽度反解」出来的 ——
+     * {@link #measurePerUnitWidth()} 量的是预览当前文本每 1px 字号占多宽，
+     * {@link #previewGapCount()} 用的是当前字符总数。字符数从 5 变 8 后如果沿用旧指标，
+     * 字号偏大、字距份数偏少，整行要么超出可用宽度被裁、要么缩成一团挤在一起，
+     * 下划线和光晕也会按旧的字形墨迹落在错位的数字下面（真机反馈：数字「错乱」）。</p>
+     *
+     * <p>所以这里把展开入口处的那套初值原样恢复一遍，再按新文本重新算字号与字距，
+     * 最后重新定位下划线与光晕。</p>
+     */
+    private void relayoutExpanded() {
+        if (!mDigitsExpanded || previewView == null) {
+            return;
+        }
+        mFitGuard = 0;
+        mFitSafety = 0.99f;
+        mSizeShrink = 1f;
+        computeExpandedMetrics();
+        previewView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, mExpandedSizePx);
+        previewView.setLetterSpacing(mExpandedSpacingEm);
+        balanceExpandedWidth();
+        // 点击选中的那一位在长度变化后可能已经越界（8 位 → 5 位时 slot4/slot5 消失），夹回合法范围，
+        // 否则下划线和光晕会挂在一个不存在的字符上，表现为「线不见了 / 光晕停在半空」。
+        final int len = previewView.getText() == null ? 0 : previewView.getText().length();
+        final int maxSlot = len <= 0 ? 0 : len - 1;
+        mSelSlot = Math.max(0, Math.min(mSelSlot, maxSlot));
+        if (mMarkView != null) {
+            mMarkView.setVisibility(View.VISIBLE);
+        }
+        previewView.post(() -> {
+            fitExpandedText();
+            positionMark();
+            positionGlow();
+            if (BuildConfig.DEBUG) {
+                android.util.Log.d("CS-RELAYOUT", "len=" + len + " size=" + Math.round(mExpandedSizePx)
+                        + " spacing=" + mExpandedSpacingEm + " sel=" + mSelSlot);
+            }
+        });
+    }
+
+    /**
      * 展开后的兜底收尾：按「实际行数」校验，还换行就先收紧宽度安全系数（重算字号与字距，
      * 整行仍然铺满），收到 0.80 还会换行才压字号。最多 8 次。
      *
@@ -1514,7 +1580,11 @@ public final class ModuleSettingsActivity extends Activity {
         }
         if (layout.getLineCount() <= 1) {
             mFitGuard = 0;
+            // 字号/字距可能在上一轮被收紧过（含显秒开关切换引发的重排），
+            // 下划线与光晕是按「当前字形墨迹」定位的，这里必须跟着重算一次，
+            // 否则会停在按旧字号算出来的位置上（真机表现为「线跑到数字左边/光晕飘在外面」）。
             positionMark();
+            positionGlow();
             return;
         }
         mFitGuard++;
@@ -1532,6 +1602,44 @@ public final class ModuleSettingsActivity extends Activity {
                     + " spacing=" + mExpandedSpacingEm);
         }
         previewView.post(this::fitExpandedText);
+    }
+
+    /**
+     * 把展开态的（字号, 字距）调成「整行刚好铺满可用宽度」。
+     *
+     * <p>解析式反解出来的值总差一点点（字体 hinting、每字符后多加的一份字距、
+     * 亚像素取整），所以这里再按实测宽度二分校正一次：只调字距不动字号，
+     * 字号是视觉主角，字距只是把剩余空间铺开。</p>
+     */
+    private void balanceExpandedWidth() {
+        if (!mDigitsExpanded || previewView == null || mExpandedSizePx <= 0f) {
+            return;
+        }
+        final CharSequence txt = previewView.getText();
+        if (txt == null || txt.length() == 0) {
+            return;
+        }
+        final int avail = previewAvailWidth();
+        if (avail <= 0) {
+            return;
+        }
+        final android.text.TextPaint tp = new android.text.TextPaint(previewView.getPaint());
+        tp.setTextSize(mExpandedSizePx);
+        tp.setLetterSpacing(0f);
+        final int n = txt.length();
+        final float glyph = tp.measureText(txt.toString());
+        // letterSpacing 的单位是 em（相对字号），每个字符后面各加一份（含最后一个）。
+        final float want = Math.max(0f, (avail - glyph) / (float) n);
+        final float em = Math.max(0f, Math.min(0.90f, want / mExpandedSizePx));
+        if (Math.abs(em - mExpandedSpacingEm) < 0.002f) {
+            return;
+        }
+        mExpandedSpacingEm = em;
+        previewView.setLetterSpacing(em);
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-BALANCE", "n=" + n + " glyph=" + Math.round(glyph) + " avail=" + avail
+                    + " em=" + em);
+        }
     }
 
     /** sp → px。 */
@@ -1859,10 +1967,19 @@ public final class ModuleSettingsActivity extends Activity {
                     + " glow=" + gp[0] + "," + gp[1]
                     + " padL=" + previewPlate.getPaddingLeft() + " padT=" + previewPlate.getPaddingTop());
         }
-        // 浅色主题下直接用深色数字本色做光晕，在白卡上晕出来是一团灰（像脏点）；
-        // 这里把光晕色提亮到中等亮度，读起来才是「这数字在发光」而不是阴影。
+        // 光晕配色（浅色/深色两套完全不同的读法）：
+        //
+        // 深色模式：背景是深紫，光晕要「比背景亮」，所以取数字色并保证够亮，
+        //           靠亮度差说「这个数字在发光」。
+        // 浅色模式：背景是白卡，亮度已经到顶 —— 之前把光晕提亮到 0.55 亮度，
+        //           结果光晕和白底几乎同色，真机看着就是「没光晕」。这里改成
+        //           「数字本色往外晕开一圈」：颜色用数字自己的深色（不做任何提亮），
+        //           半径与透明度由 DigitGlowDrawable.setLightTheme 那套参数负责。
+        // 浅色下光晕 = 数字色**再提亮一档**：数字本身已经被推亮到 0.72，
+        // 光晕要更亮才像「光从数字里透出来」；同色才不会被看成两种颜色。
         final int glowBase = adaptPreviewColor(slotColor(mSelSlot));
-        mGlowDrawable.setColor(night ? glowBase : brightenForDark(glowBase, 0.55f));
+        mGlowDrawable.setLightTheme(!night);
+        mGlowDrawable.setColor(night ? glowBase : lightenForLight(glowBase, 0.92f));
         mGlowView.setVisibility(View.VISIBLE);
     }
 
@@ -1896,7 +2013,7 @@ public final class ModuleSettingsActivity extends Activity {
     /**
      * 预览里的颜色按背景做对比度补偿，保证「预览看到的 = 状态栏显示的」。
      *
-     * <p>浅底：亮色看不清 → 各通道 ×0.42 压暗（与状态栏 adaptColorForBackground 同一套规则）。</p>
+     * <p>浅底：见下方浅色分支——不压暗，改为提亮（vc143）。</p>
      *
      * <p>深底：深色数字（如深绿 #183419）几乎和卡片融成一片，光晕也就没东西可发光 →
      * 向白色混合到亮度 0.30 以上，色相保留、明度提上来（vc66 修）。</p>
@@ -1909,13 +2026,68 @@ public final class ModuleSettingsActivity extends Activity {
         if (Color.luminance(system) >= 0.5f) {      // 深色主题（浅字深底）：提亮到看得见
             return brightenForDark(color, 0.32f);
         }
-        if (Color.luminance(color) <= 0.55f) {      // 本身够深：不用压
+        // 浅色主题（白卡）：不压暗，反而**把数字往亮里推**。
+        //
+        // 白底上「选中位在发光」只能这么读：数字本身接近白色、比卡片更亮，光才像从数字
+        // 里透出来的。以前这里是压暗到 0.42（怕亮色在白底看不清），结果是深棕数字配一圈
+        // 亮光晕 —— 真机看着像「数字下面垫了块脏东西」，光晕也就谈不上效果
+        // （用户反馈「浅色模式下光晕呼吸不够明显」）。
+        // 现在改成提亮到中等偏亮的亮度：既压住白底刺眼，又给光晕留出「比它更亮」的空间。
+        return lightenForLight(color, LIGHT_TEXT_TARGET_LUM);
+    }
+
+    /**
+     * 浅色主题（白卡）上，选中位数字的目标亮度。
+     *
+     * <p>0.72 是实测下来的平衡点：再低就回到「深色数字」，光晕即便更亮也像阴影；
+     * 再高白卡上就快看不见笔画了（白 1.0，卡片本身也是 1.0）。</p>
+     */
+    private static final float LIGHT_TEXT_TARGET_LUM = 0.72f;
+
+    /**
+     * 浅色主题把数字**提亮**到目标亮度（与 {@link #brightenForDark} 同思路，只是用于白底）。
+     *
+     * <p>先抬 HSV 明度（色相不变，黄还是黄、蓝还是蓝）；明度顶到头还达不到目标的
+     * （深蓝、深紫这类），再向白色混一点。饱和度同时略降——纯色到高亮度会显得荧光刺眼，
+     * 压一点饱和度读起来更柔和。</p>
+     */
+    private static int lightenForLight(int color, float targetLum) {
+        if (Color.luminance(color) >= targetLum) {
             return color;
         }
-        final int r = Math.round(((color >> 16) & 0xFF) * 0.42f);
-        final int g = Math.round(((color >> 8) & 0xFF) * 0.42f);
-        final int b = Math.round((color & 0xFF) * 0.42f);
-        return 0xFF000000 | (r << 16) | (g << 8) | b;
+        final float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+        // 先把「明度已经顶到头」的色相换成能提亮的邻居色。
+        //
+        // 纯黄 (255,255,0) 的明度本来就是 1.0，往上推不动，唯一的路是向白色混 —— 混出来
+        // 是一坨发灰的橄榄色，光晕更是直接变白、在白卡上彻底看不见（真机实测：
+        // 黄色在浅色模式下数字变深橄榄、光晕消失）。纯青、纯洋红同理。
+        // 这类色相唯一的出路是**先往暖/深的方向挪一点色相**：黄 → 琥珀，青 → 天蓝。
+        // 用户看到的仍然是「同一个色系」，但在白底上既有颜色又有亮度。
+        if (hsv[2] >= 0.995f && hsv[1] >= 0.6f) {
+            if (hsv[0] >= 40f && hsv[0] <= 75f) {
+                hsv[0] = Math.max(30f, hsv[0] - 22f);        // 黄 → 琥珀/橙金
+            } else if (hsv[0] >= 160f && hsv[0] <= 200f) {
+                hsv[0] = 205f;                               // 纯青 → 天蓝
+            } else if (hsv[0] >= 285f && hsv[0] <= 325f) {
+                hsv[0] = 330f;                               // 纯洋红 → 玫红
+            }
+            hsv[2] = 0.92f;
+            color = Color.HSVToColor(hsv);
+        }
+        Color.colorToHSV(color, hsv);
+        int best = color;
+        for (int i = 0; i < 24 && hsv[2] < 1f; i++) {
+            hsv[2] = Math.min(1f, hsv[2] * 1.22f + 0.015f);
+            best = Color.HSVToColor(hsv);
+            if (Color.luminance(best) >= targetLum) {
+                return best;
+            }
+        }
+        final float lum = Color.luminance(best);
+        float t = (targetLum - lum) / (1f - Math.min(0.999f, lum));
+        t = Math.min(0.90f, Math.max(0f, t));
+        return blendColor(best, 0xFFFFFFFF, t);
     }
 
     /**
@@ -1974,7 +2146,10 @@ public final class ModuleSettingsActivity extends Activity {
         if (night) {
             return blendColor(color, DARK_CARD, 0.58f);
         }
-        return (color & 0x00FFFFFF) | 0x59000000;   // 35% 不透明度
+        // 浅色主题的问题和深色相反：选中位现在被提亮到接近白卡，未选中位如果只降到 35%
+        // 不透明度，两者在亮度上会撞在一起，「哪一位被选中」反而看不出来。
+        // 这里改成向**深色方向**跨一步（混 62% 的系统文字色），一眼能分出「亮的那位是选中的」。
+        return blendColor(color, text(), 0.62f);
     }
 
     /** 给「正在编辑的那一位」设色（-1 = 跟随系统），写 Secure 设置并由 SystemUI 立即生效。 */
