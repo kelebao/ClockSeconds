@@ -34,7 +34,6 @@ import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
 import io.github.kelebao.colorosclockseconds.CloseCrossView;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
 import io.github.kelebao.colorosclockseconds.HsvPickerView;
-import io.github.kelebao.colorosclockseconds.PreviewDropDrawable;
 import io.github.kelebao.colorosclockseconds.DigitGlowDrawable;
 import io.github.kelebao.colorosclockseconds.SlantCardDrawable;
 import io.github.kelebao.colorosclockseconds.UnderlineDrawable;
@@ -160,11 +159,6 @@ public final class ModuleSettingsActivity extends Activity {
     private View mGlowView;
     private DigitGlowDrawable mGlowDrawable;
     private android.animation.ValueAnimator mGlowAnim;
-    /** 从卡片顶端滴下来、落在选中数字上就消失的那滴水（画在数字上层）。 */
-    private View mDropView;
-    private PreviewDropDrawable mDropDrawable;
-    private android.animation.ValueAnimator mDropAnim;
-    private final Handler mDropHandler = new Handler(Looper.getMainLooper());
     /** 预览卡下方「切换手势 / 小时颜色」两张统计卡（展开取色时让位隐藏）。 */
     private View mStatsRow;
     /** 数字颜色卡内的部件：色块网格、正在编辑行、摘要行、开关、完成胶囊。 */
@@ -702,26 +696,7 @@ public final class ModuleSettingsActivity extends Activity {
         });
         previewPlate.addView(previewView);
 
-        // 水滴：铺满整个预览区、画在文字上层（从卡片顶端滴下来要看得见）。
-        mDropView = new View(this);
-        // 负 topMargin：让水滴能从预览区上沿之外开始下落（数字贴着预览区顶部，
-        // 不留这段就会「凭空出现在数字头上」）。父容器要一起关掉裁剪，否则上沿会被削平。
-        final FrameLayout.LayoutParams dropLp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        dropLp.topMargin = -dp(20);
-        mDropView.setLayoutParams(dropLp);
-        previewPlate.setClipChildren(false);
-        // 只关 clipChildren 还会被 padding 盒裁掉（水滴上半截被削平），padding 裁剪也要关。
-        previewPlate.setClipToPadding(false);
-        mDropView.setVisibility(View.GONE);
-        mDropView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        mDropDrawable = new PreviewDropDrawable();
-        mDropView.setBackground(mDropDrawable);
-        previewPlate.addView(mDropView);
-
         card.addView(previewPlate);
-        // 水滴要从卡片顶端开始掉，必须让预览区能画到卡片上沿的留白里（否则只露出下半截）。
-        card.setClipChildren(false);
 
         // 「网络时间」行 + 关闭圆钮共用一格：展开取色时网络时间隐藏、X 正好落在它的位置上
         // （用户指定）。两者叠在同一个 FrameLayout 里，行高由网络时间决定，X 不会额外撑高卡片，
@@ -1134,7 +1109,6 @@ public final class ModuleSettingsActivity extends Activity {
             mMarkView.setVisibility(View.GONE);
         }
         stopGlowLoop();
-        stopDropLoop();
         // 先落回与其他位同一条基线，再缩回默认大小（用户要求：别一边缩一边降）。
         animateLift(false, () -> animateDigits(false));
     }
@@ -1432,7 +1406,6 @@ public final class ModuleSettingsActivity extends Activity {
                     positionMark();     // 数字落位后才画下划线、摆光晕
                     previewView.post(ModuleSettingsActivity.this::fitExpandedText);   // 兜一层：真换行了就收字距/字号
                     startGlowLoop();    // 再开始呼吸
-                    startDropLoop();    // 数字落位后开始滴水
                     // 摊开之后再抬起选中那一位（用户要求：先拉开间隙，再抬高）。
                     animateLift(true, null);
                 }
@@ -1589,7 +1562,6 @@ public final class ModuleSettingsActivity extends Activity {
             previewView.post(this::positionMark);
         }
         startGlowLoop();           // 手一点就挪光晕（已经在呼吸就不打断节拍）
-        dropOnce();                // 手一点就滴一次，反馈更直接
     }
 
     /** 选中位数字在 previewPlate 坐标系里的墨迹框（下划线与水滴落点都靠它定位）。 */
@@ -1751,106 +1723,6 @@ public final class ModuleSettingsActivity extends Activity {
         if (mGlowView != null) {
             mGlowView.setVisibility(View.GONE);
         }
-    }
-
-    // ------------------------------------------------------------------
-    // 水滴：从卡片顶端滴下来，落在选中数字上就消失，隔一会儿再滴一滴
-    // ------------------------------------------------------------------
-
-    private final Runnable mDropTick = this::dropOnce;
-
-    /** 展开后稍等一下再开始滴水（等数字落位）。 */
-    private void startDropLoop() {
-        if (!mDigitsExpanded || mDropView == null) {
-            return;
-        }
-        stopDropLoop();
-        mDropHandler.postDelayed(mDropTick, 520L);
-    }
-
-    private void stopDropLoop() {
-        mDropHandler.removeCallbacks(mDropTick);
-        if (mDropAnim != null) {
-            mDropAnim.cancel();
-            mDropAnim = null;
-        }
-        if (mDropDrawable != null) {
-            mDropDrawable.setDrop(0f, 0f, 0f);
-            mDropDrawable.setSplash(-1f);
-        }
-        if (mDropView != null) {
-            mDropView.setVisibility(View.GONE);
-        }
-    }
-
-    /** 滴一滴：从预览区最上沿自由落体到选中数字的顶边，落地瞬间消失、只留一圈很快散开的水花。 */
-    private void dropOnce() {
-        if (!mDigitsExpanded || mDropView == null || mDropDrawable == null) {
-            return;
-        }
-        if (!measureSelInk() || !glowAllowed()) {
-            return;             // 跟随系统色时不滴水（与光晕规则一致）
-        }
-        final float cx = mSelInk.centerX() - previewPlate.getPaddingLeft();
-        // 目标：选中数字的墨迹顶边（数字被抬高了，这里同样减掉 lift，落点才贴着字形）。
-        // 坐标都用「水滴 View 自己的空间」：这个 View 被 -dp(20) 顶出预览区上沿，
-        // 所以 y=0 就是预览区上沿再往上 20dp 处（数字贴着顶，只能从这儿开始掉）。
-        final float overhang = dp(20);
-        final float targetY = mSelInk.top - previewPlate.getPaddingTop() - mLiftNow - dp(3) + overhang;
-        // 从卡片顶端露出：水滴 View 被顶出预览区上沿 dp(20)，
-        // 加 dp(4) 让起点落在卡片上沿附近（card 关掉 clipChildren 才看得见这一段）。
-        final float startY = dp(4);
-        final float radius = dp(5);
-        if (targetY <= startY + radius) {
-            mDropHandler.postDelayed(mDropTick, 1200L);
-            return;
-        }
-        mDropDrawable.setColor(adaptPreviewColor(slotColor(mSelSlot)));
-        mDropView.setVisibility(View.VISIBLE);
-        if (BuildConfig.DEBUG) {
-            android.util.Log.d("CS-DROP", "drop cx=" + Math.round(cx) + " y=" + Math.round(startY)
-                    + "->" + Math.round(targetY) + " plate=" + previewPlate.getWidth() + "x"
-                    + previewPlate.getHeight() + " ink=" + mSelInk);
-        }
-
-        final ValueAnimator fall = ValueAnimator.ofFloat(0f, 1f);
-        fall.setDuration(560L);
-        fall.setInterpolator(new android.view.animation.AccelerateInterpolator(1.6f));
-        fall.addUpdateListener(a -> {
-            final float t = (float) a.getAnimatedValue();
-            mDropDrawable.setSplash(-1f);
-            mDropDrawable.setDrop(cx, startY + (targetY - startY) * t, radius);
-        });
-        fall.addListener(new android.animation.AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(android.animation.Animator animation) {
-                // 滴到数字上：水滴瞬间收掉，同时散开一圈水花。
-                final ValueAnimator splash = ValueAnimator.ofFloat(0f, 1f);
-                splash.setDuration(280L);
-                splash.addUpdateListener(a -> {
-                    final float t = (float) a.getAnimatedValue();
-                    mDropDrawable.setDrop(cx, targetY, radius * (1f - t));
-                    mDropDrawable.setSplash(t);
-                });
-                splash.addListener(new android.animation.AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(android.animation.Animator animation) {
-                        mDropDrawable.setDrop(0f, 0f, 0f);
-                        mDropDrawable.setSplash(-1f);
-                        if (mDropView != null) {
-                            mDropView.setVisibility(View.GONE);
-                        }
-                        if (mDigitsExpanded) {
-                            mDropHandler.postDelayed(mDropTick, 1100L);
-                        }
-                    }
-                });
-                mDropAnim = splash;
-                splash.start();
-            }
-        });
-        mDropAnim = fall;
-        fall.start();
     }
 
     /**
