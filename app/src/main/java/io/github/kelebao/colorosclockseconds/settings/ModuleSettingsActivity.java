@@ -31,9 +31,11 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import io.github.kelebao.colorosclockseconds.ArcTickDrawable;
 import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
+import io.github.kelebao.colorosclockseconds.CloseCrossView;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
-import io.github.kelebao.colorosclockseconds.DigitGlowDrawable;
 import io.github.kelebao.colorosclockseconds.HsvPickerView;
+import io.github.kelebao.colorosclockseconds.PreviewDropDrawable;
+import io.github.kelebao.colorosclockseconds.UnderlineDrawable;
 import io.github.kelebao.colorosclockseconds.WavyLineView;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ForegroundColorSpan;
@@ -145,18 +147,21 @@ public final class ModuleSettingsActivity extends Activity {
     private int mFitGuard;
     /** 正在编辑的数字位（0..5 = 时十/时个/分十/分个/秒十/秒个）。 */
     private int mSelSlot;
-    /** 选中位背后的呼吸光晕（普通 View + DigitGlowDrawable）。 */
-    private View mGlowView;
-    private DigitGlowDrawable mGlowDrawable;
-    /** 当前光晕的颜色（换位取色时才重建 drawable）。 */
-    private int mGlowColor = Integer.MIN_VALUE;
+    /** 选中数字下面那根短色线（普通 View + UnderlineDrawable）。 */
+    private View mMarkView;
+    private UnderlineDrawable mMarkDrawable;
+    /** 从卡片顶端滴下来、滴在选中数字上就消失的水滴。 */
+    private View mDropView;
+    private PreviewDropDrawable mDropDrawable;
+    private android.animation.ValueAnimator mDropAnim;
+    private final Handler mDropHandler = new Handler(Looper.getMainLooper());
     /** 预览卡下方「切换手势 / 小时颜色」两张统计卡（展开取色时让位隐藏）。 */
     private View mStatsRow;
     /** 数字颜色卡内的部件：色块网格、正在编辑行、摘要行、开关、完成胶囊。 */
     private GridLayout mDigitGrid;
     private TextView mDigitEditingView;
     private TextView mDigitSummaryView;
-    private TextView mDigitDoneView;
+    private View mDigitDoneView;
     private Switch mDigitSwitch;
     private boolean mObserverOk = false;
     private final android.database.ContentObserver mCfgObserver =
@@ -251,8 +256,6 @@ public final class ModuleSettingsActivity extends Activity {
     private View mActivationCard;
     /** 卡片列根容器：展开/收起时对它做 ChangeBounds 过渡，下面的卡片不跳。 */
     private LinearLayout mColumn;
-    /** 展开态下「正在取色的那一位」是否放大强调（设完颜色立刻复原）。 */
-    private boolean mDigitEmphasized;
     private final Handler mPingHandler = new Handler(Looper.getMainLooper());
     private final Runnable mPingTimeout = () -> setActiveState(ACTIVE_NO, null, false);
 
@@ -283,11 +286,6 @@ public final class ModuleSettingsActivity extends Activity {
                 // 关闭小时颜色时，色块光晕呼吸也停止（强度归零、光晕不绘制）。
                 mBreathSwatch.setBreath(ClockSecondsConfig.isHourColorEnabled(getContentResolver())
                         ? ClockSecondsConfig.breathIntensity(now) : 0f);
-            }
-            // 逐位取色时：选中数字的光晕跟着呼吸（起始就有弱光晕，不是从 0 开始）。
-            if (mDigitsExpanded && mGlowDrawable != null && mGlowView != null
-                    && mGlowView.getVisibility() == View.VISIBLE) {
-                mGlowDrawable.setBreath(ClockSecondsConfig.breathIntensity(now));
             }
             // 预览卡滚出屏幕时跳过弧的高频刷新（省电/省 CPU）；色块光晕照常（它可能在视口内）。
             if (mArcTicks != null
@@ -490,10 +488,13 @@ public final class ModuleSettingsActivity extends Activity {
     // 页面骨架
     // ==================================================================
 
-    /** 展开态字距（em）。数字之间拉得更开。 */
-    private static final float EXPAND_SPACING = 0.12f;
-    /** 选中数字放大倍数。 */
-    private static final float SEL_SCALE = 1.22f;
+    /** 展开态的目标字距（em）：先按这个间隙解字号，剩余宽度再全部补给间隙（铺满整卡）。 */
+    private static final float EXPAND_GAP_EM = 0.14f;
+    /** 展开态预览区上内边距（dp）：数字整体下移，腾出空间让水滴从上沿外落进来。 */
+    private static final int EXPAND_TOP_INSET_DP = 20;
+    /** 展开态实测出的字号（px）与字距（em），由 computeExpandedMetrics() 计算。 */
+    private float mExpandedSizePx;
+    private float mExpandedSpacingEm = EXPAND_GAP_EM;
     /** 布局变化平滑时长。 */
     private static final long LAYOUT_ANIM_MS = 240L;
 
@@ -624,12 +625,12 @@ public final class ModuleSettingsActivity extends Activity {
         previewPlate = new FrameLayout(this);
         previewPlate.setPadding(dp(22), dp(2), dp(22), dp(14));
 
-        // 选中数字的呼吸光晕：先加 = 画在文字下面；默认隐藏，展开取色时才出现。
-        mGlowView = new View(this);
-        mGlowView.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
-        mGlowView.setVisibility(View.GONE);
-        mGlowView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        previewPlate.addView(mGlowView);
+        // 选中数字下面那根短色线：先加 = 画在文字下层；默认隐藏，展开取色时才出现。
+        mMarkView = new View(this);
+        mMarkView.setLayoutParams(new FrameLayout.LayoutParams(0, 0));
+        mMarkView.setVisibility(View.GONE);
+        mMarkView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        previewPlate.addView(mMarkView);
 
         previewView = new TextView(this);
         previewView.setTextSize(44f);
@@ -654,15 +655,31 @@ public final class ModuleSettingsActivity extends Activity {
         });
         previewView.setClickable(true);   // 无障碍：让 TalkBack 识别为可点击项
         previewPlate.addView(previewView);
+
+        // 水滴：铺满整个预览区、画在文字上层（从顶上滴下来要看得见）。
+        mDropView = new View(this);
+        // 负 topMargin + 关掉父容器裁剪：让水滴可以从预览区上沿之外开始下落，
+        // 否则它一出现就已经在框内、只剩最后 60px 可见（看起来像「凭空冒出来」）。
+        mDropView.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mDropView.setVisibility(View.GONE);
+        mDropView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        mDropDrawable = new PreviewDropDrawable();
+        mDropView.setBackground(mDropDrawable);
+        previewPlate.addView(mDropView);
+
         card.addView(previewPlate);
 
-        // 展开取色时才出现的「完成」胶囊：点一下收起，下面两张统计卡回归。
-        mDigitDoneView = pillButton(getString(R.string.settings_digit_done));
-        LinearLayout.LayoutParams doneLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        // 展开取色时才出现的「关闭」圆钮（X），位置在「网络时间」那行上方：点一下收起。
+        mDigitDoneView = new CloseCrossView(this, accent(), 0xFFFFFFFF);
+        // 卡片背景上叠着半圆刻度弧：弧顶在数字下面，弧内（底部中间）是空白，所以把圆钮
+        // 放在弧内偏下的位置，既不压刻度、也正好像「网络时间」这行的上方。
+        LinearLayout.LayoutParams doneLp = new LinearLayout.LayoutParams(dp(34), dp(34));
         doneLp.gravity = Gravity.CENTER_HORIZONTAL;
+        doneLp.topMargin = dp(26);
         mDigitDoneView.setLayoutParams(doneLp);
         mDigitDoneView.setVisibility(View.GONE);
+        mDigitDoneView.setContentDescription(getString(R.string.settings_digit_done));
         mDigitDoneView.setOnClickListener(v -> collapseDigits());
         card.addView(mDigitDoneView);
 
@@ -960,6 +977,10 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         mDigitsExpanded = true;
+        // 展开后预览区上方多留一段空白：水滴要从上沿外滴下来，没有这段空间就只看得见最后几十像素。
+        if (previewPlate != null) {
+            previewPlate.setPadding(dp(22), dp(EXPAND_TOP_INSET_DP), dp(22), dp(14));
+        }
         if (mStatsRow != null) {
             mStatsRow.setVisibility(View.GONE);
         }
@@ -970,9 +991,10 @@ public final class ModuleSettingsActivity extends Activity {
             previewHintView.setVisibility(View.INVISIBLE);
         }
         mFitGuard = 0;
-        if (mGlowView != null) {
-            mGlowView.setVisibility(View.GONE);   // 展开过程中先不亮，完全展开后再点亮
+        if (mMarkView != null) {
+            mMarkView.setVisibility(View.GONE);   // 展开动画期间先不画线，等数字落位
         }
+        stopDropLoop();
         beginSmoothLayout();
         animateDigits(true);
         refreshDigitSwatches();
@@ -986,7 +1008,9 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         mDigitsExpanded = false;
-        mDigitEmphasized = false;
+        if (previewPlate != null) {
+            previewPlate.setPadding(dp(22), dp(2), dp(22), dp(14));
+        }
         beginSmoothLayout();
         if (mStatsRow != null) {
             mStatsRow.setVisibility(View.VISIBLE);
@@ -994,13 +1018,14 @@ public final class ModuleSettingsActivity extends Activity {
         if (mDigitDoneView != null) {
             mDigitDoneView.setVisibility(View.GONE);
         }
-        if (mGlowView != null) {
-            mGlowView.setVisibility(View.GONE);
+        if (mMarkView != null) {
+            mMarkView.setVisibility(View.GONE);
         }
+        stopDropLoop();
         animateDigits(false);
     }
 
-    /** 展开/收起动画：字号 44sp → 刚好占满卡片宽度的最大字号，字距 0 → EXPAND_SPACING（约 260ms，数字像被拉开）。 */
+    /** 展开/收起动画：字号 44sp → 铺满卡片的最大字号，字距 0 → 铺满后的最大间隙（约 260ms，数字被拉开）。 */
     private void animateDigits(final boolean expand) {
         if (previewView == null) {
             return;
@@ -1009,9 +1034,12 @@ public final class ModuleSettingsActivity extends Activity {
         // 这样来回切换不会跳变。
         final float base = sp(44);
         final float from = previewView.getTextSize();
-        final float to = expand ? expandedTextSizePx() : base;
+        if (expand) {
+            computeExpandedMetrics();   // 先算出「铺满整卡 + 间隙最大化」的字号和字距
+        }
+        final float to = expand ? mExpandedSizePx : base;
         final float spacingFrom = previewView.getLetterSpacing();
-        final float spacingTo = expand ? EXPAND_SPACING : 0f;
+        final float spacingTo = expand ? mExpandedSpacingEm : 0f;
         ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
         anim.setDuration(260L);
         anim.setInterpolator(new android.view.animation.DecelerateInterpolator());
@@ -1025,39 +1053,74 @@ public final class ModuleSettingsActivity extends Activity {
             @Override
             public void onAnimationEnd(android.animation.Animator animation) {
                 if (expand && mDigitsExpanded) {
-                    positionGlow();
+                    positionMark();     // 数字落位后才画下划线
+                    startDropLoop();    // 再开始滴水
                 }
             }
         });
         anim.start();
     }
 
-    /**
-     * 展开态的字号（px）：按预览卡可用宽度解出「8 个字符 + 字距刚好放得下」的最大值。
-     * 固定 70sp 在 411dp 宽的机器上会把「秒」挤到第二行，所以按实测字宽反推。
-     */
-    private float expandedTextSizePx() {
-        final float maxPx = sp(70);
-        if (previewView == null) {
-            return maxPx;
-        }
-        final int avail = previewView.getWidth()
-                - previewView.getPaddingLeft() - previewView.getPaddingRight();
-        if (avail <= 0) {
-            return sp(52);
-        }
-        // 同样用副本：不要动 TextView 自己的 TextPaint（见 positionGlow 的注释）。
+    /** 预览文本「每 1px 字号」占的宽度（实测，避免不同机型字体宽度偏差）。 */
+    private float measurePerUnitWidth() {
+        // 必须用副本：previewView.getPaint() 是 TextView 自己的 TextPaint。
         final android.text.TextPaint tp = new android.text.TextPaint(previewView.getPaint());
         tp.setTextSize(100f);
+        tp.setLetterSpacing(0f);   // 量「纯字形宽度」，字距由调用方自己加，否则会重复计算
         final CharSequence txt = previewView.getText();
         final String sample = (txt == null || txt.length() == 0) ? "00:00:00" : txt.toString();
-        final float perUnit = tp.measureText(sample) / 100f;   // 每 1px 字号对应的宽度
-        final int gaps = Math.max(0, sample.length() - 1);
-        // 0.90：Layout 里的字距/字形留白比 measureText 略宽，再加上「选中位放大 1.22 倍」，
-        // 留的余量比原来更多，避免「秒」被挤到第二行；
-        // 万一仍然换行，expandDigits 末尾的 fitExpandedText() 会再按实测行数收一次。
-        final float size = 0.90f * avail / (perUnit + EXPAND_SPACING * gaps);
-        return Math.max(sp(38), Math.min(maxPx, size));
+        return Math.max(0.1f, tp.measureText(sample) / 100f);
+    }
+
+    /** 预览区可用宽度（px）。 */
+    private int previewAvailWidth() {
+        return previewView.getWidth()
+                - previewView.getPaddingLeft() - previewView.getPaddingRight();
+    }
+
+    /**
+     * 字距要乘的份数。
+     *
+     * <p>Android 的 letterSpacing 是「每个字符后面都加一份」，最后一个字符后面也加，
+     * 所以这里必须用字符总数、不能用「间隙数 = 字符数 - 1」。少算这一份会让整行比可用
+     * 宽度多出一个字距，正好触发换行（vc41 在 PHP110 上「10:18:1 / 3」两行的事故）。</p>
+     */
+    private int previewGapCount() {
+        final CharSequence txt = previewView.getText();
+        return Math.max(1, txt == null ? 8 : txt.length());
+    }
+
+    /**
+     * 展开态排版：数字间隙最大化 + 整行刚好铺满卡片可用宽度。
+     *
+     * <p>先假设间隙 = {@link #EXPAND_GAP_EM} 个字号宽，反解出字号；字号被上下限夹住后，
+     * 剩余宽度全部补给间隙（avail = size × (每 px 字宽 + 字距 × 间隙数)）。</p>
+     */
+    private void computeExpandedMetrics() {
+        if (previewView == null) {
+            return;
+        }
+        final int avail = previewAvailWidth();
+        final int gaps = previewGapCount();
+        if (avail <= 0) {
+            mExpandedSizePx = sp(52);
+            mExpandedSpacingEm = EXPAND_GAP_EM;
+            return;
+        }
+        final float perUnit = measurePerUnitWidth();
+        // 留 3% 余量：字体 hinting、亚像素取整、Layout 在行尾多算的一份字距都会让实测
+        // 比解析式宽一点，正好压线就会换行。
+        final float fit = avail * 0.97f;
+        float size = fit / (perUnit + EXPAND_GAP_EM * gaps);
+        size = Math.max(sp(34), Math.min(sp(58), size));
+        mExpandedSizePx = size;
+        // 铺满整卡：把（可能剩下的）宽度全部灌进间隙。
+        mExpandedSpacingEm = Math.max(0f, Math.min(0.90f, (fit / size - perUnit) / gaps));
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-FIT", "avail=" + avail + " gaps=" + gaps + " perUnit=" + perUnit
+                    + " size=" + Math.round(size) + " spacing=" + mExpandedSpacingEm
+                    + " min34=" + Math.round(sp(34)) + " max58=" + Math.round(sp(58)));
+        }
     }
 
     /**
@@ -1073,12 +1136,23 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         if (layout.getLineCount() <= 1) {
-            positionGlow();
+            positionMark();
             return;
         }
         mFitGuard++;
-        final float next = Math.max(sp(38), previewView.getTextSize() * 0.92f);
+        final float next = Math.max(sp(34), previewView.getTextSize() * 0.90f);
         previewView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, next);
+        // 字号收小后把省下来的宽度全部还给间隙，整行仍然铺满卡片。
+        final float avail = previewAvailWidth() * 0.97f;
+        if (avail > 0) {
+            final int gaps = previewGapCount();
+            previewView.setLetterSpacing(Math.max(0f, Math.min(0.90f,
+                    (avail / next - measurePerUnitWidth()) / gaps)));
+        }
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-LAYOUT", "fitExpandedText retry=" + mFitGuard
+                    + " size=" + Math.round(next) + " spacing=" + previewView.getLetterSpacing());
+        }
         previewView.post(this::fitExpandedText);
     }
 
@@ -1110,75 +1184,179 @@ public final class ModuleSettingsActivity extends Activity {
             return;   // 点在冒号或空白处：保持当前选中位
         }
         mSelSlot = slot;
-        mDigitEmphasized = true;   // 选中的这一位先放大；设完颜色会复原
         refreshDigitSwatches();
-        updatePreview();           // 放大靠 RelativeSizeSpan，要重排一次
+        updatePreview();           // 未选中位变淡，要重排一次
         if (previewView != null) {
-            previewView.post(this::positionGlow);
+            previewView.post(this::positionMark);
         }
+        dropOnce();                // 手一点就滴一次，反馈更直接
     }
 
+    /** 选中位数字在 previewPlate 坐标系里的墨迹框（下划线与水滴落点都靠它定位）。 */
+    private final android.graphics.RectF mSelInk = new android.graphics.RectF();
+
     /**
-     * 把光晕对齐到「正在取色的那一位数字」的墨迹上。
+     * 算出「正在取色的那一位数字」的墨迹框。
      *
-     * <p>光晕画的是同一个字形的模糊副本（见 DigitGlowDrawable），所以这里必须用
-     * Layout 的笔位 + 行基线算出该字的墨迹中心，View 大小按墨迹 + 模糊外扩留够；
-     * 位置或字形一变就重新 setBounds（展开动画每帧都会走这里）。</p>
+     * <p>必须用 Layout 的笔位 + 行基线算，字距（letterSpacing）会改变笔位，所以每次
+     * 字号/字距/文本一变都要重算，不能缓存。</p>
+     *
+     * @return false 表示当前算不出来（未展开 / 文本为空 / 位下标越界）
      */
-    private void positionGlow() {
-        if (mGlowView == null || previewView == null || previewPlate == null || !mDigitsExpanded) {
-            return;
+    private boolean measureSelInk() {
+        if (previewView == null || previewPlate == null) {
+            return false;
         }
         final android.text.Layout layout = previewView.getLayout();
         final CharSequence text = previewView.getText();
-        if (layout == null || text == null) {
-            return;
+        if (layout == null || text == null || text.length() == 0) {
+            return false;
         }
         final int idx = indexOfSlot(mSelSlot);
         if (idx < 0 || idx >= text.length()) {
-            mGlowView.setVisibility(View.GONE);
-            return;
-        }
-        if (slotColor(mSelSlot) == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-            // 跟随系统 = 不发光：这一位取的是系统文字色，光晕反而显脏。
-            mGlowView.setVisibility(View.GONE);
-            return;
+            return false;
         }
         final int line = layout.getLineForOffset(idx);
         final String glyph = String.valueOf(text.charAt(idx));
-        final float size = previewView.getTextSize() * (mDigitEmphasized ? SEL_SCALE : 1f);
         // 必须用 paint 的【副本】量墨迹：previewView.getPaint() 返回的是 TextView 内部那个
-        // TextPaint 实例，直接 setTextSize() 会(e1) 改掉预览本身的字号、(e2) 让下一帧
-        // getTextSize() 读到放大后的值再乘 SEL_SCALE —— 每次刷新乘 1.22，几百毫秒内
-        // 指数暴涨、数字换行、卡片撑爆屏幕（vc39 真机事故）。
+        // TextPaint 实例，直接 setTextSize() 会改掉预览本身的字号 —— 每次刷新乘一个系数，
+        // 几百毫秒内指数暴涨、数字换行、卡片撑爆屏幕（vc39 真机事故）。
         final TextPaint tp = new TextPaint(previewView.getPaint());
-        tp.setTextSize(size);
         final Rect ink = new Rect();
         tp.getTextBounds(glyph, 0, glyph.length(), ink);
-        // 笔位 + 行基线 → 该字墨迹中心的绝对坐标（相对 previewPlate）
         final float penX = previewView.getLeft() + previewView.getTotalPaddingLeft()
                 + layout.getPrimaryHorizontal(idx);
         final float baseline = previewView.getTop() + previewView.getTotalPaddingTop()
                 + layout.getLineBaseline(line);
-        final float cx = penX + (ink.left + ink.right) / 2f;
-        final float cy = baseline + (ink.top + ink.bottom) / 2f;
-        final float pad = DigitGlowDrawable.blurExtent(size);
-        final int w = Math.max(dp(8), Math.round(ink.width() + pad * 2f));
-        final int h = Math.max(dp(8), Math.round(ink.height() + pad * 2f));
-        final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mGlowView.getLayoutParams();
+        mSelInk.set(penX + ink.left, baseline + ink.top, penX + ink.right, baseline + ink.bottom);
+        return true;
+    }
+
+    /** 把短色线摆到选中数字下面（宽度取字形的 62%，位置随字号/字距变化重算）。 */
+    private void positionMark() {
+        if (mMarkView == null || previewView == null || previewPlate == null || !mDigitsExpanded) {
+            return;
+        }
+        if (!measureSelInk()) {
+            mMarkView.setVisibility(View.GONE);
+            return;
+        }
+        final int color = adaptPreviewColor(slotColor(mSelSlot));
+        if (mMarkDrawable == null) {
+            mMarkDrawable = new UnderlineDrawable(color);
+            mMarkView.setBackground(mMarkDrawable);
+        } else {
+            mMarkDrawable.setColor(color);
+        }
+        final int w = Math.max(dp(10), Math.round(mSelInk.width() * 0.85f));
+        final int h = Math.max(dp(2), dp(3));
+        int top = Math.round(mSelInk.bottom + dp(10));
+        final int plateH = previewPlate.getHeight();
+        if (plateH > 0) {
+            top = Math.min(top, plateH - h - dp(2));
+        }
+        final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mMarkView.getLayoutParams();
         lp.width = w;
         lp.height = h;
-        lp.leftMargin = Math.round(cx - w / 2f) - previewPlate.getPaddingLeft();
-        lp.topMargin = Math.round(cy - h / 2f) - previewPlate.getPaddingTop();
-        mGlowView.setLayoutParams(lp);
-        final int color = adaptPreviewColor(slotColor(mSelSlot));
-        if (mGlowDrawable == null || mGlowColor != color) {
-            mGlowColor = color;
-            mGlowDrawable = new DigitGlowDrawable(color);
-            mGlowView.setBackground(mGlowDrawable);
+        lp.leftMargin = Math.round(mSelInk.centerX() - w / 2f) - previewPlate.getPaddingLeft();
+        lp.topMargin = top - previewPlate.getPaddingTop();
+        mMarkView.setLayoutParams(lp);
+        mMarkView.setVisibility(View.VISIBLE);
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-MARK", "mark slot=" + mSelSlot + " ink=" + mSelInk
+                    + " lp=" + w + "x" + h + "@" + lp.leftMargin + "," + lp.topMargin
+                    + " plate=" + previewPlate.getWidth() + "x" + previewPlate.getHeight());
         }
-        mGlowDrawable.setGlyph(glyph, size, previewView.getTypeface());
-        mGlowView.setVisibility(View.VISIBLE);
+    }
+
+    // ------------------------------------------------------------------
+    // 水滴：从预览卡顶端正中滴下来，落在选中数字上就消失，隔一会儿再滴一滴
+    // ------------------------------------------------------------------
+
+    private final Runnable mDropTick = this::dropOnce;
+
+    /** 展开后稍等一下再开始滴水（等动画落位）。 */
+    private void startDropLoop() {
+        if (!mDigitsExpanded || mDropView == null) {
+            return;
+        }
+        stopDropLoop();
+        mDropHandler.postDelayed(mDropTick, 620L);
+    }
+
+    private void stopDropLoop() {
+        mDropHandler.removeCallbacks(mDropTick);
+        if (mDropAnim != null) {
+            mDropAnim.cancel();
+            mDropAnim = null;
+        }
+        if (mDropDrawable != null) {
+            mDropDrawable.setDrop(0f, 0f, 0f);
+            mDropDrawable.setSplash(-1f);
+        }
+        if (mDropView != null) {
+            mDropView.setVisibility(View.GONE);
+        }
+    }
+
+    /** 滴一滴：自由落体到选中数字的顶边，落地瞬间消失、只留一圈很快散开的水花。 */
+    private void dropOnce() {
+        if (!mDigitsExpanded || mDropView == null || mDropDrawable == null) {
+            return;
+        }
+        if (!measureSelInk()) {
+            return;
+        }
+        final float cx = mSelInk.centerX() - previewPlate.getPaddingLeft();
+        final float targetY = mSelInk.top - previewPlate.getPaddingTop() - dp(4);
+        final float startY = -dp(18);
+        final float radius = dp(8);
+        mDropDrawable.setColor(adaptPreviewColor(slotColor(mSelSlot)));
+        mDropView.setVisibility(View.VISIBLE);
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-DROP", "drop cx=" + Math.round(cx) + " y=" + Math.round(startY)
+                    + "->" + Math.round(targetY) + " plate=" + previewPlate.getWidth() + "x"
+                    + previewPlate.getHeight() + " ink=" + mSelInk);
+        }
+
+        final ValueAnimator fall = ValueAnimator.ofFloat(0f, 1f);
+        fall.setDuration(720L);
+        fall.setInterpolator(new android.view.animation.AccelerateInterpolator(1.7f));
+        fall.addUpdateListener(a -> {
+            final float t = (float) a.getAnimatedValue();
+            mDropDrawable.setSplash(-1f);
+            mDropDrawable.setDrop(cx, startY + (targetY - startY) * t, radius);
+        });
+        fall.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                // 滴到数字上：水滴瞬间收掉，同时散开一圈水花。
+                final ValueAnimator splash = ValueAnimator.ofFloat(0f, 1f);
+                splash.setDuration(360L);
+                splash.addUpdateListener(a -> {
+                    final float t = (float) a.getAnimatedValue();
+                    mDropDrawable.setDrop(cx, targetY, radius * (1f - t));
+                    mDropDrawable.setSplash(t);
+                });
+                splash.addListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(android.animation.Animator animation) {
+                        mDropDrawable.setDrop(0f, 0f, 0f);
+                        mDropDrawable.setSplash(-1f);
+                        if (mDropView != null) {
+                            mDropView.setVisibility(View.GONE);
+                        }
+                        if (mDigitsExpanded) {
+                            mDropHandler.postDelayed(mDropTick, 900L);
+                        }
+                    }
+                });
+                mDropAnim = splash;
+                splash.start();
+            }
+        });
+        mDropAnim = fall;
+        fall.start();
     }
 
     /** 预览文本里第 slot 位数字的字符下标（预览是实时文本，不能缓存）。 */
@@ -1216,6 +1394,11 @@ public final class ModuleSettingsActivity extends Activity {
         return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 
+    /** 未选中的位变淡：保留色相，只降不透明度（卡片是浅底，看起来就是变浅）。 */
+    private static int dimColor(int color) {
+        return (color & 0x00FFFFFF) | 0x59000000;   // 35% 不透明度
+    }
+
     /** 给「正在编辑的那一位」设色（-1 = 跟随系统），写 Secure 设置并由 SystemUI 立即生效。 */
     private void applyDigitColor(final int slot, final int color) {
         if (slot < 0 || slot >= ClockSecondsConfig.DIGIT_COUNT) {
@@ -1234,12 +1417,11 @@ public final class ModuleSettingsActivity extends Activity {
             if (!mCfgHourColorOn && mDigitSwitch != null && !mDigitSwitch.isChecked()) {
                 mDigitSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
             }
-            mDigitEmphasized = false;   // 颜色设好 → 数字回到展开态原大小
             refreshDigitSwatches();
             refreshColorSummary();
-            updatePreview();
+            updatePreview();            // 字色 / 下划线 / 水滴颜色一起跟着变
             if (previewView != null) {
-                previewView.post(this::positionGlow);
+                previewView.post(this::positionMark);
             }
         });
     }
@@ -2515,30 +2697,22 @@ public final class ModuleSettingsActivity extends Activity {
         mNowDate.setTime(System.currentTimeMillis());
         final String text = (seconds ? mFmtSec : mFmtNoSec).format(mNowDate);
         final SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        if (hourOn) {
-            // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
-            for (int i = 0; i < sb.length(); i++) {
-                final int slot = ClockSecondsConfig.slotOfChar(sb, i);
-                if (slot < 0) {
-                    continue;
-                }
-                final int color = mCfgDigitColors[slot];
-                if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-                    continue;
-                }
-                sb.setSpan(new ForegroundColorSpan(adaptPreviewColor(color)), i, i + 1,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
+        // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
+        for (int i = 0; i < sb.length(); i++) {
+            final int slot = ClockSecondsConfig.slotOfChar(sb, i);
+            if (slot < 0) {
+                continue;
             }
-        }
-        // 展开取色时把「正在编辑的那一位」放大一点，一眼能看出在对哪位上色。
-        if (mDigitsExpanded && mDigitEmphasized && mSelSlot >= 0) {
-            for (int i = 0; i < sb.length(); i++) {
-                if (ClockSecondsConfig.slotOfChar(sb, i) == mSelSlot) {
-                    sb.setSpan(new android.text.style.RelativeSizeSpan(SEL_SCALE), i, i + 1,
-                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    break;
-                }
+            final boolean dim = mDigitsExpanded && slot != mSelSlot;
+            final int color = mCfgDigitColors[slot];
+            final boolean follow = !hourOn || color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+            if (follow && !dim) {
+                continue;   // 跟随系统且不淡：用默认文字色，不必加 span
             }
+            final int shown = follow ? text() : adaptPreviewColor(color);
+            sb.setSpan(new ForegroundColorSpan(dim ? dimColor(shown) : shown), i, i + 1,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         previewView.setText(sb);
 
@@ -2548,7 +2722,7 @@ public final class ModuleSettingsActivity extends Activity {
         }
         updateNetworkTimeLine();
         if (mDigitsExpanded) {
-            positionGlow();
+            positionMark();
         }
     }
 
