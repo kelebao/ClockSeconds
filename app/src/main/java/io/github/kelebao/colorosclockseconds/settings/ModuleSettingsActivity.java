@@ -159,6 +159,8 @@ public final class ModuleSettingsActivity extends Activity {
     private View mGlowView;
     private DigitGlowDrawable mGlowDrawable;
     private android.animation.ValueAnimator mGlowAnim;
+    /** 探针：呼吸动画的帧计数（仅 DEBUG 日志用）。 */
+    private long mGlowProbe;
     /** 预览卡下方「切换手势 / 小时颜色」两张统计卡（展开取色时让位隐藏）。 */
     private View mStatsRow;
     /** 数字颜色卡内的部件：色块网格、正在编辑行、摘要行、开关、完成胶囊。 */
@@ -1625,8 +1627,9 @@ public final class ModuleSettingsActivity extends Activity {
                 + layout.getLineBaseline(line);
         mSelInk.set(penX + ink.left, baseline + ink.top, penX + ink.right, baseline + ink.bottom);
         mSelPenX = penX;
-        // 这里保持「未抬高」的原始墨迹：下划线要留在原来的位置（用户明确要求），
-        // 只有光晕和水滴跟着被抬高的数字走，所以在各自的函数里单独减 lift。
+        // 这里保持「未抬高」的原始墨迹（抬起量只存在 mLiftNow 里）：光晕和下划线
+        // 都在各自的函数里按当前 lift 落位 —— vc111 起下划线跟随抬起，不然数字抬上去、
+        // 线悬在原位，中间空出 20dp，看着就是「线和数字没对准」（真机反馈）。
         return true;
     }
 
@@ -1655,7 +1658,10 @@ public final class ModuleSettingsActivity extends Activity {
         final float markCx = mSelInk.centerX();
         final int w = Math.max(dp(12), Math.round(mSelInk.width() * 0.92f));
         final int h = Math.max(dp(2), dp(3));
-        int top = Math.round(mSelInk.bottom + dp(10));
+        // 线跟数字一起抬：保持「抬起后的字形底 + dp(10)」，抬起/落下由 animateLift
+        // 每帧回调 positionMark，线随动画平滑升降。
+        final int lift = mDigitsExpanded ? mLiftNow : 0;
+        int top = Math.round(mSelInk.bottom - lift + dp(10));
         final int plateH = previewPlate.getHeight();
         if (plateH > 0) {
             top = Math.min(top, plateH - h - dp(2));
@@ -1691,7 +1697,7 @@ public final class ModuleSettingsActivity extends Activity {
     // 呼吸光晕：选中那位数字自己发光（不是垫一块色板，是字形模糊两遍画在字底下）
     // ------------------------------------------------------------------
 
-    private static final long GLOW_PERIOD_MS = 1500L;
+    private static final long GLOW_PERIOD_MS = 2000L;
 
     /** 展开后稍等一下再点亮（等数字落位与下划线画好）。 */
     private void startGlowLoop() {
@@ -1701,21 +1707,33 @@ public final class ModuleSettingsActivity extends Activity {
         if (mGlowAnim != null) {
             return;              // 已经在呼吸：换位/换色只需重新定位，别打断节拍
         }
-        final ValueAnimator anim = ValueAnimator.ofFloat(0.06f, 1f);
+        // 暗端 0.06 会让光晕整段熄灭再亮回来，真机上读成「闪烁」不是呼吸（vc111 反馈）；
+        // 0.30 起步既保留明显的明暗差，又保证任何时刻光晕都在、数字始终像在发光。
+        final ValueAnimator anim = ValueAnimator.ofFloat(0.30f, 1f);
         anim.setDuration(GLOW_PERIOD_MS);
         anim.setRepeatCount(ValueAnimator.INFINITE);
         anim.setRepeatMode(ValueAnimator.REVERSE);
         anim.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
         anim.addUpdateListener(a -> {
+            final float v = (float) a.getAnimatedValue();
+            if (BuildConfig.DEBUG && (mGlowProbe++ % 30L) == 0L) {
+                android.util.Log.d("CS-GLOW", "breath tick v=" + v);
+            }
             if (mGlowDrawable != null) {
-                mGlowDrawable.setBreath((float) a.getAnimatedValue());
+                mGlowDrawable.setBreath(v);
             }
         });
         mGlowAnim = anim;
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-GLOW", "glowLoop start floor=0.30 period=" + GLOW_PERIOD_MS);
+        }
         anim.start();
     }
 
     private void stopGlowLoop() {
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-GLOW", "glowLoop stop anim=" + (mGlowAnim != null));
+        }
         if (mGlowAnim != null) {
             mGlowAnim.cancel();
             mGlowAnim = null;
