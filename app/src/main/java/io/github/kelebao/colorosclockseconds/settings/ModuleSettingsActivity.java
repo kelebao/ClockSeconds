@@ -1977,9 +1977,17 @@ public final class ModuleSettingsActivity extends Activity {
         //           半径与透明度由 DigitGlowDrawable.setLightTheme 那套参数负责。
         // 浅色下光晕 = 数字色**再提亮一档**：数字本身已经被推亮到 0.72，
         // 光晕要更亮才像「光从数字里透出来」；同色才不会被看成两种颜色。
+        // vc145：光晕色 = 数字色**原样**，任何主题下都不做提亮。
+        //
+        // 起因：浅色模式下「数字提亮到 0.72 + 光晕提到 0.92」这套，对明度已经顶到头的
+        // 纯色（纯黄 #FFFF00、纯青、纯洋红）根本不成立 —— 混白只会把颜色冲淡，
+        // 之前试图靠挪色相补救，被用户判为「颜色不一样，误导用户」。所以浅色模式索性
+        // 两种提亮全砍：数字和光晕都用用户选的同一个颜色，靠**光晕的量和半径**（见
+        // DigitGlowDrawable 的 LIGHT_GAIN / 半径）来补可见度。颜色零偏差是硬要求，
+        // 亮度可以妥协。
         final int glowBase = adaptPreviewColor(slotColor(mSelSlot));
         mGlowDrawable.setLightTheme(!night);
-        mGlowDrawable.setColor(night ? glowBase : lightenForLight(glowBase, 0.92f));
+        mGlowDrawable.setColor(glowBase);
         mGlowView.setVisibility(View.VISIBLE);
     }
 
@@ -2013,7 +2021,7 @@ public final class ModuleSettingsActivity extends Activity {
     /**
      * 预览里的颜色按背景做对比度补偿，保证「预览看到的 = 状态栏显示的」。
      *
-     * <p>浅底：见下方浅色分支——不压暗，改为提亮（vc143）。</p>
+     * <p>浅底：见下方浅色分支——直接返回原色，不做任何提亮或压暗（vc145）。</p>
      *
      * <p>深底：深色数字（如深绿 #183419）几乎和卡片融成一片，光晕也就没东西可发光 →
      * 向白色混合到亮度 0.30 以上，色相保留、明度提上来（vc66 修）。</p>
@@ -2026,58 +2034,18 @@ public final class ModuleSettingsActivity extends Activity {
         if (Color.luminance(system) >= 0.5f) {      // 深色主题（浅字深底）：提亮到看得见
             return brightenForDark(color, 0.32f);
         }
-        // 浅色主题（白卡）：不压暗，反而**把数字往亮里推**。
+        // 浅色主题（白卡）：直接返回**用户选的原色**。
         //
-        // 白底上「选中位在发光」只能这么读：数字本身接近白色、比卡片更亮，光才像从数字
-        // 里透出来的。以前这里是压暗到 0.42（怕亮色在白底看不清），结果是深棕数字配一圈
-        // 亮光晕 —— 真机看着像「数字下面垫了块脏东西」，光晕也就谈不上效果
-        // （用户反馈「浅色模式下光晕呼吸不够明显」）。
-        // 现在改成提亮到中等偏亮的亮度：既压住白底刺眼，又给光晕留出「比它更亮」的空间。
-        return lightenForLight(color, LIGHT_TEXT_TARGET_LUM);
+        // 这里前后试过三种做法，全都因为「颜色变了」被否：
+        //   vc66 起 各通道 ×0.42 压暗 → 亮色在白底看得清了，但数字变深棕；
+        //   vc143  提亮到亮度 0.72 → 纯黄这类色相明度已到顶，只好挪 22° 色相补救，
+        //          结果选的黄显示成琥珀橙（用户：「颜色不一样，误导用户」）；
+        //   vc144~ 原色不动。
+        // 结论：预览卡是「我选的颜色长什么样」的展示窗，不是调色板，任何自动改色都是错的。
+        // 白底上确实不好看，但那是用户自己选的颜色，必须如实显示。
+        return color;
     }
 
-    /**
-     * 浅色主题（白卡）上，选中位数字的目标亮度。
-     *
-     * <p>0.72 是实测下来的平衡点：再低就回到「深色数字」，光晕即便更亮也像阴影；
-     * 再高白卡上就快看不见笔画了（白 1.0，卡片本身也是 1.0）。</p>
-     */
-    private static final float LIGHT_TEXT_TARGET_LUM = 0.72f;
-
-    /**
-     * 浅色主题把数字**提亮**到目标亮度（与 {@link #brightenForDark} 同思路，只是用于白底）。
-     *
-     * <p>先抬 HSV 明度（色相不变，黄还是黄、蓝还是蓝）；明度顶到头还达不到目标的
-     * （深蓝、深紫、以及纯黄/纯青这类 v=1 的纯色），再向白色混一点——混白同样不改色相，
-     * 只是把颜色冲淡。绝不为了亮度去换色相：预览颜色必须和状态栏真正生效的颜色一致，
-     * 否则就是误导用户。</p>
-     */
-    private static int lightenForLight(int color, float targetLum) {
-        if (Color.luminance(color) >= targetLum) {
-            return color;
-        }
-        final float[] hsv = new float[3];
-        Color.colorToHSV(color, hsv);
-        // 色相一律不动。
-        //
-        // vc143 第一版为了让「明度已经顶到头」的纯色（纯黄 #FFFF00、纯青、纯洋红）在白卡上
-        // 亮得起来，先挪 22° 色相再提亮 —— 结果是用户选的黄显示成琥珀橙，选的青显示成天蓝。
-        // 这与状态栏里实际生效的颜色对不上，等于**误导用户**（用户反馈「改回去吧，颜色不一样，
-        // 误导用户」）。所以整段色相搬迁已删除：提不动的颜色就停在它能到的亮度，宁可光晕弱一点，
-        // 也不能显示成另一个颜色。
-        int best = color;
-        for (int i = 0; i < 24 && hsv[2] < 1f; i++) {
-            hsv[2] = Math.min(1f, hsv[2] * 1.22f + 0.015f);
-            best = Color.HSVToColor(hsv);
-            if (Color.luminance(best) >= targetLum) {
-                return best;
-            }
-        }
-        final float lum = Color.luminance(best);
-        float t = (targetLum - lum) / (1f - Math.min(0.999f, lum));
-        t = Math.min(0.90f, Math.max(0f, t));
-        return blendColor(best, 0xFFFFFFFF, t);
-    }
 
     /**
      * 深色底上把过暗的颜色提亮：优先**抬高 HSV 明度**（保住色相与饱和度，绿还是绿），
