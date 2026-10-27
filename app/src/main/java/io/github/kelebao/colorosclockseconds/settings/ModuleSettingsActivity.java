@@ -92,9 +92,22 @@ public final class ModuleSettingsActivity extends Activity {
     private static final String KEY_AUTO_UPDATE = "auto_update";
     private static final String PREF_SEEN_INTRO = "seen_intro";
 
-    /** 小时十位数字可选颜色（第一项为默认红）。 */
+    /**
+     * 每一位数字可选的颜色（第一项为默认红）。
+     *
+     * <p><b>挑选规则（vc147 起，硬性）：亮度必须 ≤ 0.55。</b>
+     * 状态栏会按背景明暗自适配颜色（{@code ClockSecondsModule.adaptColorForBackground}）：
+     * 浅色背景上亮度超过 0.55 的颜色会被各通道 ×0.42 压暗，好让它在浅壁纸上还看得见。
+     * 原来的琥珀 {@code #FFC107} 亮度 0.594，压暗后变成 {@code #6B5102} 一坨暗橄榄 ——
+     * 用户在设置里点了「琥珀」，状态栏却画出一个脏兮兮的暗黄绿，前后对不上
+     * （用户反馈：「预选里的暗橄榄黄色换掉，用户就选不着了」）。
+     * 换成暗琥珀金 {@code #D4A017}（亮度 0.392）：视觉上仍然是同一支黄色，
+     * 但任何背景上都原样输出，设置里看到什么、状态栏就是什么。
+     * 以后往这个数组里加颜色，先算一下 {@code Color.luminance()} 再放进来，
+     * 或者同时调高 adaptColorForBackground 的阈值（两边必须一起改，否则又会对不上）。</p>
+     */
     private static final int[] HOUR_COLORS = {
-            0xFFF44336, 0xFFFF9800, 0xFFFFC107, 0xFF4CAF50, 0xFF00BCD4,
+            0xFFF44336, 0xFFFF9800, 0xFFD4A017, 0xFF4CAF50, 0xFF00BCD4,
             0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFFFFFFFF, 0xFF9E9E9E,
     };
 
@@ -3614,7 +3627,7 @@ public final class ModuleSettingsActivity extends Activity {
         switch (color) {
             case 0xFFF44336: res = R.string.swatch_red; break;
             case 0xFFFF9800: res = R.string.swatch_orange; break;
-            case 0xFFFFC107: res = R.string.swatch_amber; break;
+            case 0xFFD4A017: res = R.string.swatch_amber; break;
             case 0xFF4CAF50: res = R.string.swatch_green; break;
             case 0xFF00BCD4: res = R.string.swatch_cyan; break;
             case 0xFF2196F3: res = R.string.swatch_blue; break;
