@@ -78,7 +78,7 @@ public class DigitGlowDrawable extends Drawable {
 
     /** 光晕要向外扩多少像素（调用方据此给 View 留边，否则会被裁掉）。 */
     public static float pad(float textSize) {
-        return textSize * 0.34f;
+        return textSize * 0.42f;
     }
 
     @Override
@@ -107,9 +107,11 @@ public class DigitGlowDrawable extends Drawable {
         final int g = (color >> 8) & 0xFF;
         final int b = color & 0xFF;
 
-        final int ra = Math.round(120f * breath);
-        final int ga = Math.round(205f * breath);
-        final int ba = Math.round(245f * breath);
+        // 三个通道都按满亮度算：呼吸的「亮端」直接顶到 alpha 上限，暗端几乎灭掉，
+        // 这样一呼一吸的亮度差才够大（之前暗端留了 0.42，看着像没在呼吸）。
+        final int ra = Math.round(200f * breath);
+        final int ga = Math.round(255f * breath);
+        final int ba = Math.round(255f * breath);
 
         paint.setMaskFilter(wideFilter);
         paint.setColor(Color.argb(ra, r, g, b));

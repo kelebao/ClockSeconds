@@ -33,11 +33,13 @@ public class PressTiltEffect {
         void onPressDown();
     }
 
-    private static final float MAX_DEG = 3f;        // 最大倾斜角
+    private static final float MAX_DEG = 2f;        // 最大倾斜角（用户要求从 3 度减到 2 度）
     private static final float PRESS_SCALE = 0.97f; // 按下缩放
     private static final long RELEASE_MS = 450L;    // 回弹时长
 
     private final List<Pair<View, GradientDrawable>> mTargets = new ArrayList<>();
+    /** 每张卡片的「平时倾角」：松手回弹回到这个角度，而不是一律回到 0 度。 */
+    private final java.util.Map<View, Float> mBaseTiltX = new java.util.WeakHashMap<>();
     private final int[] mLoc = new int[2];   // 复用：避免每次触摸 new int[2]
     private final Rect mRect = new Rect();   // 复用：命中测试
     private final OvershootInterpolator mOver = new OvershootInterpolator(1.35f);
@@ -70,6 +72,23 @@ public class PressTiltEffect {
         // 内层 glow 拿不到 bounds / invalidate 不传播 → 高光不显示的问题。
         card.setForeground(glow);
         mTargets.add(new Pair<>(card, glow));
+    }
+
+    /**
+     * 让某张卡片平时就保持一个固定倾角（例如取色时预览卡下端内倾 20 度）。
+     *
+     * <p>没有这一步的话，按压回弹会把 rotationX 一律拉回 0，刚设好的倾角会被下一次点击抹掉。</p>
+     */
+    public void setBaseTiltX(View card, float deg) {
+        if (card == null) {
+            return;
+        }
+        mBaseTiltX.put(card, deg);
+    }
+
+    private float baseTiltX(View card) {
+        final Float v = mBaseTiltX.get(card);
+        return v == null ? 0f : v;
     }
 
     /** 在 Activity.dispatchTouchEvent() 开头调用；内部不消费事件。 */
@@ -152,7 +171,7 @@ public class PressTiltEffect {
 
     private void release(View card, GradientDrawable glow) {
         card.animate().setDuration(RELEASE_MS).setInterpolator(mOver)
-                .rotationX(0f).rotationY(0f).scaleX(1f).scaleY(1f).start();
+                .rotationX(baseTiltX(card)).rotationY(0f).scaleX(1f).scaleY(1f).start();
         if (glow != null) {
             glow.setAlpha(0);
         }

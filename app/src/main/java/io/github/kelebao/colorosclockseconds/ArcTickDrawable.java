@@ -16,6 +16,7 @@ public class ArcTickDrawable extends Drawable {
     private final Paint mMajorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final boolean mNight;   // 深色主题用提亮色板（否则深色段在深卡片上看不见）
     private float mRotation;   // 旋转相位（度）
+    private float mGlobalAlpha = 1f;   // 整体透明度：展开/收起动画期间先淡出，避免刻度长到数字上
     private float mBreath;     // 呼吸强度 0..1（6s 余弦）
     private float mDrift;      // 漂移相位 0..1（30s）
 
@@ -36,6 +37,17 @@ public class ArcTickDrawable extends Drawable {
     /** 呼吸强度 0..1（6s 余弦）。 */
     public void setBreath(float breath) {
         mBreath = Math.max(0f, Math.min(1f, breath));
+        invalidateSelf();
+    }
+
+    /**
+     * 整体透明度 0..1。
+     *
+     * <p>刻度弧是按卡片高度成比例的（弧顶在 0.48h），卡片高度动画期间它会一路往上长、
+     * 盖到数字上；所以在卡片高度变化的那 400ms 里先把它淡出去，落定后再淡回来。</p>
+     */
+    public void setGlobalAlpha(float alpha) {
+        mGlobalAlpha = Math.max(0f, Math.min(1f, alpha));
         invalidateSelf();
     }
 
@@ -122,7 +134,7 @@ public class ArcTickDrawable extends Drawable {
             // 距发光角的远近 → 亮度渐隐（越靠中心越亮，两端下限抬高到 70%）
             float angDist = Math.abs(a - glowAng);
             float fade = Math.max(0.70f, 1f - angDist / halfDeg);
-            int alpha = Math.round(255f * breath * fade);
+            int alpha = Math.round(255f * breath * fade * mGlobalAlpha);
 
             // 沿拱在色板里平滑插值取色，整条随时间流转（深色主题换提亮色板）
             float pos = (a - (270f - halfDeg)) / (2f * halfDeg);   // 0..1 沿弧

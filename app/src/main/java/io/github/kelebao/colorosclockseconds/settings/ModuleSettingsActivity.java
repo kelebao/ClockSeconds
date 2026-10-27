@@ -34,7 +34,9 @@ import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
 import io.github.kelebao.colorosclockseconds.CloseCrossView;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
 import io.github.kelebao.colorosclockseconds.HsvPickerView;
+import io.github.kelebao.colorosclockseconds.PreviewDropDrawable;
 import io.github.kelebao.colorosclockseconds.DigitGlowDrawable;
+import io.github.kelebao.colorosclockseconds.SlantCardDrawable;
 import io.github.kelebao.colorosclockseconds.UnderlineDrawable;
 import io.github.kelebao.colorosclockseconds.WavyLineView;
 import android.text.style.AbsoluteSizeSpan;
@@ -158,6 +160,11 @@ public final class ModuleSettingsActivity extends Activity {
     private View mGlowView;
     private DigitGlowDrawable mGlowDrawable;
     private android.animation.ValueAnimator mGlowAnim;
+    /** 从卡片顶端滴下来、落在选中数字上就消失的那滴水（画在数字上层）。 */
+    private View mDropView;
+    private PreviewDropDrawable mDropDrawable;
+    private android.animation.ValueAnimator mDropAnim;
+    private final Handler mDropHandler = new Handler(Looper.getMainLooper());
     /** 预览卡下方「切换手势 / 小时颜色」两张统计卡（展开取色时让位隐藏）。 */
     private View mStatsRow;
     /** 数字颜色卡内的部件：色块网格、正在编辑行、摘要行、开关、完成胶囊。 */
@@ -165,6 +172,8 @@ public final class ModuleSettingsActivity extends Activity {
     private TextView mDigitEditingView;
     private TextView mDigitSummaryView;
     private View mDigitDoneView;
+    /** 「网络时间」那一行。展开取色时临时藏起来，把位置让给 X 圆钮。 */
+    private LinearLayout mNetRow;
     private Switch mDigitSwitch;
     private boolean mObserverOk = false;
     private final android.database.ContentObserver mCfgObserver =
@@ -492,7 +501,9 @@ public final class ModuleSettingsActivity extends Activity {
     // ==================================================================
 
     /** 展开态的目标字距（em）：先按这个间隙解字号，剩余宽度再全部补给间隙（铺满整卡）。 */
-    private static final float EXPAND_GAP_EM = 0.14f;
+    private static final float EXPAND_GAP_EM = 0.22f;
+    /** 预览卡底板（可斜切下沿）。 */
+    private SlantCardDrawable mSlantCard;
     /** 展开态预览区上内边距（dp）：数字整体下移，腾出空间让水滴从上沿外落进来。 */
 
     /** 展开态实测出的字号（px）与字距（em），由 computeExpandedMetrics() 计算。 */
@@ -610,8 +621,11 @@ public final class ModuleSettingsActivity extends Activity {
         // 底部叠「长弧刻度」（只有刻度、无弧线），把网络时间/提示两行圈在弧中间。
         ArcTickDrawable arc = new ArcTickDrawable(night);
         mArcTicks = arc;
+        // 底板用可斜切的版本：取色时下沿两个角被削出 20 度斜面。
+        mSlantCard = new SlantCardDrawable(night ? DARK_CARD : LIGHT_CARD, dp(24));
+        mSlantCutPx = 0f;
         // card() 已 mPressTilt.register（卡片背景不变、另叠了按压高光前景层）；这里只把刻度弧叠上去。
-        card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arc}));
+        card.setBackground(new LayerDrawable(new Drawable[]{mSlantCard, arc}));
 
         // 提示（在预览时间上方；点击预览后才出现，3 秒后自动收起）。
         previewHintView = new TextView(this);
@@ -626,7 +640,8 @@ public final class ModuleSettingsActivity extends Activity {
 
         // 预览时间容器（仅承载文字）。
         previewPlate = new FrameLayout(this);
-        previewPlate.setPadding(dp(22), dp(2), dp(22), dp(14));
+        // 左右几乎不留边：展开时整行要铺到卡片边缘，数字才能「向左右顶开 + 变大」。
+        previewPlate.setPadding(dp(2), dp(2), dp(2), dp(14));
 
         // 选中那位的呼吸光晕：先加 = 画在文字下层；默认隐藏，展开取色时才点亮。
         // previewPlate 关掉裁剪，光晕才能糊出字形边界（否则被自己/父容器切成方块）。
@@ -653,6 +668,10 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setFontFeatureSettings("tnum");
         previewView.setTextColor(text());
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
+        // 永远单行：展开动画中途字号和字距同时变，总有一两帧比可用宽度略宽，
+        // 一旦换行预览卡会瞬间高出一整行、下面的卡片先被顶下去再弹回来（用户看到「往上跳」）。
+        // 换成单行后宁可这两帧被裁掉几个像素，也不让卡片高度变。
+        previewView.setSingleLine(true);
         // 点一下展开成逐位取色；展开后再点就选中被点的那一位数字。
         previewView.setOnClickListener(v -> {
             if (!mDigitsExpanded) {
@@ -683,26 +702,39 @@ public final class ModuleSettingsActivity extends Activity {
         });
         previewPlate.addView(previewView);
 
-        card.addView(previewPlate);
+        // 水滴：铺满整个预览区、画在文字上层（从卡片顶端滴下来要看得见）。
+        mDropView = new View(this);
+        // 负 topMargin：让水滴能从预览区上沿之外开始下落（数字贴着预览区顶部，
+        // 不留这段就会「凭空出现在数字头上」）。父容器要一起关掉裁剪，否则上沿会被削平。
+        final FrameLayout.LayoutParams dropLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        dropLp.topMargin = -dp(20);
+        mDropView.setLayoutParams(dropLp);
+        previewPlate.setClipChildren(false);
+        // 只关 clipChildren 还会被 padding 盒裁掉（水滴上半截被削平），padding 裁剪也要关。
+        previewPlate.setClipToPadding(false);
+        mDropView.setVisibility(View.GONE);
+        mDropView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        mDropDrawable = new PreviewDropDrawable();
+        mDropView.setBackground(mDropDrawable);
+        previewPlate.addView(mDropView);
 
-        // 展开取色时才出现的「关闭」圆钮（X），位置在「网络时间」那行上方：点一下收起。
-        mDigitDoneView = new CloseCrossView(this, accent(), 0xFFFFFFFF);
-        // 卡片背景上叠着半圆刻度弧：弧顶在数字下面，弧内（底部中间）是空白，所以把圆钮
-        // 放在弧内偏下的位置，既不压刻度、也正好像「网络时间」这行的上方。
-        LinearLayout.LayoutParams doneLp = new LinearLayout.LayoutParams(dp(34), dp(34));
-        doneLp.gravity = Gravity.CENTER_HORIZONTAL;
-        doneLp.topMargin = dp(40);
-        mDigitDoneView.setLayoutParams(doneLp);
-        mDigitDoneView.setVisibility(View.GONE);
-        mDigitDoneView.setContentDescription(getString(R.string.settings_digit_done));
-        mDigitDoneView.setOnClickListener(v -> collapseDigits());
-        card.addView(mDigitDoneView);
+        card.addView(previewPlate);
+        // 水滴要从卡片顶端开始掉，必须让预览区能画到卡片上沿的留白里（否则只露出下半截）。
+        card.setClipChildren(false);
+
+        // 「网络时间」行 + 关闭圆钮共用一格：展开取色时网络时间隐藏、X 正好落在它的位置上
+        // （用户指定）。两者叠在同一个 FrameLayout 里，行高由网络时间决定，X 不会额外撑高卡片，
+        // 所以展开/收起时下面的卡片一动不动。
+        FrameLayout netSlot = new FrameLayout(this);
+        // X 会用 translationY 往上挪到数字与弧顶之间的空带里，超出这一格的部分不能被裁掉。
+        netSlot.setClipChildren(false);
 
         // 网络时间对比：点一下重新获取（HTTP Date 头，按 RTT 折半校正）。
         LinearLayout netRow = new LinearLayout(this);
         netRow.setOrientation(LinearLayout.HORIZONTAL);
         netRow.setGravity(Gravity.CENTER);
-        netRow.setPadding(0, dp(40), 0, 0);
+        netRow.setPadding(0, dp(26), 0, 0);
 
         netTimeView = new TextView(this);
         netTimeView.setTextSize(12f);
@@ -729,8 +761,24 @@ public final class ModuleSettingsActivity extends Activity {
         syncView.setOnClickListener(v -> syncNetworkTime());
         syncView.setClickable(true);   // 无障碍
         netRow.addView(syncView);
+        mNetRow = netRow;
+        netSlot.addView(netRow, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        card.addView(netRow);
+        card.addView(netSlot);
+
+        // 展开取色时才出现的「关闭」圆钮（X）。挂在卡片最后 = 画在最上层；
+        // 负的 bottomMargin 让它在纵向不占高度，实际位置由 positionMark() 按选中位墨迹算出来。
+        mDigitDoneView = new CloseCrossView(this, accent(), 0xFFFFFFFF);
+        LinearLayout.LayoutParams doneLp =
+                new LinearLayout.LayoutParams(dp(34), dp(34));
+        doneLp.gravity = Gravity.CENTER_HORIZONTAL;
+        doneLp.bottomMargin = -dp(34);
+        mDigitDoneView.setLayoutParams(doneLp);
+        mDigitDoneView.setVisibility(View.GONE);
+        mDigitDoneView.setContentDescription(getString(R.string.settings_digit_done));
+        mDigitDoneView.setOnClickListener(v -> collapseDigits());
+        card.addView(mDigitDoneView);
 
         root.addView(card, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -993,25 +1041,75 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         mDigitsExpanded = true;
+        // 先站平：抬高动作要等数字摊开之后才开始（否则展开动画里那一位是斜着飞上去的）。
+        mLiftNow = 0;
         if (previewPlate != null) {
-            previewPlate.setPadding(dp(22), dp(2), dp(22), dp(14));
+            previewPlate.setPadding(dp(2), dp(2), dp(2), dp(14));
         }
-        if (mStatsRow != null) {
-            mStatsRow.setVisibility(View.GONE);
+        // 目标：预览卡的底边正好落在原来两张统计卡的底边上（用户画红线的位置）。
+        // 记法：最终卡片高度 = 折叠高度 + 统计卡高度。展开过程中 X 圆钮出现、数字变大都会自己改变
+        // 高度，所以不能直接拿统计卡高度当延伸量，要等一帧布局完成后再用「目标高度 − 当前高度」反推。
+        final int cardHFold = (mPreviewCard != null) ? mPreviewCard.getHeight() : 0;
+        mCardHFold = cardHFold;
+        // 统计卡不要立刻 GONE：立刻撤掉会让下面的卡片瞬间上跳一截、中间空一块。
+        // 改成「卡片长多少、统计卡就矮多少」，空间一对一转移，下面的卡片一动不动。
+        mStatsH = (mStatsRow != null) ? mStatsRow.getHeight() : 0;
+        // X 圆钮一旦 VISIBLE 就立刻占掉 44dp（34+10）高度；不在这里同步扣掉，
+        // 它会把下面所有卡片顶下去 154px，下一帧补偿动画再拉回来 —— 这就是用户看到的
+        // 「数字颜色卡往上跳一下」。这里先扣，等于把这 154px 立刻从统计卡身上转走。
+        // X 现在和「网络时间」共用一格，不再额外占高度（vc95 前这里是 dp(34)+dp(10)=154px）。
+        mXSpace = 0;
+        if (mNetRow != null) {
+            mNetRow.setVisibility(View.INVISIBLE);   // 藏起来但保留行高，卡片高度不变
+        }
+        mStatsStartH = mStatsH;
+        if (mStatsRow != null && mStatsH > mXSpace
+                && mStatsRow.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            final LinearLayout.LayoutParams slp =
+                    (LinearLayout.LayoutParams) mStatsRow.getLayoutParams();
+            slp.height = mStatsH - mXSpace;
+            mStatsRow.setLayoutParams(slp);
+            mStatsStartH = mStatsH - mXSpace;
         }
         if (mDigitDoneView != null) {
             mDigitDoneView.setVisibility(View.VISIBLE);
+        }
+        // X 和刻度弧都等卡片长完再淡进来：卡片还没长高时弧顶会顶到数字上、X 会浮在空白里。
+        setDecorAlpha(0f);
+        if (mPreviewCard != null && cardHFold > 0) {
+            mPreviewCard.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            mPreviewCard.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            if (!mDigitsExpanded) {
+                                return;
+                            }
+                            final int targetH = cardHFold + mStatsH;
+                            if (BuildConfig.DEBUG) {
+                                android.util.Log.d("ColorOSClockSeconds", "CS-GROW2 cardHFold=" + cardHFold
+                                        + " statsH=" + mStatsH + " startH=" + mStatsStartH
+                                        + " xSpace=" + mXSpace + " nowH=" + mPreviewCard.getHeight()
+                                        + " targetH=" + targetH + " grow=" + (targetH - mPreviewCard.getHeight()));
+                            }
+                            animateGrow(Math.max(0, targetH - mPreviewCard.getHeight()));
+                        }
+                    });
+        } else {
+            animateGrow(statsRowSpace());
         }
         if (previewHintView != null) {
             previewHintView.setVisibility(View.INVISIBLE);
         }
         mFitGuard = 0;
-        mFitSafety = 0.97f;
+        mFitSafety = 0.99f;
         mSizeShrink = 1f;
         if (mMarkView != null) {
             mMarkView.setVisibility(View.GONE);   // 展开动画期间先不画线，等数字落位
         }
         stopGlowLoop();
+        setPreviewGap(true);
+        animateTilt(true);
         beginSmoothLayout();
         animateDigits(true);
         refreshDigitSwatches();
@@ -1025,24 +1123,285 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         mDigitsExpanded = false;
-        if (previewPlate != null) {
-            previewPlate.setPadding(dp(22), dp(2), dp(22), dp(14));
-        }
+        // 卡片变矮时刻度弧会跟着缩、往上爬到数字上，先把它和 X 淡出去，落定后再淡回来。
+        fadeDecorTo(0f, 120L);
+        // 不要在这里直接重置内边距，否则收起动画（animateGrow(0)）会失效、卡片瞬间弹回。
+        animateTilt(false);
+        setPreviewGap(false);
         beginSmoothLayout();
-        if (mStatsRow != null) {
-            mStatsRow.setVisibility(View.VISIBLE);
-        }
-        if (mDigitDoneView != null) {
-            mDigitDoneView.setVisibility(View.GONE);
-        }
+        animateGrow(0);                        // 收回延伸（结束时才把统计卡放回来）
         if (mMarkView != null) {
             mMarkView.setVisibility(View.GONE);
         }
         stopGlowLoop();
-        animateDigits(false);
+        stopDropLoop();
+        // 先落回与其他位同一条基线，再缩回默认大小（用户要求：别一边缩一边降）。
+        animateLift(false, () -> animateDigits(false));
+    }
+
+    /** 展开态下沿单侧削掉的宽度（px）：与下沿成 20 度。 */
+    private float mSlantCutPx;
+
+    /** 展开态预览卡向下延伸的像素（给隐藏掉的两张统计卡让位），动画逐帧累加。 */
+    private int mGrowPx;
+    private android.animation.ValueAnimator mGrowAnim;
+    /**
+     * 选中位当前的抬高量（px）。
+     *
+     * <p>不是常量：展开时先让数字摊开（字号/字距动画），摊好了才把它抬起来；收起时反过来，
+     * 先让它落回与其他位同一基线，再缩回默认大小。用户明确要求这两个动作不要同时发生。</p>
+     */
+    private int mLiftNow;
+    private android.animation.ValueAnimator mLiftAnim;
+
+    /**
+     * 取色时把预览卡的**下端向内倾斜 20 度**：卡片底板下沿两个角被斜着削掉一块。
+     *
+     * <p>早先试过整卡 3D 旋转（rotationX + 透视），内容会被压扁、底部整块被裁掉，不可用；
+     * 现在改成改底板形状：内容位置一点不动，只是卡片轮廓的下沿变斜，收起时斜切收回到 0。</p>
+     */
+    private void animateTilt(final boolean tilt) {
+        // 卡片倾斜方案已按用户要求撤掉（「不用倾斜了，弄回原来样子」）：底板恢复普通圆角矩形。
+        // 保留这个空方法，两个调用点（展开/收起）不必改，将来要再做倾斜时只在这里接回来。
+        if (mSlantCard == null) {
+            return;
+        }
+        mSlantCutPx = 0f;
+        mSlantCard.setRise(0f);
+    }
+
+    /**
+     * 展开时让预览卡**慢慢向下延伸**到原来两张统计卡的底部位置（收起时收回）。
+     *
+     * <p>做法是给 {@code previewPlate} 加下内边距：卡片高度由内容撑，下内边距一变就整体变高，
+     * 用 ValueAnimator 逐帧改，视觉上就是卡片自己往下长。不走 TransitionManager，
+     * 因为 ChangeBounds 会把整张卡一起缩放，圆角和数字都会跟着变形。</p>
+     */
+    private void animateGrow(final int targetPx) {
+        if (previewPlate == null) {
+            return;
+        }
+        if (mGrowAnim != null) {
+            mGrowAnim.cancel();
+            mGrowAnim = null;
+        }
+        final boolean expand = mDigitsExpanded;
+        // 直接写死卡片高度，而不是改内边距让内容自己撑：
+        // 展开动画期间数字还在变大、提示行还在变，内容一抖卡片就跟着抖，下面的卡片就被顶下去再弹回来
+        // （vc86/87 实测跳 42px）。高度由我们逐帧给定，内容就再也影响不到别人。
+        final int fromH = (mPreviewCard != null) ? mPreviewCard.getHeight() : 0;
+        // 展开：长 targetPx 这么多；收起：缩回折叠态高度（mCardHFold）。
+        final int toH = expand ? (fromH + targetPx)
+                : (mCardHFold > 0 ? mCardHFold : fromH);
+        final int statsFrom = (mStatsRow != null) ? mStatsRow.getHeight() : 0;
+        final int statsTo = expand ? 0 : (mStatsStartH > 0 ? mStatsStartH : mStatsH);
+        final int statsH = mStatsStartH > 0 ? mStatsStartH : (mStatsH > 0 ? mStatsH : 0);
+        // 收起时先把统计卡以「0 高 + 全透明」放回来，它再跟着卡片变矮一路长高、显形。
+        if (!expand && mStatsRow != null && statsH > 0) {
+            mStatsRow.setVisibility(View.VISIBLE);
+            mStatsRow.setAlpha(0f);
+            if (mStatsRow.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                final LinearLayout.LayoutParams lp =
+                        (LinearLayout.LayoutParams) mStatsRow.getLayoutParams();
+                lp.height = 0;
+                mStatsRow.setLayoutParams(lp);
+            }
+        }
+        final android.animation.ValueAnimator anim =
+                android.animation.ValueAnimator.ofFloat(0f, 1f);
+        anim.setDuration(420L);
+        anim.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        anim.addUpdateListener(a -> {
+            final float t = (float) (Float) a.getAnimatedValue();
+            mGrowPx = Math.round((toH - fromH) * t);
+            // 卡片高度逐帧给定；统计卡与之反向等量变化（两者之和恒定）→ 下面那张卡一动不动。
+            if (mPreviewCard != null
+                    && mPreviewCard.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                final LinearLayout.LayoutParams clp =
+                        (LinearLayout.LayoutParams) mPreviewCard.getLayoutParams();
+                clp.height = Math.round(fromH + (toH - fromH) * t);
+                mPreviewCard.setLayoutParams(clp);
+            }
+            if (mStatsRow != null && statsH > 0
+                    && mStatsRow.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                final LinearLayout.LayoutParams lp =
+                        (LinearLayout.LayoutParams) mStatsRow.getLayoutParams();
+                lp.height = Math.round(statsFrom + (statsTo - statsFrom) * t);
+                mStatsRow.setLayoutParams(lp);
+                mStatsRow.setAlpha(expand ? (1f - t) : t);
+            }
+        });
+        anim.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator a) {
+                if (mGrowAnim == a) {
+                    mGrowAnim = null;
+                }
+                // 只在收起结束时把高度交还给内容；展开态保持固定高度，
+                // 否则「内容自己撑」和「固定高度」两种模式一切换，卡片会瞬间缩回去（vc90 实测矮了 130px）。
+                if (!mDigitsExpanded && mPreviewCard != null
+                        && mPreviewCard.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                    final LinearLayout.LayoutParams clp =
+                            (LinearLayout.LayoutParams) mPreviewCard.getLayoutParams();
+                    clp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    mPreviewCard.setLayoutParams(clp);
+                }
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("ColorOSClockSeconds", "CS-GROW end grow=" + mGrowPx
+                            + " cardH=" + (mPreviewCard == null ? -1 : mPreviewCard.getHeight())
+                            + " plateH=" + (previewPlate == null ? -1 : previewPlate.getHeight())
+                            + " platePadB=" + (previewPlate == null ? -1 : previewPlate.getPaddingBottom()));
+                }
+                if (mStatsRow != null && mStatsRow.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                    final LinearLayout.LayoutParams lp =
+                            (LinearLayout.LayoutParams) mStatsRow.getLayoutParams();
+                    if (mDigitsExpanded) {
+                        lp.height = 0;
+                        mStatsRow.setLayoutParams(lp);
+                        mStatsRow.setVisibility(View.GONE);   // 长完了，位置已让给预览卡
+                    } else {
+                        lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;   // 收回了，交还正常高度
+                        mStatsRow.setLayoutParams(lp);
+                        mStatsRow.setVisibility(View.VISIBLE);
+                        mStatsRow.setAlpha(1f);
+                    }
+                }
+                if (mDigitDoneView != null) {
+                    if (mDigitsExpanded) {
+                        mDigitDoneView.setVisibility(View.VISIBLE);
+                    } else {
+                        mDigitDoneView.setVisibility(View.GONE); // X 等缩回去再撤掉，否则卡片瞬间矮一截
+                        if (mNetRow != null) {
+                            mNetRow.setVisibility(View.VISIBLE);   // 网络时间回到原位
+                        }
+                    }
+                }
+                // 卡片高度落定后再把刻度弧 / X 淡进来（高度动画期间它们会跑到数字上）。
+                fadeDecorTo(1f, 200L);
+            }
+        });
+        mGrowAnim = anim;
+        anim.start();
+    }
+
+    /** 统计卡的原始高度（展开时记下，收起时按这个高度长回来）。 */
+    private int mStatsH;
+    /** 统计卡在「X 已经占掉 44dp」之后的起始高度（动画从这个值开始缩）。 */
+    private int mStatsStartH;
+    /** X 圆钮占掉的竖向空间（34dp 高 + 10dp 上外边距）。 */
+    private int mXSpace;
+    /** 折叠态预览卡的高度（收起动画要缩回这个高度）。 */
+    private int mCardHFold;
+
+    /** 刻度弧 + X 圆钮当前的透明度（展开/收起动画期间淡出，避免刻度爬上数字）。 */
+    private float mDecorAlpha = 1f;
+    private android.animation.ValueAnimator mDecorAnim;
+
+    private void setDecorAlpha(float alpha) {
+        mDecorAlpha = Math.max(0f, Math.min(1f, alpha));
+        if (mDigitDoneView != null) {
+            mDigitDoneView.setAlpha(mDecorAlpha);
+        }
+        if (mArcTicks != null) {
+            mArcTicks.setGlobalAlpha(mDecorAlpha);
+        }
+    }
+
+    private void fadeDecorTo(final float target, final long duration) {
+        if (mDecorAnim != null) {
+            mDecorAnim.cancel();
+            mDecorAnim = null;
+        }
+        if (Math.abs(mDecorAlpha - target) < 0.01f) {
+            setDecorAlpha(target);
+            return;
+        }
+        final float from = mDecorAlpha;
+        final android.animation.ValueAnimator anim =
+                android.animation.ValueAnimator.ofFloat(from, target);
+        anim.setDuration(duration);
+        anim.addUpdateListener(a -> setDecorAlpha((float) (Float) a.getAnimatedValue()));
+        mDecorAnim = anim;
+        anim.start();
+    }
+
+    /**
+     * 展开时预览卡要向下延伸多少：一直长到原来两张统计卡的**底边**（用户画红线的位置）。
+     *
+     * <p>直接按几何算：(统计卡顶 − 预览卡底) + 统计卡高。比按「高度 + margin」拼更准，
+     * 外面的 margin 怎么改都自动跟上。</p>
+     */
+    private int statsRowSpace() {
+        if (mStatsRow == null || mPreviewCard == null) {
+            return 0;
+        }
+        final int rowTop = mStatsRow.getTop() - mPreviewCard.getTop();
+        final int cardBottom = mPreviewCard.getHeight();
+        final int extra = (rowTop - cardBottom) + mStatsRow.getHeight();
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("ColorOSClockSeconds",
+                    "CS-GROW rowTop=" + rowTop + " cardH=" + cardBottom
+                            + " cardTopAbs=" + mPreviewCard.getTop() + " rowTopAbs=" + mStatsRow.getTop()
+                            + " rowH=" + mStatsRow.getHeight() + " extra=" + extra);
+        }
+        return Math.max(0, extra + dp(2));
+    }
+
+    /** 预览卡与「数字颜色」卡之间拉开间隙：取色时卡片倾斜后会贴上去，留白要更大。 */
+    private void setPreviewGap(boolean expanded) {
+        if (mPreviewCard == null) {
+            return;
+        }
+        final ViewGroup.LayoutParams raw = mPreviewCard.getLayoutParams();
+        if (!(raw instanceof LinearLayout.LayoutParams)) {
+            return;
+        }
+        final LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) raw;
+        lp.bottomMargin = dp(12);   // 卡片之间保持和平时一样的间隙，不再为倾斜额外留白
+        mPreviewCard.setLayoutParams(lp);
     }
 
     /** 展开/收起动画：字号 44sp → 铺满卡片的最大字号，字距 0 → 铺满后的最大间隙（约 260ms，数字被拉开）。 */
+    /**
+     * 抬起 / 落下选中那一位（带一点动画，避免突兀）。
+     *
+     * @param after 动画结束后要接着做的事（收起时用来串「先落下、再缩小」）
+     */
+    private void animateLift(final boolean up, final Runnable after) {
+        final int target = up ? liftPx() : 0;
+        if (mLiftAnim != null) {
+            mLiftAnim.cancel();
+            mLiftAnim = null;
+        }
+        if (mLiftNow == target) {
+            if (after != null) {
+                after.run();
+            }
+            return;
+        }
+        final ValueAnimator anim = ValueAnimator.ofInt(mLiftNow, target);
+        anim.setDuration(up ? 220L : 160L);
+        anim.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        anim.addUpdateListener(a -> {
+            mLiftNow = (int) a.getAnimatedValue();
+            updatePreview();                 // 重排 span：基线跟着变
+            if (previewView != null) {
+                previewView.post(this::positionMark);   // 下划线/光晕一起跟手
+            }
+        });
+        anim.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                mLiftNow = target;
+                if (after != null) {
+                    after.run();
+                }
+            }
+        });
+        mLiftAnim = anim;
+        anim.start();
+    }
+
     private void animateDigits(final boolean expand) {
         if (previewView == null) {
             return;
@@ -1073,6 +1432,9 @@ public final class ModuleSettingsActivity extends Activity {
                     positionMark();     // 数字落位后才画下划线、摆光晕
                     previewView.post(ModuleSettingsActivity.this::fitExpandedText);   // 兜一层：真换行了就收字距/字号
                     startGlowLoop();    // 再开始呼吸
+                    startDropLoop();    // 数字落位后开始滴水
+                    // 摊开之后再抬起选中那一位（用户要求：先拉开间隙，再抬高）。
+                    animateLift(true, null);
                 }
             }
         });
@@ -1131,7 +1493,7 @@ public final class ModuleSettingsActivity extends Activity {
         // 一点，压线就会换行。mFitSafety 会在 fitExpandedText 里逐次收紧。
         final float fit = avail * mFitSafety;
         float size = fit / (perUnit + EXPAND_GAP_EM * gaps);
-        size = Math.max(sp(34), Math.min(sp(58), size)) * mSizeShrink;
+        size = Math.max(sp(34), Math.min(sp(80), size)) * mSizeShrink;
         mExpandedSizePx = size;
         // 铺满整卡：把（可能剩下的）宽度全部灌进间隙。
         mExpandedSpacingEm = Math.max(0f, Math.min(0.90f, (fit / size - perUnit) / gaps));
@@ -1188,16 +1550,31 @@ public final class ModuleSettingsActivity extends Activity {
         if (previewView == null) {
             return;
         }
-        final android.text.Layout layout = previewView.getLayout();
-        if (layout == null) {
+        final CharSequence text = previewView.getText();
+        if (text == null || text.length() == 0) {
             return;
         }
-        final CharSequence text = previewView.getText();
+        // 同 measureSelInk()：不能走 Layout，singleLine 的 Layout 宽度是 1048576px，
+        // getOffsetForHorizontal 会把任何点击都算到行首附近，于是「点其他数字没反应」。
+        final String whole = text.toString();
+        final TextPaint tp = new TextPaint(previewView.getPaint());
+        tp.setLetterSpacing(previewView.getLetterSpacing());
+        final float avail = previewView.getWidth() - previewView.getTotalPaddingLeft()
+                - previewView.getTotalPaddingRight();
+        final float lineStart = Math.max(0f, (avail - tp.measureText(whole)) / 2f);
         final float lx = Math.max(0f, x - previewView.getTotalPaddingLeft());
-        final float ly = Math.max(0f, y - previewView.getTotalPaddingTop());
-        final int line = layout.getLineForVertical(Math.round(ly));
-        final int offset = layout.getOffsetForHorizontal(line, lx);
-        // 点在数字右半边时 offset 会落到下一个字符（冒号/下一位），再往回校准一次。
+        int offset = -1;
+        for (int i = 0; i < whole.length(); i++) {
+            final float x0 = lineStart + tp.measureText(whole, 0, i);
+            final float x1 = lineStart + tp.measureText(whole, 0, i + 1);
+            if (lx >= x0 && lx < x1) {
+                offset = i;
+                break;
+            }
+        }
+        if (offset < 0) {
+            return;   // 点在整行之外：保持当前选中位
+        }
         int slot = ClockSecondsConfig.slotOfChar(text, offset);
         if (slot < 0 && offset > 0) {
             slot = ClockSecondsConfig.slotOfChar(text, offset - 1);
@@ -1212,10 +1589,13 @@ public final class ModuleSettingsActivity extends Activity {
             previewView.post(this::positionMark);
         }
         startGlowLoop();           // 手一点就挪光晕（已经在呼吸就不打断节拍）
+        dropOnce();                // 手一点就滴一次，反馈更直接
     }
 
     /** 选中位数字在 previewPlate 坐标系里的墨迹框（下划线与水滴落点都靠它定位）。 */
     private final android.graphics.RectF mSelInk = new android.graphics.RectF();
+    /** 选中位字符的笔位（X 起点，已含字距）：下划线按它居中，避免墨迹左右不均导致歪线。 */
+    private float mSelPenX;
 
     /**
      * 算出「正在取色的那一位数字」的墨迹框。
@@ -1244,13 +1624,37 @@ public final class ModuleSettingsActivity extends Activity {
         // TextPaint 实例，直接 setTextSize() 会改掉预览本身的字号 —— 每次刷新乘一个系数，
         // 几百毫秒内指数暴涨、数字换行、卡片撑爆屏幕（vc39 真机事故）。
         final TextPaint tp = new TextPaint(previewView.getPaint());
+        // 量墨迹必须把字距清零：letterSpacing 会算进 getTextBounds/measureText 的宽度里，
+        // 展开态字距有 0.2em 以上，带进去会让墨迹框整体变宽、下划线歪到一边（真机反馈）。
+        tp.setLetterSpacing(0f);
         final Rect ink = new Rect();
         tp.getTextBounds(glyph, 0, glyph.length(), ink);
-        final float penX = previewView.getLeft() + previewView.getTotalPaddingLeft()
-                + layout.getPrimaryHorizontal(idx);
+        // 必须补上 layout.getLineLeft()：居中排版的文本，TextView 画的时候会把整行平移
+        // lineLeft，而 getPrimaryHorizontal() 返回的是相对行首的笔位，不含这段平移。
+        // 少了它，下划线和光晕会整体偏左约 lineLeft（vc73~75 真机反馈「线对不上数字」）。
+        // 不能用 layout.getPrimaryHorizontal/getLineLeft：vc87 给预览文字加了 setSingleLine(true) 之后，
+        // TextView 会用一个 1048576px 宽的「超宽行」来排版再居中绘制（layoutW=1048576、lineL=523824），
+        // 于是笔位和行左偏移都变成天文数字，下划线/光晕被推到屏幕外（vc92 真机：ink.x=1047676）。
+        // 改成自己按 paint 量：整行宽度居中后累加各位宽度，跟 TextView 的实际绘制一致。
+        final String whole = text.toString();
+        final float avail = previewView.getWidth() - previewView.getTotalPaddingLeft()
+                - previewView.getTotalPaddingRight();
+        // 行宽和笔位必须用「带字距」的 paint 来量：TextView 排版时 letterSpacing 会算进
+        // 每一个字符的步进（含最后一个），而上面 tp 为了量墨迹把字距清零了。拿零字距的
+        // 行宽去算居中偏移，会把整行往右推大半个字符宽 —— 光晕/下划线整体偏到旁边那一位
+        // 数字上（vc102 真机：ink 偏右 114px，正好一个步进）。
+        final TextPaint tpL = new TextPaint(previewView.getPaint());
+        tpL.setLetterSpacing(previewView.getLetterSpacing());
+        final float lineW = tpL.measureText(whole);
+        final float lineStart = Math.max(0f, (avail - lineW) / 2f);
+        final float penX = previewView.getLeft() + previewView.getTotalPaddingLeft() + lineStart
+                + tpL.measureText(whole, 0, idx);
         final float baseline = previewView.getTop() + previewView.getTotalPaddingTop()
                 + layout.getLineBaseline(line);
         mSelInk.set(penX + ink.left, baseline + ink.top, penX + ink.right, baseline + ink.bottom);
+        mSelPenX = penX;
+        // 这里保持「未抬高」的原始墨迹：下划线要留在原来的位置（用户明确要求），
+        // 只有光晕和水滴跟着被抬高的数字走，所以在各自的函数里单独减 lift。
         return true;
     }
 
@@ -1263,7 +1667,9 @@ public final class ModuleSettingsActivity extends Activity {
             mMarkView.setVisibility(View.GONE);
             return;
         }
-        final int color = adaptPreviewColor(slotColor(mSelSlot));
+        // 下划线用中性色（深色模式白、浅色模式黑）：跟着数字颜色走时，深色数字配深色线
+        // 在白卡上几乎看不见，反而丢掉了「选中哪一位」的提示。
+        final int color = night ? 0xFFFFFFFF : 0xFF000000;
         if (mMarkDrawable == null) {
             mMarkDrawable = new UnderlineDrawable(color);
             mMarkView.setBackground(mMarkDrawable);
@@ -1272,13 +1678,10 @@ public final class ModuleSettingsActivity extends Activity {
         }
         // 横线要压在这位数字的「步进中心」上，不能用字形墨迹中心：像「1」这种带左上小旗
         // 的字，墨迹框整体偏左，按墨迹居中会让人看着横线歪到一边。
-        final CharSequence markText = previewView.getText();
-        final int markIdx = indexOfSlot(mSelSlot);
-        final float advance = (markText == null || markIdx < 0 || markIdx >= markText.length())
-                ? mSelInk.width()
-                : previewView.getPaint().measureText(markText, markIdx, markIdx + 1);
-        final float markCx = mSelInk.centerX() - mSelInk.width() / 2f + advance / 2f;
-        final int w = Math.max(dp(2), Math.round(advance * 0.50f));
+        // 横线**必须压在这位数字字形的视觉中心**（墨迹中心）上：用字宽/步进居中时，
+        // 「4」「1」这类字形在步进框里左右不均，线会歪到数字旁边（vc73 真机反馈）。
+        final float markCx = mSelInk.centerX();
+        final int w = Math.max(dp(12), Math.round(mSelInk.width() * 0.92f));
         final int h = Math.max(dp(2), dp(3));
         int top = Math.round(mSelInk.bottom + dp(10));
         final int plateH = previewPlate.getHeight();
@@ -1293,6 +1696,18 @@ public final class ModuleSettingsActivity extends Activity {
         mMarkView.setLayoutParams(lp);
         mMarkView.setVisibility(View.VISIBLE);
         positionGlow();   // 光晕跟下划线共用同一套墨迹框，一起落位
+        // X 圆钮：落在「数字下方到刻度弧顶之间」那条空带里（用户用绿笔圈出来的位置），
+        // 也就是下划线再往下一点。它在卡片里不占高度，靠 translationY 挪过去。
+        // X 圆钮：用户指定「放在长弧内部的正中」。刻度弧的弧顶在卡片高度的 0.48 处
+        // （见 ArcTickDrawable.peakY），弧两端落在卡片底边，所以内部中线 = (弧顶 + 卡片底)/2。
+        if (mDigitDoneView != null && mDigitDoneView.getHeight() > 0 && mPreviewCard != null) {
+            final int cardH = mPreviewCard.getHeight();
+            final int apex = Math.round(cardH * 0.48f);
+            // 0.56 = 用户实测的「十字中心」位置：从弧顶往下走到卡片底边的 56% 处。
+            final int targetCenterY = apex + Math.round((cardH - apex) * 0.56f);
+            final int defaultCenter = mDigitDoneView.getTop() + mDigitDoneView.getHeight() / 2;
+            mDigitDoneView.setTranslationY(targetCenterY - defaultCenter);
+        }
         if (BuildConfig.DEBUG) {
             android.util.Log.d("CS-MARK", "mark slot=" + mSelSlot + " ink=" + mSelInk
                     + " lp=" + w + "x" + h + "@" + lp.leftMargin + "," + lp.topMargin
@@ -1314,7 +1729,7 @@ public final class ModuleSettingsActivity extends Activity {
         if (mGlowAnim != null) {
             return;              // 已经在呼吸：换位/换色只需重新定位，别打断节拍
         }
-        final ValueAnimator anim = ValueAnimator.ofFloat(0.42f, 1f);
+        final ValueAnimator anim = ValueAnimator.ofFloat(0.06f, 1f);
         anim.setDuration(GLOW_PERIOD_MS);
         anim.setRepeatCount(ValueAnimator.INFINITE);
         anim.setRepeatMode(ValueAnimator.REVERSE);
@@ -1338,6 +1753,106 @@ public final class ModuleSettingsActivity extends Activity {
         }
     }
 
+    // ------------------------------------------------------------------
+    // 水滴：从卡片顶端滴下来，落在选中数字上就消失，隔一会儿再滴一滴
+    // ------------------------------------------------------------------
+
+    private final Runnable mDropTick = this::dropOnce;
+
+    /** 展开后稍等一下再开始滴水（等数字落位）。 */
+    private void startDropLoop() {
+        if (!mDigitsExpanded || mDropView == null) {
+            return;
+        }
+        stopDropLoop();
+        mDropHandler.postDelayed(mDropTick, 520L);
+    }
+
+    private void stopDropLoop() {
+        mDropHandler.removeCallbacks(mDropTick);
+        if (mDropAnim != null) {
+            mDropAnim.cancel();
+            mDropAnim = null;
+        }
+        if (mDropDrawable != null) {
+            mDropDrawable.setDrop(0f, 0f, 0f);
+            mDropDrawable.setSplash(-1f);
+        }
+        if (mDropView != null) {
+            mDropView.setVisibility(View.GONE);
+        }
+    }
+
+    /** 滴一滴：从预览区最上沿自由落体到选中数字的顶边，落地瞬间消失、只留一圈很快散开的水花。 */
+    private void dropOnce() {
+        if (!mDigitsExpanded || mDropView == null || mDropDrawable == null) {
+            return;
+        }
+        if (!measureSelInk() || !glowAllowed()) {
+            return;             // 跟随系统色时不滴水（与光晕规则一致）
+        }
+        final float cx = mSelInk.centerX() - previewPlate.getPaddingLeft();
+        // 目标：选中数字的墨迹顶边（数字被抬高了，这里同样减掉 lift，落点才贴着字形）。
+        // 坐标都用「水滴 View 自己的空间」：这个 View 被 -dp(20) 顶出预览区上沿，
+        // 所以 y=0 就是预览区上沿再往上 20dp 处（数字贴着顶，只能从这儿开始掉）。
+        final float overhang = dp(20);
+        final float targetY = mSelInk.top - previewPlate.getPaddingTop() - mLiftNow - dp(3) + overhang;
+        // 从卡片顶端露出：水滴 View 被顶出预览区上沿 dp(20)，
+        // 加 dp(4) 让起点落在卡片上沿附近（card 关掉 clipChildren 才看得见这一段）。
+        final float startY = dp(4);
+        final float radius = dp(5);
+        if (targetY <= startY + radius) {
+            mDropHandler.postDelayed(mDropTick, 1200L);
+            return;
+        }
+        mDropDrawable.setColor(adaptPreviewColor(slotColor(mSelSlot)));
+        mDropView.setVisibility(View.VISIBLE);
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("CS-DROP", "drop cx=" + Math.round(cx) + " y=" + Math.round(startY)
+                    + "->" + Math.round(targetY) + " plate=" + previewPlate.getWidth() + "x"
+                    + previewPlate.getHeight() + " ink=" + mSelInk);
+        }
+
+        final ValueAnimator fall = ValueAnimator.ofFloat(0f, 1f);
+        fall.setDuration(560L);
+        fall.setInterpolator(new android.view.animation.AccelerateInterpolator(1.6f));
+        fall.addUpdateListener(a -> {
+            final float t = (float) a.getAnimatedValue();
+            mDropDrawable.setSplash(-1f);
+            mDropDrawable.setDrop(cx, startY + (targetY - startY) * t, radius);
+        });
+        fall.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                // 滴到数字上：水滴瞬间收掉，同时散开一圈水花。
+                final ValueAnimator splash = ValueAnimator.ofFloat(0f, 1f);
+                splash.setDuration(280L);
+                splash.addUpdateListener(a -> {
+                    final float t = (float) a.getAnimatedValue();
+                    mDropDrawable.setDrop(cx, targetY, radius * (1f - t));
+                    mDropDrawable.setSplash(t);
+                });
+                splash.addListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(android.animation.Animator animation) {
+                        mDropDrawable.setDrop(0f, 0f, 0f);
+                        mDropDrawable.setSplash(-1f);
+                        if (mDropView != null) {
+                            mDropView.setVisibility(View.GONE);
+                        }
+                        if (mDigitsExpanded) {
+                            mDropHandler.postDelayed(mDropTick, 1100L);
+                        }
+                    }
+                });
+                mDropAnim = splash;
+                splash.start();
+            }
+        });
+        mDropAnim = fall;
+        fall.start();
+    }
+
     /**
      * 把光晕摆到选中那位的字形上（跟着字号、字距、选中位一起动）。
      *
@@ -1349,7 +1864,8 @@ public final class ModuleSettingsActivity extends Activity {
                 || previewPlate == null || !mDigitsExpanded) {
             return;
         }
-        if (!measureSelInk()) {
+        if (!measureSelInk() || !glowAllowed()) {
+            // 跟随系统色、或数字颜色开关关着：都不该有光晕（用户明确要求）。
             mGlowView.setVisibility(View.GONE);
             return;
         }
@@ -1364,12 +1880,43 @@ public final class ModuleSettingsActivity extends Activity {
         final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mGlowView.getLayoutParams();
         lp.width = w;
         lp.height = h;
+        final int lift = mDigitsExpanded ? mLiftNow : 0;
         lp.leftMargin = Math.round(mSelInk.centerX() - w / 2f) - previewPlate.getPaddingLeft();
-        lp.topMargin = Math.round(mSelInk.centerY() - h / 2f) - previewPlate.getPaddingTop();
+        lp.topMargin = Math.round(mSelInk.centerY() - h / 2f) - previewPlate.getPaddingTop() - lift;
         mGlowView.setLayoutParams(lp);
         mGlowDrawable.setGlyph(glyph, size, previewView.getTypeface());
-        mGlowDrawable.setColor(adaptPreviewColor(slotColor(mSelSlot)));
+        if (BuildConfig.DEBUG) {
+            final int[] pv = new int[2];
+            final int[] gp = new int[2];
+            final int[] pl = new int[2];
+            previewView.getLocationOnScreen(pv);
+            mGlowView.getLocationOnScreen(gp);
+            previewPlate.getLocationOnScreen(pl);
+            android.util.Log.d("CS-GLOW", "slot=" + mSelSlot + " idx=" + idx + " glyph=[" + glyph + "]"
+                    + " ink=" + mSelInk + " size=" + size + " w=" + w + " h=" + h
+                    + " lp=" + lp.leftMargin + "," + lp.topMargin
+                    + " pv=" + pv[0] + "," + pv[1] + " plate=" + pl[0] + "," + pl[1]
+                    + " glow=" + gp[0] + "," + gp[1] + " lift=" + lift
+                    + " padL=" + previewPlate.getPaddingLeft() + " padT=" + previewPlate.getPaddingTop());
+        }
+        // 浅色主题下直接用深色数字本色做光晕，在白卡上晕出来是一团灰（像脏点）；
+        // 这里把光晕色提亮到中等亮度，读起来才是「这数字在发光」而不是阴影。
+        final int glowBase = adaptPreviewColor(slotColor(mSelSlot));
+        mGlowDrawable.setColor(night ? glowBase : brightenForDark(glowBase, 0.55f));
         mGlowView.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * 选中那位该不该亮光晕。
+     *
+     * <p>两种情况不亮：①「数字颜色」总开关关着（此时整卡只是普通时间，没有逐位取色可言）；
+     * ②这一位是「跟随系统」——它的颜色由系统主题决定，发光会跟状态栏对不上，用户不要。</p>
+     */
+    private boolean glowAllowed() {
+        if (!ClockSecondsConfig.isHourColorEnabled(getContentResolver())) {
+            return false;
+        }
+        return slotColor(mSelSlot) != ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
     }
 
     /** 预览文本里第 slot 位数字的字符下标（预览是实时文本，不能缓存）。 */
@@ -1387,16 +1934,20 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     /**
-     * 预览里的颜色也要按背景压暗：亮色在浅底上看不清，与状态栏 adaptColorForBackground
-     * 用同一套规则（浅底 + 亮色 → 各通道 ×0.42），保证「预览看到的 = 状态栏显示的」。
+     * 预览里的颜色按背景做对比度补偿，保证「预览看到的 = 状态栏显示的」。
+     *
+     * <p>浅底：亮色看不清 → 各通道 ×0.42 压暗（与状态栏 adaptColorForBackground 同一套规则）。</p>
+     *
+     * <p>深底：深色数字（如深绿 #183419）几乎和卡片融成一片，光晕也就没东西可发光 →
+     * 向白色混合到亮度 0.30 以上，色相保留、明度提上来（vc66 修）。</p>
      */
     private int adaptPreviewColor(int color) {
         if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
             return text();
         }
         final int system = text();
-        if (Color.luminance(system) >= 0.5f) {      // 深色主题（浅字深底）：原色即可
-            return color;
+        if (Color.luminance(system) >= 0.5f) {      // 深色主题（浅字深底）：提亮到看得见
+            return brightenForDark(color, 0.32f);
         }
         if (Color.luminance(color) <= 0.55f) {      // 本身够深：不用压
             return color;
@@ -1407,8 +1958,62 @@ public final class ModuleSettingsActivity extends Activity {
         return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 
-    /** 未选中的位变淡：保留色相，只降不透明度（卡片是浅底，看起来就是变浅）。 */
-    private static int dimColor(int color) {
+    /**
+     * 深色底上把过暗的颜色提亮：优先**抬高 HSV 明度**（保住色相与饱和度，绿还是绿），
+     * 明度顶到头还达不到目标亮度时，再向白色混一点（很暗的颜色只能这样）。
+     *
+     * <p>vc66 第一版直接向白混，深绿 #183419 会被冲成橄榄绿；vc67 改成先提明度。</p>
+     */
+    private static int brightenForDark(int color, float targetLum) {
+        if (Color.luminance(color) >= targetLum) {
+            return color;
+        }
+        final float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+        int best = color;
+        for (int i = 0; i < 24 && hsv[2] < 1f; i++) {
+            hsv[2] = Math.min(1f, hsv[2] * 1.22f + 0.015f);
+            best = Color.HSVToColor(hsv);
+            if (Color.luminance(best) >= targetLum) {
+                return best;
+            }
+        }
+        final float lum = Color.luminance(best);
+        float t = (targetLum - lum) / (1f - Math.min(0.999f, lum));
+        t = Math.min(0.75f, Math.max(0f, t));
+        return blendColor(best, 0xFFFFFFFF, t);
+    }
+
+    /** 选中位被抬起的高度：向上移动一点点，一眼看出「正在编辑这一位」。 */
+    private int liftPx() {
+        return dp(10);
+    }
+
+    /** 只抬高绘制基线、不参与排版测量的 span（用 baselineShift，行高不变）。 */
+    private static final class LiftSpan extends android.text.style.CharacterStyle
+            implements android.text.style.UpdateAppearance {
+        private final int mLift;
+        LiftSpan(int lift) {
+            mLift = lift;
+        }
+        @Override
+        public void updateDrawState(android.text.TextPaint tp) {
+            // 注意方向：这条绘制路径上 baselineShift 取正值是往下走，取负值才是抬高（真机实测）。
+            tp.baselineShift -= mLift;
+        }
+    }
+
+    /**
+     * 未选中的位变淡。
+     *
+     * <p>浅底：保留色相只降不透明度（35%），看起来就是变浅。
+     * 深底：半透明叠在深色卡片上等于「直接消失」（vc65 实测），改成向卡片底色混 58%，
+     * 既保留色相又能看出这是「同一行里的弱化位」。</p>
+     */
+    private int dimColor(int color) {
+        if (night) {
+            return blendColor(color, DARK_CARD, 0.58f);
+        }
         return (color & 0x00FFFFFF) | 0x59000000;   // 35% 不透明度
     }
 
@@ -2720,6 +3325,11 @@ public final class ModuleSettingsActivity extends Activity {
             final boolean dim = mDigitsExpanded && slot != mSelSlot;
             final int color = mCfgDigitColors[slot];
             final boolean follow = !hourOn || color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+            // 「抬高」是几何变换，跟有没有颜色无关，必须先挂：vc83 之前它写在「跟随系统且不淡就
+            // continue」后面，于是选中跟随系统的那一位永远抬不起来（真机反馈「3 也没抬高」）。
+            if (mDigitsExpanded && slot == mSelSlot && mLiftNow > 0) {
+                sb.setSpan(new LiftSpan(mLiftNow), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
             if (follow && !dim) {
                 continue;   // 跟随系统且不淡：用默认文字色，不必加 span
             }
