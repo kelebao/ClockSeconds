@@ -1625,11 +1625,50 @@ public final class ModuleSettingsActivity extends Activity {
                 + tpL.measureText(whole, 0, idx);
         final float baseline = previewView.getTop() + previewView.getTotalPaddingTop()
                 + layout.getLineBaseline(line);
-        mSelInk.set(penX + ink.left, baseline + ink.top, penX + ink.right, baseline + ink.bottom);
-        mSelPenX = penX;
-        // 这里保持「未抬高」的原始墨迹（抬起量只存在 mLiftNow 里）：光晕和下划线
-        // 都在各自的函数里按当前 lift 落位 —— vc111 起下划线跟随抬起，不然数字抬上去、
-        // 线悬在原位，中间空出 20dp，看着就是「线和数字没对准」（真机反馈）。
+        // 字距（letterSpacing）下，TextView 把每个字形画在「步进框」里，
+        // 而 ink 是用字距清零的 paint 量的、只含字形本身，所以整体要往右补一段。
+        // 补多少是逐位实测拟出来的：
+        //   vc117 补 0.5 个字距 → 光晕/线仍偏左 12~18px；
+        //   vc118 补 1.5 个字距 → 变成偏右 11~15px；
+        //   斜率正好一个字距（0.22em × 153px ≈ 34px），最优点在 1.03 处：
+        //   vc119 真机 6 位里 5 位误差 ≤1.5px。
+        // 唯一例外是**第一位**：它的笔位就是行首，前面没有字距要补，
+        //   1.03 个字距会让它偏右整整 33px（vc119 真机），所以首位的补偿单独去掉。
+        // （vc120 试过直接用 layout.getPrimaryHorizontal 校真值，但 singleLine 下那段是
+        //   天文数字的 layout，差值整体偏了 57px，已回退，别再走这条路。）
+        final float lsUnit = previewView.getLetterSpacing() * previewView.getTextSize();
+        final float penFix = (idx == 0) ? 0f : lsUnit * 1.03f;
+        mSelInk.set(penX + penFix + ink.left, baseline + ink.top,
+                penX + penFix + ink.right, baseline + ink.bottom);
+        mSelPenX = penX + penFix;
+        if (BuildConfig.DEBUG) {
+            final int[] pvLoc = new int[2];
+            previewView.getLocationOnScreen(pvLoc);
+            // 用 Layout 的「真实」行宽/笔位做对照（singleLine 下 layout 宽度是天文数字，
+            // 但 getLineRight-getLineLeft 的差值仍反映 TextView 实际排版的整行宽度）。
+            final float realLineW = layout.getLineRight(line) - layout.getLineLeft(line);
+            android.util.Log.d("CS-INK", "idx=" + idx + " g=[" + glyph + "]"
+                    + " vw=" + previewView.getWidth() + " padL=" + previewView.getTotalPaddingLeft()
+                    + " lineW=" + lineW + " realLineW=" + realLineW + " avail=" + avail
+                    + " lineStart=" + lineStart
+                    + " penX=" + penX + " inkL=" + ink.left + " inkR=" + ink.right
+                    + " paintW=" + previewView.getPaint().measureText(whole)
+                    + " sp=" + previewView.getLetterSpacing()
+                    + " screenInkL=" + (pvLoc[0] + penX + ink.left)
+                    + " screenInkR=" + (pvLoc[0] + penX + ink.right)
+                    + " primaryH=" + layout.getPrimaryHorizontal(idx)
+                    + " lineL=" + layout.getLineLeft(line)
+                    + " lineR=" + layout.getLineRight(line)
+                    + " lineW=" + layout.getWidth()
+                    + " layoutAlgn=" + layout.getParagraphAlignment(line)
+                    + " tvLeft=" + previewView.getLeft()
+                    + " tvPadL=" + previewView.getPaddingLeft()
+                    + " pvLoc=" + pvLoc[0] + "," + pvLoc[1]
+                    + " realPenRelView=" + (layout.getPrimaryHorizontal(idx) - layout.getLineLeft(line))
+                    + " myPenRelView=" + (penX - previewView.getLeft() - previewView.getTotalPaddingLeft()));
+        }
+        // 这里保持「未抬高」的原始墨迹（抬起量只存在 mLiftNow 里）：下划线直接用原墨迹
+        // 落位（用户要求线不跟抬，vc112），光晕则自己减去当前 lift 贴到抬起的字形上。
         return true;
     }
 
@@ -1658,10 +1697,9 @@ public final class ModuleSettingsActivity extends Activity {
         final float markCx = mSelInk.centerX();
         final int w = Math.max(dp(12), Math.round(mSelInk.width() * 0.92f));
         final int h = Math.max(dp(2), dp(3));
-        // 线跟数字一起抬：保持「抬起后的字形底 + dp(10)」，抬起/落下由 animateLift
-        // 每帧回调 positionMark，线随动画平滑升降。
-        final int lift = mDigitsExpanded ? mLiftNow : 0;
-        int top = Math.round(mSelInk.bottom - lift + dp(10));
+        // 线保持「未抬高时的字形底 + dp(10)」：用户明确要求线不要跟着数字抬起来
+        // （vc112 真机反馈「线是保持原来位置，不用也抬高」）。
+        int top = Math.round(mSelInk.bottom + dp(10));
         final int plateH = previewPlate.getHeight();
         if (plateH > 0) {
             top = Math.min(top, plateH - h - dp(2));
@@ -1765,14 +1803,21 @@ public final class ModuleSettingsActivity extends Activity {
                 ? "" : String.valueOf(text.charAt(idx));
         final float size = previewView.getTextSize();
         final float pad = DigitGlowDrawable.pad(size);
-        final int w = Math.max(1, Math.round(mSelInk.width() + pad * 2f));
-        final int h = Math.max(1, Math.round(mSelInk.height() + pad * 2f));
+        // 光晕外框尺寸与字形无关：否则「1」这种窄字光晕只有宽字的一半大，
+        // 换一位就换个大小，读成「每位的光晕都不一样」（vc112 真机反馈）。
+        // 基准取 max(墨迹宽, 0.62 字号) —— 等宽数字的步进框大约就是 0.6 字号。
+        final float baseW = Math.max(mSelInk.width(), size * 0.62f);
+        final float baseH = Math.max(mSelInk.height(), size * 0.86f);
+        final int w = Math.max(1, Math.round(baseW + pad * 2f));
+        final int h = Math.max(1, Math.round(baseH + pad * 2f));
         final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mGlowView.getLayoutParams();
         lp.width = w;
         lp.height = h;
-        final int lift = mDigitsExpanded ? mLiftNow : 0;
+        // 光晕与下划线共用「未抬高」的墨迹中心：数字自己抬走（LiftSpan 只改绘制基线），
+        // 光晕和线都留在原位 —— 两者永远同心，不会再出现「一个跟上去了、一个没动」
+        // （vc112 用户要求「线保持原来位置」，并反馈光晕与线不一致）。
         lp.leftMargin = Math.round(mSelInk.centerX() - w / 2f) - previewPlate.getPaddingLeft();
-        lp.topMargin = Math.round(mSelInk.centerY() - h / 2f) - previewPlate.getPaddingTop() - lift;
+        lp.topMargin = Math.round(mSelInk.centerY() - h / 2f) - previewPlate.getPaddingTop();
         mGlowView.setLayoutParams(lp);
         mGlowDrawable.setGlyph(glyph, size, previewView.getTypeface());
         if (BuildConfig.DEBUG) {
@@ -1784,9 +1829,12 @@ public final class ModuleSettingsActivity extends Activity {
             previewPlate.getLocationOnScreen(pl);
             android.util.Log.d("CS-GLOW", "slot=" + mSelSlot + " idx=" + idx + " glyph=[" + glyph + "]"
                     + " ink=" + mSelInk + " size=" + size + " w=" + w + " h=" + h
+                    + " cx=" + Math.round(mSelInk.centerX()) + " cy=" + Math.round(mSelInk.centerY())
+                    + " glowBox=" + w + "x" + h + "@" + Math.round(mSelInk.centerX() - w / 2f)
+                    + "," + Math.round(mSelInk.centerY() - h / 2f)
                     + " lp=" + lp.leftMargin + "," + lp.topMargin
                     + " pv=" + pv[0] + "," + pv[1] + " plate=" + pl[0] + "," + pl[1]
-                    + " glow=" + gp[0] + "," + gp[1] + " lift=" + lift
+                    + " glow=" + gp[0] + "," + gp[1]
                     + " padL=" + previewPlate.getPaddingLeft() + " padT=" + previewPlate.getPaddingTop());
         }
         // 浅色主题下直接用深色数字本色做光晕，在白卡上晕出来是一团灰（像脏点）；
