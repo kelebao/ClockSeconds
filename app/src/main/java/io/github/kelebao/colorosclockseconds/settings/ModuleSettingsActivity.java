@@ -2048,8 +2048,9 @@ public final class ModuleSettingsActivity extends Activity {
      * 浅色主题把数字**提亮**到目标亮度（与 {@link #brightenForDark} 同思路，只是用于白底）。
      *
      * <p>先抬 HSV 明度（色相不变，黄还是黄、蓝还是蓝）；明度顶到头还达不到目标的
-     * （深蓝、深紫这类），再向白色混一点。饱和度同时略降——纯色到高亮度会显得荧光刺眼，
-     * 压一点饱和度读起来更柔和。</p>
+     * （深蓝、深紫、以及纯黄/纯青这类 v=1 的纯色），再向白色混一点——混白同样不改色相，
+     * 只是把颜色冲淡。绝不为了亮度去换色相：预览颜色必须和状态栏真正生效的颜色一致，
+     * 否则就是误导用户。</p>
      */
     private static int lightenForLight(int color, float targetLum) {
         if (Color.luminance(color) >= targetLum) {
@@ -2057,25 +2058,13 @@ public final class ModuleSettingsActivity extends Activity {
         }
         final float[] hsv = new float[3];
         Color.colorToHSV(color, hsv);
-        // 先把「明度已经顶到头」的色相换成能提亮的邻居色。
+        // 色相一律不动。
         //
-        // 纯黄 (255,255,0) 的明度本来就是 1.0，往上推不动，唯一的路是向白色混 —— 混出来
-        // 是一坨发灰的橄榄色，光晕更是直接变白、在白卡上彻底看不见（真机实测：
-        // 黄色在浅色模式下数字变深橄榄、光晕消失）。纯青、纯洋红同理。
-        // 这类色相唯一的出路是**先往暖/深的方向挪一点色相**：黄 → 琥珀，青 → 天蓝。
-        // 用户看到的仍然是「同一个色系」，但在白底上既有颜色又有亮度。
-        if (hsv[2] >= 0.995f && hsv[1] >= 0.6f) {
-            if (hsv[0] >= 40f && hsv[0] <= 75f) {
-                hsv[0] = Math.max(30f, hsv[0] - 22f);        // 黄 → 琥珀/橙金
-            } else if (hsv[0] >= 160f && hsv[0] <= 200f) {
-                hsv[0] = 205f;                               // 纯青 → 天蓝
-            } else if (hsv[0] >= 285f && hsv[0] <= 325f) {
-                hsv[0] = 330f;                               // 纯洋红 → 玫红
-            }
-            hsv[2] = 0.92f;
-            color = Color.HSVToColor(hsv);
-        }
-        Color.colorToHSV(color, hsv);
+        // vc143 第一版为了让「明度已经顶到头」的纯色（纯黄 #FFFF00、纯青、纯洋红）在白卡上
+        // 亮得起来，先挪 22° 色相再提亮 —— 结果是用户选的黄显示成琥珀橙，选的青显示成天蓝。
+        // 这与状态栏里实际生效的颜色对不上，等于**误导用户**（用户反馈「改回去吧，颜色不一样，
+        // 误导用户」）。所以整段色相搬迁已删除：提不动的颜色就停在它能到的亮度，宁可光晕弱一点，
+        // 也不能显示成另一个颜色。
         int best = color;
         for (int i = 0; i < 24 && hsv[2] < 1f; i++) {
             hsv[2] = Math.min(1f, hsv[2] * 1.22f + 0.015f);
