@@ -820,6 +820,9 @@ public final class ModuleSettingsActivity extends Activity {
         // 「同步」按钮固定 wrap_content 永不被压。
         netTimeView.setSingleLine(true);
         netTimeView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        // weight=1 让 TextView 占满剩余宽度以便收缩防溢出，但文字要 CENTER，
+        // 否则默认左对齐会把「网络时间 …」贴到卡片左边（vc182 引入的位置偏移，vc183 修回）。
+        netTimeView.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams netLp = new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         netLp.gravity = Gravity.CENTER_VERTICAL;
