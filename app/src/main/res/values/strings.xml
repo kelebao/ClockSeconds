@@ -90,6 +90,7 @@
     <string name="swatch_pink">粉</string>
     <string name="swatch_white">白</string>
     <string name="swatch_grey">灰</string>
+    <string name="swatch_brown">Brown</string>
     <string name="settings_digit_title">数字颜色</string>
     <string name="settings_digit_new">NEW</string>
     <string name="settings_digit_sum_v2">Pick a color below, applies instantly</string>

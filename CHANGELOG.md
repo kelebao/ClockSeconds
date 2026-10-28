@@ -2,9 +2,9 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 171）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 172）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc171；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：未发布。** 测试线从 vc37 累积到 vc172；正式发版时本段即为 v1.2.0 的更新内容。
 
 ### vc148 ~ vc168（数字颜色卡改版）
 
@@ -19,6 +19,12 @@
 
 - **X 圆钮下移、时间整体上移（vc169~vc170）**：X 关闭钮改为挂在 `previewPlate` 内、用 `topMargin` 定位到「下划线下方、弧内空带」，不再用 `translationY`（避免每帧 `positionMark()` 重算把它拉回原位导致「跳动」）；网络时间行上移。
 - **三处位置精调（vc171）**：按真机调参结果固化——整组数字 `translationY = -10dp`、X 圆钮 `targetCenterY = 下划线 + dp(20) + dp(17)`、网络时间行 `padding-top = dp(19)`。临时的 DEBUG 三滑杆调参卡已删除。
+
+### vc172（光晕跟随 / X 再下移 / 预设白色改棕）
+
+- **光晕跟随数字上移**：整组数字设了 `translationY=-10dp`，但光晕是 previewPlate 下独立子 View 不吃该平移，`positionGlow()` 的 `topMargin` 补 `- dp(10)`，避免数字抬上去、光晕留在下面。
+- **X 圆钮再下移 7dp**：`targetCenterY = 下划线 + dp(20) + dp(24)`（原 +17）。
+- **预设白色改棕**：`HOUR_COLORS` 里 `0xFFFFFFFF` 换成 `0xFF795548`（棕），白圆在白卡上看不见；`colorNameOf` 与 `swatch_brown` 字符串（中/英）同步。
 
 ### 新增
 

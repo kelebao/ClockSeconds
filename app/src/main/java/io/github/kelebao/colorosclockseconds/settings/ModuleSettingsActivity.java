@@ -108,7 +108,7 @@ public final class ModuleSettingsActivity extends Activity {
      */
     private static final int[] HOUR_COLORS = {
             0xFFF44336, 0xFFFF9800, 0xFFD4A017, 0xFF4CAF50, 0xFF00BCD4,
-            0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFFFFFFFF, 0xFF9E9E9E,
+            0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFF795548, 0xFF9E9E9E,
     };
 
     // 浅色配色
@@ -1977,7 +1977,7 @@ public final class ModuleSettingsActivity extends Activity {
             final int xH = dp(26);
             // plateH 复用上面已算好的值。
             int cx = Math.round(mSelInk.bottom + dp(10));   // 下划线基线
-            int targetCenterY = cx + dp(20) + dp(17);       // X 中心=下划线再下 20dp，再按真机调参 +17dp
+            int targetCenterY = cx + dp(20) + dp(24);       // X 中心=下划线再下 20dp，再按真机调参 +24dp
             // 兜底：别顶到 plate 底边之外。
             targetCenterY = Math.min(targetCenterY, plateH - Math.round(xH / 2f) - dp(2));
             final FrameLayout.LayoutParams dlp =
@@ -2091,8 +2091,11 @@ public final class ModuleSettingsActivity extends Activity {
         // 下划线则相反 —— 用户明确要求「线保持原来位置，不用也抬高」（vc112），
         // 所以 positionMark() 不补这个偏移，两者分工不同。
         lp.leftMargin = Math.round(mSelInk.centerX() - w / 2f) - previewPlate.getPaddingLeft();
+        // 光晕跟着「整组数字」上移：previewView 设了 translationY=-10dp（数字整体上移），
+        // 但光晕是 previewPlate 下另一个子 View，不吃 previewView 的平移，必须手动补 -10dp。
+        // 下划线 positionMark() 不补 —— 用户要求线保持原位。
         lp.topMargin = Math.round(mSelInk.centerY() - h / 2f) - previewPlate.getPaddingTop()
-                - mLiftNow;
+                - mLiftNow - dp(10);
         mGlowView.setLayoutParams(lp);
         mGlowDrawable.setGlyph(glyph, size, previewView.getTypeface());
         if (BuildConfig.DEBUG) {
@@ -3962,6 +3965,7 @@ public final class ModuleSettingsActivity extends Activity {
             case 0xFF2196F3: res = R.string.swatch_blue; break;
             case 0xFF9C27B0: res = R.string.swatch_purple; break;
             case 0xFFE91E63: res = R.string.swatch_pink; break;
+            case 0xFF795548: res = R.string.swatch_brown; break;
             case 0xFFFFFFFF: res = R.string.swatch_white; break;
             case 0xFF9E9E9E: res = R.string.swatch_grey; break;
             default: return "";
