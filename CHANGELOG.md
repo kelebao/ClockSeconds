@@ -2,9 +2,9 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 181）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 182）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc181；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：未发布。** 测试线从 vc37 累积到 vc182；正式发版时本段即为 v1.2.0 的更新内容。
 
 ### vc148 ~ vc168（数字颜色卡改版）
 
@@ -28,6 +28,12 @@
 - **下划线跟随数字抬高（vc174）**：`positionMark()` 里 `top = mSelInk.bottom + dp(10) - mLiftNow`，与 `LiftSpan` 抬高等量。
 - **X 圆钮位置调整并锚定网络时间行（vc174~vc180）**：X 改为按「网络时间文字顶边 - 1dp」定位（用 `netTimeView.getLocationOnScreen()` 而非容器顶，避开 padding 误差）。
 - **修复 X 按钮点不动（vc181）**：X 挂在只有 296px 高的 `previewPlate` 内，却有一大半伸出其边界。Android 触摸命中测试先按父容器 bounds 裁剪，点在 `previewPlate` 外时它不处理触摸，挂在其上的 `TouchDelegate` 也不触发。改把 `TouchDelegate` 挂到整张预览卡 `mPreviewCard`（纵向完整覆盖 X 且已 `setClipChildren(false)`），hit 矩形从 plate 坐标换算成 card 坐标。真机验证：点 X 能正常收起预览卡、再展开正常。
+
+
+### vc182（跨分辨率防溢出）
+
+- **修复高密度（density ≥ 720）下「网络时间」行被挤出卡片（vc182）**：网络时间文字原为 `WRAP_CONTENT` 且无宽度约束，高密度时整行「网络时间 xx:xx:xx（本地 Ns）」比卡片还宽，`LinearLayout(CENTER)` 把它挤出左边界、并把右侧「同步」按钮压成半个字。改为 `weight=1` 可伸缩 + `singleLine` + 超宽省略号（`TruncateAt.END`），「同步」按钮固定 `WRAP_CONTENT` 不再被压。真机验证 density 400/560/640/720 均正常。
+- 顺带确认：下划线、光晕、X 圆钮的定位全部基于运行时实测（墨迹框 / 字号 / 网络时间文字屏幕位置 / dp），换分辨率不会错位（density 400/480/560/640/720 逐一截图核对）。
 
 ### vc172（光晕跟随 / X 再下移 / 预设白色改棕）
 

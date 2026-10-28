@@ -814,6 +814,16 @@ public final class ModuleSettingsActivity extends Activity {
         netTimeView.setTextColor(text2());
         netTimeView.setOnClickListener(v -> fetchNetworkTime());
         netTimeView.setClickable(true);   // 无障碍
+        // 【跨分辨率防溢出 vc182】网络时间文字以前是 WRAP_CONTENT，高密度(density≥720)时
+        // 「网络时间 xx:xx:xx（本地 Ns）」比卡片还宽，LinearLayout(CENTER) 会把它挤出左边界、
+        // 同时把右侧「同步」按钮压成半个字。改为 weight=1 可伸缩 + 单行 + 超宽省略号，
+        // 「同步」按钮固定 wrap_content 永不被压。
+        netTimeView.setSingleLine(true);
+        netTimeView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams netLp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        netLp.gravity = Gravity.CENTER_VERTICAL;
+        netTimeView.setLayoutParams(netLp);
         netRow.addView(netTimeView);
 
         // 与网络时间有明显误差时才出现「同步」按钮。
