@@ -2368,6 +2368,11 @@ public final class ModuleSettingsActivity extends Activity {
             if (!mCfgHourColorOn && mDigitSwitch != null && !mDigitSwitch.isChecked()) {
                 mDigitSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
             }
+            // 【用户 m12469】在「数字颜色」卡上点预设/拖滑杆改色时，预览时间卡不应自动进入
+            // 「设置颜色(展开取色)」状态。若此刻正处于展开态，静默收起回普通折叠外观，只保留改色结果。
+            if (mDigitsExpanded) {
+                collapseDigits();
+            }
             refreshDigitSwatches();
             refreshColorSummary();
             updatePreview();            // 字色 / 下划线 / 水滴颜色一起跟着变
