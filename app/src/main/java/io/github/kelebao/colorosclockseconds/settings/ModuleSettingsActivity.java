@@ -1655,13 +1655,31 @@ public final class ModuleSettingsActivity extends Activity {
         final float fit = avail * mFitSafety;
         float size = fit / (perUnit + EXPAND_GAP_EM * gaps);
         size = Math.max(sp(34), Math.min(sp(80), size)) * mSizeShrink;
-        // 高度上限：展开时卡片高度不增，得给卡片下半留出长弧的位置 → 字号不超过卡片可用高度的 52%。
-        if (mPreviewCard != null && mPreviewCard.getHeight() > 0) {
-            final int availH = mPreviewCard.getHeight()
-                    - previewView.getPaddingTop() - previewView.getPaddingBottom();
-            final float maxByH = availH * 0.46f;
-            if (size > maxByH && maxByH >= sp(34)) {
-                size = maxByH;
+        // 高度上限（vc185 重做）：展开时 previewPlate 高度被锁为折叠态自然高度（约一行字高），
+        // 数字放大后字形墨迹高会超过 plate 可见高度 → 被 TextView/父容器裁掉下半段
+        // （「个别分辨率下预览时间数字下段没了一半」的真因）。
+        // 旧逻辑用 cardH*0.46，在矮卡上仍偏大（实测 320 密度：plate=169px 而字形 159px+上移 20px 已超）。
+        // 改为：按「字形墨迹高 / 字号」的实测比例，反推能完整放进 plate 的最大字号。
+        if (previewView != null) {
+            // 参考高度：优先用锁定的折叠态 plate 高（展开时就锁这个高），否则用当前 plate 高。
+            int plateHForFit = (mPlateFoldH > 0) ? mPlateFoldH : previewPlate.getHeight();
+            if (plateHForFit > 0) {
+                // plate 可见高 = plate 高 − 上下 padding（plate padding 底 26dp 是给下划线留的，
+                // 数字仍可与它重叠，所以只扣上下 padding，不额外扣）。
+                final int platePadT = previewPlate.getPaddingTop();
+                final int platePadB = previewPlate.getPaddingBottom();
+                final int usableH = plateHForFit - platePadT - platePadB;
+                if (usableH > 0) {
+                    // 实测字形墨迹高 ≈ 字号 × 1.17；再加上整体上移 10dp 的占用，
+                    // 用 0.86 的安全系数（≈ 1/1.17）保证字形完全落在 plate 内、不被裁。
+                    // 实测字形墨迹高 ≈ 字号×1.17，再加整体上移 10dp。用 0.855（=1/1.17）近似上限，
+                    // 再乘 0.96 留亚像素余量 → 0.82。既让矮卡数字尽量大，又不裁底。
+                    final float glyphRatioInv = 0.82f;   // 字号 / 字形墨迹高，留余量
+                    final float maxByH = usableH * glyphRatioInv;
+                    if (size > maxByH && maxByH >= sp(30)) {
+                        size = maxByH;
+                    }
+                }
             }
         }
         mExpandedSizePx = size;
