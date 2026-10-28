@@ -1982,7 +1982,12 @@ public final class ModuleSettingsActivity extends Activity {
             int arcBoundsH = Math.max(0, cardHx - cardPadT - cardPadB);
             int arcPeakInCardY = cardPadT + Math.round(arcBoundsH * 0.48f);
             int plateTopInCard = (previewPlate != null) ? previewPlate.getTop() : 0;
-            int targetCenterY = arcPeakInCardY - plateTopInCard;
+            // 用户要求「移动到箭头位置」：箭头=弧尖。让 X 整体浮在弧尖上方、不压弧线
+            // （圆心若压在弧尖上，下半圆会盖住弧线尖端，看起来"和长弧重叠"）。
+            int arcPeakPlateY = arcPeakInCardY - plateTopInCard;   // 弧尖在 plate 坐标里的 y
+            // 视觉上弧线最高处会再往上溢出一点（弧描边 + 呼吸），所以除一个半径外再多让 dp(14)，
+            // 让 X 整体浮在弧尖上方、不压线。
+            int targetCenterY = arcPeakPlateY - Math.round(xH / 2f) - dp(14);
             // 兜底：别顶到 plate 上下边之外。
             targetCenterY = Math.max(Math.round(xH / 2f), targetCenterY);
             targetCenterY = Math.min(targetCenterY, plateH - Math.round(xH / 2f) - dp(2));
