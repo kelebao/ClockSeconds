@@ -1082,13 +1082,6 @@ public final class ModuleSettingsActivity extends Activity {
         sub.setPadding(0, dp(4), 0, 0);
         card.addView(sub);
 
-        // 「正在编辑：时十」——点上面预览里的数字即可切换这一行。
-        mDigitEditingView = new TextView(this);
-        mDigitEditingView.setTextSize(11f);
-        mDigitEditingView.setTextColor(accent());
-        mDigitEditingView.setPadding(0, dp(10), 0, 0);
-        card.addView(mDigitEditingView);
-
         // 预设两排、每排 5 颗，铺满卡片宽度（无背景板、无角标）。
         LinearLayout presetWrap = new LinearLayout(this);
         presetWrap.setOrientation(LinearLayout.VERTICAL);
