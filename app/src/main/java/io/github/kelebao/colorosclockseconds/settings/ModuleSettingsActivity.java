@@ -1976,18 +1976,19 @@ public final class ModuleSettingsActivity extends Activity {
             // 纵向：X 中心落在弧顶红点处。弧是卡片背景 LayerDrawable 子项，bounds 高度
             // = 卡片内容高（cardH - padT - padB），弧顶在该高度的 0.48 处（ArcTickDrawable.peakY）。
             // X 挂在 previewPlate 内，需把「卡片坐标的弧顶」换算到 plate 坐标：减去 previewPlate.getTop()。
+            // 弧尖（用户说的「箭头」）在 previewPlate 内的 y。
+            // 弧是画在「卡片背景」上的，bounds 高度 = cardH - padT - padB（实测 cardH=516 稳定），
+            // 弧尖在卡片坐标 = padT + boundsH*0.48；plate 在卡片内有 top 偏移(实测 58)，
+            // 相减即得弧尖在 plate 内的 y（实测 183，恰是 plate 高 296 的 61.8%，不是 28%）。
             int cardHx = mPreviewCard != null ? mPreviewCard.getHeight() : plateH;
             int cardPadT = mPreviewCard != null ? mPreviewCard.getPaddingTop() : 0;
             int cardPadB = mPreviewCard != null ? mPreviewCard.getPaddingBottom() : 0;
             int arcBoundsH = Math.max(0, cardHx - cardPadT - cardPadB);
             int arcPeakInCardY = cardPadT + Math.round(arcBoundsH * 0.48f);
-            int plateTopInCard = (previewPlate != null) ? previewPlate.getTop() : 0;
-            // 用户要求「移动到箭头位置」：箭头=弧尖。让 X 整体浮在弧尖上方、不压弧线
-            // （圆心若压在弧尖上，下半圆会盖住弧线尖端，看起来"和长弧重叠"）。
+            int plateTopInCard = previewPlate.getTop();
             int arcPeakPlateY = arcPeakInCardY - plateTopInCard;   // 弧尖在 plate 坐标里的 y
-            // 视觉上弧线最高处会再往上溢出一点（弧描边 + 呼吸），所以除一个半径外再多让 dp(14)，
-            // 让 X 整体浮在弧尖上方、不压线。
-            int targetCenterY = arcPeakPlateY - Math.round(xH / 2f) - dp(14);
+            // X 整体浮在弧尖上方（底边离弧尖留 dp(2)），不压弧线。
+            int targetCenterY = arcPeakPlateY - Math.round(xH / 2f) - dp(2);
             // 兜底：别顶到 plate 上下边之外。
             targetCenterY = Math.max(Math.round(xH / 2f), targetCenterY);
             targetCenterY = Math.min(targetCenterY, plateH - Math.round(xH / 2f) - dp(2));
@@ -2004,6 +2005,7 @@ public final class ModuleSettingsActivity extends Activity {
             dlp.topMargin = targetCenterY - Math.round(xH / 2f) - previewPlate.getPaddingTop();
             mDigitDoneView.setLayoutParams(dlp);
             mDigitDoneView.setTranslationY(0f);
+
         }
         if (BuildConfig.DEBUG) {
             android.util.Log.d("CS-MARK", "mark slot=" + mSelSlot + " ink=" + mSelInk
