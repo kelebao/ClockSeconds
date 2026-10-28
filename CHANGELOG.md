@@ -2,9 +2,9 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 168）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 171）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc168；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：未发布。** 测试线从 vc37 累积到 vc171；正式发版时本段即为 v1.2.0 的更新内容。
 
 ### vc148 ~ vc168（数字颜色卡改版）
 
@@ -14,6 +14,11 @@
 - **修复收起后长弧消失（vc166）**：收起路径不经过 `animateGrow`，弧停在 `fadeDecorTo(0f)` 的全透明状态；在 `animateDigits(false)` 结束回调里补 `fadeDecorTo(1f, 200L)`。
 - **长弧不再随展开/收起淡出（vc167）**：`setDecorAlpha` 不再把装饰透明度传给长弧，弧恒为不透明，位置与卡片绑定。
 - **修复点开预览时「网络时间」行闪一下（vc168）**：展开时字号变大把 `previewPlate` 撑高、把网络时间行顶出锁定的卡片高度再缩回；改为锁定 `previewPlate` 高度为折叠态快照值 `mPlateFoldH`，收起时归还 `WRAP_CONTENT`。
+
+### vc169 ~ vc171（预览卡元素位置微调）
+
+- **X 圆钮下移、时间整体上移（vc169~vc170）**：X 关闭钮改为挂在 `previewPlate` 内、用 `topMargin` 定位到「下划线下方、弧内空带」，不再用 `translationY`（避免每帧 `positionMark()` 重算把它拉回原位导致「跳动」）；网络时间行上移。
+- **三处位置精调（vc171）**：按真机调参结果固化——整组数字 `translationY = -10dp`、X 圆钮 `targetCenterY = 下划线 + dp(20) + dp(17)`、网络时间行 `padding-top = dp(19)`。临时的 DEBUG 三滑杆调参卡已删除。
 
 ### 新增
 

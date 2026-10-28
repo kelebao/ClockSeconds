@@ -753,6 +753,8 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setFontFeatureSettings("tnum");
         previewView.setTextColor(text());
         previewView.setGravity(Gravity.CENTER_HORIZONTAL);
+        // 真机调参：整组数字向上移 10dp（数字整体 -10dp）。
+        previewView.setTranslationY(dp(-10));
         // 永远单行：展开动画中途字号和字距同时变，总有一两帧比可用宽度略宽，
         // 一旦换行预览卡会瞬间高出一整行、下面的卡片先被顶下去再弹回来（用户看到「往上跳」）。
         // 换成单行后宁可这两帧被裁掉几个像素，也不让卡片高度变。
@@ -804,7 +806,8 @@ public final class ModuleSettingsActivity extends Activity {
         LinearLayout netRow = new LinearLayout(this);
         netRow.setOrientation(LinearLayout.HORIZONTAL);
         netRow.setGravity(Gravity.CENTER);
-        netRow.setPadding(0, dp(26), 0, 0);
+        // 用户要求「整体时间上移」：上内边距从原 26dp 收到 14dp，网络时间行整体上移约 12dp（不是只动选中数字）。
+        netRow.setPadding(0, dp(19), 0, 0);
 
         netTimeView = new TextView(this);
         netTimeView.setTextSize(12f);
@@ -840,15 +843,16 @@ public final class ModuleSettingsActivity extends Activity {
         // 展开取色时才出现的「关闭」圆钮（X）。挂在卡片最后 = 画在最上层；
         // 负的 bottomMargin 让它在纵向不占高度，实际位置由 positionMark() 按选中位墨迹算出来。
         mDigitDoneView = new CloseCrossView(this, accent(), 0xFFFFFFFF);
-        LinearLayout.LayoutParams doneLp =
-                new LinearLayout.LayoutParams(dp(26), dp(26));
-        doneLp.gravity = Gravity.CENTER_HORIZONTAL;
-        doneLp.bottomMargin = -dp(26);
+        // X 放进 previewPlate（和数字/下划线/光晕同一坐标系），不再挂在 card 上：
+        // 挂 card 时会因为 LayerDrawable 背景 + 负 bottomMargin 被排到内容区之外、被裁掉不显示。
+        FrameLayout.LayoutParams doneLp =
+                new FrameLayout.LayoutParams(dp(26), dp(26));
+        doneLp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
         mDigitDoneView.setLayoutParams(doneLp);
         mDigitDoneView.setVisibility(View.GONE);
         mDigitDoneView.setContentDescription(getString(R.string.settings_digit_done));
         mDigitDoneView.setOnClickListener(v -> collapseDigits());
-        card.addView(mDigitDoneView);
+        previewPlate.addView(mDigitDoneView);
 
         // 预览卡与下方两张卡之间的间隙：必须在此处（真正 addView 的地方）给 bottomMargin。
         // 之前只在 expand/collapse 里 setPreviewGap() 设置，冷启动首次进设置页时两方法都没跑过 → 贴死。
@@ -859,6 +863,12 @@ public final class ModuleSettingsActivity extends Activity {
         updatePreview();
         fetchNetworkTime();
     }
+
+
+
+
+
+
 
     /** 初始化按压音 SoundPool（自带 press_click.wav，独立于系统「触摸音」开关）。 */
     private void initPressSound() {
@@ -1908,6 +1918,13 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     /** 把短色线摆到选中数字下面（宽度取字形的 62%，位置随字号/字距变化重算）。 */
+    private static String locStr(View v) {
+        if (v == null) return "null";
+        int[] xy = new int[2];
+        v.getLocationOnScreen(xy);
+        return xy[0] + "," + xy[1] + "," + v.getWidth() + "x" + v.getHeight();
+    }
+
     private void positionMark() {
         if (mMarkView == null || previewView == null || previewPlate == null || !mDigitsExpanded) {
             return;
@@ -1951,13 +1968,33 @@ public final class ModuleSettingsActivity extends Activity {
         // 也就是下划线再往下一点。它在卡片里不占高度，靠 translationY 挪过去。
         // X 圆钮：用户指定「放在长弧内部的正中」。刻度弧的弧顶在卡片高度的 0.48 处
         // （见 ArcTickDrawable.peakY），弧两端落在卡片底边，所以内部中线 = (弧顶 + 卡片底)/2。
-        if (mDigitDoneView != null && mDigitDoneView.getHeight() > 0 && mPreviewCard != null) {
-            final int cardH = mPreviewCard.getHeight();
-            final int apex = Math.round(cardH * 0.48f);
-            // 用户要求「X 按钮上移一下」：从 0.56 收到 0.32，十字中心更靠近弧顶。
-            final int targetCenterY = apex + Math.round((cardH - apex) * 0.32f);
-            final int defaultCenter = mDigitDoneView.getTop() + mDigitDoneView.getHeight() / 2;
-            mDigitDoneView.setTranslationY(targetCenterY - defaultCenter);
+        // 注意：X 默认 GONE，首帧 getHeight()==0，若等高度再算会漏设 translationY，
+        // X 先停在卡片底部原生位置、淡入后跳到弧内 —— 看起来就是"卡闪一下"。所以用固定 dp(26) 高度算。
+        // X 已改挂 previewPlate：直接用 plate 内坐标设 topMargin 居中，不再用 translationY。
+        // 目标中心 = 数字墨迹底(下划线)往下一点，落在弧顶与卡底之间的空带里（用户要求「X 下移一下」）。
+        if (mDigitDoneView != null && previewPlate != null
+                && mDigitDoneView.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+            final int xH = dp(26);
+            // plateH 复用上面已算好的值。
+            int cx = Math.round(mSelInk.bottom + dp(10));   // 下划线基线
+            int targetCenterY = cx + dp(20) + dp(17);       // X 中心=下划线再下 20dp，再按真机调参 +17dp
+            // 兜底：别顶到 plate 底边之外。
+            targetCenterY = Math.min(targetCenterY, plateH - Math.round(xH / 2f) - dp(2));
+            final FrameLayout.LayoutParams dlp =
+                    (FrameLayout.LayoutParams) mDigitDoneView.getLayoutParams();
+            dlp.topMargin = targetCenterY - Math.round(xH / 2f) - previewPlate.getPaddingTop();
+            mDigitDoneView.setLayoutParams(dlp);
+            mDigitDoneView.setTranslationY(0f);
+            if (BuildConfig.DEBUG) {
+                android.util.Log.d("CS-X", "plateH=" + plateH
+                        + " targetCY=" + targetCenterY
+                        + " topMargin=" + dlp.topMargin
+                        + " xH=" + mDigitDoneView.getHeight()
+                        + " alpha=" + mDigitDoneView.getAlpha()
+                        + " vis=" + mDigitDoneView.getVisibility()
+                        + " scr=" + locStr(mDigitDoneView)
+                        + " plateScr=" + locStr(previewPlate));
+            }
         }
         if (BuildConfig.DEBUG) {
             android.util.Log.d("CS-MARK", "mark slot=" + mSelSlot + " ink=" + mSelInk
