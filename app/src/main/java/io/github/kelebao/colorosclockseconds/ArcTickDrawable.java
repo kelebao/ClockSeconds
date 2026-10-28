@@ -19,6 +19,10 @@ public class ArcTickDrawable extends Drawable {
     private float mGlobalAlpha = 1f;   // 整体透明度：展开/收起动画期间先淡出，避免刻度长到数字上
     private float mBreath;     // 呼吸强度 0..1（6s 余弦）
     private float mDrift;      // 漂移相位 0..1（30s）
+    /** 弧在卡片高度里占的比例（1=整张卡；<1 时会收缩、把弧压到卡片底部避免被放大的数字盖住）。 */
+    private float mHeightFactor = 1f;
+    /** 弧顶部起点在卡片高度里的比例（0=顶端；>0 时整体下移）。 */
+    private float mTopInset = 0f;
 
     public ArcTickDrawable(boolean night) {
         mNight = night;
@@ -91,13 +95,25 @@ public class ArcTickDrawable extends Drawable {
         return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
+    /** 展开取色时把长弧压到卡片下半部分（数字放大后不再盖住它）。 */
+    public void setHeightFactor(float factor, float topInset) {
+        mHeightFactor = Math.max(0.2f, Math.min(1f, factor));
+        mTopInset = Math.max(0f, Math.min(0.6f, topInset));
+        invalidateSelf();
+    }
+
     @Override
     public void draw(Canvas canvas) {
         final float w = getBounds().width();
-        final float h = getBounds().height();
-        if (w <= 1f || h <= 1f) {
+        final float fullH = getBounds().height();
+        if (w <= 1f || fullH <= 1f) {
             return;
         }
+        // 收缩后的绘制区：从卡片 y = fullH*mTopInset 开始、高 fullH*mHeightFactor。
+        final float originY = fullH * mTopInset;
+        final float h = fullH * mHeightFactor;
+        canvas.save();
+        canvas.translate(0f, originY);
         final float cx = w / 2f;
         final float peakY = h * 0.48f;
         final float depth = h * 0.44f;
@@ -152,6 +168,7 @@ public class ArcTickDrawable extends Drawable {
             canvas.drawLine(cx + innerR * c, cy + innerR * s,
                     cx + outer * c, cy + outer * s, paint);
         }
+        canvas.restore();
     }
 
     @Override

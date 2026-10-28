@@ -143,6 +143,7 @@ public final class ModuleSettingsActivity extends Activity {
     private ArcTickDrawable mArcTicks;
     private final PressTiltEffect mPressTilt = new PressTiltEffect();   // 全卡片按压倾斜效果
     private View mPreviewCard;                    // 预览卡：判断是否滚出屏幕，跳过弧的高频刷新
+    private View mColorCard;                      // 数字颜色卡：展开取色时用 translationY 顶住不上移
     private final Rect mTmpVisible = new Rect();
     // 时间格式化缓存（预览每秒刷新；SimpleDateFormat 仅主线程用，可安全缓存）
     private final java.text.SimpleDateFormat mFmtSec =
@@ -177,7 +178,11 @@ public final class ModuleSettingsActivity extends Activity {
     /** 预览卡下方「切换手势 / 小时颜色」两张统计卡（展开取色时让位隐藏）。 */
     private View mStatsRow;
     /** 数字颜色卡内的部件：色块网格、正在编辑行、摘要行、开关、完成胶囊。 */
-    private GridLayout mDigitGrid;
+    private DigitPaletteRow mDigitGrid;
+    private LinearLayout mPresetWrap;
+    private android.widget.SeekBar mHueSlider;
+    private android.widget.SeekBar mSatSlider;
+    private android.widget.SeekBar mValSlider;
     private TextView mDigitEditingView;
     private TextView mDigitSummaryView;
     private View mDigitDoneView;
@@ -679,7 +684,35 @@ public final class ModuleSettingsActivity extends Activity {
         // 预览时间容器（仅承载文字）。
         previewPlate = new FrameLayout(this);
         // 左右几乎不留边：展开时整行要铺到卡片边缘，数字才能「向左右顶开 + 变大」。
-        previewPlate.setPadding(dp(2), dp(2), dp(2), dp(14));
+        // 用户要求「预览时间整体上升一些」：上面紧贴、下面多留，字位整体上提。
+        previewPlate.setPadding(dp(2), dp(0), dp(2), dp(26));
+        // 折叠态预览卡自然高度必须在「首次展开前」就快照下来，且之后绝不被展开动画污染。
+        // 之前每次展开都在 expandDigits 里重取 getHeight()，而那时卡片可能已被上一次动画撑高，
+        // 导致展开后卡片比折叠时高一大截、长弧被拉长/上移（用户反复投诉「两态长弧位置不一致」）。
+        card.post(() -> {
+            if (!mDigitsExpanded && mCardHFold <= 0) {
+                mCardHFold = card.getHeight();
+                if (previewPlate != null) {
+                    mPlateFoldH = previewPlate.getHeight();
+                }
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("CS-ARC", "SNAPSHOT foldH=" + mCardHFold + " plateH=" + mPlateFoldH);
+                }
+            }
+        });
+        // 首帧「预览卡与下方两张卡之间看起来无缝」的根因：卡片尺寸在本帧内变化时，
+        // 作为背景的 LayerDrawable(弧) 有时没跟着重算 bounds，弧沿用旧尺寸画到卡外。
+        // 挂一个 layout 变化监听：卡片每次尺寸变化都让背景重设 bounds 并重绘，保证弧始终贴合卡片。
+        card.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            if (r - l != or - ol || b - t != ob - ot) {
+                final Drawable bg = v.getBackground();
+                if (bg != null) {
+                    bg.setBounds(v.getPaddingLeft(), v.getPaddingTop(),
+                            (r - l) - v.getPaddingRight(), (b - t) - v.getPaddingBottom());
+                    bg.invalidateSelf();
+                }
+            }
+        });
 
         // 选中那位的呼吸光晕：先加 = 画在文字下层；默认隐藏，展开取色时才点亮。
         // previewPlate 关掉裁剪，光晕才能糊出字形边界（否则被自己/父容器切成方块）。
@@ -752,7 +785,11 @@ public final class ModuleSettingsActivity extends Activity {
             previewView.setLetterSpacing(mExpandedSpacingEm);
             previewView.post(this::fitExpandedText);
         });
-        previewPlate.addView(previewView);
+        // 数字在预览区内垂直居中：这样字号放大/缩小只改变字形本身，不改变它在固定高度 plate 里的重心。
+        final FrameLayout.LayoutParams pvLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        pvLp.gravity = Gravity.CENTER_VERTICAL;
+        previewPlate.addView(previewView, pvLp);
 
         card.addView(previewPlate);
 
@@ -804,17 +841,21 @@ public final class ModuleSettingsActivity extends Activity {
         // 负的 bottomMargin 让它在纵向不占高度，实际位置由 positionMark() 按选中位墨迹算出来。
         mDigitDoneView = new CloseCrossView(this, accent(), 0xFFFFFFFF);
         LinearLayout.LayoutParams doneLp =
-                new LinearLayout.LayoutParams(dp(34), dp(34));
+                new LinearLayout.LayoutParams(dp(26), dp(26));
         doneLp.gravity = Gravity.CENTER_HORIZONTAL;
-        doneLp.bottomMargin = -dp(34);
+        doneLp.bottomMargin = -dp(26);
         mDigitDoneView.setLayoutParams(doneLp);
         mDigitDoneView.setVisibility(View.GONE);
         mDigitDoneView.setContentDescription(getString(R.string.settings_digit_done));
         mDigitDoneView.setOnClickListener(v -> collapseDigits());
         card.addView(mDigitDoneView);
 
-        root.addView(card, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        // 预览卡与下方两张卡之间的间隙：必须在此处（真正 addView 的地方）给 bottomMargin。
+        // 之前只在 expand/collapse 里 setPreviewGap() 设置，冷启动首次进设置页时两方法都没跑过 → 贴死。
+        final LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        previewLp.bottomMargin = dp(12);
+        root.addView(card, previewLp);
         updatePreview();
         fetchNetworkTime();
     }
@@ -863,6 +904,7 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         rowLp.bottomMargin = dp(12);
         row.setLayoutParams(rowLp);
+        // 注意：预览卡与下方两张卡之间的空隙由 setPreviewGap() 控制（preview 卡 bottomMargin），此处是 stats->颜色卡。
 
         LinearLayout gestureCard = statCard();
         LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(
@@ -947,6 +989,7 @@ public final class ModuleSettingsActivity extends Activity {
         CornerArcsDrawable arcs = new CornerArcsDrawable(WAVE_COLOR, dp(2));
         mCornerArcs = arcs;
         card.setBackground(new LayerDrawable(new Drawable[]{card.getBackground(), arcs}));
+        mColorCard = card;
 
         // 标题行：标题 + NEW 徽章 + 右侧总开关（关掉后状态栏恢复系统默认样式）。
         LinearLayout titleRow = new LinearLayout(this);
@@ -987,7 +1030,7 @@ public final class ModuleSettingsActivity extends Activity {
         card.addView(titleRow);
 
         TextView sub = new TextView(this);
-        sub.setText(R.string.settings_digit_sum);
+        sub.setText(R.string.settings_digit_sum_v2);
         sub.setTextSize(11f);
         sub.setTextColor(text2());
         sub.setPadding(0, dp(4), 0, 0);
@@ -1000,43 +1043,42 @@ public final class ModuleSettingsActivity extends Activity {
         mDigitEditingView.setPadding(0, dp(10), 0, 0);
         card.addView(mDigitEditingView);
 
-        TextView preset = new TextView(this);
-        preset.setText(R.string.settings_digit_preset);
-        preset.setTextSize(11f);
-        preset.setTextColor(text3());
-        preset.setPadding(0, dp(10), 0, 0);
-        card.addView(preset);
-
-        mDigitGrid = new GridLayout(this);
-        mDigitGrid.setColumnCount(5);
-        mDigitGrid.setPadding(0, dp(6), 0, 0);
-        for (int color : HOUR_COLORS) {
-            mDigitGrid.addView(makeSwatch(color, color == slotColor(mSelSlot), mDigitGrid));
+        // 预设两排、每排 5 颗，铺满卡片宽度（无背景板、无角标）。
+        LinearLayout presetWrap = new LinearLayout(this);
+        presetWrap.setOrientation(LinearLayout.VERTICAL);
+        presetWrap.setPadding(0, dp(8), 0, 0);
+        for (int row = 0; row < 2; row++) {
+            DigitPaletteRow rowView = new DigitPaletteRow(this);
+            final int padTop = row == 0 ? dp(4) : dp(8);
+            final int padBottom = dp(4);
+            rowView.setPadding(0, padTop, 0, padBottom);
+            // 明确行高 = 圆直径 + 上下内边距，避免圆被裁成平顶/半圆。
+            rowView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(30) + padTop + padBottom));
+            for (int c = 0; c < 5; c++) {
+                int idx = row * 5 + c;
+                if (idx < HOUR_COLORS.length) {
+                    rowView.addView(makePresetDot(HOUR_COLORS[idx]));
+                }
+            }
+            presetWrap.addView(rowView);
+            if (row == 0) mDigitGrid = rowView;   // 兼容旧字段：只用于整体刷新第一排
         }
-        card.addView(mDigitGrid);
+        // 记录两排容器，刷新时逐排处理
+        mPresetWrap = presetWrap;
+        card.addView(presetWrap);
 
-        // 胶囊：调色盘（自绘 HSV）/ 跟随系统（清掉该位颜色）。
+        // 三条 HSV 滑杆：色相 / 饱和度 / 明度，拖动即生效，并同步更新当前选中位的颜色。
+        buildHsvSliders(card);
+
+        // 胶囊：跟随系统（清掉该位颜色，用系统默认色）。
         LinearLayout pillRow = new LinearLayout(this);
         pillRow.setOrientation(LinearLayout.HORIZONTAL);
         pillRow.setPadding(0, dp(12), 0, 0);
-        TextView paletteBtn = pillButton(getString(R.string.settings_digit_palette));
-        paletteBtn.setOnClickListener(v -> showPaletteDialog(mSelSlot));
-        pillRow.addView(paletteBtn);
         TextView followBtn = pillButton(getString(R.string.settings_digit_follow));
-        LinearLayout.LayoutParams followLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        followLp.leftMargin = dp(8);
-        followBtn.setLayoutParams(followLp);
         followBtn.setOnClickListener(v -> applyDigitColor(mSelSlot, ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
         pillRow.addView(followBtn);
         card.addView(pillRow);
-
-        // 底部摘要：时 #2196F3 · 分 跟随系统 · 秒 #FF5252
-        mDigitSummaryView = new TextView(this);
-        mDigitSummaryView.setTextSize(11f);
-        mDigitSummaryView.setTextColor(text3());
-        mDigitSummaryView.setPadding(0, dp(10), 0, 0);
-        card.addView(mDigitSummaryView);
 
         root.addView(card);
 
@@ -1077,59 +1119,56 @@ public final class ModuleSettingsActivity extends Activity {
         // 先站平：抬高动作要等数字摊开之后才开始（否则展开动画里那一位是斜着飞上去的）。
         mLiftNow = 0;
         if (previewPlate != null) {
-            previewPlate.setPadding(dp(2), dp(2), dp(2), dp(14));
+            // 与 buildPreviewCard 里保持一致，两态卡片内部布局完全相同 → 长弧位置一致。
+            previewPlate.setPadding(dp(2), dp(0), dp(2), dp(26));
         }
-        // 目标：预览卡的底边正好落在原来两张统计卡的底边上（用户画红线的位置）。
-        // 记法：最终卡片高度 = 折叠高度 + 统计卡高度。展开过程中 X 圆钮出现、数字变大都会自己改变
-        // 高度，所以不能直接拿统计卡高度当延伸量，要等一帧布局完成后再用「目标高度 − 当前高度」反推。
-        final int cardHFold = (mPreviewCard != null) ? mPreviewCard.getHeight() : 0;
-        mCardHFold = cardHFold;
-        // 统计卡不要立刻 GONE：立刻撤掉会让下面的卡片瞬间上跳一截、中间空一块。
-        // 改成「卡片长多少、统计卡就矮多少」，空间一对一转移，下面的卡片一动不动。
+        // 「预览卡不下拉延伸、不覆盖切换手势/小时颜色卡」：卡片高度完全不动，
+        // 展开只是把数字在原有卡片里放大拉开（内容自行排版），下面两张统计卡也照常显示。
+        mColorCoverPx = 0;
+        // 折叠高用 buildPreviewCard 里 post 快照的值；万一还没量到再兜底取一次当前高度。
+        if (mCardHFold <= 0) {
+            mCardHFold = (mPreviewCard != null) ? mPreviewCard.getHeight() : 0;
+        }
+        // 锁死预览卡高度：数字放大后若让 WRAP_CONTENT 自己撑，卡片会长高去盖住下面两张统计卡。
+        // 展开的字号由 computeExpandedMetrics 按「卡片当前可用宽度」算，字放得下，不需要变高。
+        if (mPreviewCard != null && mCardHFold > 0
+                && mPreviewCard.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            final LinearLayout.LayoutParams clp =
+                    (LinearLayout.LayoutParams) mPreviewCard.getLayoutParams();
+            clp.height = mCardHFold;
+            mPreviewCard.setLayoutParams(clp);
+        }
         mStatsH = (mStatsRow != null) ? mStatsRow.getHeight() : 0;
-        // X 圆钮一旦 VISIBLE 就立刻占掉 44dp（34+10）高度；不在这里同步扣掉，
-        // 它会把下面所有卡片顶下去 154px，下一帧补偿动画再拉回来 —— 这就是用户看到的
-        // 「数字颜色卡往上跳一下」。这里先扣，等于把这 154px 立刻从统计卡身上转走。
-        // X 现在和「网络时间」共用一格，不再额外占高度（vc95 前这里是 dp(34)+dp(10)=154px）。
-        mXSpace = 0;
-        if (mNetRow != null) {
-            mNetRow.setVisibility(View.INVISIBLE);   // 藏起来但保留行高，卡片高度不变
-        }
         mStatsStartH = mStatsH;
-        if (mStatsRow != null && mStatsH > mXSpace
-                && mStatsRow.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-            final LinearLayout.LayoutParams slp =
-                    (LinearLayout.LayoutParams) mStatsRow.getLayoutParams();
-            slp.height = mStatsH - mXSpace;
-            mStatsRow.setLayoutParams(slp);
-            mStatsStartH = mStatsH - mXSpace;
-        }
+        mXSpace = 0;
         if (mDigitDoneView != null) {
             mDigitDoneView.setVisibility(View.VISIBLE);
         }
-        // X 和刻度弧都等卡片长完再淡进来：卡片还没长高时弧顶会顶到数字上、X 会浮在空白里。
-        setDecorAlpha(0f);
-        if (mPreviewCard != null && cardHFold > 0) {
-            mPreviewCard.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            mPreviewCard.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            if (!mDigitsExpanded) {
-                                return;
-                            }
-                            final int targetH = cardHFold + mStatsH;
-                            if (BuildConfig.DEBUG) {
-                                android.util.Log.d("ColorOSClockSeconds", "CS-GROW2 cardHFold=" + cardHFold
-                                        + " statsH=" + mStatsH + " startH=" + mStatsStartH
-                                        + " xSpace=" + mXSpace + " nowH=" + mPreviewCard.getHeight()
-                                        + " targetH=" + targetH + " grow=" + (targetH - mPreviewCard.getHeight()));
-                            }
-                            animateGrow(Math.max(0, targetH - mPreviewCard.getHeight()));
-                        }
-                    });
-        } else {
-            animateGrow(statsRowSpace());
+        // X 与刻度弧立刻显示（不再等长高动画）。
+        setDecorAlpha(1f);
+        // 锁死预览区高度=折叠态自然高度：否则展开时字号变大把 plate 撑高，
+        // 下方的「网络时间」行被顶出卡片底边、随即又被 fitExpandedText 缩回来，肉眼就是"闪一下"。
+        if (previewPlate != null && mPlateFoldH <= 0) {
+            mPlateFoldH = previewPlate.getHeight();
+        }
+        if (previewPlate != null && mPlateFoldH > 0
+                && previewPlate.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            final LinearLayout.LayoutParams plp =
+                    (LinearLayout.LayoutParams) previewPlate.getLayoutParams();
+            plp.height = mPlateFoldH;
+            previewPlate.setLayoutParams(plp);
+        }
+        // 数字放大后会把原位置的弧顶盖住 → 展开时把长弧压到卡片下半部分（0.62 处起、占 0.38）。
+        // 两态长弧位置必须一致 → 展开不改变弧的几何，始终整卡（1f, 0f）。
+        // 用下面的「展开字号限高」保证数字不压到弧顶。
+        if (mArcTicks != null) {
+            mArcTicks.setHeightFactor(1f, 0f);
+        }
+        if (BuildConfig.DEBUG) {
+            previewView.postDelayed(() -> android.util.Log.d("CS-ARC",
+                    "EXPAND card=" + (mPreviewCard == null ? -1 : mPreviewCard.getHeight())
+                    + " plate=" + (previewPlate == null ? -1 : previewPlate.getHeight())
+                    + " padB=" + (mPreviewCard == null ? -1 : mPreviewCard.getPaddingBottom())), 600L);
         }
         if (previewHintView != null) {
             previewHintView.setVisibility(View.INVISIBLE);
@@ -1162,9 +1201,38 @@ public final class ModuleSettingsActivity extends Activity {
         animateTilt(false);
         setPreviewGap(false);
         beginSmoothLayout();
-        animateGrow(0);                        // 收回延伸（结束时才把统计卡放回来）
         if (mMarkView != null) {
             mMarkView.setVisibility(View.GONE);
+        }
+        if (mDigitDoneView != null) {
+            mDigitDoneView.setVisibility(View.GONE);
+        }
+        if (mColorCard != null) {
+            mColorCard.setTranslationY(0);
+        }
+        if (previewPlate != null
+                && previewPlate.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            final LinearLayout.LayoutParams plp =
+                    (LinearLayout.LayoutParams) previewPlate.getLayoutParams();
+            plp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            previewPlate.setLayoutParams(plp);
+        }
+        if (mPreviewCard != null
+                && mPreviewCard.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            final LinearLayout.LayoutParams clp =
+                    (LinearLayout.LayoutParams) mPreviewCard.getLayoutParams();
+            clp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            mPreviewCard.setLayoutParams(clp);
+        }
+        // 长弧恢复整卡比例。
+        if (mArcTicks != null) {
+            mArcTicks.setHeightFactor(1f, 0f);
+        }
+        if (BuildConfig.DEBUG && mPreviewCard != null) {
+            mPreviewCard.postDelayed(() -> android.util.Log.d("CS-ARC",
+                    "COLLAPSE card=" + mPreviewCard.getHeight()
+                    + " plate=" + (previewPlate == null ? -1 : previewPlate.getHeight())
+                    + " padB=" + mPreviewCard.getPaddingBottom()), 700L);
         }
         stopGlowLoop();
         // 先落回与其他位同一条基线，再缩回默认大小（用户要求：别一边缩一边降）。
@@ -1262,6 +1330,9 @@ public final class ModuleSettingsActivity extends Activity {
                 mStatsRow.setLayoutParams(lp);
                 mStatsRow.setAlpha(expand ? (1f - t) : t);
             }
+            if (mColorCard != null && mColorCoverPx > 0) {
+                mColorCard.setTranslationY(mColorCoverPx * t);
+            }
         });
         anim.addListener(new android.animation.AnimatorListenerAdapter() {
             @Override
@@ -1277,6 +1348,9 @@ public final class ModuleSettingsActivity extends Activity {
                             (LinearLayout.LayoutParams) mPreviewCard.getLayoutParams();
                     clp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                     mPreviewCard.setLayoutParams(clp);
+                }
+                if (mColorCard != null) {
+                    mColorCard.setTranslationY(mDigitsExpanded ? mColorCoverPx : 0);
                 }
                 if (BuildConfig.DEBUG) {
                     android.util.Log.d("ColorOSClockSeconds", "CS-GROW end grow=" + mGrowPx
@@ -1324,6 +1398,10 @@ public final class ModuleSettingsActivity extends Activity {
     private int mXSpace;
     /** 折叠态预览卡的高度（收起动画要缩回这个高度）。 */
     private int mCardHFold;
+    /** 折叠态预览区(previewPlate)自然高度；展开时锁定它，防止字号变大把「网络时间」行顶出卡片（闪一下）。 */
+    private int mPlateFoldH;
+    /** 展开取色时把「数字颜色」卡向下补位的像素（保持它在屏幕上固定位置，不用下滚）。 */
+    private int mColorCoverPx;
 
     /** 刻度弧 + X 圆钮当前的透明度（展开/收起动画期间淡出，避免刻度爬上数字）。 */
     private float mDecorAlpha = 1f;
@@ -1334,8 +1412,10 @@ public final class ModuleSettingsActivity extends Activity {
         if (mDigitDoneView != null) {
             mDigitDoneView.setAlpha(mDecorAlpha);
         }
+        // 用户要求：长弧不做淡入淡出，位置始终与卡片绑定、恒定可见。
+        // 所以这里不再把 mDecorAlpha 传给弧（否则展开/收起期间会被淡成透明）。
         if (mArcTicks != null) {
-            mArcTicks.setGlobalAlpha(mDecorAlpha);
+            mArcTicks.setGlobalAlpha(1f);
         }
     }
 
@@ -1466,6 +1546,12 @@ public final class ModuleSettingsActivity extends Activity {
                     startGlowLoop();    // 再开始呼吸
                     // 摊开之后再抬起选中那一位（用户要求：先拉开间隙，再抬高）。
                     animateLift(true, null);
+                } else if (!expand && !mDigitsExpanded) {
+                    // 收起收尾：collapseDigits 开头把刻度弧淡到 0（避免缩卡时爬到数字上），
+                    // 而恢复 alpha=1 原本只挂在 animateGrow 的 onAnimationEnd 上——收起路径不经过那个动画，
+                    // 于是弧停在全透明、收起后整条长弧消失（用户反馈「点开预览收起后弧不见了」）。
+                    // 在这里（真正缩回默认字号的结束点）把弧淡回来。
+                    fadeDecorTo(1f, 200L);
                 }
             }
         });
@@ -1525,6 +1611,15 @@ public final class ModuleSettingsActivity extends Activity {
         final float fit = avail * mFitSafety;
         float size = fit / (perUnit + EXPAND_GAP_EM * gaps);
         size = Math.max(sp(34), Math.min(sp(80), size)) * mSizeShrink;
+        // 高度上限：展开时卡片高度不增，得给卡片下半留出长弧的位置 → 字号不超过卡片可用高度的 52%。
+        if (mPreviewCard != null && mPreviewCard.getHeight() > 0) {
+            final int availH = mPreviewCard.getHeight()
+                    - previewView.getPaddingTop() - previewView.getPaddingBottom();
+            final float maxByH = availH * 0.46f;
+            if (size > maxByH && maxByH >= sp(34)) {
+                size = maxByH;
+            }
+        }
         mExpandedSizePx = size;
         // 铺满整卡：把（可能剩下的）宽度全部灌进间隙。
         mExpandedSpacingEm = Math.max(0f, Math.min(0.90f, (fit / size - perUnit) / gaps));
@@ -1859,8 +1954,8 @@ public final class ModuleSettingsActivity extends Activity {
         if (mDigitDoneView != null && mDigitDoneView.getHeight() > 0 && mPreviewCard != null) {
             final int cardH = mPreviewCard.getHeight();
             final int apex = Math.round(cardH * 0.48f);
-            // 0.56 = 用户实测的「十字中心」位置：从弧顶往下走到卡片底边的 56% 处。
-            final int targetCenterY = apex + Math.round((cardH - apex) * 0.56f);
+            // 用户要求「X 按钮上移一下」：从 0.56 收到 0.32，十字中心更靠近弧顶。
+            final int targetCenterY = apex + Math.round((cardH - apex) * 0.32f);
             final int defaultCenter = mDigitDoneView.getTop() + mDigitDoneView.getHeight() / 2;
             mDigitDoneView.setTranslationY(targetCenterY - defaultCenter);
         }
@@ -2148,20 +2243,38 @@ public final class ModuleSettingsActivity extends Activity {
             if (previewView != null) {
                 previewView.post(this::positionMark);
             }
+            syncSlidersToColor();
         });
+    }
+
+    /** 把三条 HSV 滑杆跳到某一位当前的颜色（点预设点后同步显示）。 */
+    private void syncSlidersToColor() {
+        if (mHueSlider == null) return;
+        int c = slotColor(mSelSlot);
+        if (c == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) c = HOUR_COLORS[0];
+        float[] hsv = new float[3];
+        android.graphics.Color.colorToHSV(c, hsv);
+        mHueSlider.setProgress(Math.round(hsv[0] / 360f * 255f));
+        mSatSlider.setProgress(Math.round(hsv[1] * 255f));
+        mValSlider.setProgress(Math.round(hsv[2] * 255f));
+        updateSliderGradients(hsv[0], hsv[1], hsv[2]);
     }
 
     /** 刷新预设色块的选中环 + 「正在编辑」行 + 底部摘要。 */
     private void refreshDigitSwatches() {
         final boolean enabled = mCfgHourColorOn;
         final int current = slotColor(mSelSlot);
-        if (mDigitGrid != null) {
-            for (int i = 0; i < mDigitGrid.getChildCount() && i < HOUR_COLORS.length; i++) {
-                final View child = mDigitGrid.getChildAt(i);
-                child.setClickable(enabled);
-                final boolean selected = HOUR_COLORS[i] == current;
-                child.setBackground(swatchDrawable(swatchColor(HOUR_COLORS[i], enabled), selected));
-                child.setSelected(selected);
+        if (mPresetWrap != null) {
+            int idx = 0;
+            for (int r = 0; r < mPresetWrap.getChildCount(); r++) {
+                android.view.ViewGroup row = (android.view.ViewGroup) mPresetWrap.getChildAt(r);
+                for (int i = 0; i < row.getChildCount() && idx < HOUR_COLORS.length; i++, idx++) {
+                    final View child = row.getChildAt(i);
+                    child.setClickable(enabled);
+                    final boolean selected = HOUR_COLORS[idx] == current;
+                    child.setBackground(swatchDrawable(swatchColor(HOUR_COLORS[idx], enabled), selected));
+                    child.setSelected(selected);
+                }
             }
         }
         if (mCornerArcs != null) {
@@ -2173,6 +2286,175 @@ public final class ModuleSettingsActivity extends Activity {
         if (mDigitSummaryView != null) {
             mDigitSummaryView.setText(getString(R.string.settings_digit_summary,
                     fieldLabel(0, 1), fieldLabel(2, 3), fieldLabel(4, 5)));
+        }
+        syncSlidersToColor();
+    }
+
+    /** 自绘进度条：一条渐变圆角条 + 一个圆形滑块（白描边），用于色相/饱和/明度三条滑杆。 */
+    private class HsvBarDrawable extends android.graphics.drawable.Drawable {
+        private final int kind;              // 0=色相 1=饱和度 2=明度
+        private float hue = 0f, sat = 1f, val = 1f;
+        private final android.graphics.Paint bar = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint knobP = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint ring = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.RectF rf = new android.graphics.RectF();
+        private android.widget.SeekBar host;
+
+        HsvBarDrawable(int kind) {
+            this.kind = kind;
+            bar.setStyle(android.graphics.Paint.Style.FILL);
+            ring.setStyle(android.graphics.Paint.Style.STROKE);
+            ring.setStrokeWidth(dp(3));
+            ring.setColor(0xFFFFFFFF);
+            knobP.setStyle(android.graphics.Paint.Style.FILL);
+        }
+
+        void setContext(float h, float s, float v) { hue = h; sat = s; val = v; }
+        void notifyGradientChanged() { invalidateSelf(); }
+        void bind(android.widget.SeekBar sb) { host = sb; }
+
+        @Override public void draw(android.graphics.Canvas canvas) {
+            int w = getBounds().width(), h = getBounds().height();
+            int bh = dp(10);
+            int cy = h / 2;
+            rf.set(0, cy - bh / 2f, w, cy + bh / 2f);
+            int[] colors = new int[13];
+            for (int i = 0; i <= 12; i++) {
+                float t = i / 12f;
+                if (kind == 0) colors[i] = android.graphics.Color.HSVToColor(new float[]{t * 360f, 0.85f, 1f});
+                else if (kind == 1) colors[i] = android.graphics.Color.HSVToColor(new float[]{hue, t, Math.max(0.45f, val)});
+                else colors[i] = android.graphics.Color.HSVToColor(new float[]{hue, sat, 0.12f + 0.88f * t});
+            }
+            bar.setShader(new android.graphics.LinearGradient(0, 0, w, 0, colors, null,
+                    android.graphics.Shader.TileMode.CLAMP));
+            canvas.drawRoundRect(rf, bh / 2f, bh / 2f, bar);
+            bar.setShader(null);
+            // 滑块
+            if (host != null) {
+                float t = host.getProgress() / 255f;
+                float kx = Math.max(dp(11), Math.min(w - dp(11), t * w));
+                float r = dp(11);
+                int kc;
+                if (kind == 0) kc = android.graphics.Color.HSVToColor(new float[]{t * 360f, 0.85f, 1f});
+                else if (kind == 1) kc = android.graphics.Color.HSVToColor(new float[]{hue, t, Math.max(0.45f, val)});
+                else kc = android.graphics.Color.HSVToColor(new float[]{hue, sat, 0.12f + 0.88f * t});
+                knobP.setColor(kc);
+                canvas.drawCircle(kx, cy, r, knobP);
+                canvas.drawCircle(kx, cy, r, ring);
+            }
+        }
+        @Override public void setAlpha(int a) { }
+        @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+    }
+
+    /** 三条 HSV 滑杆：色相 / 饱和度 / 明度。拖动即把当前选中位的颜色改成对应值。 */
+    private void buildHsvSliders(LinearLayout card) {
+        final int[] seed = {slotColor(mSelSlot)};
+        if (seed[0] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            seed[0] = HOUR_COLORS[0];
+        }
+        final float[] hsv = new float[3];
+        android.graphics.Color.colorToHSV(seed[0], hsv);
+
+        mHueSlider = addHsvSlider(card, 0, (int) (hsv[0] / 360f * 255f));
+        mSatSlider = addHsvSlider(card, 1, (int) (hsv[1] * 255f));
+        mValSlider = addHsvSlider(card, 2, (int) (hsv[2] * 255f));
+        updateSliderGradients(hsv[0], hsv[1], hsv[2]);
+
+        final android.widget.SeekBar.OnSeekBarChangeListener l =
+                new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(android.widget.SeekBar sb, int progress, boolean fromUser) {
+                if (!fromUser) return;
+                float[] c = new float[3];
+                c[0] = mHueSlider.getProgress() / 255f * 360f;
+                c[1] = mSatSlider.getProgress() / 255f;
+                c[2] = Math.max(0.08f, mValSlider.getProgress() / 255f);
+                updateSliderGradients(c[0], c[1], c[2]);
+                applyDigitColor(mSelSlot, android.graphics.Color.HSVToColor(c));
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar sb) { }
+            @Override public void onStopTrackingTouch(android.widget.SeekBar sb) { }
+        };
+        mHueSlider.setOnSeekBarChangeListener(l);
+        mSatSlider.setOnSeekBarChangeListener(l);
+        mValSlider.setOnSeekBarChangeListener(l);
+    }
+
+    private android.widget.SeekBar addHsvSlider(LinearLayout card, int kind, int progress) {
+        android.widget.SeekBar sb = new android.widget.SeekBar(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(28));
+        lp.topMargin = (kind == 0) ? dp(14) : dp(6);
+        sb.setLayoutParams(lp);
+        sb.setMax(255);
+        sb.setProgress(progress);
+        sb.setPadding(0, 0, 0, 0);
+        // 去掉系统轨道/滑块样式，仅用自绘背景（渐变条 + 圆点）。
+        sb.setBackground(null);
+        sb.setSplitTrack(false);
+        sb.setThumb(new android.graphics.drawable.ColorDrawable(0x00000000) {
+            @Override public void draw(android.graphics.Canvas c) { }
+        });
+        HsvBarDrawable bar = new HsvBarDrawable(kind);
+        bar.bind(sb);
+        sb.setProgressDrawable(bar);
+        card.addView(sb);
+        return sb;
+    }
+
+    private void updateSliderGradients(float hue, float sat, float val) {
+        if (mHueSlider != null) ((HsvBarDrawable) mHueSlider.getProgressDrawable()).notifyGradientChanged();
+        if (mSatSlider != null) ((HsvBarDrawable) mSatSlider.getProgressDrawable()).setContext(hue, sat, val);
+        if (mValSlider != null) ((HsvBarDrawable) mValSlider.getProgressDrawable()).setContext(hue, sat, val);
+        if (mSatSlider != null) mSatSlider.invalidate();
+        if (mValSlider != null) mValSlider.invalidate();
+        if (mHueSlider != null) mHueSlider.invalidate();
+    }
+
+    /**
+     * 一排预设色点的托盘容器：横向 LinearLayout，背景是自绘的浅色圆角托盘。
+     * 让 10 颗圆看起来是「同一组色板」，而不是散在卡片上的圆点。
+     */
+    private class DigitPaletteRow extends LinearLayout {
+        private final android.graphics.Paint tray = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.RectF rf = new android.graphics.RectF();
+
+        DigitPaletteRow(Context ctx) {
+            super(ctx);
+            setOrientation(HORIZONTAL);
+            setGravity(Gravity.CENTER_VERTICAL);
+            setWillNotDraw(false);
+            tray.setColor(night ? 0xFF2B2440 : 0xFFF5F4FA);
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+            // 手动等分：每排的圆均匀铺满整行，两端贴齐（SpaceBetween 效果）。
+            final int n = getChildCount();
+            if (n == 0) return;
+            final int pt = getPaddingTop(), pb = getPaddingBottom();
+            final int left = getPaddingLeft(), right = getWidth() - getPaddingRight();
+            final int availW = right - left;
+            final int childW = getChildAt(0).getMeasuredWidth();
+            int gap = n > 1 ? (availW - childW * n) / (n - 1) : 0;
+            if (gap < 0) gap = 0;
+            int x = left;
+            final int areaH = b - t - pt - pb;
+            for (int i = 0; i < n; i++) {
+                View c = getChildAt(i);
+                int cw = c.getMeasuredWidth();
+                int ch = c.getMeasuredHeight();
+                int top = pt + (areaH - ch) / 2;
+                c.layout(x, top, x + cw, top + ch);
+                x += cw + gap;
+            }
+        }
+
+        @Override
+        protected void onDraw(android.graphics.Canvas canvas) {
+            // 预设不加背景板：直接让圆点落在卡片底色上。
+            super.onDraw(canvas);
         }
     }
 
@@ -3592,21 +3874,31 @@ public final class ModuleSettingsActivity extends Activity {
     // 小时颜色
     // ==================================================================
 
-    private View makeSwatch(int color, boolean selected, GridLayout grid) {
-        View swatch = new View(this);
-        GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-        lp.width = dp(42);
-        lp.height = dp(42);
-        lp.setMargins(dp(5), dp(5), dp(5), dp(5));
-        swatch.setLayoutParams(lp);
-        swatch.setBackground(swatchDrawable(color, selected));
-        swatch.setOnClickListener(v -> applyDigitColor(mSelSlot, color));
+    /**
+     * 预设色点：老老实实一颗圆（选中时套一圈强调色描边，没有任何数字角标）。
+     * 点一下立即生效（无「应用」按钮），与其余调色入口行为一致。
+     */
+    private View makePresetDot(int color) {
+        // 预设横向铺满整张卡片：每颗用 weight 均分宽度，高度取「测量到的宽度」做成正方形，
+        // 这样圆的大小自动跟着卡片宽度伸缩，10 颗正好排满一行。
+        final int size = dp(30);
+        View dot = new View(this) {
+            @Override
+            protected void onMeasure(int wSpec, int hSpec) {
+                setMeasuredDimension(size, size);
+            }
+        };
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+        dot.setLayoutParams(lp);
+        // onLayout 手动排布，这里不需要 weight/margin。
+        dot.setBackground(swatchDrawable(color, color == slotColor(mSelSlot)));
+        dot.setOnClickListener(v -> applyDigitColor(mSelSlot, color));
         // 无障碍：色块是纯色 View，读屏读不出内容 → 补 contentDescription（色号）；
         // setSelected 让 TalkBack 自动播报“已选中”；setClickable 让它被识别为可操作项。
-        swatch.setContentDescription(swatchDesc(color));
-        swatch.setSelected(selected);
-        swatch.setClickable(true);
-        return swatch;
+        dot.setContentDescription(swatchDesc(color));
+        dot.setSelected(color == slotColor(mSelSlot));
+        dot.setClickable(true);
+        return dot;
     }
 
     /** 颜色转 "#RRGGBB"（用于色块朗读描述与色号显示）。 */
@@ -3646,9 +3938,9 @@ public final class ModuleSettingsActivity extends Activity {
         d.setColor(color);
         if (selected) {
             d.setStroke(dp(3), accent());
-        } else {
-            d.setStroke(dp(1), night ? 0x33FFFFFF : 0x1F000000);
         }
+        // 非选中不再描边（旧版 dp(1) 细描边在抗锯齿下会让圆看着像被切了角）。
+        
         return d;
     }
 

@@ -92,6 +92,7 @@
     <string name="swatch_grey">灰</string>
     <string name="settings_digit_title">数字颜色</string>
     <string name="settings_digit_new">NEW</string>
+    <string name="settings_digit_sum_v2">Pick a color below, applies instantly</string>
     <string name="settings_digit_sum">时分秒分别取色，点预览里的数字即可选中</string>
     <string name="settings_digit_preset">预设</string>
     <string name="settings_digit_palette">调色盘</string>
