@@ -820,11 +820,11 @@ public final class ModuleSettingsActivity extends Activity {
         // 「同步」按钮固定 wrap_content 永不被压。
         netTimeView.setSingleLine(true);
         netTimeView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        // weight=1 让 TextView 占满剩余宽度以便收缩防溢出，但文字要 CENTER，
-        // 否则默认左对齐会把「网络时间 …」贴到卡片左边（vc182 引入的位置偏移，vc183 修回）。
-        netTimeView.setGravity(Gravity.CENTER);
+        // 【vc184】不用 weight=1：weight 会把「网络时间」撑满整行、把「同步」推到最右贴弧上。
+        // 回到原来的 WRAP_CONTENT + 整组由 netRow(Gravity.CENTER) 居中，同步紧跟文字之后。
+        // 防高密度溢出改用 maxWidth：超宽时在自身框内省略号截断，但不再改变整组居中位置。
         LinearLayout.LayoutParams netLp = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         netLp.gravity = Gravity.CENTER_VERTICAL;
         netTimeView.setLayoutParams(netLp);
         netRow.addView(netTimeView);
@@ -848,6 +848,20 @@ public final class ModuleSettingsActivity extends Activity {
         syncView.setClickable(true);   // 无障碍
         netRow.addView(syncView);
         mNetRow = netRow;
+        // 【vc184】防高密度溢出：netRow 布局后，把「网络时间」文字的最大宽度限制为
+        // 行宽 − 同步按钮宽 − 间距，超宽则省略号截断；整组仍由 Gravity.CENTER 居中，
+        // 同步紧跟文字，不再被 weight 推到最右贴弧上。
+        netRow.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            if (r - l <= 0 || netTimeView == null || syncView == null) return;
+            int avail = r - l - netRow.getPaddingLeft() - netRow.getPaddingRight();
+            int syncW = syncView.getWidth();
+            int margin = dp(8) + dp(4);
+            int maxW = avail - syncW - margin;
+            if (maxW > 0 && netTimeView.getMaxWidth() != maxW) {
+                netTimeView.setMaxWidth(maxW);
+                netTimeView.requestLayout();
+            }
+        });
         netSlot.addView(netRow, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
