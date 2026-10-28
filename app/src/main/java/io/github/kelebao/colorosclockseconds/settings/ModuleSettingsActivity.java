@@ -1942,9 +1942,9 @@ public final class ModuleSettingsActivity extends Activity {
         final float markCx = mSelInk.centerX();
         final int w = Math.max(dp(12), Math.round(mSelInk.width() * 0.92f));
         final int h = Math.max(dp(2), dp(3));
-        // 线保持「未抬高时的字形底 + dp(10)」：用户明确要求线不要跟着数字抬起来
-        // （vc112 真机反馈「线是保持原来位置，不用也抬高」）。
-        int top = Math.round(mSelInk.bottom + dp(10));
+        // 下划线跟着选中数字一起抬高（用户 vc174 要求：数字抬了线也要抬）。
+        // mLiftNow 是当前选中位的抬起像素（LiftSpan 抬高同一数值）。
+        int top = Math.round(mSelInk.bottom + dp(10)) - mLiftNow;
         final int plateH = previewPlate.getHeight();
         if (plateH > 0) {
             top = Math.min(top, plateH - h - dp(2));
@@ -1973,12 +1973,29 @@ public final class ModuleSettingsActivity extends Activity {
             // （真机 density 3.5，红点距下划线约 72px）。之前 +44dp 偏下、
             // plateH*0.48 会落到数字后面，均不可取。
             // X 中心 = 下划线基线 + 20dp（vc170 的位置），再按用户要求整体下移 15dp = +35dp。
-            int cx = Math.round(mSelInk.bottom + dp(10));   // 下划线基线
-            int targetCenterY = cx + dp(125);
-            // 兜底：别顶到 plate 底边之外。
+            // 纵向：X 中心落在弧顶红点处。弧是卡片背景 LayerDrawable 子项，bounds 高度
+            // = 卡片内容高（cardH - padT - padB），弧顶在该高度的 0.48 处（ArcTickDrawable.peakY）。
+            // X 挂在 previewPlate 内，需把「卡片坐标的弧顶」换算到 plate 坐标：减去 previewPlate.getTop()。
+            int cardHx = mPreviewCard != null ? mPreviewCard.getHeight() : plateH;
+            int cardPadT = mPreviewCard != null ? mPreviewCard.getPaddingTop() : 0;
+            int cardPadB = mPreviewCard != null ? mPreviewCard.getPaddingBottom() : 0;
+            int arcBoundsH = Math.max(0, cardHx - cardPadT - cardPadB);
+            int arcPeakInCardY = cardPadT + Math.round(arcBoundsH * 0.48f);
+            int plateTopInCard = (previewPlate != null) ? previewPlate.getTop() : 0;
+            int targetCenterY = arcPeakInCardY - plateTopInCard;
+            // 兜底：别顶到 plate 上下边之外。
+            targetCenterY = Math.max(Math.round(xH / 2f), targetCenterY);
             targetCenterY = Math.min(targetCenterY, plateH - Math.round(xH / 2f) - dp(2));
             final FrameLayout.LayoutParams dlp =
                     (FrameLayout.LayoutParams) mDigitDoneView.getLayoutParams();
+            // 横向：弧顶红点在卡片水平正中；previewPlate 左右 padding 对称，故 X 水平居中于 plate。
+            int plateW = previewPlate.getWidth();
+            int xW = dp(26);
+            dlp.width = xW;
+            dlp.height = xH;
+            dlp.gravity = android.view.Gravity.NO_GRAVITY;
+            dlp.leftMargin = Math.round((plateW - previewPlate.getPaddingLeft()
+                    - previewPlate.getPaddingRight()) / 2f - xW / 2f);
             dlp.topMargin = targetCenterY - Math.round(xH / 2f) - previewPlate.getPaddingTop();
             mDigitDoneView.setLayoutParams(dlp);
             mDigitDoneView.setTranslationY(0f);
