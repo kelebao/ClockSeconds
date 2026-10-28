@@ -1918,13 +1918,6 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     /** 把短色线摆到选中数字下面（宽度取字形的 62%，位置随字号/字距变化重算）。 */
-    private static String locStr(View v) {
-        if (v == null) return "null";
-        int[] xy = new int[2];
-        v.getLocationOnScreen(xy);
-        return xy[0] + "," + xy[1] + "," + v.getWidth() + "x" + v.getHeight();
-    }
-
     private void positionMark() {
         if (mMarkView == null || previewView == null || previewPlate == null || !mDigitsExpanded) {
             return;
@@ -1976,8 +1969,12 @@ public final class ModuleSettingsActivity extends Activity {
                 && mDigitDoneView.getLayoutParams() instanceof FrameLayout.LayoutParams) {
             final int xH = dp(26);
             // plateH 复用上面已算好的值。
+            // 用户要求：X 放到「弧顶红点」位置。实测红点 ≈ 下划线下方 20dp
+            // （真机 density 3.5，红点距下划线约 72px）。之前 +44dp 偏下、
+            // plateH*0.48 会落到数字后面，均不可取。
+            // X 中心 = 下划线基线 + 20dp（vc170 的位置），再按用户要求整体下移 15dp = +35dp。
             int cx = Math.round(mSelInk.bottom + dp(10));   // 下划线基线
-            int targetCenterY = cx + dp(20) + dp(24);       // X 中心=下划线再下 20dp，再按真机调参 +24dp
+            int targetCenterY = cx + dp(125);
             // 兜底：别顶到 plate 底边之外。
             targetCenterY = Math.min(targetCenterY, plateH - Math.round(xH / 2f) - dp(2));
             final FrameLayout.LayoutParams dlp =
@@ -1985,16 +1982,6 @@ public final class ModuleSettingsActivity extends Activity {
             dlp.topMargin = targetCenterY - Math.round(xH / 2f) - previewPlate.getPaddingTop();
             mDigitDoneView.setLayoutParams(dlp);
             mDigitDoneView.setTranslationY(0f);
-            if (BuildConfig.DEBUG) {
-                android.util.Log.d("CS-X", "plateH=" + plateH
-                        + " targetCY=" + targetCenterY
-                        + " topMargin=" + dlp.topMargin
-                        + " xH=" + mDigitDoneView.getHeight()
-                        + " alpha=" + mDigitDoneView.getAlpha()
-                        + " vis=" + mDigitDoneView.getVisibility()
-                        + " scr=" + locStr(mDigitDoneView)
-                        + " plateScr=" + locStr(previewPlate));
-            }
         }
         if (BuildConfig.DEBUG) {
             android.util.Log.d("CS-MARK", "mark slot=" + mSelSlot + " ink=" + mSelInk
