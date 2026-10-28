@@ -2368,6 +2368,10 @@ public final class ModuleSettingsActivity extends Activity {
             if (!mCfgHourColorOn && mDigitSwitch != null && !mDigitSwitch.isChecked()) {
                 mDigitSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
             }
+            // 改色即进入设置状态：预览卡若还在折叠态，展开成逐位取色，改色效果当场可见（vc187）。
+            if (!mDigitsExpanded) {
+                expandDigits();
+            }
             refreshDigitSwatches();
             refreshColorSummary();
             updatePreview();            // 字色 / 下划线 / 水滴颜色一起跟着变
