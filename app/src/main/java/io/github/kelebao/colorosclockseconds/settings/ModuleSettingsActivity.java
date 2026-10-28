@@ -845,6 +845,11 @@ public final class ModuleSettingsActivity extends Activity {
         mDigitDoneView = new CloseCrossView(this, accent(), 0xFFFFFFFF);
         // X 放进 previewPlate（和数字/下划线/光晕同一坐标系），不再挂在 card 上：
         // 挂 card 时会因为 LayerDrawable 背景 + 负 bottomMargin 被排到内容区之外、被裁掉不显示。
+        // 【X 点击修复 vc181】X 必须能伸出 previewPlate（只数字那一行高）落到网络时间行上方。
+        // 视觉上靠 previewPlate.setClipChildren(false) 已经能画出去，但 Android 的触摸命中测试
+        // 仍按子 View 的父容器边界裁剪：超出 previewPlate 的部分收不到点击 → 用户「X 按不了」。
+        // 解法：给 X 设 TouchDelegate，把 previewPlate 内 X 所在矩形区域的触摸转交给 X（不受父边界限制）。
+        // 定位仍由 positionMark() 每帧写 LayoutParams，所以 TouchDelegate 的 rect 在 positionMark 里更新。
         FrameLayout.LayoutParams doneLp =
                 new FrameLayout.LayoutParams(dp(26), dp(26));
         doneLp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
@@ -852,6 +857,8 @@ public final class ModuleSettingsActivity extends Activity {
         mDigitDoneView.setVisibility(View.GONE);
         mDigitDoneView.setContentDescription(getString(R.string.settings_digit_done));
         mDigitDoneView.setOnClickListener(v -> collapseDigits());
+        // 抬高 X 的触摸优先级，避免被下方（网络时间行）先吃掉。
+        mDigitDoneView.setElevation(dp(8));
         previewPlate.addView(mDigitDoneView);
 
         // 预览卡与下方两张卡之间的间隙：必须在此处（真正 addView 的地方）给 bottomMargin。
@@ -1976,25 +1983,29 @@ public final class ModuleSettingsActivity extends Activity {
             // 纵向：X 中心落在弧顶红点处。弧是卡片背景 LayerDrawable 子项，bounds 高度
             // = 卡片内容高（cardH - padT - padB），弧顶在该高度的 0.48 处（ArcTickDrawable.peakY）。
             // X 挂在 previewPlate 内，需把「卡片坐标的弧顶」换算到 plate 坐标：减去 previewPlate.getTop()。
-            // 弧尖（用户说的「箭头」）在 previewPlate 内的 y。
-            // 弧是画在「卡片背景」上的，bounds 高度 = cardH - padT - padB（实测 cardH=516 稳定），
-            // 弧尖在卡片坐标 = padT + boundsH*0.48；plate 在卡片内有 top 偏移(实测 58)，
-            // 相减即得弧尖在 plate 内的 y（实测 183，恰是 plate 高 296 的 61.8%，不是 28%）。
-            int cardHx = mPreviewCard != null ? mPreviewCard.getHeight() : plateH;
-            int cardPadT = mPreviewCard != null ? mPreviewCard.getPaddingTop() : 0;
-            int cardPadB = mPreviewCard != null ? mPreviewCard.getPaddingBottom() : 0;
-            int arcBoundsH = Math.max(0, cardHx - cardPadT - cardPadB);
-            int arcPeakInCardY = cardPadT + Math.round(arcBoundsH * 0.48f);
-            int plateTopInCard = previewPlate.getTop();
-            int arcPeakPlateY = arcPeakInCardY - plateTopInCard;   // 弧尖在 plate 坐标里的 y
-            // X 整体浮在弧尖上方（底边离弧尖留 dp(2)），不压弧线。
-            int targetCenterY = arcPeakPlateY - Math.round(xH / 2f) - dp(2);
-            // 兜底：别顶到 plate 上下边之外。
+            // 用户要求（vc180）：X 圆钮的**底边**与「网络时间」行顶边相差 dp(1)。
+            // 网络时间行(mNetRow)和 previewPlate 都是卡片里的兄弟 View，用屏幕坐标换算最稳：
+            // X 挂 plate 内，bottomMargin 反推 —— targetBottomScreen = netRowTopScreen - dp(1)。
+            // 拿不到 netRow 时退回「下划线底 + 固定间距」。
+            int targetCenterY;
+            if (netTimeView != null && netTimeView.getHeight() > 0) {
+                // 用「网络时间文字」本身的屏幕顶边做锚（netRow 容器顶离文字还有 padding/netSlot 空间）。
+                final int[] ntAbs = new int[2];
+                netTimeView.getLocationOnScreen(ntAbs);
+                final int[] plateAbs = new int[2];
+                previewPlate.getLocationOnScreen(plateAbs);
+                int targetBottomScreen = ntAbs[1] - dp(1);              // X 底边目标屏幕 y（文字顶上方 1dp）
+                int xBottomInPlate = targetBottomScreen - plateAbs[1];  // 换算到 plate 内
+                targetCenterY = xBottomInPlate - Math.round(xH / 2f);   // 圆心 = 底边 - 半径
+            } else {
+                int markBottomPlateY = top - previewPlate.getPaddingTop() + h;
+                targetCenterY = markBottomPlateY + dp(8) + Math.round(xH / 2f);
+            }
+            // 只兜底「别顶出 plate 上边」；下边界不限制 —— X 要能伸出 previewPlate
+            // （plate 只有数字那一行高），靠 plate / card / netSlot 的 clipChildren=false 画到网络时间行上方。
             targetCenterY = Math.max(Math.round(xH / 2f), targetCenterY);
-            targetCenterY = Math.min(targetCenterY, plateH - Math.round(xH / 2f) - dp(2));
             final FrameLayout.LayoutParams dlp =
                     (FrameLayout.LayoutParams) mDigitDoneView.getLayoutParams();
-            // 横向：弧顶红点在卡片水平正中；previewPlate 左右 padding 对称，故 X 水平居中于 plate。
             int plateW = previewPlate.getWidth();
             int xW = dp(26);
             dlp.width = xW;
@@ -2005,7 +2016,31 @@ public final class ModuleSettingsActivity extends Activity {
             dlp.topMargin = targetCenterY - Math.round(xH / 2f) - previewPlate.getPaddingTop();
             mDigitDoneView.setLayoutParams(dlp);
             mDigitDoneView.setTranslationY(0f);
-
+            // 【X 点击修复 vc181】X 伸出 previewPlate 的部分收不到点击（命中测试按父边界裁）。
+            // 在 previewPlate 上用 TouchDelegate 把它所在矩形（含伸出部分）的触摸转交给 X。
+            // 【X 点击修复 vc181】X 大半伸到 previewPlate 边界外（plate 只有 296px 高），
+            // 点在 plate 外时 previewPlate.dispatchTouchEvent 直接判「不在我 bounds」不处理，
+            // 挂 previewPlate 的 TouchDelegate 也就永不触发 → 用户「X 按不了」。
+            // 改挂整张预览卡 mPreviewCard（纵向完整覆盖 X，且已 setClipChildren(false)），
+            // hit 矩形从 plate 坐标换算成 card 坐标（两者左上角屏幕偏移相减）。
+            if (mPreviewCard != null) {
+                mPreviewCard.post(() -> {
+                    if (mPreviewCard == null || mDigitDoneView == null) return;
+                    final int[] pa = new int[2];
+                    previewPlate.getLocationOnScreen(pa);
+                    final int[] ca = new int[2];
+                    mPreviewCard.getLocationOnScreen(ca);
+                    final int offX = pa[0] - ca[0];
+                    final int offY = pa[1] - ca[1];
+                    final int pad = dp(12);
+                    android.graphics.Rect hit = new android.graphics.Rect(
+                            offX + dlp.leftMargin - pad,
+                            offY + dlp.topMargin - pad,
+                            offX + dlp.leftMargin + dlp.width + pad,
+                            offY + dlp.topMargin + dlp.height + pad);
+                    mPreviewCard.setTouchDelegate(new android.view.TouchDelegate(hit, mDigitDoneView));
+                });
+            }
         }
         if (BuildConfig.DEBUG) {
             android.util.Log.d("CS-MARK", "mark slot=" + mSelSlot + " ink=" + mSelInk

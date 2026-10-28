@@ -2,9 +2,9 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 173）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 181）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc173；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：未发布。** 测试线从 vc37 累积到 vc181；正式发版时本段即为 v1.2.0 的更新内容。
 
 ### vc148 ~ vc168（数字颜色卡改版）
 
@@ -19,6 +19,15 @@
 
 - **X 圆钮下移、时间整体上移（vc169~vc170）**：X 关闭钮改为挂在 `previewPlate` 内、用 `topMargin` 定位到「下划线下方、弧内空带」，不再用 `translationY`（避免每帧 `positionMark()` 重算把它拉回原位导致「跳动」）；网络时间行上移。
 - **三处位置精调（vc171）**：按真机调参结果固化——整组数字 `translationY = -10dp`、X 圆钮 `targetCenterY = 下划线 + dp(20) + dp(17)`、网络时间行 `padding-top = dp(19)`。临时的 DEBUG 三滑杆调参卡已删除。
+
+
+### vc172 ~ vc181（X 关闭钮定位与点击修复）
+
+- **光晕跟随数字上移（vc172）**：数字整体上移 10dp 后，光晕（独立子 View）不吃翻译位移，改为在 `positionGlow()` 里补 `- dp(10)` 与数字同步。
+- **预设白色改棕色（vc172）**：预设色里的纯白在白卡上看不见，换成棕 `#795548`（亮度 0.29 ≤ 0.55，符合状态栏取色阈值）。
+- **下划线跟随数字抬高（vc174）**：`positionMark()` 里 `top = mSelInk.bottom + dp(10) - mLiftNow`，与 `LiftSpan` 抬高等量。
+- **X 圆钮位置调整并锚定网络时间行（vc174~vc180）**：X 改为按「网络时间文字顶边 - 1dp」定位（用 `netTimeView.getLocationOnScreen()` 而非容器顶，避开 padding 误差）。
+- **修复 X 按钮点不动（vc181）**：X 挂在只有 296px 高的 `previewPlate` 内，却有一大半伸出其边界。Android 触摸命中测试先按父容器 bounds 裁剪，点在 `previewPlate` 外时它不处理触摸，挂在其上的 `TouchDelegate` 也不触发。改把 `TouchDelegate` 挂到整张预览卡 `mPreviewCard`（纵向完整覆盖 X 且已 `setClipChildren(false)`），hit 矩形从 plate 坐标换算成 card 坐标。真机验证：点 X 能正常收起预览卡、再展开正常。
 
 ### vc172（光晕跟随 / X 再下移 / 预设白色改棕）
 
