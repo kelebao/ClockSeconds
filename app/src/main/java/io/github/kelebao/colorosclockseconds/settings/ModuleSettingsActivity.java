@@ -159,6 +159,8 @@ public final class ModuleSettingsActivity extends Activity {
     private int[] mCfgDigitColors = new int[ClockSecondsConfig.DIGIT_COUNT];
     /** 预览卡是否处于「逐位取色」展开态。 */
     private boolean mDigitsExpanded;
+    // 展开动画进行中：期间光晕不落位不显示（数字还在飞，按最终位置画会出「残影」，用户 vc189 反馈）。
+    private boolean mExpandingAnim;
     private int mFitGuard;
     /** 展开排版的宽度安全系数：1.0 → 逐渐收紧，收到底还换行才降字号。 */
     private float mFitSafety = 0.97f;
@@ -1160,6 +1162,7 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         mDigitsExpanded = true;
+        mExpandingAnim = true;   // 光晕压到动画结束再点亮
         // 先站平：抬高动作要等数字摊开之后才开始（否则展开动画里那一位是斜着飞上去的）。
         mLiftNow = 0;
         if (previewPlate != null) {
@@ -1239,6 +1242,7 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         mDigitsExpanded = false;
+        mExpandingAnim = false;
         // 卡片变矮时刻度弧会跟着缩、往上爬到数字上，先把它和 X 淡出去，落定后再淡回来。
         fadeDecorTo(0f, 120L);
         // 不要在这里直接重置内边距，否则收起动画（animateGrow(0)）会失效、卡片瞬间弹回。
@@ -1585,6 +1589,7 @@ public final class ModuleSettingsActivity extends Activity {
             @Override
             public void onAnimationEnd(android.animation.Animator animation) {
                 if (expand && mDigitsExpanded) {
+                    mExpandingAnim = false;   // 数字落位，恢复光晕
                     positionMark();     // 数字落位后才画下划线、摆光晕
                     previewView.post(ModuleSettingsActivity.this::fitExpandedText);   // 兜一层：真换行了就收字距/字号
                     startGlowLoop();    // 再开始呼吸
@@ -2152,6 +2157,9 @@ public final class ModuleSettingsActivity extends Activity {
      * 不然模糊出来的光会被自己的 bounds 裁掉。</p>
      */
     private void positionGlow() {
+        if (mExpandingAnim) {
+            return;   // 展开动画期间不按飞行中的位置画光晕（残影）
+        }
         if (mGlowView == null || mGlowDrawable == null || previewView == null
                 || previewPlate == null || !mDigitsExpanded) {
             return;
@@ -2355,6 +2363,10 @@ public final class ModuleSettingsActivity extends Activity {
         if (slot < 0 || slot >= ClockSecondsConfig.DIGIT_COUNT) {
             return;
         }
+        // 改色即进入设置状态：同步展开，不等写配置回调（否则拖色相滑条每帧等一次写盘往返，展开明显滞后）。
+        if (!mDigitsExpanded) {
+            expandDigits();
+        }
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -2368,11 +2380,6 @@ public final class ModuleSettingsActivity extends Activity {
             if (!mCfgHourColorOn && mDigitSwitch != null && !mDigitSwitch.isChecked()) {
                 mDigitSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
             }
-            // 改色即进入设置状态：预览卡若还在折叠态，展开成逐位取色，改色效果当场可见（vc187）。
-            if (!mDigitsExpanded) {
-                expandDigits();
-            }
-            refreshDigitSwatches();
             refreshColorSummary();
             updatePreview();            // 字色 / 下划线 / 水滴颜色一起跟着变
             if (previewView != null) {
