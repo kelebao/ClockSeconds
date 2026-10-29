@@ -196,6 +196,13 @@ public final class ModuleSettingsActivity extends Activity {
     private LinearLayout mNetRow;
     private Switch mDigitSwitch;
     private Switch mGradientSwitch;
+    /** 数字颜色卡的两个页面容器与页签。 */
+    private LinearLayout mPageDigit;
+    private LinearLayout mPageGradient;
+    private TextView mTabDigit;
+    private TextView mTabGradient;
+    /** 当前是否停在渐变页（true）还是逐位颜色页（false）。 */
+    private boolean mGradPage;
     /** 取色目标：-1 = 编辑某一位数字（mSelSlot）；0 = 渐变起点色；1 = 渐变终点色。 */
     private int mGradTarget = -1;
     private View mGradStartDot;
@@ -1092,12 +1099,24 @@ public final class ModuleSettingsActivity extends Activity {
         titleRow.addView(mDigitSwitch);
         card.addView(titleRow);
 
+        // 页签：逐位颜色 / 渐变。同一张卡两个页面，预设两排色点与三条滑杆两页共用，
+        // 切换页签只是换掉上半部分的「说明行 / 渐变端点行」，下半部分不动。
+        card.addView(buildDigitTabs());
+
+        mPageDigit = new LinearLayout(this);
+        mPageDigit.setOrientation(LinearLayout.VERTICAL);
+        card.addView(mPageDigit);
+
+        mPageGradient = new LinearLayout(this);
+        mPageGradient.setOrientation(LinearLayout.VERTICAL);
+        card.addView(mPageGradient);
+
         TextView sub = new TextView(this);
         sub.setText(R.string.settings_digit_sum_v2);
         sub.setTextSize(11f);
         sub.setTextColor(text2());
         sub.setPadding(0, dp(4), 0, 0);
-        card.addView(sub);
+        mPageDigit.addView(sub);
 
         // 预设两排、每排 5 颗，铺满卡片宽度（无背景板、无角标）。
         LinearLayout presetWrap = new LinearLayout(this);
@@ -1136,8 +1155,8 @@ public final class ModuleSettingsActivity extends Activity {
         pillRow.addView(followBtn);
         card.addView(pillRow);
 
-        // 渐变：整体效果开关，放在卡片底部（颜色仍由上面六位决定）。
-        buildGradientRows(card);
+        // 渐变页：启用开关 + 起点色 / 终点色（下面的预设与滑杆改为编辑该端点色）。
+        buildGradientRows(mPageGradient);
 
         root.addView(card);
 
@@ -1163,6 +1182,91 @@ public final class ModuleSettingsActivity extends Activity {
             });
         });
         refreshDigitSwatches();
+        // 渐变已启用时直接落在渐变页（此时逐位颜色不参与渲染），否则落在逐位页。
+        selectDigitPage(mCfgGradientOn);
+    }
+
+    // ==================================================================
+    // 数字颜色卡：页签（逐位颜色 / 渐变）
+    // ==================================================================
+
+    /** 两段式页签行：逐位颜色 | 渐变。预设色点与三条滑杆两页共用。 */
+    private View buildDigitTabs() {
+        LinearLayout track = new LinearLayout(this);
+        track.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tlp.topMargin = dp(10);
+        track.setLayoutParams(tlp);
+        GradientDrawable trackBg = new GradientDrawable();
+        trackBg.setCornerRadius(dp(999));
+        trackBg.setColor(night ? 0xFF2A2340 : 0xFFF1EDFB);
+        track.setBackground(trackBg);
+        track.setPadding(dp(3), dp(3), dp(3), dp(3));
+
+        mTabDigit = makeTab(getString(R.string.settings_digit_tab_digit));
+        mTabGradient = makeTab(getString(R.string.settings_gradient_title));
+        mTabDigit.setLayoutParams(new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        glp.leftMargin = dp(3);
+        mTabGradient.setLayoutParams(glp);
+        track.addView(mTabDigit);
+        track.addView(mTabGradient);
+        mTabDigit.setOnClickListener(v -> selectDigitPage(false));
+        mTabGradient.setOnClickListener(v -> selectDigitPage(true));
+        return track;
+    }
+
+    private TextView makeTab(String label) {
+        TextView t = new TextView(this);
+        t.setText(label);
+        t.setTextSize(12f);
+        t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(0, dp(7), 0, dp(7));
+        t.setClickable(true);
+        return t;
+    }
+
+    /** 切换页签：渐变页把取色目标切到起点色，逐位页切回「正在编辑的那一位」。 */
+    private void selectDigitPage(boolean gradient) {
+        mGradPage = gradient;
+        if (gradient) {
+            if (mGradTarget < 0) {
+                mGradTarget = 0;
+            }
+        } else {
+            mGradTarget = -1;
+        }
+        if (mPageDigit != null) {
+            mPageDigit.setVisibility(gradient ? View.GONE : View.VISIBLE);
+        }
+        if (mPageGradient != null) {
+            mPageGradient.setVisibility(gradient ? View.VISIBLE : View.GONE);
+        }
+        styleTab(mTabDigit, !gradient);
+        styleTab(mTabGradient, gradient);
+        refreshDigitSwatches();
+        updatePreview();
+        positionMark();
+    }
+
+    private void styleTab(TextView t, boolean active) {
+        if (t == null) {
+            return;
+        }
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(999));
+        if (active) {
+            bg.setColor(accent());
+            t.setTextColor(0xFFFFFFFF);
+        } else {
+            bg.setColor(0x00000000);
+            t.setTextColor(text2());
+        }
+        t.setBackground(bg);
     }
 
     // ==================================================================
@@ -1174,11 +1278,11 @@ public final class ModuleSettingsActivity extends Activity {
      *
      * <p>渐变端点色直接取第 1 位与第 6 位已配置的颜色，所以这里不再提供选色控件。</p>
      */
-    private void buildGradientRows(LinearLayout card) {
+    private void buildGradientRows(LinearLayout box) {
         mGradientSwitch = new Switch(this);
         mGradientSwitch.setChecked(mCfgGradientOn);
         styleSwitch(mGradientSwitch);
-        card.addView(makeSwitchRow(getString(R.string.settings_gradient_title), mGradientSwitch, dp(14)));
+        box.addView(makeSwitchRow(getString(R.string.settings_gradient_enable), mGradientSwitch, dp(2)));
 
         // 起点 / 终点色：点一下选中，下面两排预设色与三条滑杆就改为编辑这个颜色。
         LinearLayout edgeRow = new LinearLayout(this);
@@ -1189,14 +1293,14 @@ public final class ModuleSettingsActivity extends Activity {
         mGradEndDot = makeEdgeSwatch(1, R.string.settings_gradient_end);
         edgeRow.addView(mGradStartDot);
         edgeRow.addView(mGradEndDot);
-        card.addView(edgeRow);
+        box.addView(edgeRow);
 
         TextView hint = new TextView(this);
         hint.setText(R.string.settings_gradient_hint);
         hint.setTextSize(11f);
         hint.setTextColor(text2());
         hint.setPadding(0, dp(2), 0, 0);
-        card.addView(hint);
+        box.addView(hint);
 
         syncGradientEnabledState();
 

@@ -105,6 +105,8 @@
     <string name="settings_cancel">取消</string>
     <string name="settings_gradient_title">渐变</string>
     <string name="settings_gradient_hint">把第一位与最后一位的颜色连成渐变</string>
+    <string name="settings_digit_tab_digit">逐位颜色</string>
+    <string name="settings_gradient_enable">启用渐变</string>
     <string name="settings_gradient_start">起点色</string>
     <string name="settings_gradient_end">终点色</string>
 </resources>
