@@ -208,6 +208,9 @@ public final class ModuleSettingsActivity extends Activity {
     private int mGradTarget = -1;
     private View mGradStartDot;
     private View mGradEndDot;
+    /** 渐变预设胶囊（每套 = 一对端点色，点一下整套换掉）。 */
+    private LinearLayout mGradPresetWrap;
+    private final java.util.List<View> mGradPresetPills = new java.util.ArrayList<>();
     private boolean mObserverOk = false;
     private final android.database.ContentObserver mCfgObserver =
             new android.database.ContentObserver(new Handler(Looper.getMainLooper())) {
@@ -1267,6 +1270,10 @@ public final class ModuleSettingsActivity extends Activity {
         if (mPageGradient != null) {
             mPageGradient.setVisibility(gradient ? View.VISIBLE : View.GONE);
         }
+        // 渐变页用「渐变预设胶囊」，逐位颜色页才显示实心预设点，两套不混。
+        if (mPresetWrap != null) {
+            mPresetWrap.setVisibility(gradient ? View.GONE : View.VISIBLE);
+        }
         styleTab(mTabDigit, !gradient);
         styleTab(mTabGradient, gradient);
         refreshDigitSwatches();
@@ -1318,6 +1325,40 @@ public final class ModuleSettingsActivity extends Activity {
         hint.setTextColor(text2());
         hint.setPadding(0, dp(2), 0, 0);
         box.addView(hint);
+
+        // 渐变预设：每个胶囊就是一套「起点 → 终点」，点一下整套换掉（用户 m19814 的形态：
+        // 左右渐变的长条、不写色值）。逐位颜色页的实心预设点在渐变页隐藏，两套预设不打架。
+        mGradPresetWrap = new LinearLayout(this);
+        mGradPresetWrap.setOrientation(LinearLayout.VERTICAL);
+        mGradPresetWrap.setPadding(0, dp(10), 0, 0);
+        for (int r = 0; r < 2; r++) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            if (r > 0) {
+                LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                rlp.topMargin = dp(8);
+                row.setLayoutParams(rlp);
+            }
+            for (int c = 0; c < 3; c++) {
+                final int idx = r * 3 + c;
+                if (idx >= GRADIENT_PRESETS.length) {
+                    break;
+                }
+                View pill = new View(this);
+                LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(0, dp(36), 1f);
+                plp.setMargins(dp(4), 0, dp(4), 0);
+                pill.setLayoutParams(plp);
+                pill.setClickable(true);
+                pill.setOnClickListener(v -> applyGradientPair(
+                        GRADIENT_PRESETS[idx][0], GRADIENT_PRESETS[idx][1]));
+                row.addView(pill);
+                mGradPresetPills.add(pill);
+            }
+            mGradPresetWrap.addView(row);
+        }
+        box.addView(mGradPresetWrap);
+        refreshGradientPresets();
 
         syncGradientEnabledState();
     }
@@ -1374,6 +1415,71 @@ public final class ModuleSettingsActivity extends Activity {
         dot0.setBackground(b0);
         dot1.setBackground(b1);
         mGradBreath = sel0 ? b0 : (sel1 ? b1 : null);
+        refreshGradientPresets();
+    }
+
+    /** 渐变预设：每套一对端点色（起点 → 终点）。 */
+    private static final int[][] GRADIENT_PRESETS = {
+            {0xFFC3F823, 0xFF5E32FE},
+            {0xFFFF8A3D, 0xFFFF2D6F},
+            {0xFF00E0FF, 0xFF2C6BFF},
+            {0xFFFFD54F, 0xFFFF6D3D},
+            {0xFFB388FF, 0xFF5B21B6},
+            {0xFF00E676, 0xFF00B8D4},
+    };
+
+    /** 重画渐变预设胶囊：填充即该套渐变的左右渐变，当前生效的那套加一圈描边。 */
+    private void refreshGradientPresets() {
+        if (mGradPresetPills == null || mGradPresetPills.isEmpty()) {
+            return;
+        }
+        final boolean on = mCfgGradientOn;
+        for (int i = 0; i < mGradPresetPills.size() && i < GRADIENT_PRESETS.length; i++) {
+            View pill = mGradPresetPills.get(i);
+            GradientDrawable bg = new GradientDrawable(
+                    GradientDrawable.Orientation.LEFT_RIGHT,
+                    new int[]{GRADIENT_PRESETS[i][0], GRADIENT_PRESETS[i][1]});
+            bg.setCornerRadius(dp(999));
+            final boolean match = on
+                    && gradientTargetColor(0) == GRADIENT_PRESETS[i][0]
+                    && gradientTargetColor(1) == GRADIENT_PRESETS[i][1];
+            if (match) {
+                bg.setStroke(dp(3), accent());
+            }
+            pill.setBackground(bg);
+            pill.setAlpha(on ? 1f : 0.45f);
+            pill.setClickable(on);
+        }
+    }
+
+    /** 点一下整套换掉渐变（起点 + 终点两个键都写）。 */
+    private void applyGradientPair(final int start, final int end) {
+        writeGradientEndpoint(0, start, ok0 -> writeGradientEndpoint(1, end, ok1 -> {
+            if (!ok0 || !ok1) {
+                toastWriteFailed();
+                return;
+            }
+            mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
+            mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+            if (!mCfgGradientOn && mGradPage) {
+                selectDigitPage(true);
+            }
+            refreshDigitSwatches();
+            refreshGradientPresets();
+            updatePreview();
+            if (previewView != null) {
+                previewView.post(this::positionMark);
+            }
+        }));
+    }
+
+    private void writeGradientEndpoint(final int which, final int color,
+                                       final java.util.function.Consumer<Boolean> after) {
+        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
+                .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
+        applyConfig(which == 0 ? ClockSecondsConfig.GRADIENT_START_KEY
+                : ClockSecondsConfig.GRADIENT_END_KEY, color, intent, after);
     }
 
     /** 当前取色目标：0..5 = 数字位；6 = 渐变起点；7 = 渐变终点。 */
