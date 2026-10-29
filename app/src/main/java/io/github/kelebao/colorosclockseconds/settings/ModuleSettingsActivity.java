@@ -195,7 +195,8 @@ public final class ModuleSettingsActivity extends Activity {
     /** 「网络时间」那一行。展开取色时临时藏起来，把位置让给 X 圆钮。 */
     private LinearLayout mNetRow;
     private Switch mDigitSwitch;
-    private Switch mGradientSwitch;
+    /** 选中的渐变端点色点的呼吸光晕（只驱动当前选中的那一个）。 */
+    private BreathSwatchDrawable mGradBreath;
     /** 数字颜色卡的两个页面容器与页签。 */
     private LinearLayout mPageDigit;
     private LinearLayout mPageGradient;
@@ -345,6 +346,8 @@ public final class ModuleSettingsActivity extends Activity {
             ticker.postDelayed(this, 1000L);
         }
     };
+    /** 渐变端点色点的呼吸周期（比数字光晕快，用户要求「呼吸快些」）。 */
+    private static final long GRAD_BREATH_PERIOD_MS = 1200L;
     /** 选中色块荧光光晕 + 半弧刻度盘的高频刷新（~50ms）。 */
     private final Runnable breathTick = new Runnable() {
         @Override
@@ -354,6 +357,11 @@ public final class ModuleSettingsActivity extends Activity {
                 // 关闭小时颜色时，色块光晕呼吸也停止（强度归零、光晕不绘制）。
                 mBreathSwatch.setBreath(ClockSecondsConfig.isHourColorEnabled(getContentResolver())
                         ? ClockSecondsConfig.breathIntensity(now) : 0f);
+            }
+            if (mGradBreath != null) {
+                // 渐变端点色点：谷底 0.45 → 峰值 1.0（最亮），周期 1200ms（比数字光晕的 3s 快一倍多）。
+                double gp = (now % GRAD_BREATH_PERIOD_MS) / (double) GRAD_BREATH_PERIOD_MS;
+                mGradBreath.setBreath(0.45f + 0.55f * (float) ((1 - Math.cos(gp * 2 * Math.PI)) / 2));
             }
             // 预览卡滚出屏幕时跳过弧的高频刷新（省电/省 CPU）；色块光晕照常（它可能在视口内）。
             if (mArcTicks != null
@@ -1233,6 +1241,19 @@ public final class ModuleSettingsActivity extends Activity {
     /** 切换页签：渐变页把取色目标切到起点色，逐位页切回「正在编辑的那一位」。 */
     private void selectDigitPage(boolean gradient) {
         mGradPage = gradient;
+        // 页签即开关：停在渐变页就启用渐变，回到逐位颜色页就关闭渐变。
+        if (mCfgGradientOn != gradient) {
+            mCfgGradientOn = gradient;   // 乐观更新，先让界面切过去，写盘失败再提示
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, gradient ? 1 : 0);
+            applyConfig(ClockSecondsConfig.GRADIENT_ENABLED_KEY, gradient ? 1 : 0, intent, ok -> {
+                if (!ok) {
+                    toastWriteFailed();
+                }
+                refreshDigitSwatches();
+                updatePreview();
+            });
+        }
         if (gradient) {
             if (mGradTarget < 0) {
                 mGradTarget = 0;
@@ -1279,11 +1300,7 @@ public final class ModuleSettingsActivity extends Activity {
      * <p>渐变端点色直接取第 1 位与第 6 位已配置的颜色，所以这里不再提供选色控件。</p>
      */
     private void buildGradientRows(LinearLayout box) {
-        mGradientSwitch = new Switch(this);
-        mGradientSwitch.setChecked(mCfgGradientOn);
-        styleSwitch(mGradientSwitch);
-        box.addView(makeSwitchRow(getString(R.string.settings_gradient_enable), mGradientSwitch, dp(2)));
-
+        // 没有「启用渐变」开关：页签就是开关——停在渐变页即启用渐变，回到逐位颜色页即关闭。
         // 起点 / 终点色：点一下选中，下面两排预设色与三条滑杆就改为编辑这个颜色。
         LinearLayout edgeRow = new LinearLayout(this);
         edgeRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -1303,22 +1320,6 @@ public final class ModuleSettingsActivity extends Activity {
         box.addView(hint);
 
         syncGradientEnabledState();
-
-        mGradientSwitch.setOnCheckedChangeListener((v, checked) -> {
-            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT)
-                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
-            applyConfig(ClockSecondsConfig.GRADIENT_ENABLED_KEY, checked ? 1 : 0, intent, ok -> {
-                if (ok) {
-                    mCfgGradientOn = checked;
-                    syncGradientEnabledState();
-                    updatePreview();
-                } else {
-                    mGradientSwitch.setChecked(!checked);
-                    toastWriteFailed();
-                }
-            });
-        });
-
     }
 
     /** 渐变端点色胶囊：色点 + 文字，点一下把取色目标切到该端点。 */
@@ -1330,8 +1331,9 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         box.setClickable(true);
 
+        // 40dp 的容器：实心圆只占 0.70（BreathSwatchDrawable 的 SOLID），外面一圈留给呼吸光晕。
         View dot = new View(this);
-        dot.setLayoutParams(new LinearLayout.LayoutParams(dp(26), dp(26)));
+        dot.setLayoutParams(new LinearLayout.LayoutParams(dp(40), dp(40)));
         box.addView(dot);
 
         TextView label = new TextView(this);
@@ -1361,10 +1363,17 @@ public final class ModuleSettingsActivity extends Activity {
         mGradEndDot.setClickable(on);
         View dot0 = ((ViewGroup) mGradStartDot).getChildAt(0);
         View dot1 = ((ViewGroup) mGradEndDot).getChildAt(0);
-        dot0.setBackground(swatchDrawable(swatchColor(gradientTargetColor(0), on),
-                on && mGradTarget == 0));
-        dot1.setBackground(swatchDrawable(swatchColor(gradientTargetColor(1), on),
-                on && mGradTarget == 1));
+        // 选中的端点色点带呼吸光晕（BreathSwatchDrawable 由 breathTick 每 50ms 推进），
+        // 未选中的只画实心圆，不占呼吸节拍。
+        final boolean sel0 = on && mGradTarget == 0;
+        final boolean sel1 = on && mGradTarget == 1;
+        BreathSwatchDrawable b0 = new BreathSwatchDrawable(
+                swatchColor(gradientTargetColor(0), on), sel0, accent(), sel0 ? dp(2) : 0f);
+        BreathSwatchDrawable b1 = new BreathSwatchDrawable(
+                swatchColor(gradientTargetColor(1), on), sel1, accent(), sel1 ? dp(2) : 0f);
+        dot0.setBackground(b0);
+        dot1.setBackground(b1);
+        mGradBreath = sel0 ? b0 : (sel1 ? b1 : null);
     }
 
     /** 当前取色目标：0..5 = 数字位；6 = 渐变起点；7 = 渐变终点。 */
@@ -1412,9 +1421,9 @@ public final class ModuleSettingsActivity extends Activity {
             }
             mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
             mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
-            // 取色即视为启用渐变：否则选了颜色却看不到效果（开关只负责整体启停）。
-            if (!mCfgGradientOn && mGradientSwitch != null && !mGradientSwitch.isChecked()) {
-                mGradientSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
+            // 取色即视为启用渐变：在渐变页取色本身就是「用渐变」的意图，切到渐变页即写盘启用。
+            if (!mCfgGradientOn && mGradPage) {
+                selectDigitPage(true);
             }
             refreshDigitSwatches();
             updatePreview();
@@ -4160,7 +4169,9 @@ public final class ModuleSettingsActivity extends Activity {
         mNowDate.setTime(System.currentTimeMillis());
         final String text = (seconds ? mFmtSec : mFmtNoSec).format(mNowDate);
         final SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        if (mCfgGradientOn) {
+        // 总开关关掉时整串回到默认文字色（用户 m19679 反馈「关闭颜色开关预览还是彩色」）：
+        // 渐变同样受 hourOn 门控，与状态栏 applyDigitColors 里「先判 hourColorEnabled 再判 sGradientOn」保持一致。
+        if (mCfgGradientOn && hourOn) {
             // 渐变模式：整串一个 GradientTextSpan（与状态栏同一份实现），端点色取自定义值或首位/末位数字色。
             // 预览卡是居中显示的，文字并不从 x=0 起画；色带必须按文字左边缘对齐，否则只会画到色带
             // 的后半段、被 MIRROR 翻成反向渐变（真机表现：预览绿→红，状态栏红→绿）。
