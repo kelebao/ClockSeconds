@@ -105,7 +105,7 @@
     <string name="settings_cancel">取消</string>
     <string name="settings_gradient_title">Gradient</string>
     <string name="settings_gradient_hint">Blends the first and last digit colors</string>
-    <string name="settings_digit_tab_digit">Digits</string>
+    <string name="settings_digit_tab_digit">Single</string>
     <string name="settings_gradient_start">Start color</string>
     <string name="settings_gradient_end">End color</string>
 </resources>

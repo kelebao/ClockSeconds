@@ -109,7 +109,7 @@ public final class ModuleSettingsActivity extends Activity {
      */
     private static final int[] HOUR_COLORS = {
             0xFFF44336, 0xFFFF9800, 0xFFD4A017, 0xFF4CAF50, 0xFF00BCD4,
-            0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFF795548, 0xFF9E9E9E,
+            0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFF9E9E9E,
     };
 
     // 浅色配色
@@ -163,6 +163,8 @@ public final class ModuleSettingsActivity extends Activity {
     private int[] mCfgDigitColors = new int[ClockSecondsConfig.DIGIT_COUNT];
     /** 预览卡是否处于「逐位取色」展开态。 */
     private boolean mDigitsExpanded;
+    /** 色板里第 10 颗「跟随系统」色点（替掉原来单独占一行的胶囊按钮）。 */
+    private View mFollowDot;
     // 展开动画进行中：期间光晕不落位不显示（数字还在飞，按最终位置画会出「残影」，用户 vc189 反馈）。
     private boolean mExpandingAnim;
     private int mFitGuard;
@@ -795,11 +797,18 @@ public final class ModuleSettingsActivity extends Activity {
         previewView.setSingleLine(true);
         // 点一下展开成逐位取色；展开后再点就选中被点的那一位数字。
         previewView.setOnClickListener(v -> {
+            // 渐变页不允许展开：渐变是整串一个色带，没有「逐位」可编辑的对象。
+            if (mGradPage) {
+                return;
+            }
             if (!mDigitsExpanded) {
                 expandDigits();
             }
         });
         previewView.setOnTouchListener((v, ev) -> {
+            if (mGradPage) {
+                return false;   // 渐变页点预览不展开（也不吃事件）
+            }
             if (ev.getActionMasked() == MotionEvent.ACTION_UP) {
                 if (!mDigitsExpanded) {
                     expandDigits();
@@ -1147,6 +1156,11 @@ public final class ModuleSettingsActivity extends Activity {
                     rowView.addView(makePresetDot(HOUR_COLORS[idx]));
                 }
             }
+            if (row == 1) {
+                // 第 10 颗 = 「跟随系统」：做成色板里的一种选择，替掉原来单独占一整行的胶囊。
+                mFollowDot = makeFollowDot();
+                rowView.addView(mFollowDot);
+            }
             presetWrap.addView(rowView);
             if (row == 0) mDigitGrid = rowView;   // 兼容旧字段：只用于整体刷新第一排
         }
@@ -1156,15 +1170,6 @@ public final class ModuleSettingsActivity extends Activity {
 
         // 三条 HSV 滑杆：色相 / 饱和度 / 明度，拖动即生效，并同步更新当前选中位的颜色。
         buildHsvSliders(card);
-
-        // 胶囊：跟随系统（清掉该位颜色，用系统默认色）。
-        LinearLayout pillRow = new LinearLayout(this);
-        pillRow.setOrientation(LinearLayout.HORIZONTAL);
-        pillRow.setPadding(0, dp(12), 0, 0);
-        TextView followBtn = pillButton(getString(R.string.settings_digit_follow));
-        followBtn.setOnClickListener(v -> applyColor(selTarget(), ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
-        pillRow.addView(followBtn);
-        card.addView(pillRow);
 
         // 渐变页：启用开关 + 起点色 / 终点色（下面的预设与滑杆改为编辑该端点色）。
         buildGradientRows(mPageGradient);
@@ -1243,6 +1248,10 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 切换页签：渐变页把取色目标切到起点色，逐位页切回「正在编辑的那一位」。 */
     private void selectDigitPage(boolean gradient) {
+        // 切页时预览卡一律回到默认（折叠）状态：渐变页不允许展开，切回单色页也重新从折叠开始。
+        if (mDigitsExpanded) {
+            collapseDigits();
+        }
         mGradPage = gradient;
         // 页签即开关：停在渐变页就启用渐变，回到逐位颜色页就关闭渐变。
         if (mCfgGradientOn != gradient) {
@@ -2856,6 +2865,12 @@ public final class ModuleSettingsActivity extends Activity {
         }
         refreshGradientDots();
         syncSlidersToColor();
+        if (mFollowDot != null) {
+            final boolean followSel = current == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+            mFollowDot.setClickable(enabled);
+            mFollowDot.setBackground(new FollowSwatchDrawable(enabled, followSel));
+            mFollowDot.setSelected(followSel);
+        }
     }
 
     /** 自绘进度条：一条渐变圆角条 + 一个圆形滑块（白描边），用于色相/饱和/明度三条滑杆。 */
@@ -4479,6 +4494,76 @@ public final class ModuleSettingsActivity extends Activity {
      * 预设色点：老老实实一颗圆（选中时套一圈强调色描边，没有任何数字角标）。
      * 点一下立即生效（无「应用」按钮），与其余调色入口行为一致。
      */
+    /**
+     * 色板里的第 11 颗：「跟随系统」。原来是一整行胶囊按钮，太占位置；改成和其他预设一样大的
+     * 一颗圆（圆环 + 一条斜线表示「不指定颜色」），混在第二排末尾，语义就是「色板里的一种选择」。
+     */
+    private View makeFollowDot() {
+        final int size = dp(30);
+        View dot = new View(this) {
+            @Override
+            protected void onMeasure(int wSpec, int hSpec) {
+                setMeasuredDimension(size, size);
+            }
+        };
+        dot.setLayoutParams(new LinearLayout.LayoutParams(size, size));
+        final boolean followSel = selColor() == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+        dot.setBackground(new FollowSwatchDrawable(mCfgHourColorOn, followSel));
+        dot.setOnClickListener(v -> applyColor(selTarget(), ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
+        dot.setContentDescription(getString(R.string.settings_digit_follow));
+        dot.setSelected(followSel);
+        dot.setClickable(true);
+        return dot;
+    }
+
+    /** 「跟随系统」色点的绘制：灰色圆环 + 斜线，选中时外面加一圈主题色环（与其他预设一致）。 */
+    private class FollowSwatchDrawable extends android.graphics.drawable.Drawable {
+        private final boolean enabled;
+        private final boolean selected;
+        private final android.graphics.Paint ring = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint slash = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint selRing = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+        FollowSwatchDrawable(boolean enabled, boolean selected) {
+            this.enabled = enabled;
+            this.selected = selected;
+            final int c = enabled ? text2() : blendColor(text2(), night ? DARK_CARD : LIGHT_CARD, 0.6f);
+            ring.setStyle(android.graphics.Paint.Style.STROKE);
+            ring.setStrokeWidth(dp(2));
+            ring.setColor(c);
+            slash.setStyle(android.graphics.Paint.Style.STROKE);
+            slash.setStrokeWidth(dp(2));
+            slash.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+            slash.setColor(c);
+            selRing.setStyle(android.graphics.Paint.Style.STROKE);
+            selRing.setStrokeWidth(dp(3));
+            selRing.setColor(accent());
+        }
+
+        @Override
+        public void draw(android.graphics.Canvas canvas) {
+            final int w = getBounds().width();
+            final int h = getBounds().height();
+            if (w <= 0 || h <= 0) {
+                return;
+            }
+            final float cx = w / 2f;
+            final float cy = h / 2f;
+            final float inset = selected ? dp(4) : dp(2);
+            final float r = Math.min(w, h) / 2f - inset;
+            canvas.drawCircle(cx, cy, r, ring);
+            final float d = r * 0.62f;
+            canvas.drawLine(cx - d, cy + d, cx + d, cy - d, slash);
+            if (selected) {
+                canvas.drawCircle(cx, cy, r + dp(2), selRing);
+            }
+        }
+
+        @Override public void setAlpha(int alpha) { }
+        @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+    }
+
     private View makePresetDot(int color) {
         // 预设横向铺满整张卡片：每颗用 weight 均分宽度，高度取「测量到的宽度」做成正方形，
         // 这样圆的大小自动跟着卡片宽度伸缩，10 颗正好排满一行。
