@@ -1887,7 +1887,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 ? colors[colors.length - 1] : sGradientEnd;
         int c0 = gradientEdgeColor(rawStart, systemTextColor);
         int c1 = gradientEdgeColor(rawEnd, systemTextColor);
-        sb.setSpan(new GradientTextSpan(view, c0, c1, sGradientFlow), 0, len,
+        sb.setSpan(new GradientTextSpan(view, sb, c0, c1, sGradientFlow), 0, len,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         int[] starts = new int[len];
         int n = 0;

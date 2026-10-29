@@ -4084,10 +4084,29 @@ public final class ModuleSettingsActivity extends Activity {
         final SpannableStringBuilder sb = new SpannableStringBuilder(text);
         if (mCfgGradientOn) {
             // 渐变模式：整串一个 GradientTextSpan（与状态栏同一份实现），端点色取自定义值或首位/末位数字色。
-            sb.setSpan(new GradientTextSpan(previewView,
+            // 预览卡是居中显示的，文字并不从 x=0 起画；色带必须按文字左边缘对齐，否则只会画到色带
+            // 的后半段、被 MIRROR 翻成反向渐变（真机表现：预览绿→红，状态栏红→绿）。
+            // vc199 真机扫参结论：居中 TextView 里色带的绘制原点比文字左边缘偏左**正好一个文字宽度**，
+            // 所以要传「文字实测宽度」而不是「文字左偏移 (view 宽 - 文字宽) / 2」。
+            // 传左偏移或传 0（vc194 之前）时，文字都落在 MIRROR 色带的后半段，渐变整个反向
+            // （真机表现：预览卡绿→红，状态栏红→绿）。改布局方式后必须重新扫参确认。
+            final float gradXOff = previewView.getPaint().measureText(sb, 0, sb.length());
+            float gradXOffUse = gradXOff;
+            if (BuildConfig.DEBUG) {
+                // 调试钩子：settings put secure coloros_clock_seconds_debug_xoff <float> 可强制覆盖色带偏移。
+                try {
+                    String dbg = android.provider.Settings.Secure.getString(getContentResolver(),
+                            "coloros_clock_seconds_debug_xoff");
+                    if (dbg != null && dbg.length() > 0) {
+                        gradXOffUse = Float.parseFloat(dbg);
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            sb.setSpan(new GradientTextSpan(previewView, sb,
                     adaptPreviewColor(gradientTargetColor(0)),
                     adaptPreviewColor(gradientTargetColor(1)),
-                    mCfgGradientFlow), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    mCfgGradientFlow, gradXOffUse), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
             // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
             // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。

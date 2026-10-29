@@ -2,7 +2,6 @@ package io.github.kelebao.colorosclockseconds;
 
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
-import android.text.Layout;
 import android.text.TextPaint;
 import android.text.style.CharacterStyle;
 import android.widget.TextView;
@@ -20,69 +19,100 @@ import java.lang.ref.WeakReference;
  * <p><b>成本：</b>整串只有一个 span、一次 shader 构建（同宽度同相位时复用）。「流动」的相位取自
  * 墙钟（{@link ClockSecondsConfig#GRADIENT_FLOW_PERIOD_MS}），完全由时钟本来就有的每秒重绘
  * 驱动前进，不产生任何额外唤醒或重绘请求。</p>
+ *
+ * <p><b>vc194 血的教训：</b>这里绝对不能调用 {@code Layout.getLineLeft()/getLineRight()}。
+ * 单行文本用的是 {@code BoringLayout}，它的 {@code getLineMax()} 会反过来触发
+ * {@code TextLine.metrics() → updateDrawState()}，于是在
+ * {@code getLineLeft → getLineMax → updateDrawState} 之间无限递归，
+ * 直接 {@code StackOverflowError} 把 SystemUI 打死（vc193 真机实测：40 秒内连崩 4 次，
+ * LSPosed 判定「System UI crashed too many times」→ 全模块进安全模式）。
+ * 因此色带宽度改用 {@link TextPaint#measureText(CharSequence, int, int)} 自行测量，
+ * 并且整个方法用 try/catch 兜底——绘制期抛异常是致命的。</p>
  */
 public class GradientTextSpan extends CharacterStyle {
 
     private final WeakReference<TextView> mView;
+    private final CharSequence mText;
     private final int mColorStart;
     private final int mColorEnd;
     private final boolean mFlow;
+    /** 文字左边缘在绘制坐标里的 x 偏移（居中的 TextView 不为 0）。 */
+    private final float mXOffset;
+
+    /** 重入护栏：万一测量/绘制链路再回调进来，直接复用上一次的 shader，绝不递归。 */
+    private static final ThreadLocal<Boolean> IN_DRAW = new ThreadLocal<>();
 
     private Shader mShader;
-    private float mShaderX0;
-    private float mShaderX1;
+    private float mShaderBand = -1f;
     private float mShaderPhase = -1f;
+    /** 一个完整色带的宽度 = 这段文字实测宽度（不用 Layout，避免 BoringLayout 递归）。 */
+    private float mBand;
+    private float mBandTextSize = -1f;
+    private int mBandTextLength = -1;
 
-    public GradientTextSpan(TextView view, int colorStart, int colorEnd, boolean flow) {
+    public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
+                            boolean flow) {
+        this(view, text, colorStart, colorEnd, flow, 0f);
+    }
+
+    /**
+     * @param xOffset 文字左边缘在绘制坐标中的 x（TextView 居中时 = (可用宽 - 文字宽) / 2）。
+     *                必须由调用方在绘制之外算好传进来：绘制期不能去问 Layout（会递归崩溃）。
+     */
+    public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
+                            boolean flow, float xOffset) {
         mView = new WeakReference<>(view);
+        mText = text;
         mColorStart = colorStart;
         mColorEnd = colorEnd;
         mFlow = flow;
+        mXOffset = xOffset;
     }
 
     @Override
     public void updateDrawState(TextPaint tp) {
-        TextView view = mView.get();
-        if (view == null) {
+        if (Boolean.TRUE.equals(IN_DRAW.get())) {
+            // 重入：说明宿主在测量过程中又回调了这里，直接用缓存 shader，什么都不重算。
+            if (mShader != null) {
+                tp.setShader(mShader);
+            }
             return;
         }
-        // 渐变必须按「文字实际占的宽度」铺，不能按 View 宽度：设置页预览卡里的 TextView 是
-        // match_parent + 居中，文字比 View 窄很多，按 View 宽度铺只能看到色带中间一小段，
-        // 表现为「颜色被冲淡成一片粉」。用 Layout 的行左右边界取真实文字范围。
-        float x0 = 0f;
-        float x1 = Math.max(1, view.getWidth());
-        Layout layout = view.getLayout();
-        if (layout != null && layout.getLineCount() > 0) {
-            float l = layout.getLineLeft(0);
-            float r = layout.getLineRight(0);
-            if (r > l + 1f) {
-                x0 = l;
-                x1 = r;
+        IN_DRAW.set(Boolean.TRUE);
+        try {
+            if (mText == null || mText.length() == 0) {
+                return;
             }
-        }
-        float span = Math.max(1f, x1 - x0);
-        float phase = 0f;
-        if (mFlow) {
-            long period = ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
-            if (period > 0) {
-                phase = (System.currentTimeMillis() % period) / (float) period;
+            // 文字实测宽度：文字长度或字号变化时重算一次（AOD / 字体缩放会改字号）。
+            if (mBand <= 0f || mBandTextSize != tp.getTextSize()
+                    || mBandTextLength != mText.length()) {
+                mBandTextSize = tp.getTextSize();
+                mBandTextLength = mText.length();
+                mBand = Math.max(1f, tp.measureText(mText, 0, mText.length()));
             }
+            float phase = 0f;
+            if (mFlow) {
+                long period = ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
+                if (period > 0) {
+                    phase = (System.currentTimeMillis() % period) / (float) period;
+                }
+            }
+            // 同一色带宽度 / 同一相位下重复绘制不重建 shader（一秒内可能被绘制多次）。
+            if (mShader == null || mShaderBand != mBand || mShaderPhase != phase) {
+                float offset = phase * mBand;
+                // 色带必须从「文字左边缘」起算，否则居中的 TextView 只画到色带的中后段
+                // （MIRROR 会把它翻成反向渐变，真机表现就是预览卡的颜色顺序和状态栏相反）。
+                float x0 = mXOffset - offset;
+                mShader = new LinearGradient(x0, 0f, x0 + mBand, 0f,
+                        new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                mShaderBand = mBand;
+                mShaderPhase = phase;
+            }
+            tp.setShader(mShader);
+        } catch (Throwable ignored) {
+            // 绘制期异常会直接崩掉宿主进程（状态栏 = SystemUI），这里必须兜死。
+        } finally {
+            IN_DRAW.set(Boolean.FALSE);
         }
-        // 同一几何 / 同一相位下重复绘制不重建 shader（一秒内可能被绘制多次）。
-        if (mShader == null || mShaderX0 != x0 || mShaderX1 != x1 || mShaderPhase != phase) {
-            mShader = buildShader(x0, x1, span, phase);
-            mShaderX0 = x0;
-            mShaderX1 = x1;
-            mShaderPhase = phase;
-        }
-        tp.setShader(mShader);
-    }
-
-    private Shader buildShader(float x0, float x1, float span, float phase) {
-        // 一个完整色带 = 文字宽度；MIRROR 让色带首尾对称循环，流动时没有硬边（直接 REPEAT
-        // 会在「终点色 → 起点色」处出现一条明显接缝）。静止时正好是「左起点色 → 右终点色」。
-        float offset = phase * span;
-        return new LinearGradient(x0 - offset, 0f, x1 - offset, 0f,
-                new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
     }
 }
