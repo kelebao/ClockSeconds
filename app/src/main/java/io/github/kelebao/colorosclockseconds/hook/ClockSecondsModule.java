@@ -47,6 +47,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import io.github.kelebao.colorosclockseconds.BuildConfig;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
+import io.github.kelebao.colorosclockseconds.GradientTextSpan;
 
 /**
  * 状态栏时钟显秒模块（legacy Xposed API，参考 {@code io.github.betterclock} 的稳妥范式）。
@@ -103,6 +104,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 仅在首次使用与收到 {@code SET_DIGIT_COLOR / SET_HOUR_COLOR} 广播时刷新。</p>
      */
     private static volatile int[] sDigitColors;
+
+    /** 渐变 / 流动开关缓存（与六位颜色同批重读，避免每秒额外 binder）。 */
+    private static volatile boolean sGradientOn;
+    private static volatile boolean sGradientFlow;
+    /** 渐变端点色缓存（{@code GRADIENT_COLOR_AUTO} = 跟随首位 / 末位数字）。 */
+    private static volatile int sGradientStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+    private static volatile int sGradientEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     /** 无上色目标时复用的空数组（避免每帧分配）。 */
     private static final int[] NO_STARTS = new int[0];
 
@@ -1732,7 +1740,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
                     + (base instanceof android.text.Spannable));
         }
-        if (TextUtils.equals(view.getText(), sb)) {
+        // 流动开启时必须绕过「字符相同就跳过」的短路：渐变相位靠重绘推进，
+        // 字符没变也要写一次（span 对象变了），否则流动会静止。
+        if (!sGradientFlow && TextUtils.equals(view.getText(), sb)) {
             return;
         }
         WRITING_CLOCK.set(true);
@@ -1799,6 +1809,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 总开关关闭：恢复系统默认样式，不加任何 Span。
             return NO_STARTS;
         }
+        if (sGradientOn) {
+            // 渐变模式：整串一个 CharacterStyle，颜色由 shader 生成，不再逐字符上色。
+            return applyGradient(sb, view, digitColors(view));
+        }
         int[] colors = digitColors(view);
         int systemTextColor = view.getCurrentTextColor();
         int[] starts = new int[sb.length()];
@@ -1833,6 +1847,70 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         return result;
     }
 
+    /**
+     * 渐变上色：整串数字只挂一个 {@link GradientTextSpan}，颜色由 LinearGradient 生成。
+     *
+     * <p><b>为什么比逐位上色更省：</b>逐位 ForegroundColorSpan 是「6 个 span + 6 次颜色换算」，
+     * 渐变只有「1 个 span + 1 次 shader 构建」，且完全寄生在时钟本来就有的重绘上——
+     * 显秒开时 ticker 每秒写一次文本，相位按毫秒推进，不需要新增定时器、不需要 invalidate
+     * 循环、不新增任何 View。开关状态来自缓存字段（{@link #sGradientOn}），每秒零 binder。</p>
+     *
+     * @return 需要维护颜色的字符下标（掉色判定沿用同一套逻辑）
+     */
+    private static int[] applyGradient(SpannableStringBuilder sb, TextView view, int[] colors) {
+        // 剥掉外来 / 上一轮的前景色：主题模块与 OplusClockExImpl 会塞 ForegroundColorSpan，
+        // 其中还有 #0 透明色（会让数字直接消失），留着会和 shader 抢画笔。
+        ForegroundColorSpan[] oldFg = sb.getSpans(0, sb.length(), ForegroundColorSpan.class);
+        for (ForegroundColorSpan s : oldFg) {
+            sb.removeSpan(s);
+        }
+        GradientTextSpan[] oldGradient = sb.getSpans(0, sb.length(), GradientTextSpan.class);
+        for (GradientTextSpan g : oldGradient) {
+            sb.removeSpan(g);
+        }
+        int len = sb.length();
+        // 尾部零宽空格（防模式重建剥 span 用）不参与着色，否则右端会多算一格宽度。
+        while (len > 0 && sb.charAt(len - 1) == '\u200B') {
+            len--;
+        }
+        if (len <= 0) {
+            return NO_STARTS;
+        }
+        int systemTextColor = view.getCurrentTextColor();
+        // 起止色直接复用第 1 位与第 6 位已配置的颜色：零新增选色 UI，语义也直观
+        // （「第一个数字的颜色」渐变到「最后一个数字的颜色」）。
+        // 端点色：用户自定义优先；未自定义（GRADIENT_COLOR_AUTO）时沿用首位 / 末位数字的颜色，
+        // 这样「不配置也能看到渐变」，配置了就完全按用户的颜色来。
+        int rawStart = sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? colors[0] : sGradientStart;
+        int rawEnd = sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? colors[colors.length - 1] : sGradientEnd;
+        int c0 = gradientEdgeColor(rawStart, systemTextColor);
+        int c1 = gradientEdgeColor(rawEnd, systemTextColor);
+        sb.setSpan(new GradientTextSpan(view, c0, c1, sGradientFlow), 0, len,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int[] starts = new int[len];
+        int n = 0;
+        for (int i = 0; i < len; i++) {
+            if (ClockSecondsConfig.slotOfChar(sb, i) >= 0) {
+                starts[n++] = i;
+            }
+        }
+        if (n == 0) {
+            return NO_STARTS;
+        }
+        int[] result = new int[n];
+        System.arraycopy(starts, 0, result, 0, n);
+        return result;
+    }
+
+    /** 渐变端点颜色：「跟随系统」的端点用系统文字色，并按底色压暗（与逐位上色同规则）。 */
+    private static int gradientEdgeColor(int color, int systemTextColor) {
+        int base = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW ? systemTextColor : color;
+        return adaptColorForBackground(base, systemTextColor);
+    }
+
+
     /** 读取六位颜色缓存（首次或广播变更后读取，避免每秒 6 次 binder）。 */
     private static int[] digitColors(TextView view) {
         int[] cached = sDigitColors;
@@ -1854,12 +1932,26 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
             colors[0] = HOUR_COLOR_FALLBACK;
         }
+        try {
+            // 渐变 / 流动开关与端点色同批读取：每秒渲染路径里只读缓存字段，不再打 binder。
+            sGradientOn = ClockSecondsConfig.isGradientEnabled(ctx.getContentResolver());
+            sGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(ctx.getContentResolver());
+            sGradientStart = ClockSecondsConfig.getGradientStartColor(ctx.getContentResolver());
+            sGradientEnd = ClockSecondsConfig.getGradientEndColor(ctx.getContentResolver());
+        } catch (Throwable ignored) {
+            // 读取失败保持上一次值，不影响上色。
+        }
         sDigitColors = colors;
         return colors;
     }
 
     /** 目标文本所有已配置颜色的位是否仍带着前景色 Span（掉色判定用）。 */
     private static boolean hasAllColorSpans(Spanned sp, int[] starts) {
+        // 渐变模式没有逐位 ForegroundColorSpan：整串只要还带着我们的 GradientTextSpan，
+        // 就说明颜色存活，属于稳态，无需重写（否则会退化成每秒一次无谓 setText）。
+        if (sp.getSpans(0, sp.length(), GradientTextSpan.class).length > 0) {
+            return true;
+        }
         for (int start : starts) {
             if (sp.getSpans(start, start + 1, ForegroundColorSpan.class).length == 0) {
                 return false;
@@ -2703,6 +2795,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
@@ -2735,6 +2830,26 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
                                 reloadDigitColors(ctx);
                                 sFloatHourColor = sDigitColors[0];
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT.equals(action)) {
+                                // 渐变总开关：只改配置，重读缓存后立刻刷新一次时钟。
+                                ClockSecondsConfig.setGradientEnabled(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
+                                reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW.equals(action)) {
+                                ClockSecondsConfig.setGradientFlowEnabled(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
+                                reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR.equals(action)) {
+                                // 渐变端点色（0 = 起点，1 = 终点）：取色即生效。
+                                boolean isStart = intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_SLOT, 0) == 0;
+                                ClockSecondsConfig.setGradientEdgeColor(cr, isStart, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_COLOR,
+                                        ClockSecondsConfig.GRADIENT_COLOR_AUTO));
+                                reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED.equals(action)) {
                                 ClockSecondsConfig.setHourColorEnabled(cr, intent.getIntExtra(

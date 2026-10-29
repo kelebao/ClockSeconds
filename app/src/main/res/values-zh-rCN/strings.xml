@@ -103,4 +103,9 @@
     <string name="settings_digit_editing">正在编辑：%1$s</string>
     <string name="settings_digit_summary">时 %1$s · 分 %2$s · 秒 %3$s</string>
     <string name="settings_cancel">取消</string>
+    <string name="settings_gradient_title">渐变</string>
+    <string name="settings_gradient_hint">把第一位与最后一位的颜色连成渐变</string>
+    <string name="settings_gradient_flow">流动</string>
+    <string name="settings_gradient_start">起点色</string>
+    <string name="settings_gradient_end">终点色</string>
 </resources>

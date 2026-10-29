@@ -69,6 +69,7 @@ import org.json.JSONObject;
 
 import io.github.kelebao.colorosclockseconds.BuildConfig;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
+import io.github.kelebao.colorosclockseconds.GradientTextSpan;
 import io.github.kelebao.colorosclockseconds.R;
 
 /**
@@ -154,6 +155,10 @@ public final class ModuleSettingsActivity extends Activity {
     // 配置缓存：避免预览每秒 3 次 Settings.Secure binder 读取；变化由 ContentObserver 推送刷新。
     private boolean mCfgSeconds;
     private boolean mCfgHourColorOn;
+    private boolean mCfgGradientOn;
+    private boolean mCfgGradientFlow;
+    private int mCfgGradStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+    private int mCfgGradEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private int mCfgHourColor;
     // 六位数字各自的颜色（-1 = 跟随系统）；由 ContentObserver / 取色后重新读取刷新。
     private int[] mCfgDigitColors = new int[ClockSecondsConfig.DIGIT_COUNT];
@@ -191,6 +196,12 @@ public final class ModuleSettingsActivity extends Activity {
     /** 「网络时间」那一行。展开取色时临时藏起来，把位置让给 X 圆钮。 */
     private LinearLayout mNetRow;
     private Switch mDigitSwitch;
+    private Switch mGradientSwitch;
+    private Switch mFlowSwitch;
+    /** 取色目标：-1 = 编辑某一位数字（mSelSlot）；0 = 渐变起点色；1 = 渐变终点色。 */
+    private int mGradTarget = -1;
+    private View mGradStartDot;
+    private View mGradEndDot;
     private boolean mObserverOk = false;
     private final android.database.ContentObserver mCfgObserver =
             new android.database.ContentObserver(new Handler(Looper.getMainLooper())) {
@@ -460,6 +471,10 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
         mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+        mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
+        mCfgGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(getContentResolver());
+        mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
+        mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
         if (mDigitGrid != null) {
             // 回到前台 / 状态栏改了颜色：同步色块选中环与摘要行。
             refreshDigitSwatches();
@@ -1028,6 +1043,10 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
         mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+        mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
+        mCfgGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(getContentResolver());
+        mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
+        mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
 
         LinearLayout card = card();
 
@@ -1115,9 +1134,12 @@ public final class ModuleSettingsActivity extends Activity {
         pillRow.setOrientation(LinearLayout.HORIZONTAL);
         pillRow.setPadding(0, dp(12), 0, 0);
         TextView followBtn = pillButton(getString(R.string.settings_digit_follow));
-        followBtn.setOnClickListener(v -> applyDigitColor(mSelSlot, ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
+        followBtn.setOnClickListener(v -> applyColor(selTarget(), ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
         pillRow.addView(followBtn);
         card.addView(pillRow);
+
+        // 渐变 / 流动：整体效果开关，放在卡片底部（颜色仍由上面六位决定）。
+        buildGradientRows(card);
 
         root.addView(card);
 
@@ -1143,6 +1165,210 @@ public final class ModuleSettingsActivity extends Activity {
             });
         });
         refreshDigitSwatches();
+    }
+
+    // ==================================================================
+    // 渐变 / 流动
+    // ==================================================================
+
+    /**
+     * 渐变与流动两行开关。
+     *
+     * <p>渐变是父开关：关闭时「流动」置灰（流动只描述渐变怎么动，没有渐变就没有意义）。
+     * 渐变端点色直接取第 1 位与第 6 位已配置的颜色，所以这里不再提供选色控件。</p>
+     */
+    private void buildGradientRows(LinearLayout card) {
+        mGradientSwitch = new Switch(this);
+        mGradientSwitch.setChecked(mCfgGradientOn);
+        styleSwitch(mGradientSwitch);
+        card.addView(makeSwitchRow(getString(R.string.settings_gradient_title), mGradientSwitch, dp(14)));
+
+        // 起点 / 终点色：点一下选中，下面两排预设色与三条滑杆就改为编辑这个颜色。
+        LinearLayout edgeRow = new LinearLayout(this);
+        edgeRow.setOrientation(LinearLayout.HORIZONTAL);
+        edgeRow.setGravity(Gravity.CENTER_VERTICAL);
+        edgeRow.setPadding(0, dp(12), 0, 0);
+        mGradStartDot = makeEdgeSwatch(0, R.string.settings_gradient_start);
+        mGradEndDot = makeEdgeSwatch(1, R.string.settings_gradient_end);
+        edgeRow.addView(mGradStartDot);
+        edgeRow.addView(mGradEndDot);
+        card.addView(edgeRow);
+
+        TextView hint = new TextView(this);
+        hint.setText(R.string.settings_gradient_hint);
+        hint.setTextSize(11f);
+        hint.setTextColor(text2());
+        hint.setPadding(0, dp(2), 0, 0);
+        card.addView(hint);
+
+        mFlowSwitch = new Switch(this);
+        mFlowSwitch.setChecked(mCfgGradientFlow);
+        styleSwitch(mFlowSwitch);
+        card.addView(makeSwitchRow(getString(R.string.settings_gradient_flow), mFlowSwitch, dp(10)));
+
+        syncGradientEnabledState();
+
+        mGradientSwitch.setOnCheckedChangeListener((v, checked) -> {
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
+            applyConfig(ClockSecondsConfig.GRADIENT_ENABLED_KEY, checked ? 1 : 0, intent, ok -> {
+                if (ok) {
+                    mCfgGradientOn = checked;
+                    syncGradientEnabledState();
+                } else {
+                    mGradientSwitch.setChecked(!checked);
+                    toastWriteFailed();
+                }
+            });
+        });
+
+        mFlowSwitch.setOnCheckedChangeListener((v, checked) -> {
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
+            applyConfig(ClockSecondsConfig.GRADIENT_FLOW_KEY, checked ? 1 : 0, intent, ok -> {
+                if (ok) {
+                    mCfgGradientFlow = checked;
+                } else {
+                    mFlowSwitch.setChecked(!checked);
+                    toastWriteFailed();
+                }
+            });
+        });
+    }
+
+    /** 渐变端点色胶囊：色点 + 文字，点一下把取色目标切到该端点。 */
+    private View makeEdgeSwatch(final int which, int labelRes) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        box.setLayoutParams(new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        box.setClickable(true);
+
+        View dot = new View(this);
+        dot.setLayoutParams(new LinearLayout.LayoutParams(dp(26), dp(26)));
+        box.addView(dot);
+
+        TextView label = new TextView(this);
+        label.setText(labelRes);
+        label.setTextSize(12f);
+        label.setTextColor(text());
+        label.setPadding(dp(8), 0, 0, 0);
+        box.addView(label);
+
+        box.setOnClickListener(v -> {
+            mGradTarget = which;
+            refreshDigitSwatches();
+            updatePreview();
+        });
+        return box;
+    }
+
+    /** 刷新渐变端点色点：颜色 + 选中环；渐变关闭时整行置灰不可点。 */
+    private void refreshGradientDots() {
+        if (mGradStartDot == null || mGradEndDot == null) {
+            return;
+        }
+        final boolean on = mCfgGradientOn;
+        mGradStartDot.setAlpha(on ? 1f : 0.45f);
+        mGradEndDot.setAlpha(on ? 1f : 0.45f);
+        mGradStartDot.setClickable(on);
+        mGradEndDot.setClickable(on);
+        View dot0 = ((ViewGroup) mGradStartDot).getChildAt(0);
+        View dot1 = ((ViewGroup) mGradEndDot).getChildAt(0);
+        dot0.setBackground(swatchDrawable(swatchColor(gradientTargetColor(0), on),
+                on && mGradTarget == 0));
+        dot1.setBackground(swatchDrawable(swatchColor(gradientTargetColor(1), on),
+                on && mGradTarget == 1));
+    }
+
+    /** 当前取色目标：0..5 = 数字位；6 = 渐变起点；7 = 渐变终点。 */
+    private int selTarget() {
+        return mGradTarget >= 0 ? 6 + mGradTarget : mSelSlot;
+    }
+
+    /** 当前取色目标实际显示的颜色（渐变端点为 AUTO 时解析成首位 / 末位数字的颜色）。 */
+    private int selColor() {
+        int target = selTarget();
+        return target >= 6 ? gradientTargetColor(target - 6) : slotColor(mSelSlot);
+    }
+
+    /** 渐变端点色：用户自定义优先，未自定义时回落到首位 / 末位数字的颜色。 */
+    private int gradientTargetColor(int which) {
+        int stored = which == 0 ? mCfgGradStart : mCfgGradEnd;
+        if (stored != ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
+            return stored;
+        }
+        if (mCfgDigitColors == null || mCfgDigitColors.length < ClockSecondsConfig.DIGIT_COUNT) {
+            mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+        }
+        return mCfgDigitColors[which == 0 ? 0 : mCfgDigitColors.length - 1];
+    }
+
+    /** 统一取色入口：数字位走原逻辑，渐变端点走自己的键。 */
+    private void applyColor(final int target, final int color) {
+        if (target >= 6) {
+            applyGradientColor(target - 6, color);
+            return;
+        }
+        applyDigitColor(target, color);
+    }
+
+    /** 写渐变端点色（0 = 起点，1 = 终点）。 */
+    private void applyGradientColor(final int which, final int color) {
+        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
+                .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
+        applyConfig(which == 0 ? ClockSecondsConfig.GRADIENT_START_KEY
+                : ClockSecondsConfig.GRADIENT_END_KEY, color, intent, ok -> {
+            if (!ok) {
+                toastWriteFailed();
+                return;
+            }
+            mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
+            mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+            // 取色即视为启用渐变：否则选了颜色却看不到效果（开关只负责整体启停）。
+            if (!mCfgGradientOn && mGradientSwitch != null && !mGradientSwitch.isChecked()) {
+                mGradientSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
+            }
+            refreshDigitSwatches();
+            updatePreview();
+            if (previewView != null) {
+                previewView.post(this::positionMark);
+            }
+        });
+    }
+
+    /** 一行「标题 + 弹性空隙 + 开关」。 */
+    private LinearLayout makeSwitchRow(String label, Switch sw, int topPad) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, topPad, 0, 0);
+
+        TextView title = new TextView(this);
+        title.setText(label);
+        title.setTextSize(13f);
+        title.setTextColor(text());
+        row.addView(title);
+
+        View spacer = new View(this);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        row.addView(spacer);
+
+        row.addView(sw);
+        return row;
+    }
+
+    /** 渐变关闭时把「流动」置灰（视觉上明确它是渐变的子开关）。 */
+    private void syncGradientEnabledState() {
+        if (mFlowSwitch == null) {
+            return;
+        }
+        boolean on = mGradientSwitch != null && mGradientSwitch.isChecked();
+        mFlowSwitch.setEnabled(on);
+        mFlowSwitch.setAlpha(on ? 1f : 0.4f);
+        refreshGradientDots();
     }
 
     // ==================================================================
@@ -1853,6 +2079,7 @@ public final class ModuleSettingsActivity extends Activity {
             return;   // 点在冒号或空白处：保持当前选中位
         }
         mSelSlot = slot;
+        mGradTarget = -1;   // 点了某一位数字 → 回到「按位取色」
         refreshDigitSwatches();
         updatePreview();           // 未选中位变淡，要重排一次
         if (previewView != null) {
@@ -1970,6 +2197,17 @@ public final class ModuleSettingsActivity extends Activity {
     /** 把短色线摆到选中数字下面（宽度取字形的 62%，位置随字号/字距变化重算）。 */
     private void positionMark() {
         if (mMarkView == null || previewView == null || previewPlate == null || !mDigitsExpanded) {
+            return;
+        }
+        if (mGradTarget >= 0) {
+            // 正在编辑渐变端点：选中标记（下划线 / 光晕 / X）都无处可落，先全部隐藏。
+            mMarkView.setVisibility(View.GONE);
+            if (mGlowView != null) {
+                mGlowView.setVisibility(View.GONE);
+            }
+            if (mDigitDoneView != null) {
+                mDigitDoneView.setVisibility(View.GONE);
+            }
             return;
         }
         if (!measureSelInk()) {
@@ -2225,7 +2463,7 @@ public final class ModuleSettingsActivity extends Activity {
         // 两种提亮全砍：数字和光晕都用用户选的同一个颜色，靠**光晕的量和半径**（见
         // DigitGlowDrawable 的 LIGHT_GAIN / 半径）来补可见度。颜色零偏差是硬要求，
         // 亮度可以妥协。
-        final int glowBase = adaptPreviewColor(slotColor(mSelSlot));
+        final int glowBase = adaptPreviewColor(selColor());
         mGlowDrawable.setLightTheme(!night);
         mGlowDrawable.setColor(glowBase);
         mGlowView.setVisibility(View.VISIBLE);
@@ -2241,7 +2479,7 @@ public final class ModuleSettingsActivity extends Activity {
         if (!ClockSecondsConfig.isHourColorEnabled(getContentResolver())) {
             return false;
         }
-        return slotColor(mSelSlot) != ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+        return selColor() != ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
     }
 
     /** 预览文本里第 slot 位数字的字符下标（预览是实时文本，不能缓存）。 */
@@ -2385,7 +2623,7 @@ public final class ModuleSettingsActivity extends Activity {
     /** 把三条 HSV 滑杆跳到某一位当前的颜色（点预设点后同步显示）。 */
     private void syncSlidersToColor() {
         if (mHueSlider == null) return;
-        int c = slotColor(mSelSlot);
+        int c = selColor();
         if (c == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) c = HOUR_COLORS[0];
         float[] hsv = new float[3];
         android.graphics.Color.colorToHSV(c, hsv);
@@ -2398,7 +2636,7 @@ public final class ModuleSettingsActivity extends Activity {
     /** 刷新预设色块的选中环 + 「正在编辑」行 + 底部摘要。 */
     private void refreshDigitSwatches() {
         final boolean enabled = mCfgHourColorOn;
-        final int current = slotColor(mSelSlot);
+        final int current = selColor();
         if (mPresetWrap != null) {
             int idx = 0;
             for (int r = 0; r < mPresetWrap.getChildCount(); r++) {
@@ -2422,6 +2660,7 @@ public final class ModuleSettingsActivity extends Activity {
             mDigitSummaryView.setText(getString(R.string.settings_digit_summary,
                     fieldLabel(0, 1), fieldLabel(2, 3), fieldLabel(4, 5)));
         }
+        refreshGradientDots();
         syncSlidersToColor();
     }
 
@@ -2485,7 +2724,7 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 三条 HSV 滑杆：色相 / 饱和度 / 明度。拖动即把当前选中位的颜色改成对应值。 */
     private void buildHsvSliders(LinearLayout card) {
-        final int[] seed = {slotColor(mSelSlot)};
+        final int[] seed = {selColor()};
         if (seed[0] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
             seed[0] = HOUR_COLORS[0];
         }
@@ -2506,7 +2745,7 @@ public final class ModuleSettingsActivity extends Activity {
                 c[1] = mSatSlider.getProgress() / 255f;
                 c[2] = Math.max(0.08f, mValSlider.getProgress() / 255f);
                 updateSliderGradients(c[0], c[1], c[2]);
-                applyDigitColor(mSelSlot, android.graphics.Color.HSVToColor(c));
+            applyColor(selTarget(), android.graphics.Color.HSVToColor(c));
             }
             @Override public void onStartTrackingTouch(android.widget.SeekBar sb) { }
             @Override public void onStopTrackingTouch(android.widget.SeekBar sb) { }
@@ -3836,30 +4075,42 @@ public final class ModuleSettingsActivity extends Activity {
         if (mCfgDigitColors == null || mCfgDigitColors.length < ClockSecondsConfig.DIGIT_COUNT) {
             mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
         }
+        mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
+        mCfgGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(getContentResolver());
+        mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
+        mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
         mNowDate.setTime(System.currentTimeMillis());
         final String text = (seconds ? mFmtSec : mFmtNoSec).format(mNowDate);
         final SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
-        // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
-        for (int i = 0; i < sb.length(); i++) {
-            final int slot = ClockSecondsConfig.slotOfChar(sb, i);
-            if (slot < 0) {
-                continue;
+        if (mCfgGradientOn) {
+            // 渐变模式：整串一个 GradientTextSpan（与状态栏同一份实现），端点色取自定义值或首位/末位数字色。
+            sb.setSpan(new GradientTextSpan(previewView,
+                    adaptPreviewColor(gradientTargetColor(0)),
+                    adaptPreviewColor(gradientTargetColor(1)),
+                    mCfgGradientFlow), 0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
+            // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
+            for (int i = 0; i < sb.length(); i++) {
+                final int slot = ClockSecondsConfig.slotOfChar(sb, i);
+                if (slot < 0) {
+                    continue;
+                }
+                final boolean dim = mDigitsExpanded && slot != mSelSlot;
+                final int color = mCfgDigitColors[slot];
+                final boolean follow = !hourOn || color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+                // 「抬高」是几何变换，跟有没有颜色无关，必须先挂：vc83 之前它写在「跟随系统且不淡就
+                // continue」后面，于是选中跟随系统的那一位永远抬不起来（真机反馈「3 也没抬高」）。
+                if (mDigitsExpanded && slot == mSelSlot && mLiftNow > 0) {
+                    sb.setSpan(new LiftSpan(mLiftNow), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                if (follow && !dim) {
+                    continue;   // 跟随系统且不淡：用默认文字色，不必加 span
+                }
+                final int shown = follow ? text() : adaptPreviewColor(color);
+                sb.setSpan(new ForegroundColorSpan(dim ? dimColor(shown) : shown), i, i + 1,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            final boolean dim = mDigitsExpanded && slot != mSelSlot;
-            final int color = mCfgDigitColors[slot];
-            final boolean follow = !hourOn || color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
-            // 「抬高」是几何变换，跟有没有颜色无关，必须先挂：vc83 之前它写在「跟随系统且不淡就
-            // continue」后面，于是选中跟随系统的那一位永远抬不起来（真机反馈「3 也没抬高」）。
-            if (mDigitsExpanded && slot == mSelSlot && mLiftNow > 0) {
-                sb.setSpan(new LiftSpan(mLiftNow), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            if (follow && !dim) {
-                continue;   // 跟随系统且不淡：用默认文字色，不必加 span
-            }
-            final int shown = follow ? text() : adaptPreviewColor(color);
-            sb.setSpan(new ForegroundColorSpan(dim ? dimColor(shown) : shown), i, i + 1,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         previewView.setText(sb);
 
@@ -4026,12 +4277,12 @@ public final class ModuleSettingsActivity extends Activity {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
         dot.setLayoutParams(lp);
         // onLayout 手动排布，这里不需要 weight/margin。
-        dot.setBackground(swatchDrawable(color, color == slotColor(mSelSlot)));
-        dot.setOnClickListener(v -> applyDigitColor(mSelSlot, color));
+        dot.setBackground(swatchDrawable(color, color == selColor()));
+        dot.setOnClickListener(v -> applyColor(selTarget(), color));
         // 无障碍：色块是纯色 View，读屏读不出内容 → 补 contentDescription（色号）；
         // setSelected 让 TalkBack 自动播报“已选中”；setClickable 让它被识别为可操作项。
         dot.setContentDescription(swatchDesc(color));
-        dot.setSelected(color == slotColor(mSelSlot));
+        dot.setSelected(color == selColor());
         dot.setClickable(true);
         return dot;
     }

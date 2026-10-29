@@ -170,6 +170,17 @@ public final class ClockSecondsConfig {
             "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_COLOR";
     /** int extra：数字位 slot（0..5，见 {@link #slotOfChar}）。 */
     public static final String EXTRA_SLOT = "slot";
+
+    /** 设置页 → SystemUI 写入渐变开关（{@link #EXTRA_ENABLED}）。 */
+    public static final String ACTION_SET_GRADIENT =
+            "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT";
+    /** 设置页 → SystemUI 写入流动开关（{@link #EXTRA_ENABLED}）。 */
+    public static final String ACTION_SET_GRADIENT_FLOW =
+            "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_FLOW";
+
+    /** 设置页 → SystemUI 写入渐变端点色（{@link #EXTRA_SLOT} 0=起点 1=终点，{@link #EXTRA_COLOR}）。 */
+    public static final String ACTION_SET_GRADIENT_COLOR =
+            "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_COLOR";
     /** 一键对时：让 SystemUI 打开系统「自动设置时间」。 */
     public static final String ACTION_SYNC_TIME =
             "io.github.kelebao.colorosclockseconds.action.SYNC_TIME";
@@ -298,6 +309,77 @@ public final class ClockSecondsConfig {
     /** 写入小时颜色开关。 */
     public static void setHourColorEnabled(ContentResolver resolver, boolean enabled) {
         Settings.Secure.putInt(resolver, HOUR_COLOR_ENABLED_KEY, enabled ? 1 : 0);
+    }
+
+    // ==================================================================
+    // 渐变（默认关闭；「流动」是渐变的子开关，渐变关时不可用）
+    // ==================================================================
+
+    /** 渐变总开关（1 = 启用，0 = 关闭）。默认关闭。 */
+    public static final String GRADIENT_ENABLED_KEY =
+            "coloros_clock_seconds_gradient_enabled";
+
+    /** 流动开关（1 = 启用，0 = 关闭）。默认关闭；仅在渐变开启时生效。 */
+    public static final String GRADIENT_FLOW_KEY =
+            "coloros_clock_seconds_gradient_flow";
+
+    /** 流动一个完整色带的周期（毫秒）：复用每秒刷新推进相位，不产生额外重绘。 */
+    public static final long GRADIENT_FLOW_PERIOD_MS = 4000L;
+
+    /** 渐变起点色（ARGB）。{@link #GRADIENT_COLOR_AUTO} = 跟随首位数字的颜色。 */
+    public static final String GRADIENT_START_KEY = "coloros_clock_seconds_gradient_start";
+    /** 渐变终点色（ARGB）。{@link #GRADIENT_COLOR_AUTO} = 跟随末位数字的颜色。 */
+    public static final String GRADIENT_END_KEY = "coloros_clock_seconds_gradient_end";
+
+    /** 渐变端点色「未自定义」：取首位 / 末位数字的颜色。 */
+    public static final int GRADIENT_COLOR_AUTO = -1;
+
+    /** 读取渐变起点色（{@link #GRADIENT_COLOR_AUTO} 表示跟随首位数字）。 */
+    public static int getGradientStartColor(ContentResolver resolver) {
+        return resolver == null ? GRADIENT_COLOR_AUTO
+                : Settings.Secure.getInt(resolver, GRADIENT_START_KEY, GRADIENT_COLOR_AUTO);
+    }
+
+    /** 读取渐变终点色（{@link #GRADIENT_COLOR_AUTO} 表示跟随末位数字）。 */
+    public static int getGradientEndColor(ContentResolver resolver) {
+        return resolver == null ? GRADIENT_COLOR_AUTO
+                : Settings.Secure.getInt(resolver, GRADIENT_END_KEY, GRADIENT_COLOR_AUTO);
+    }
+
+    /** 写入渐变端点色。 */
+    public static void setGradientEdgeColor(ContentResolver resolver, boolean start, int color) {
+        if (resolver == null) {
+            return;
+        }
+        Settings.Secure.putInt(resolver, start ? GRADIENT_START_KEY : GRADIENT_END_KEY, color);
+    }
+
+    /** 渐变是否启用（默认关闭）。 */
+    public static boolean isGradientEnabled(ContentResolver resolver) {
+        return resolver != null
+                && Settings.Secure.getInt(resolver, GRADIENT_ENABLED_KEY, 0) == 1;
+    }
+
+    /** 写入渐变开关。 */
+    public static void setGradientEnabled(ContentResolver resolver, boolean enabled) {
+        if (resolver == null) {
+            return;
+        }
+        Settings.Secure.putInt(resolver, GRADIENT_ENABLED_KEY, enabled ? 1 : 0);
+    }
+
+    /** 流动是否启用（默认关闭）。渐变关闭时恒为 false。 */
+    public static boolean isGradientFlowEnabled(ContentResolver resolver) {
+        return isGradientEnabled(resolver)
+                && Settings.Secure.getInt(resolver, GRADIENT_FLOW_KEY, 0) == 1;
+    }
+
+    /** 写入流动开关。 */
+    public static void setGradientFlowEnabled(ContentResolver resolver, boolean enabled) {
+        if (resolver == null) {
+            return;
+        }
+        Settings.Secure.putInt(resolver, GRADIENT_FLOW_KEY, enabled ? 1 : 0);
     }
 
     // ==================================================================
