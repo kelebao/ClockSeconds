@@ -1429,11 +1429,11 @@ public final class ModuleSettingsActivity extends Activity {
     /** 渐变预设：每套一对端点色（起点 → 终点）。 */
     private static final int[][] GRADIENT_PRESETS = {
             {0xFFC3F823, 0xFF5E32FE},
-            {0xFFFF8A3D, 0xFFFF2D6F},
-            {0xFF00E0FF, 0xFF2C6BFF},
-            {0xFFFFD54F, 0xFFFF6D3D},
-            {0xFFB388FF, 0xFF5B21B6},
-            {0xFF00E676, 0xFF00B8D4},
+            {0xFFFFBB27, 0xFF7411FF},
+            {0xFFE94F8C, 0xFF164FA3},
+            {0xFFFD5E11, 0xFF19D5FE},
+            {0xFFF01996, 0xFFFEDF80},
+            {0xFFF2B635, 0xFF4B5D16},
     };
 
     /** 重画渐变预设胶囊：填充即该套渐变的左右渐变，当前生效的那套加一圈描边。 */
