@@ -156,9 +156,6 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean mCfgSeconds;
     private boolean mCfgHourColorOn;
     private boolean mCfgGradientOn;
-    private boolean mCfgGradientFlow;
-    /** 流动周期（毫秒，可调）：一个完整色带扫过去再回来的时间。 */
-    private long mCfgGradientPeriod = ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
     private int mCfgGradStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private int mCfgGradEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private int mCfgHourColor;
@@ -199,10 +196,6 @@ public final class ModuleSettingsActivity extends Activity {
     private LinearLayout mNetRow;
     private Switch mDigitSwitch;
     private Switch mGradientSwitch;
-    private Switch mFlowSwitch;
-    /** 流动速度滑杆 + 右侧数值（仅渐变+流动都开时可用）。 */
-    private android.widget.SeekBar mFlowSpeedBar;
-    private TextView mFlowSpeedValue;
     /** 取色目标：-1 = 编辑某一位数字（mSelSlot）；0 = 渐变起点色；1 = 渐变终点色。 */
     private int mGradTarget = -1;
     private View mGradStartDot;
@@ -345,36 +338,6 @@ public final class ModuleSettingsActivity extends Activity {
             ticker.postDelayed(this, 1000L);
         }
     };
-    /**
-     * 预览卡渐变流动的逐帧刷新：只 {@code invalidate()}（重绘），不重建 span、不改文本。
-     *
-     * <p>相位取自单调时钟毫秒，靠这里逐帧推进；没有它相位只能跟着每秒一次的 {@link #tick} 走，
-     * 长周期几乎不动、短周期一秒跳一大格。</p>
-     */
-    private final Runnable previewFlowTick = new Runnable() {
-        @Override
-        public void run() {
-            if (previewView == null || !mCfgGradientOn || !mCfgGradientFlow) {
-                return;
-            }
-            if (previewView.isShown()) {
-                previewView.invalidate();
-            }
-            previewView.postOnAnimation(this);
-        }
-    };
-
-    /** 按当前开关挂上/停掉预览卡的流动刷新。 */
-    private void syncPreviewFlow() {
-        if (previewView == null) {
-            return;
-        }
-        previewView.removeCallbacks(previewFlowTick);
-        if (mCfgGradientOn && mCfgGradientFlow) {
-            previewView.postOnAnimation(previewFlowTick);
-        }
-    }
-
     /** 选中色块荧光光晕 + 半弧刻度盘的高频刷新（~50ms）。 */
     private final Runnable breathTick = new Runnable() {
         @Override
@@ -450,7 +413,6 @@ public final class ModuleSettingsActivity extends Activity {
         ticker.post(tick);
         ticker.removeCallbacks(breathTick);
         ticker.post(breathTick);
-        syncPreviewFlow();
         // 返回前台时重新读取 SystemUI 检测到的候选时钟清单（此时 SystemUI 多半已发布最新列表）。
         if (mClockTestList != null) {
             refreshClockTestList();
@@ -508,8 +470,6 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
         mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
-        mCfgGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(getContentResolver());
-        mCfgGradientPeriod = ClockSecondsConfig.getGradientFlowPeriod(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
         if (mDigitGrid != null) {
@@ -547,7 +507,6 @@ public final class ModuleSettingsActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (previewView != null) {
-            previewView.removeCallbacks(previewFlowTick);
         }
         ticker.removeCallbacks(tick);
         ticker.removeCallbacks(breathTick);
@@ -1084,8 +1043,6 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
         mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
-        mCfgGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(getContentResolver());
-        mCfgGradientPeriod = ClockSecondsConfig.getGradientFlowPeriod(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
 
@@ -1179,7 +1136,7 @@ public final class ModuleSettingsActivity extends Activity {
         pillRow.addView(followBtn);
         card.addView(pillRow);
 
-        // 渐变 / 流动：整体效果开关，放在卡片底部（颜色仍由上面六位决定）。
+        // 渐变：整体效果开关，放在卡片底部（颜色仍由上面六位决定）。
         buildGradientRows(card);
 
         root.addView(card);
@@ -1209,14 +1166,13 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     // ==================================================================
-    // 渐变 / 流动
+    // 渐变
     // ==================================================================
 
     /**
-     * 渐变与流动两行开关。
+     * 渐变开关 + 起点色 / 终点色两个胶囊。
      *
-     * <p>渐变是父开关：关闭时「流动」置灰（流动只描述渐变怎么动，没有渐变就没有意义）。
-     * 渐变端点色直接取第 1 位与第 6 位已配置的颜色，所以这里不再提供选色控件。</p>
+     * <p>渐变端点色直接取第 1 位与第 6 位已配置的颜色，所以这里不再提供选色控件。</p>
      */
     private void buildGradientRows(LinearLayout card) {
         mGradientSwitch = new Switch(this);
@@ -1242,82 +1198,6 @@ public final class ModuleSettingsActivity extends Activity {
         hint.setPadding(0, dp(2), 0, 0);
         card.addView(hint);
 
-        mFlowSwitch = new Switch(this);
-        mFlowSwitch.setChecked(mCfgGradientFlow);
-        styleSwitch(mFlowSwitch);
-        card.addView(makeSwitchRow(getString(R.string.settings_gradient_flow), mFlowSwitch, dp(10)));
-
-        // 流动速度：滑杆 + 右侧实时数值（如「4.0 秒/圈」）。仅「渐变 + 流动」都开时可用。
-        LinearLayout speedRow = new LinearLayout(this);
-        speedRow.setOrientation(LinearLayout.HORIZONTAL);
-        speedRow.setGravity(Gravity.CENTER_VERTICAL);
-        speedRow.setPadding(0, dp(12), 0, 0);
-
-        TextView speedTitle = new TextView(this);
-        speedTitle.setText(R.string.settings_gradient_speed);
-        speedTitle.setTextSize(13f);
-        speedTitle.setTextColor(text());
-        speedRow.addView(speedTitle);
-
-        View speedSpacer = new View(this);
-        speedSpacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
-        speedRow.addView(speedSpacer);
-
-        mFlowSpeedValue = new TextView(this);
-        mFlowSpeedValue.setTextSize(12f);
-        mFlowSpeedValue.setTextColor(text2());
-        speedRow.addView(mFlowSpeedValue);
-        card.addView(speedRow);
-
-        mFlowSpeedBar = new android.widget.SeekBar(this);
-        LinearLayout.LayoutParams speedLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(28));
-        speedLp.topMargin = dp(4);
-        mFlowSpeedBar.setLayoutParams(speedLp);
-        mFlowSpeedBar.setMax(flowSpeedSteps());
-        mFlowSpeedBar.setProgress(flowPeriodToProgress(mCfgGradientPeriod));
-        mFlowSpeedBar.setPadding(0, 0, 0, 0);
-        // 只换颜色，轨道与滑块沿用系统样式（与三条 HSV 自绘滑杆在同一张卡里不冲突）。
-        mFlowSpeedBar.setProgressTintList(
-                android.content.res.ColorStateList.valueOf(accent()));
-        mFlowSpeedBar.setThumbTintList(android.content.res.ColorStateList.valueOf(accent()));
-        mFlowSpeedBar.setOnSeekBarChangeListener(
-                new android.widget.SeekBar.OnSeekBarChangeListener() {
-                    @Override
-                    public void onProgressChanged(android.widget.SeekBar sb, int progress, boolean fromUser) {
-                        // fromUser=false 时也同步内存值与读数：否则松手瞬间 SeekBar 的最终进位
-                        // 只在 onStopTrackingTouch 里被写盘，界面读数会停在中途（读数 ≠ 实际生效值）。
-                        mCfgGradientPeriod = flowProgressToPeriod(progress);
-                        updateFlowSpeedLabel();
-                        if (fromUser) {
-                            updatePreview();
-                        }
-                    }
-
-                    @Override
-                    public void onStartTrackingTouch(android.widget.SeekBar sb) { }
-
-                    @Override
-                    public void onStopTrackingTouch(android.widget.SeekBar sb) {
-                        final long period = flowProgressToPeriod(sb.getProgress());
-                        mCfgGradientPeriod = period;
-                        updateFlowSpeedLabel();
-                        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_PERIOD)
-                                .putExtra(ClockSecondsConfig.EXTRA_PERIOD, period);
-                        applyConfig(ClockSecondsConfig.GRADIENT_FLOW_PERIOD_KEY, (int) period, intent,
-                                ok -> {
-                                    if (ok) {
-                                        mCfgGradientPeriod = period;
-                                        updateFlowSpeedLabel();
-                                    } else {
-                                        toastWriteFailed();
-                                    }
-                                });
-                    }
-                });
-        card.addView(mFlowSpeedBar);
-        updateFlowSpeedLabel();
-
         syncGradientEnabledState();
 
         mGradientSwitch.setOnCheckedChangeListener((v, checked) -> {
@@ -1327,7 +1207,6 @@ public final class ModuleSettingsActivity extends Activity {
                 if (ok) {
                     mCfgGradientOn = checked;
                     syncGradientEnabledState();
-                    syncPreviewFlow();   // 渐变开关变了立刻挂/停逐帧刷新
                     updatePreview();
                 } else {
                     mGradientSwitch.setChecked(!checked);
@@ -1336,21 +1215,6 @@ public final class ModuleSettingsActivity extends Activity {
             });
         });
 
-        mFlowSwitch.setOnCheckedChangeListener((v, checked) -> {
-            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW)
-                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
-            applyConfig(ClockSecondsConfig.GRADIENT_FLOW_KEY, checked ? 1 : 0, intent, ok -> {
-                if (ok) {
-                    mCfgGradientFlow = checked;
-                    syncGradientEnabledState();   // 流动关掉时速度滑杆跟着置灰
-                    syncPreviewFlow();   // 流动开关变了立刻挂/停逐帧刷新
-                    updatePreview();
-                } else {
-                    mFlowSwitch.setChecked(!checked);
-                    toastWriteFailed();
-                }
-            });
-        });
     }
 
     /** 渐变端点色胶囊：色点 + 文字，点一下把取色目标切到该端点。 */
@@ -1477,56 +1341,9 @@ public final class ModuleSettingsActivity extends Activity {
         return row;
     }
 
-    /** 渐变关闭时把「流动」置灰（视觉上明确它是渐变的子开关）。 */
+    /** 渐变开关变化后刷新端点色胶囊的可用状态。 */
     private void syncGradientEnabledState() {
-        if (mFlowSwitch == null) {
-            return;
-        }
-        boolean on = mGradientSwitch != null && mGradientSwitch.isChecked();
-        mFlowSwitch.setEnabled(on);
-        mFlowSwitch.setAlpha(on ? 1f : 0.4f);
-        // 流动速度只对「渐变 + 流动」同时开启才有意义，否则一并置灰。
-        final boolean flowOn = on && mFlowSwitch.isChecked();
-        if (mFlowSpeedBar != null) {
-            mFlowSpeedBar.setEnabled(flowOn);
-            mFlowSpeedBar.setAlpha(flowOn ? 1f : 0.4f);
-        }
-        if (mFlowSpeedValue != null) {
-            mFlowSpeedValue.setAlpha(flowOn ? 1f : 0.55f);
-        }
         refreshGradientDots();
-    }
-
-    /** 流动速度滑杆的格数：从最快 1.5 秒一圈到最慢 60 秒一圈，每格 500ms（值都是 .0 / .5 这种整数，读数不会出现四舍五入误差）。 */
-    private static final long FLOW_SPEED_STEP_MS = 500L;
-
-    /** 滑杆格数（0 = 最快）。 */
-    private static int flowSpeedSteps() {
-        return (int) ((ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MAX_MS
-                - ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MIN_MS) / FLOW_SPEED_STEP_MS);
-    }
-
-    /** 周期（毫秒）→ 滑杆位置。 */
-    private static int flowPeriodToProgress(long periodMs) {
-        long v = ClockSecondsConfig.clampFlowPeriod(periodMs)
-                - ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MIN_MS;
-        return (int) Math.round((double) v / FLOW_SPEED_STEP_MS);
-    }
-
-    /** 滑杆位置 → 周期（毫秒）。 */
-    private static long flowProgressToPeriod(int progress) {
-        return ClockSecondsConfig.clampFlowPeriod(ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MIN_MS
-                + (long) progress * FLOW_SPEED_STEP_MS);
-    }
-
-    /** 刷新滑杆右侧的数值文本（如「4.0 秒/圈」）。 */
-    private void updateFlowSpeedLabel() {
-        if (mFlowSpeedValue == null || mFlowSpeedBar == null) {
-            return;
-        }
-        float sec = flowProgressToPeriod(mFlowSpeedBar.getProgress()) / 1000f;
-        mFlowSpeedValue.setText(getString(R.string.settings_gradient_speed_value,
-                String.format(Locale.US, "%.1f", sec)));
     }
 
     // ==================================================================
@@ -4234,8 +4051,6 @@ public final class ModuleSettingsActivity extends Activity {
             mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
         }
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
-        mCfgGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(getContentResolver());
-        mCfgGradientPeriod = ClockSecondsConfig.getGradientFlowPeriod(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
         mNowDate.setTime(System.currentTimeMillis());
@@ -4265,7 +4080,7 @@ public final class ModuleSettingsActivity extends Activity {
             sb.setSpan(new GradientTextSpan(previewView, sb,
                     adaptPreviewColor(gradientTargetColor(0)),
                     adaptPreviewColor(gradientTargetColor(1)),
-                    mCfgGradientFlow, gradXOffUse, mCfgGradientPeriod), 0, sb.length(),
+                    gradXOffUse), 0, sb.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
             // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。

@@ -105,15 +105,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      */
     private static volatile int[] sDigitColors;
 
-    /** 渐变 / 流动开关缓存（与六位颜色同批重读，避免每秒额外 binder）。 */
+    /** 渐变开关缓存（与六位颜色同批重读，避免每秒额外 binder）。 */
     private static volatile boolean sGradientOn;
-    private static volatile boolean sGradientFlow;
-    /** 流动周期（毫秒，可调）。与开关同批读取，渲染路径零 binder。 */
-    private static volatile long sGradientPeriod = ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
-    /** 流动逐帧重绘的最小间隔（毫秒）；0 = 按周期自适应（见 {@link #flowFrameIntervalMs()}）。 */
-    private static volatile int sFlowFrameOverrideMs = 0;
-    /** 状态栏时钟最近一次真正绘制的时刻（uptimeMillis）：流动动画靠它判断「屏幕还在画」。 */
-    private static volatile long sLastClockDrawAt = 0L;
     /** 渐变端点色缓存（{@code GRADIENT_COLOR_AUTO} = 跟随首位 / 末位数字）。 */
     private static volatile int sGradientStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private static volatile int sGradientEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
@@ -130,10 +123,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 正在接管刷新的时钟视图 -> 其 1 秒定时器（弱键，视图回收后自动消失）。 */
     private static final Map<TextView, ClockTicker> ACTIVE =
             Collections.synchronizedMap(new WeakHashMap<TextView, ClockTicker>());
-
-    /** 正在跑流动动画的时钟视图 -> 逐帧驱动（弱键，视图回收后自动消失）。 */
-    private static final Map<TextView, FlowAnimator> FLOW_ANIM =
-            Collections.synchronizedMap(new WeakHashMap<TextView, FlowAnimator>());
 
     /** 仅 DEBUG：span 探针节流表（每个时钟最多 ~1 次/秒 dump，避免刷屏）。 */
     private static final Map<TextView, Long> SPAN_DUMP_AT =
@@ -375,15 +364,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         // configureClockView 在 setText 时缓存，彼时视图可能尚未布局，
                         // bounds 全 0 → 长按命中区为空 → 长按无反应（C16 实测复现）。
                         if (view == sClockView) {
-                            // 记录「真的画了一帧」的时刻：流动动画用它判断屏幕是否还在出帧
-                            // （PowerManager.isInteractive 在 ColorOS 上真机实测会误报 false）。
-                            sLastClockDrawAt = SystemClock.uptimeMillis();
                             refreshClockRect(view);
                         }
                         // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
-                        // 流动动画期间跳过：这时每帧都会重绘，writeTime 只会被幂等短路挡回，
-                        // 白白每帧拼一遍字符串；秒数由 1 秒 ticker 负责，不受影响。
-                        if (sSecondsEnabled && !flowWanted()) {
+                        if (sSecondsEnabled) {
                             refreshClock(view);
                         }
                     }
@@ -598,8 +582,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
 
         ensureStateLoaded(view);
-        // 渐变流动开启时，给这个时钟挂上逐帧重绘（否则相位只能每秒跳一格）。
-        startFlowAnimator(view);
 
         // 固定占位宽度，避免秒数变化把旁边的日期/图标推动（沿用 betterclock 的稳宽做法）。
         //
@@ -1761,10 +1743,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     + (base instanceof android.text.Spannable));
         }
         // 幂等短路：字符没变就跳过 setText。
-        // 【vc207 关键修复】渐变流动**不能**绕过这个短路。相位是在绘制期按单调时钟算的，
-        // 不需要每秒重写文本；一旦绕过，onDraw → refreshClock → writeTime → setText → invalidate
+        // 【vc207 教训】这里绝不能被绕过：onDraw → refreshClock → writeTime → setText → invalidate
         // 会闭合成死循环，真机实测把 SystemUI 吃满一个核（UI 线程 + RenderThread 同时满载）。
-        // 配置变化（开关 / 端点色 / 周期）由 refreshClockNow 置 sForceRewrite 强制重写一次。
+        // 配置变化（开关 / 端点色）由 refreshClockNow 置 sForceRewrite 强制重写一次。
         if (!sForceRewrite && TextUtils.equals(view.getText(), sb)) {
             return;
         }
@@ -1911,7 +1892,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 ? colors[colors.length - 1] : sGradientEnd;
         int c0 = gradientEdgeColor(rawStart, systemTextColor);
         int c1 = gradientEdgeColor(rawEnd, systemTextColor);
-        sb.setSpan(new GradientTextSpan(view, sb, c0, c1, sGradientFlow, 0f, sGradientPeriod), 0, len,
+        sb.setSpan(new GradientTextSpan(view, sb, c0, c1), 0, len,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         int[] starts = new int[len];
         int n = 0;
@@ -1957,17 +1938,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             colors[0] = HOUR_COLOR_FALLBACK;
         }
         try {
-            // 渐变 / 流动开关与端点色同批读取：每秒渲染路径里只读缓存字段，不再打 binder。
+            // 渐变开关与端点色同批读取：每秒渲染路径里只读缓存字段，不再打 binder。
             sGradientOn = ClockSecondsConfig.isGradientEnabled(ctx.getContentResolver());
-            sGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(ctx.getContentResolver());
-            sGradientPeriod = ClockSecondsConfig.getGradientFlowPeriod(ctx.getContentResolver());
             sGradientStart = ClockSecondsConfig.getGradientStartColor(ctx.getContentResolver());
             sGradientEnd = ClockSecondsConfig.getGradientEndColor(ctx.getContentResolver());
-            if (BuildConfig.DEBUG) {
-                // 仅调试包：真机扫帧率用（settings put secure coloros_clock_seconds_debug_flow_ms 33）
-                sFlowFrameOverrideMs = Settings.Secure.getInt(
-                        ctx.getContentResolver(), "coloros_clock_seconds_debug_flow_ms", 0);
-            }
         } catch (Throwable ignored) {
             // 读取失败保持上一次值，不影响上色。
         }
@@ -2348,9 +2322,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     private static void refreshClock(TextView view) {
         if (isStatusBarClock(view) && isClockEnabled(view) && sSecondsEnabled) {
-            // 自愈：流动动画在「状态栏没出帧」时会自己停掉（全屏应用、熄屏等），
-            // 这里每秒补一次「要不要挂上」的判断，条件恢复后自动续上。
-            startFlowAnimator(view);
             writeTime(view);
         }
     }
@@ -2384,170 +2355,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         if (ticker != null) {
             view.removeCallbacks(ticker);
-        }
-    }
-
-    // ==================================================================
-    // 渐变流动的逐帧驱动
-    // ==================================================================
-
-    /**
-     * 流动动画器：流动开启时按屏幕刷新逐帧 {@code invalidate()} 时钟视图。
-     *
-     * <p>为什么需要它：渐变相位本来只随时钟的每秒重绘前进，一秒一步 → 长周期（几十秒一圈）
-     * 看起来几乎不动、短周期又是一秒跳一大格。逐帧重绘后相位连续推进，肉眼才是真正的「流动」。
-     * 这里只 {@code invalidate()}，不 setText、不触发测量/布局、不新建任何 View。</p>
-     *
-     * <p>省电约束：每 32 帧（约 0.5s）复核一次前置条件——渐变+流动都开、视图还挂着、屏幕亮着、
-     * 不在省电模式、时钟没被测试卡片关掉；任一不满足立刻停。熄屏后自动停，亮屏/改配置时由
-     * {@link #syncFlowAnimators()} 重新拉起。</p>
-     */
-    /**
-     * 流动的逐帧间隔：按「每帧位移约 2.5px」反推，并夹在 16~100ms 之间。
-     *
-     * <p>为什么不固定 60fps：状态栏时钟每重绘一帧都会让整个状态栏窗口重新合成（ColorOS 有背景模糊），
-     * 真机实测 60fps 时 SystemUI 要吃满一个核。而渐变是缓慢平移，周期越长需要的帧率越低——
-     * 只要每帧位移小于 ~3px，肉眼就是连续滑动。</p>
-     */
-    private static int flowFrameIntervalMs() {
-        int override = sFlowFrameOverrideMs;
-        if (override > 0) {
-            return override;
-        }
-        long period = sGradientPeriod > 0
-                ? sGradientPeriod : ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
-        // 真机实测（PHP110 / ColorOS）：状态栏每重绘一帧约 1.1% 单核 CPU（状态栏窗口整体重新合成），
-        // 60fps 要吃满一个核、20fps 约 +28%、10fps 约 +14%。渐变是缓慢平移，取 20fps 上限 +
-        // 长周期自动降帧，肉眼仍是连续流动，但代价可控。
-        int ms = (int) (period / 240L);
-        if (ms < 50) {
-            ms = 50;
-        }
-        if (ms > 120) {
-            ms = 120;
-        }
-        return ms;
-    }
-
-    private static final class FlowAnimator implements Runnable {
-        private final WeakReference<TextView> reference;
-        private int frame;
-
-        FlowAnimator(TextView view) {
-            reference = new WeakReference<>(view);
-        }
-
-        @Override
-        public void run() {
-            TextView view = reference.get();
-            if (view == null) {
-                return;
-            }
-            if ((frame++ & 31) == 0) {
-                boolean ok;
-                try {
-                    Context ctx = view.getContext();
-                    // 熄屏判断用「最近是否真的出过帧」而不是 PowerManager.isInteractive：
-                    // 后者在 ColorOS 真机上误报 false（实测屏幕 ON 时仍返回 false），
-                    // 会让流动刚开始就自己停掉。
-                    ok = sGradientOn && sGradientFlow
-                            && view.isAttachedToWindow()
-                            && isStatusBarClock(view) && isClockEnabled(view)
-                            && !isPowerSaveMode(ctx)
-                            && (SystemClock.uptimeMillis() - sLastClockDrawAt < 3000L);
-                } catch (Throwable t) {
-                    ok = false;
-                }
-                if (!ok) {
-                    if (BuildConfig.DEBUG) {
-                        Context ctx = null;
-                        try {
-                            ctx = view.getContext();
-                        } catch (Throwable ignored) {
-                        }
-                        XposedBridge.log(LOG_PREFIX + "FLOW-STOP g=" + sGradientOn + " f=" + sGradientFlow
-                                + " loaded=" + sStateLoaded
-                                + " attached=" + view.isAttachedToWindow()
-                                + " isClock=" + isStatusBarClock(view)
-                                + " enabled=" + isClockEnabled(view)
-                                + " drawAge=" + (SystemClock.uptimeMillis() - sLastClockDrawAt)
-                                + " saver=" + (ctx != null && isPowerSaveMode(ctx)));
-                    }
-                    synchronized (FLOW_ANIM) {
-                        FLOW_ANIM.remove(view);
-                    }
-                    return;
-                }
-            }
-            // 用 postDelayed 而不是 postOnAnimation：后者每帧都会走一遍 Choreographer 的
-            // 动画回调（真机实测：即使不 invalidate，也让 SystemUI 常驻 ~70% CPU）；
-            // 而渐变只是缓慢平移，30fps 以内完全够用。
-            int delay = flowFrameIntervalMs();
-            try {
-                view.invalidate();
-                view.postDelayed(this, delay);
-            } catch (Throwable ignored) {
-                synchronized (FLOW_ANIM) {
-                    FLOW_ANIM.remove(view);
-                }
-            }
-        }
-    }
-
-    /** 当前配置是否要求逐帧重绘（渐变 + 流动都开，且状态已加载）。 */
-    private static boolean flowWanted() {
-        return sGradientOn && sGradientFlow && sStateLoaded;
-    }
-
-    private static void startFlowAnimator(TextView view) {
-        if (view == null || !flowWanted()) {
-            return;
-        }
-        synchronized (FLOW_ANIM) {
-            if (FLOW_ANIM.containsKey(view)) {
-                return;
-            }
-            if (BuildConfig.DEBUG) {
-                XposedBridge.log(LOG_PREFIX + "FLOW-START ms=" + flowFrameIntervalMs()
-                        + " period=" + sGradientPeriod);
-            }
-            FlowAnimator animator = new FlowAnimator(view);
-            FLOW_ANIM.put(view, animator);
-            try {
-                view.postDelayed(animator, flowFrameIntervalMs());
-            } catch (Throwable ignored) {
-                FLOW_ANIM.remove(view);
-            }
-        }
-    }
-
-    private static void stopFlowAnimator(TextView view) {
-        FlowAnimator animator;
-        synchronized (FLOW_ANIM) {
-            animator = FLOW_ANIM.remove(view);
-        }
-        if (animator != null && view != null) {
-            try {
-                view.removeCallbacks(animator);
-            } catch (Throwable ignored) {
-                // 视图已回收，忽略
-            }
-        }
-    }
-
-    /** 配置变化后同步流动驱动：要流动就挂上，不要就全部停掉。 */
-    private static void syncFlowAnimators() {
-        TextView clock = sClockView;
-        if (clock != null && flowWanted()) {
-            startFlowAnimator(clock);
-            return;
-        }
-        java.util.List<TextView> keys;
-        synchronized (FLOW_ANIM) {
-            keys = new java.util.ArrayList<>(FLOW_ANIM.keySet());
-        }
-        for (TextView v : keys) {
-            stopFlowAnimator(v);
         }
     }
 
@@ -2993,8 +2800,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
-                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW);
-                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_PERIOD);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
@@ -3033,18 +2838,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 // 渐变总开关：只改配置，重读缓存后立刻刷新一次时钟。
                                 ClockSecondsConfig.setGradientEnabled(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
-                                reloadDigitColors(ctx);
-                                refreshClockNow();
-                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW.equals(action)) {
-                                ClockSecondsConfig.setGradientFlowEnabled(cr, intent.getIntExtra(
-                                        ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
-                                reloadDigitColors(ctx);
-                                refreshClockNow();
-                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_PERIOD.equals(action)) {
-                                // 流动周期（毫秒）：改完重读缓存，下一秒重绘即按新速度推进。
-                                ClockSecondsConfig.setGradientFlowPeriod(cr, intent.getLongExtra(
-                                        ClockSecondsConfig.EXTRA_PERIOD,
-                                        ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS));
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR.equals(action)) {
@@ -3380,15 +3173,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 最长要等一分钟才能看到变化。
      */
     private static void refreshClockNow() {
-        // 先同步流动驱动：开关变了要立刻挂上/停掉逐帧重绘。
-        syncFlowAnimators();
         TextView clock = sClockView;
         // 该时钟已被用户停用：不写文本/颜色（否则改小时颜色等操作会绕过开关重新上色）。
         if (clock == null || !isClockEnabled(clock)) {
             return;
         }
         try {
-            // 配置变了要重写一次：幂等短路会保留旧 span（旧端点色 / 旧周期 / 旧流动开关）。
+            // 配置变了要重写一次：幂等短路会保留旧 span（旧端点色 / 旧渐变开关）。
             sForceRewrite = true;
             if (sSecondsEnabled) {
                 writeTime(clock);

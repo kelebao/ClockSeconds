@@ -174,12 +174,6 @@ public final class ClockSecondsConfig {
     /** 设置页 → SystemUI 写入渐变开关（{@link #EXTRA_ENABLED}）。 */
     public static final String ACTION_SET_GRADIENT =
             "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT";
-    /** 设置页 → SystemUI 写入流动开关（{@link #EXTRA_ENABLED}）。 */
-    public static final String ACTION_SET_GRADIENT_FLOW =
-            "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_FLOW";
-    /** 设置页 → SystemUI 写入流动周期（{@link #EXTRA_PERIOD}，毫秒）。 */
-    public static final String ACTION_SET_GRADIENT_PERIOD =
-            "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_PERIOD";
 
     /** 设置页 → SystemUI 写入渐变端点色（{@link #EXTRA_SLOT} 0=起点 1=终点，{@link #EXTRA_COLOR}）。 */
     public static final String ACTION_SET_GRADIENT_COLOR =
@@ -196,8 +190,6 @@ public final class ClockSecondsConfig {
     public static final String EXTRA_COLOR = "color";
     public static final String EXTRA_GESTURE = "gesture";
     public static final String EXTRA_ENABLED = "enabled";
-    /** long extra：流动周期（毫秒）。 */
-    public static final String EXTRA_PERIOD = "period";
 
     /** 设置页 → SystemUI 重启自身（免 adb 重新加载模块）。 */
     public static final String ACTION_RESTART_SYSTEMUI =
@@ -317,29 +309,13 @@ public final class ClockSecondsConfig {
     }
 
     // ==================================================================
-    // 渐变（默认关闭；「流动」是渐变的子开关，渐变关时不可用）
+    // 渐变（默认关闭）
     // ==================================================================
 
     /** 渐变总开关（1 = 启用，0 = 关闭）。默认关闭。 */
     public static final String GRADIENT_ENABLED_KEY =
             "coloros_clock_seconds_gradient_enabled";
 
-    /** 流动开关（1 = 启用，0 = 关闭）。默认关闭；仅在渐变开启时生效。 */
-    public static final String GRADIENT_FLOW_KEY =
-            "coloros_clock_seconds_gradient_flow";
-
-    /** 流动一个完整色带的默认周期（毫秒）：复用每秒刷新推进相位，不产生额外重绘。 */
-    public static final long GRADIENT_FLOW_PERIOD_MS = 4000L;
-
-    /** 流动周期可调下限（毫秒）：1.5 秒一个来回，再快就看不清颜色走向了。 */
-    public static final long GRADIENT_FLOW_PERIOD_MIN_MS = 1500L;
-
-    /** 流动周期可调上限（毫秒）：60 秒一个来回（用户要求最高 60 秒）。 */
-    public static final long GRADIENT_FLOW_PERIOD_MAX_MS = 60000L;
-
-    /** Secure 键：流动周期（毫秒）。 */
-    public static final String GRADIENT_FLOW_PERIOD_KEY =
-            "coloros_clock_seconds_gradient_period";
 
     /** 渐变起点色（ARGB）。{@link #GRADIENT_COLOR_AUTO} = 跟随首位数字的颜色。 */
     public static final String GRADIENT_START_KEY = "coloros_clock_seconds_gradient_start";
@@ -383,48 +359,6 @@ public final class ClockSecondsConfig {
         Settings.Secure.putInt(resolver, GRADIENT_ENABLED_KEY, enabled ? 1 : 0);
     }
 
-    /** 流动是否启用（默认关闭）。渐变关闭时恒为 false。 */
-    public static boolean isGradientFlowEnabled(ContentResolver resolver) {
-        return isGradientEnabled(resolver)
-                && Settings.Secure.getInt(resolver, GRADIENT_FLOW_KEY, 0) == 1;
-    }
-
-    /** 写入流动开关。 */
-    public static void setGradientFlowEnabled(ContentResolver resolver, boolean enabled) {
-        if (resolver == null) {
-            return;
-        }
-        Settings.Secure.putInt(resolver, GRADIENT_FLOW_KEY, enabled ? 1 : 0);
-    }
-
-    /** 读取流动周期（毫秒），越界值自动夹紧到 [MIN, MAX]。 */
-    public static long getGradientFlowPeriod(ContentResolver resolver) {
-        long period = GRADIENT_FLOW_PERIOD_MS;
-        if (resolver != null) {
-            try {
-                period = Settings.Secure.getInt(resolver, GRADIENT_FLOW_PERIOD_KEY,
-                        (int) GRADIENT_FLOW_PERIOD_MS);
-            } catch (Throwable ignored) {
-                period = GRADIENT_FLOW_PERIOD_MS;
-            }
-        }
-        return clampFlowPeriod(period);
-    }
-
-    /** 写入流动周期（毫秒），越界值夹紧。 */
-    public static void setGradientFlowPeriod(ContentResolver resolver, long periodMs) {
-        if (resolver == null) {
-            return;
-        }
-        Settings.Secure.putInt(resolver, GRADIENT_FLOW_PERIOD_KEY,
-                (int) clampFlowPeriod(periodMs));
-    }
-
-    /** 把任意周期夹紧到可调范围。 */
-    public static long clampFlowPeriod(long periodMs) {
-        return Math.max(GRADIENT_FLOW_PERIOD_MIN_MS,
-                Math.min(GRADIENT_FLOW_PERIOD_MAX_MS, periodMs));
-    }
 
     // ==================================================================
     // 六个数字位独立取色（时十 / 时个 / 分十 / 分个 / 秒十 / 秒个）

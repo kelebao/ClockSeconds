@@ -105,9 +105,6 @@
     <string name="settings_cancel">取消</string>
     <string name="settings_gradient_title">Gradient</string>
     <string name="settings_gradient_hint">Blends the first and last digit colors</string>
-    <string name="settings_gradient_flow">Flow</string>
-    <string name="settings_gradient_speed">Flow speed</string>
-    <string name="settings_gradient_speed_value">%1$s s per lap</string>
     <string name="settings_gradient_start">Start color</string>
     <string name="settings_gradient_end">End color</string>
 </resources>
