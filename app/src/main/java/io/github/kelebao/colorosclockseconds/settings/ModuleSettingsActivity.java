@@ -32,6 +32,7 @@ import android.text.TextUtils;
 import io.github.kelebao.colorosclockseconds.ArcTickDrawable;
 import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
 import io.github.kelebao.colorosclockseconds.CloseCrossView;
+import io.github.kelebao.colorosclockseconds.ColonLiftSpan;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
 import io.github.kelebao.colorosclockseconds.HsvPickerView;
 import io.github.kelebao.colorosclockseconds.DigitGlowDrawable;
@@ -1328,13 +1329,6 @@ public final class ModuleSettingsActivity extends Activity {
         edgeRow.addView(mGradEndDot);
         box.addView(edgeRow);
 
-        TextView hint = new TextView(this);
-        hint.setText(R.string.settings_gradient_hint);
-        hint.setTextSize(11f);
-        hint.setTextColor(text2());
-        hint.setPadding(0, dp(2), 0, 0);
-        box.addView(hint);
-
         // 渐变预设：每个胶囊就是一套「起点 → 终点」，点一下整套换掉（用户 m19814 的形态：
         // 左右渐变的长条、不写色值）。逐位颜色页的实心预设点在渐变页隐藏，两套预设不打架。
         mGradPresetWrap = new LinearLayout(this);
@@ -1373,6 +1367,9 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     /** 渐变端点色胶囊：色点 + 文字，点一下把取色目标切到该端点。 */
+    /** 端点色点：实心圆 28dp 放在 48dp 容器里，比例 = 14/24。 */
+    private static final float EDGE_SOLID_RATIO = 14f / 24f;
+
     private View makeEdgeSwatch(final int which, int labelRes) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.HORIZONTAL);
@@ -1381,9 +1378,9 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         box.setClickable(true);
 
-        // 40dp 的容器：实心圆只占 0.70（BreathSwatchDrawable 的 SOLID），外面一圈留给呼吸光晕。
+        // 48dp 的容器：实心圆仍是 28dp（EDGE_SOLID_RATIO），外面 10dp 留给呼吸散光。
         View dot = new View(this);
-        dot.setLayoutParams(new LinearLayout.LayoutParams(dp(40), dp(40)));
+        dot.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
         box.addView(dot);
 
         TextView label = new TextView(this);
@@ -1418,9 +1415,11 @@ public final class ModuleSettingsActivity extends Activity {
         final boolean sel0 = on && mGradTarget == 0;
         final boolean sel1 = on && mGradTarget == 1;
         BreathSwatchDrawable b0 = new BreathSwatchDrawable(
-                swatchColor(gradientTargetColor(0), on), sel0, accent(), sel0 ? dp(2) : 0f);
+                swatchColor(gradientTargetColor(0), on), sel0, accent(), sel0 ? dp(2) : 0f,
+                EDGE_SOLID_RATIO);
         BreathSwatchDrawable b1 = new BreathSwatchDrawable(
-                swatchColor(gradientTargetColor(1), on), sel1, accent(), sel1 ? dp(2) : 0f);
+                swatchColor(gradientTargetColor(1), on), sel1, accent(), sel1 ? dp(2) : 0f,
+                EDGE_SOLID_RATIO);
         dot0.setBackground(b0);
         dot1.setBackground(b1);
         mGradBreath = sel0 ? b0 : (sel1 ? b1 : null);
@@ -4322,6 +4321,14 @@ public final class ModuleSettingsActivity extends Activity {
             // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
             // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
             for (int i = 0; i < sb.length(); i++) {
+                final char ch = sb.charAt(i);
+                if (ch == ':' || ch == '：') {
+                    // 冒号光学居中：逐位上色把文本切成多个 run 后，冒号会落到基线上，
+                    // 比「渐变页 / 未上色」低约 0.11em（用户 m20412 反馈「四个小点下移」）。
+                    sb.setSpan(new ColonLiftSpan(),
+                            i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    continue;
+                }
                 final int slot = ClockSecondsConfig.slotOfChar(sb, i);
                 if (slot < 0) {
                     continue;
@@ -4495,7 +4502,7 @@ public final class ModuleSettingsActivity extends Activity {
      * 点一下立即生效（无「应用」按钮），与其余调色入口行为一致。
      */
     /**
-     * 色板里的第 11 颗：「跟随系统」。原来是一整行胶囊按钮，太占位置；改成和其他预设一样大的
+     * 色板里的第 10 颗：「跟随系统」。原来是一整行胶囊按钮，太占位置；改成和其他预设一样大的
      * 一颗圆（圆环 + 一条斜线表示「不指定颜色」），混在第二排末尾，语义就是「色板里的一种选择」。
      */
     private View makeFollowDot() {

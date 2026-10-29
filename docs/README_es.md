@@ -36,7 +36,6 @@ Muestra los **segundos** en la hora de la barra de estado, alterna con un solo t
 | Compatibilidad | Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual en otros fabricantes con root como Xiaomi / Honor / Redmi / Samsung. La ruta principal usa solo API públicas de AOSP, así que no dispara el modo seguro de LSPosed. Mínimo Android 10 |
 | Mosaico rápido | Añade un mosaico "Mostrar segundos" en el panel, alterna con un toque |
 | Mejoras flotante | La posición y tamaño del flotante se **recuerdan**; **doble toque** en la hora también alterna |
-| Ahorro de batería | Con el ahorro de batería activo, la actualización por segundo se pausa (segundos se congelan), al desactivar se reanuda |
 | Detección configurable | Si el reloj no se detecta en otros dispositivos, pulsa **Detección automática** en Ajustes o indica su nombre de recurso (p. ej. clock) manualmente |
 
 ## Instalación

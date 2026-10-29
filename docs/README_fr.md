@@ -36,7 +36,6 @@ Affichez les **secondes** sur l'heure de la barre d'état, basculez d'un simple 
 | Compatibilité | Vérifié sur ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) ; fonctionne aussi tel quel sur d'autres fabricants rootés comme Xiaomi / Honor / Redmi / Samsung. Le chemin principal n'utilise que des API publiques de AOSP, donc le mode sans échec de LSPosed n'est pas déclenché. Android 10 minimum |
 | Tuile rapide | Ajoutez une tuile "Afficher les secondes" au panneau, basculez d'un tap |
 | Flottant amélioré | Position et taille du flottant **mémorisées**; **double-tap** sur l'heure bascule aussi |
-| Économie d'énergie | En mode économie, l'actualisation par seconde se met en pause (secondes figées), reprend à la sortie |
 | Détection configurable | Si l'horloge n'est pas détectée sur d'autres appareils, appuyez sur **Détection auto** dans les réglages, ou saisissez son nom de ressource (ex. clock) |
 
 ## Installation

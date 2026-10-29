@@ -48,8 +48,6 @@ TEXTS = {
              'Añade un mosaico "Mostrar segundos" en el panel, alterna con un toque'),
             ('Mejoras flotante',
              'La posición y tamaño del flotante se **recuerdan**; **doble toque** en la hora también alterna'),
-            ('Ahorro de batería',
-             'Con el ahorro de batería activo, la actualización por segundo se pausa (segundos se congelan), al desactivar se reanuda'),
             ('Detección configurable',
              'Si el reloj no se detecta en otros dispositivos, pulsa **Detección automática** en Ajustes o indica su nombre de recurso (p. ej. clock) manualmente'),
 

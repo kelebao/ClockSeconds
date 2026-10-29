@@ -48,8 +48,6 @@ TEXTS = {
              'Add a "Show Seconds" tile to the notification shade to toggle seconds in one tap'),
             ('Float upgrade',
              'Float window position & size are **remembered**; **double-tap** the time to also toggle seconds'),
-            ('Power-save aware',
-             'When battery saver is on, per-second refresh pauses (seconds freeze); resumes instantly when off'),
             ('Configurable detection',
              'If the clock is not auto-detected on other devices, tap **Auto-detect** in Settings, or enter its resource name (e.g. clock) manually'),
 

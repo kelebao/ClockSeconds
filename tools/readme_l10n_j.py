@@ -51,8 +51,6 @@ TEXTS = {
              'Füge eine "Sekunden anzeigen"-Kachel zum Benachrichtigungsbereich hinzu, mit einem Tipp umschalten'),
             ('Float verbessert',
              'Position & Größe des Floats werden **gemerkt**; **Doppeltipp** auf die Zeit schaltet Sekunden um'),
-            ('Energiesparerkennung',
-             'Bei Aktivierung des Energiesparmodus pausiert die Sekundenaktualisierung (Sekunden einfrieren), danach sofort weiter'),
             ('Erkennung konfigurierbar',
              'Wird die Uhr auf anderen Geräten nicht erkannt, tippe in den Einstellungen auf **Automatisch erkennen** oder gib den Ressourcennamen (z. B. clock) manuell ein'),
 

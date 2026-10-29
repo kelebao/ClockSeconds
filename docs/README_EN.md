@@ -36,7 +36,6 @@ Show **seconds** in the status bar time, toggle with a single tap, and keep the 
 | Compatibility | Verified on ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); also works out of the box on other rooted vendors such as Xiaomi / Honor / Redmi / Samsung. The core path uses only public AOSP APIs (vendor-private compatibility is optional, OPPO/OnePlus/realme only, and skipped when absent), so LSPosed safe mode will not be triggered. Minimum Android 10 |
 | Quick tile | Add a "Show Seconds" tile to the notification shade to toggle seconds in one tap |
 | Float upgrade | Float window position & size are **remembered**; **double-tap** the time to also toggle seconds |
-| Power-save aware | When battery saver is on, per-second refresh pauses (seconds freeze); resumes instantly when off |
 | Configurable detection | If the clock is not auto-detected on other devices, tap **Auto-detect** in Settings, or enter its resource name (e.g. clock) manually |
 
 ## Install

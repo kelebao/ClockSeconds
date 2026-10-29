@@ -36,7 +36,6 @@ Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng
 | Phạm vi tương thích | Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Luồng chính chỉ dùng API công khai của AOSP nên không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10 |
 | Ô vuông nhanh | Thêm ô "Hiện giây" vào bảng thông báo, bật/tắt bằng một chạm |
 | Cải tiến float | Vị trí & kích thước float được **nhớ**; **nhấn đúp** thời gian cũng bật/tắt giây |
-| Tiết kiệm pin | Bật tiết kiệm pin thì tạm dừng làm mới từng giây (giây đông cứng), tắt thì phục hồi ngay |
 | Nhận diện cấu hình | Nếu đồng hồ không tự nhận diện, hãy nhấn **Tự phát hiện** trong Cài đặt, hoặc nhập tên tài nguyên (vd clock) thủ công |
 
 ## Cài đặt

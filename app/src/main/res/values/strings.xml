@@ -104,7 +104,6 @@
     <string name="settings_digit_summary">时 %1$s · 分 %2$s · 秒 %3$s</string>
     <string name="settings_cancel">取消</string>
     <string name="settings_gradient_title">Gradient</string>
-    <string name="settings_gradient_hint">Blends the first and last digit colors</string>
     <string name="settings_digit_tab_digit">Single</string>
     <string name="settings_gradient_start">Start color</string>
     <string name="settings_gradient_end">End color</string>

@@ -36,7 +36,6 @@ Durum çubuğu zamanında **saniyeleri** gösterin, tek dokunuşla açıp kapat�
 | Uyumluluk | ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme) gerçek cihazda doğrulandı; Xiaomi / Honor / Redmi / Samsung gibi rootlu diğer üreticilerde de olduğu gibi çalışır. Çekirdek akış herkese açık AOSP API kullandığı için LSPosed güvenlik modu tetiklenmez. En düşük Android 10 |
 | Hızlı döşeme | Bildirim panelinde "Saniye Göster" döşemesi ekleyin, tek dokunuşla aç/kapat |
 | Kayan pencere | Kayan pencerenin konumu ve boyutu **hatırlanır**; zamana **çift dokun** ile saniye aç/kapat |
-| Pil tasarrufu | Tasarruf modu açılınca saniye yenileme durur (saniyeler donar), kapayınca hemen devam eder |
 | Algılama yapılandırılabilir | Saat diğer cihazlarda algılanmazsa ayarlarda **Otomatik algıla** düğmesine dokunun; kaynak adını (ör. clock) elle de girebilirsiniz |
 
 ## Kurulum

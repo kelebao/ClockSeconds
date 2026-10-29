@@ -11,6 +11,9 @@ import android.graphics.drawable.Drawable;
 
 /**
  * 小时颜色色块：实心圆 + （选中时）一圈随呼吸明灭的荧光光晕，光晕颜色 = 色块本身颜色。
+ *
+ * <p>光晕是「散光」而不是「光环」：用径向渐变从圆心向外连续衰减，呼吸时同时改变
+ * <b>扩散半径</b>与<b>亮度</b>——亮时向外铺开、暗时收拢变淡，看不出明确的环状边界。</p>
  */
 public class BreathSwatchDrawable extends Drawable {
     private final Paint mHaloPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -22,16 +25,26 @@ public class BreathSwatchDrawable extends Drawable {
     private final float mStrokeWidth;
     private float mIntensity;
     private RadialGradient mHaloShader;   // 缓存：只在边界变化时重建
+    private final android.graphics.Matrix mHaloMatrix = new android.graphics.Matrix();
     private int mShaderW = -1, mShaderH = -1;
 
-    /** 实心圆半径占色块半径的比例（其余留给荧光光晕）。 */
+    /** 实心圆半径占色块半径的比例（其余留给呼吸散光）。 */
     private static final float SOLID = 0.70f;
 
+    /** 实心圆占整个色块的比例：散光需要更多外圈空间，容器放大后靠它把实心圆拉回原尺寸。 */
+    private final float mSolidRatio;
+
     public BreathSwatchDrawable(int color, boolean selected, int strokeColor, float strokeWidth) {
+        this(color, selected, strokeColor, strokeWidth, SOLID);
+    }
+
+    public BreathSwatchDrawable(int color, boolean selected, int strokeColor, float strokeWidth,
+                                float solidRatio) {
         mColor = color;
         mSelected = selected;
         mStrokeColor = strokeColor;
         mStrokeWidth = strokeWidth;
+        mSolidRatio = solidRatio > 0f ? solidRatio : SOLID;
         mFillPaint.setStyle(Paint.Style.FILL);
         mFillPaint.setColor(color);
         mStrokePaint.setStyle(Paint.Style.STROKE);
@@ -52,23 +65,27 @@ public class BreathSwatchDrawable extends Drawable {
         float cx = b.exactCenterX();
         float cy = b.exactCenterY();
         float r = b.width() / 2f;
-        float solid = r * SOLID;
+        float solid = r * mSolidRatio;
 
-        // 荧光光晕（选中才画，随呼吸明灭）
+        // 呼吸散光（选中才画）：径向渐变从圆心向外连续衰减，没有环状边界。
         if (mSelected && mIntensity > 0.01f) {
             final int bw = b.width(), bh = b.height();
-            // 缓存 shader：仅边界变化时重建；亮度改用 paint alpha 逐帧控制，
-            // 避免原来每帧 new RadialGradient（~20fps × 每秒 20 次分配）。
+            // 缓存 shader：仅边界变化时重建；亮度用 paint alpha、扩散半径用 local matrix，
+            // 避免每帧 new RadialGradient。
             if (mHaloShader == null || mShaderW != bw || mShaderH != bh) {
                 final int rgb = mColor & 0x00FFFFFF;
                 mHaloShader = new RadialGradient(cx, cy, r,
-                        new int[]{0x00000000, rgb | 0xFF000000, 0x00000000},
-                        new float[]{0f, 0.86f, 1f}, Shader.TileMode.CLAMP);
+                        new int[]{rgb | 0xFF000000, rgb | 0x59000000, rgb | 0x00000000},
+                        new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP);
                 mShaderW = bw;
                 mShaderH = bh;
             }
+            // 呼吸：亮时向外铺开（半径 ×1.0），暗时收拢（半径 ×0.58），亮度按平方衰减让谷底更暗。
+            final float k = 0.58f + 0.42f * mIntensity;
+            mHaloMatrix.setScale(k, k, cx, cy);
+            mHaloShader.setLocalMatrix(mHaloMatrix);
             mHaloPaint.setShader(mHaloShader);
-            mHaloPaint.setAlpha(Math.round(255f * mIntensity));
+            mHaloPaint.setAlpha(Math.round(255f * mIntensity * mIntensity));
             canvas.drawCircle(cx, cy, r, mHaloPaint);
         }
 

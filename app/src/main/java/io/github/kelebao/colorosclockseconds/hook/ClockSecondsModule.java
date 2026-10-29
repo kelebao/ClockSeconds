@@ -47,6 +47,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import io.github.kelebao.colorosclockseconds.BuildConfig;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
+import io.github.kelebao.colorosclockseconds.ColonLiftSpan;
 import io.github.kelebao.colorosclockseconds.GradientTextSpan;
 
 /**
@@ -1823,6 +1824,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         int[] starts = new int[sb.length()];
         int n = 0;
         for (int i = 0; i < sb.length(); i++) {
+            char ch = sb.charAt(i);
+            if (ch == ':' || ch == '：') {
+                // 冒号光学居中：逐位上色会把文本切成多个 run，冒号会被画在基线上（比整串一个 run 时
+                // 低约 0.11em）。补一个只改绘制基线的 span，让状态栏与设置页预览的四个点位置一致。
+                sb.setSpan(new ColonLiftSpan(), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                continue;
+            }
             int slot = ClockSecondsConfig.slotOfChar(sb, i);
             if (slot < 0 || slot >= colors.length) {
                 continue;
@@ -2401,10 +2409,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
 
             firstDetachedAt = 0L;
-            // 省电模式 / 熄屏：暂停秒级刷新（让状态栏秒数冻结在最后一帧），恢复后自动续走；
-            // 仍保持每秒轮询，以便亮屏或退出省电的瞬间立即恢复走秒。
+            // 熄屏：暂停秒级刷新（让状态栏秒数冻结在最后一帧），亮屏后自动续走；
+            // 仍保持每秒轮询，以便亮屏的瞬间立即恢复走秒。
+            // 注：系统省电模式不再暂停走秒（vc221 按用户要求删除该行为）。
             Context ctx = view.getContext();
-            if (sSecondsEnabled && (isPowerSaveMode(ctx) || !isInteractive(ctx))) {
+            if (sSecondsEnabled && !isInteractive(ctx)) {
                 view.postDelayed(this, 1000L);
                 return;
             }
@@ -2443,9 +2452,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 } else if (tickDelay < 30_000L) {
                     tickDelay = Math.min(tickDelay * 2, 30_000L);
                 }
-                // 熄屏/省电降频（状态栏不可见，省电优先）。
-                long delay = (isPowerSaveMode(ctx) || !isInteractive(ctx))
-                        ? Math.max(tickDelay, 10_000L) : tickDelay;
+                // 熄屏降频（状态栏不可见，省电优先）。
+                long delay = !isInteractive(ctx) ? Math.max(tickDelay, 10_000L) : tickDelay;
                 if (BuildConfig.DEBUG) {
                     long t = SystemClock.uptimeMillis();
                     if (t - sLastKeepaliveLog > 30_000L) {
@@ -2698,16 +2706,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String vendor = (Build.MANUFACTURER + " " + Build.BRAND).toLowerCase(Locale.ROOT);
         return vendor.contains("oneplus") || vendor.contains("oppo")
                 || vendor.contains("realme") || vendor.contains("oplus");
-    }
-
-    /** 是否处于系统省电模式（低电/省电时暂停秒刷新用）。 */
-    private static boolean isPowerSaveMode(Context context) {
-        try {
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            return pm != null && Build.VERSION.SDK_INT >= 21 && pm.isPowerSaveMode();
-        } catch (Throwable ignored) {
-            return false;
-        }
     }
 
     /**

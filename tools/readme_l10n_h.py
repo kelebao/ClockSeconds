@@ -47,8 +47,6 @@ TEXTS = {
              'Thêm ô "Hiện giây" vào bảng thông báo, bật/tắt bằng một chạm'),
             ('Cải tiến float',
              'Vị trí & kích thước float được **nhớ**; **nhấn đúp** thời gian cũng bật/tắt giây'),
-            ('Tiết kiệm pin',
-             'Bật tiết kiệm pin thì tạm dừng làm mới từng giây (giây đông cứng), tắt thì phục hồi ngay'),
             ('Nhận diện cấu hình',
              'Nếu đồng hồ không tự nhận diện, hãy nhấn **Tự phát hiện** trong Cài đặt, hoặc nhập tên tài nguyên (vd clock) thủ công'),
 

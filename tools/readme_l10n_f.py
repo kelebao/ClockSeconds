@@ -47,8 +47,6 @@ TEXTS = {
              'Bildirim panelinde "Saniye Göster" döşemesi ekleyin, tek dokunuşla aç/kapat'),
             ('Kayan pencere',
              'Kayan pencerenin konumu ve boyutu **hatırlanır**; zamana **çift dokun** ile saniye aç/kapat'),
-            ('Pil tasarrufu',
-             'Tasarruf modu açılınca saniye yenileme durur (saniyeler donar), kapayınca hemen devam eder'),
             ('Algılama yapılandırılabilir',
              'Saat diğer cihazlarda algılanmazsa ayarlarda **Otomatik algıla** düğmesine dokunun; kaynak adını (ör. clock) elle de girebilirsiniz'),
 

@@ -36,7 +36,6 @@ Tampilkan **detik** pada waktu bilah status, alihkan dengan sekali sentuh, dan b
 | Kompatibilitas | Terverifikasi di ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); juga langsung berfungsi di vendor lain yang sudah root seperti Xiaomi / Honor / Redmi / Samsung. Jalur inti hanya memakai API publik AOSP, sehingga mode aman LSPosed tidak akan terpicu. Minimum Android 10 |
 | Tile cepat | Tambahkan tile "Tampilkan detik" ke panel, alihkan dengan satu ketuk |
 | Float ditingkatkan | Posisi & ukuran float **diingat**; **ketuk ganda** waktu juga mengalihkan |
-| Sadar hemat baterai | Saat mode hemat aktif, penyegaran per detik dijeda (detik membeku), saat mati langsung dilanjut |
 | Deteksi dapat diatur | Jika jam tidak terdeteksi di perangkat lain, ketuk **Deteksi otomatis** di Pengaturan, atau masukkan nama sumber (mis. clock) secara manual |
 
 ## Instalasi
