@@ -1,7 +1,9 @@
 package io.github.kelebao.colorosclockseconds;
 
 import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Shader;
+import android.os.SystemClock;
 import android.text.TextPaint;
 import android.text.style.CharacterStyle;
 import android.widget.TextView;
@@ -14,11 +16,15 @@ import java.lang.ref.WeakReference;
  * <p><b>为什么用 CharacterStyle 而不是自绘：</b>{@code ForegroundColorSpan} 能在状态栏时钟上
  * 生效，说明 TextView 走的是标准 {@code Layout / TextLine} 绘制路径，而该路径一定会调用
  * {@link CharacterStyle#updateDrawState}。所以只要在画笔上挂一个 {@link LinearGradient}，
- * 就能得到真渐变——不需要新建 View、不需要自绘文字、不需要额外动画定时器。</p>
+ * 就能得到真渐变——不需要新建 View、不需要自绘文字。</p>
  *
- * <p><b>成本：</b>整串只有一个 span、一次 shader 构建（同宽度同相位时复用）。「流动」的相位取自
- * 墙钟（周期可调，见 {@link ClockSecondsConfig#GRADIENT_FLOW_PERIOD_KEY}），完全由时钟本来就有
- * 的每秒重绘驱动前进，不产生任何额外唤醒或重绘请求。</p>
+ * <p><b>流动怎么做到顺滑（vc204）：</b>相位用<b>单调时钟毫秒</b>（{@link SystemClock#uptimeMillis()}），
+ * 不再跟着「整秒」走；再由宿主（模块的状态栏时钟 / 设置页预览）在流动开启时按屏幕刷新逐帧
+ * {@code invalidate()}，于是每次重绘相位都往前走一点点，肉眼是连续滑动而不是一秒跳一格。
+ * 注意这里只重绘、不重排、不 setText，也不新建任何 View。</p>
+ *
+ * <p><b>成本控制：</b>shader 只在「色带宽度 / 端点色」变化时创建一次，逐帧流动靠
+ * {@link Shader#setLocalMatrix} 平移，60fps 下不再每秒分配 60 个 LinearGradient。</p>
  *
  * <p><b>vc194 血的教训：</b>这里绝对不能调用 {@code Layout.getLineLeft()/getLineRight()}。
  * 单行文本用的是 {@code BoringLayout}，它的 {@code getLineMax()} 会反过来触发
@@ -45,8 +51,13 @@ public class GradientTextSpan extends CharacterStyle {
     private static final ThreadLocal<Boolean> IN_DRAW = new ThreadLocal<>();
 
     private Shader mShader;
+    private Matrix mMatrix;
     private float mShaderBand = -1f;
-    private float mShaderPhase = -1f;
+    private int mShaderStart;
+    private int mShaderEnd;
+    private boolean mShaderColorsSet;
+    /** 当前 shader 已平移的色带偏移（像素）；NaN = 还没设过。 */
+    private float mAppliedOffset = Float.NaN;
     /** 一个完整色带的宽度 = 这段文字实测宽度（不用 Layout，避免 BoringLayout 递归）。 */
     private float mBand;
     private float mBandTextSize = -1f;
@@ -81,6 +92,11 @@ public class GradientTextSpan extends CharacterStyle {
         mPeriodMs = periodMs;
     }
 
+    /** 流动是否开启（宿主据此决定要不要逐帧 invalidate）。 */
+    public boolean isFlowing() {
+        return mFlow;
+    }
+
     @Override
     public void updateDrawState(TextPaint tp) {
         if (Boolean.TRUE.equals(IN_DRAW.get())) {
@@ -102,23 +118,39 @@ public class GradientTextSpan extends CharacterStyle {
                 mBandTextLength = mText.length();
                 mBand = Math.max(1f, tp.measureText(mText, 0, mText.length()));
             }
-            float phase = 0f;
+            // shader 只按「色带宽度 + 端点色」建一次；流动靠 setLocalMatrix 平移，逐帧零分配。
+            if (mShader == null || mShaderBand != mBand || !mShaderColorsSet
+                    || mShaderStart != mColorStart || mShaderEnd != mColorEnd) {
+                // 色带必须从「文字左边缘」起算，否则居中的 TextView 只画到色带的中后段
+                // （MIRROR 会把它翻成反向渐变，真机表现就是预览卡的颜色顺序和状态栏相反）。
+                mShader = new LinearGradient(mXOffset, 0f, mXOffset + mBand, 0f,
+                        new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                mShaderBand = mBand;
+                mShaderStart = mColorStart;
+                mShaderEnd = mColorEnd;
+                mShaderColorsSet = true;
+                mMatrix = new Matrix();
+                mAppliedOffset = Float.NaN;
+            }
+            float offset = 0f;
             if (mFlow) {
                 long period = mPeriodMs > 0 ? mPeriodMs : ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
                 if (period > 0) {
-                    phase = (System.currentTimeMillis() % period) / (float) period;
+                    // 单调时钟（毫秒精度）：相位连续推进，配合宿主逐帧 invalidate 才是顺滑的。
+                    // 用墙钟会在改系统时间时跳变；用整秒就是「一秒跳一格」的根源。
+                    float phase = (SystemClock.uptimeMillis() % period) / (float) period;
+                    offset = phase * mBand;
                 }
             }
-            // 同一色带宽度 / 同一相位下重复绘制不重建 shader（一秒内可能被绘制多次）。
-            if (mShader == null || mShaderBand != mBand || mShaderPhase != phase) {
-                float offset = phase * mBand;
-                // 色带必须从「文字左边缘」起算，否则居中的 TextView 只画到色带的中后段
-                // （MIRROR 会把它翻成反向渐变，真机表现就是预览卡的颜色顺序和状态栏相反）。
-                float x0 = mXOffset - offset;
-                mShader = new LinearGradient(x0, 0f, x0 + mBand, 0f,
-                        new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
-                mShaderBand = mBand;
-                mShaderPhase = phase;
+            // 位移小于 0.35px 不重设，省掉大量无意义调用（低刷新率 / 长周期时尤其明显）。
+            if (!(Math.abs(offset - mAppliedOffset) < 0.35f)) {
+                if (offset == 0f) {
+                    mShader.setLocalMatrix(null);
+                } else {
+                    mMatrix.setTranslate(-offset, 0f);
+                    mShader.setLocalMatrix(mMatrix);
+                }
+                mAppliedOffset = offset;
             }
             tp.setShader(mShader);
         } catch (Throwable ignored) {

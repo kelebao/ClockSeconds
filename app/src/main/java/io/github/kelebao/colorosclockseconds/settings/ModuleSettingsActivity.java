@@ -345,6 +345,36 @@ public final class ModuleSettingsActivity extends Activity {
             ticker.postDelayed(this, 1000L);
         }
     };
+    /**
+     * 预览卡渐变流动的逐帧刷新：只 {@code invalidate()}（重绘），不重建 span、不改文本。
+     *
+     * <p>相位取自单调时钟毫秒，靠这里逐帧推进；没有它相位只能跟着每秒一次的 {@link #tick} 走，
+     * 长周期几乎不动、短周期一秒跳一大格。</p>
+     */
+    private final Runnable previewFlowTick = new Runnable() {
+        @Override
+        public void run() {
+            if (previewView == null || !mCfgGradientOn || !mCfgGradientFlow) {
+                return;
+            }
+            if (previewView.isShown()) {
+                previewView.invalidate();
+            }
+            previewView.postOnAnimation(this);
+        }
+    };
+
+    /** 按当前开关挂上/停掉预览卡的流动刷新。 */
+    private void syncPreviewFlow() {
+        if (previewView == null) {
+            return;
+        }
+        previewView.removeCallbacks(previewFlowTick);
+        if (mCfgGradientOn && mCfgGradientFlow) {
+            previewView.postOnAnimation(previewFlowTick);
+        }
+    }
+
     /** 选中色块荧光光晕 + 半弧刻度盘的高频刷新（~50ms）。 */
     private final Runnable breathTick = new Runnable() {
         @Override
@@ -420,6 +450,7 @@ public final class ModuleSettingsActivity extends Activity {
         ticker.post(tick);
         ticker.removeCallbacks(breathTick);
         ticker.post(breathTick);
+        syncPreviewFlow();
         // 返回前台时重新读取 SystemUI 检测到的候选时钟清单（此时 SystemUI 多半已发布最新列表）。
         if (mClockTestList != null) {
             refreshClockTestList();
@@ -515,6 +546,9 @@ public final class ModuleSettingsActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        if (previewView != null) {
+            previewView.removeCallbacks(previewFlowTick);
+        }
         ticker.removeCallbacks(tick);
         ticker.removeCallbacks(breathTick);
         ticker.removeCallbacks(hideHint);
@@ -1293,6 +1327,8 @@ public final class ModuleSettingsActivity extends Activity {
                 if (ok) {
                     mCfgGradientOn = checked;
                     syncGradientEnabledState();
+                    syncPreviewFlow();   // 渐变开关变了立刻挂/停逐帧刷新
+                    updatePreview();
                 } else {
                     mGradientSwitch.setChecked(!checked);
                     toastWriteFailed();
@@ -1307,6 +1343,8 @@ public final class ModuleSettingsActivity extends Activity {
                 if (ok) {
                     mCfgGradientFlow = checked;
                     syncGradientEnabledState();   // 流动关掉时速度滑杆跟着置灰
+                    syncPreviewFlow();   // 流动开关变了立刻挂/停逐帧刷新
+                    updatePreview();
                 } else {
                     mFlowSwitch.setChecked(!checked);
                     toastWriteFailed();
