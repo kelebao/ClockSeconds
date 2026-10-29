@@ -17,8 +17,8 @@ import java.lang.ref.WeakReference;
  * 就能得到真渐变——不需要新建 View、不需要自绘文字、不需要额外动画定时器。</p>
  *
  * <p><b>成本：</b>整串只有一个 span、一次 shader 构建（同宽度同相位时复用）。「流动」的相位取自
- * 墙钟（{@link ClockSecondsConfig#GRADIENT_FLOW_PERIOD_MS}），完全由时钟本来就有的每秒重绘
- * 驱动前进，不产生任何额外唤醒或重绘请求。</p>
+ * 墙钟（周期可调，见 {@link ClockSecondsConfig#GRADIENT_FLOW_PERIOD_KEY}），完全由时钟本来就有
+ * 的每秒重绘驱动前进，不产生任何额外唤醒或重绘请求。</p>
  *
  * <p><b>vc194 血的教训：</b>这里绝对不能调用 {@code Layout.getLineLeft()/getLineRight()}。
  * 单行文本用的是 {@code BoringLayout}，它的 {@code getLineMax()} 会反过来触发
@@ -38,6 +38,8 @@ public class GradientTextSpan extends CharacterStyle {
     private final boolean mFlow;
     /** 文字左边缘在绘制坐标里的 x 偏移（居中的 TextView 不为 0）。 */
     private final float mXOffset;
+    /** 流动周期（毫秒）：一个完整色带扫过去再回来的时间。&lt;= 0 表示用默认值。 */
+    private final long mPeriodMs;
 
     /** 重入护栏：万一测量/绘制链路再回调进来，直接复用上一次的 shader，绝不递归。 */
     private static final ThreadLocal<Boolean> IN_DRAW = new ThreadLocal<>();
@@ -61,12 +63,22 @@ public class GradientTextSpan extends CharacterStyle {
      */
     public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
                             boolean flow, float xOffset) {
+        this(view, text, colorStart, colorEnd, flow, xOffset,
+                ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS);
+    }
+
+    /**
+     * @param periodMs 流动周期（毫秒），一个完整色带扫过去再回来的时间；越界值由配置层夹紧。
+     */
+    public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
+                            boolean flow, float xOffset, long periodMs) {
         mView = new WeakReference<>(view);
         mText = text;
         mColorStart = colorStart;
         mColorEnd = colorEnd;
         mFlow = flow;
         mXOffset = xOffset;
+        mPeriodMs = periodMs;
     }
 
     @Override
@@ -92,7 +104,7 @@ public class GradientTextSpan extends CharacterStyle {
             }
             float phase = 0f;
             if (mFlow) {
-                long period = ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
+                long period = mPeriodMs > 0 ? mPeriodMs : ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
                 if (period > 0) {
                     phase = (System.currentTimeMillis() % period) / (float) period;
                 }

@@ -108,6 +108,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 渐变 / 流动开关缓存（与六位颜色同批重读，避免每秒额外 binder）。 */
     private static volatile boolean sGradientOn;
     private static volatile boolean sGradientFlow;
+    /** 流动周期（毫秒，可调）。与开关同批读取，渲染路径零 binder。 */
+    private static volatile long sGradientPeriod = ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS;
     /** 渐变端点色缓存（{@code GRADIENT_COLOR_AUTO} = 跟随首位 / 末位数字）。 */
     private static volatile int sGradientStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private static volatile int sGradientEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
@@ -1887,7 +1889,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 ? colors[colors.length - 1] : sGradientEnd;
         int c0 = gradientEdgeColor(rawStart, systemTextColor);
         int c1 = gradientEdgeColor(rawEnd, systemTextColor);
-        sb.setSpan(new GradientTextSpan(view, sb, c0, c1, sGradientFlow), 0, len,
+        sb.setSpan(new GradientTextSpan(view, sb, c0, c1, sGradientFlow, 0f, sGradientPeriod), 0, len,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         int[] starts = new int[len];
         int n = 0;
@@ -1936,6 +1938,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 渐变 / 流动开关与端点色同批读取：每秒渲染路径里只读缓存字段，不再打 binder。
             sGradientOn = ClockSecondsConfig.isGradientEnabled(ctx.getContentResolver());
             sGradientFlow = ClockSecondsConfig.isGradientFlowEnabled(ctx.getContentResolver());
+            sGradientPeriod = ClockSecondsConfig.getGradientFlowPeriod(ctx.getContentResolver());
             sGradientStart = ClockSecondsConfig.getGradientStartColor(ctx.getContentResolver());
             sGradientEnd = ClockSecondsConfig.getGradientEndColor(ctx.getContentResolver());
         } catch (Throwable ignored) {
@@ -2797,6 +2800,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_PERIOD);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
@@ -2840,6 +2844,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_FLOW.equals(action)) {
                                 ClockSecondsConfig.setGradientFlowEnabled(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
+                                reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_PERIOD.equals(action)) {
+                                // 流动周期（毫秒）：改完重读缓存，下一秒重绘即按新速度推进。
+                                ClockSecondsConfig.setGradientFlowPeriod(cr, intent.getLongExtra(
+                                        ClockSecondsConfig.EXTRA_PERIOD,
+                                        ClockSecondsConfig.GRADIENT_FLOW_PERIOD_MS));
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR.equals(action)) {
