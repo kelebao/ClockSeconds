@@ -6,7 +6,7 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc249，下面按版本记录。
 
-### vc250 ~ vc251（第三方 ROM 兼容：HyperOS「点时间关显秒后秒数卡住」修复 + Probe 版）
+### vc250 ~ vc252（第三方 ROM 兼容：HyperOS「点时间关显秒后秒数卡住」修复 + Probe 版）
 
 - **用户反馈（澎湃OS 3.305，另一台小米设备）**：状态栏正在显秒时点一下时间，理论上是关闭显秒，实际效果是「秒数卡住不动」，有时几秒恢复、极限一分钟才恢复。
 - **日志定位（用户提供的 LSPosed 日志，模块日志前缀 `ColorOSClockSeconds: `）**：
@@ -21,8 +21,10 @@
   - 点击切换显秒（`toggleSeconds`）、任务到点切换（`applyTaskState`）、配置变更重写（`refreshClockNow`）全部改为走 `writeSecondsStateNow()`，不再只写 `sClockView`。
   - `writeMinuteOnly` / `applyRedToBaseText` 改用 `toHourMinute(base)`：系统（AOSP Clock）按 `HH:mm:ss` 写入时，关闭显秒写回去的文本也要把秒截掉，否则秒数看起来根本没关。
 - **ColorOS 15 回归验证（PHK110 / Android 15，vc251 Probe）**：点击一次 → 模块日志 `seconds toggled -> false`，状态栏立刻变 `21:51`（渐变与逐位颜色均保留）；再点一次 → `seconds toggled -> true`，立刻变 `21:51:47`；`logcat -b crash` FATAL = 0。
-- **Probe 包**：`deliverables/ClockSeconds-Probe-v251-2026-10-30-2147.apk`（versionCode 251 / `1.2.0-probe.20261030-2147`），用于请该澎湃用户装后复验；若仍卡住需再取一份 LSPosed 日志（重点看 `clock view cached; bounds=` 与 `WRITE:` 是否落在同一个 rect 上）。
-- 版本：versionCode 250（Probe，`1.2.0-probe.20261030-2050`，无代码改动，纯交付包）→ 251（本修复）。
+- **Probe 包**：`deliverables/ClockSeconds-Probe-v251-2026-10-30-2147.apk`（vc251，首个修复）与 `deliverables/ClockSeconds-Probe-v252-2026-10-30-2154.apk`（vc252，含两处修复，请该澎湃用户装这个复验）；若仍卡住需再取一份 LSPosed 日志（重点看 `clock view cached; bounds=` 与 `WRITE:` 是否落在同一个 rect 上）。
+- **vc252 补第二个根因（用户复看视频补充）**：「没显秒时点一下时间，秒数出现了但不动，几秒到几十秒后才开始走」。原因是显秒关闭时已有 ticker 跑在「自适应补色」模式（每次翻倍，最长 30 秒），切回显秒时 `installTicker` 因 `ACTIVE.containsKey(view)` 直接返回，那条长延时被原样保留 → 秒数盯着不动。新增 `restartTicker()`（stop + install），显秒开启分支改用它，切换瞬间就恢复 1 秒节拍。
+- **vc252 验证（ColorOS 15）**：先把显秒关掉等 32 秒（让 ticker 延时涨到秒级以上的长延时），点一下打开 → 连续三帧 `21:58:24` → `21:58:26` → `21:58:28`，秒数立刻走动；再点关闭 → 立刻回到 `21:58`；crash FATAL = 0。
+- 版本：versionCode 250（Probe，`1.2.0-probe.20261030-2050`，无代码改动，纯交付包）→ 251（隐藏实例劫持修复）→ 252（ticker 长延时重置修复，交付包 `deliverables/ClockSeconds-Probe-v252-2026-10-30-2154.apk`）。
 
 
 ### vc249（正式发版 1.2.0：README 21 语言重写 + 两张颜色效果图）

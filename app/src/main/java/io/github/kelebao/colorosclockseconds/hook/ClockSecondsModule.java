@@ -783,7 +783,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 try {
                     if (on) {
                         writeTime(v);
-                        installTicker(v);
+                        restartTicker(v);
                     } else {
                         stopTicker(v);
                         writeMinuteOnly(v);
@@ -802,7 +802,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             if (on) {
                 writeTime(clock);
-                installTicker(clock);
+                restartTicker(clock);
             } else {
                 stopTicker(clock);
                 writeMinuteOnly(clock);
@@ -2721,6 +2721,18 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (ticker != null) {
             view.removeCallbacks(ticker);
         }
+    }
+
+    /**
+     * 重启该视图的 1 秒定时器：显秒从「关」切到「开」时必须用它。
+     *
+     * <p>显秒关着的时候，已有 ticker 跑在「自适应补色」模式，下一次自我调度可能排到 4~30 秒后。
+     * 只调 installTicker 会因为 {@code ACTIVE.containsKey(view)} 直接返回，那条长延时保持不变，
+     * 于是刚打开的秒数盯着不动，要等几秒到几十秒才恢复走动（HyperOS 用户实测「几十秒」即此因）。</p>
+     */
+    private static void restartTicker(TextView view) {
+        stopTicker(view);
+        installTicker(view);
     }
 
     private static final class ClockTicker implements Runnable {
