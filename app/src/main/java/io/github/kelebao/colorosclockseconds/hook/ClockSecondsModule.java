@@ -589,11 +589,19 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 不再给时钟挂 OnTouchListener：ColorOS 通知面板会拦截状态栏区域触摸，时钟自身收不到事件；
         // 全局监听在 dispatchTouchEvent 层命中时钟边界，且不消费事件，下拉通知栏不受影响。
         try {
-            sClockView = view;
-            refreshClockRect(view);
-            if (BuildConfig.DEBUG) {
-                XposedBridge.log(LOG_PREFIX + "clock view cached; bounds=" + sClockRect
-                        + " gesture=" + ClockSecondsConfig.getGesture(view.getContext().getContentResolver()));
+            // 只在「真的显示在状态栏」时抢占缓存（HyperOS「秒数卡住」的根因就在这里）：
+            // 小米 HyperOS 状态栏同时存在 statusbar.policy.Clock / statusbar.views.MiuiClock 等多个实例，
+            // 且 AOD、锁屏、下拉面板里的 Clock 也在每秒 setText（尺寸 0x0、不可见）。
+            // 旧逻辑无条件 sClockView = view，缓存每秒都被劫持到 0x0 隐藏实例上；用户点一下关显秒时，
+            // 文本写进了那个不可见视图，真正显示的时钟停在最后那次带秒的文本上
+            // → 用户看到「秒数卡住不动」，要等系统下一次分钟更新（几秒到一分钟）才恢复。
+            if (isLiveStatusBarClock(view) || sClockView == null) {
+                sClockView = view;
+                refreshClockRect(view);
+                if (BuildConfig.DEBUG) {
+                    XposedBridge.log(LOG_PREFIX + "clock view cached; bounds=" + sClockRect
+                            + " gesture=" + ClockSecondsConfig.getGesture(view.getContext().getContentResolver()));
+                }
             }
         } catch (Throwable ignored) {
             // 缓存失败不影响显示
@@ -674,6 +682,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     if (loc[1] < 0 || loc[1] > 220) {   // 只认状态栏区域（顶部 220px 内）
                         continue;
                     }
+                    // 同尺寸但被隐藏的「双胞胎」不能选：HyperOS 有 Clock + MiuiClock 两个实例，
+                    // 选错那个会把文本写进看不见的视图（秒数卡住不动的根因）。
+                    if (v.getVisibility() != View.VISIBLE || v.getAlpha() < 0.2f) {
+                        continue;
+                    }
                     inBar++;
                     if (loc[1] < bestY) {
                         bestY = loc[1];
@@ -692,6 +705,113 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     // ==================================================================
+    /** 是否「真的显示在状态栏上」：已挂载、可见、有尺寸、不透明、位于顶部状态栏区域。 */
+    private static boolean isLiveStatusBarClock(TextView v) {
+        try {
+            if (v == null || !v.isAttachedToWindow()) {
+                return false;
+            }
+            if (v.getVisibility() != View.VISIBLE || v.getAlpha() < 0.2f) {
+                return false;
+            }
+            if (v.getWidth() <= 0 || v.getHeight() <= 0) {
+                return false;
+            }
+            int[] loc = new int[2];
+            v.getLocationOnScreen(loc);
+            return loc[1] >= 0 && loc[1] <= 220;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * 当前所有「真的在状态栏上显示」的时钟实例快照。
+     *
+     * <p>HyperOS（小米）状态栏同时挂着 statusbar.policy.Clock 与 statusbar.views.MiuiClock
+     * 等多个实例，只给其中一个写文本，另一个就会停在旧文本上（用户实际看到的是
+     * 「点了关显秒，秒数卡住不动」）。所以凡是切换显秒/刷新配置，都要对全部存活实例各写一次。</p>
+     */
+    private static List<TextView> liveStatusBarClocks() {
+        List<TextView> out = new ArrayList<>();
+        synchronized (CONFIGURED) {
+            for (TextView v : new ArrayList<>(CONFIGURED)) {
+                try {
+                    if (isClockEnabled(v) && isLiveStatusBarClock(v)) {
+                        out.add(v);
+                    }
+                } catch (Throwable ignored) {
+                    // 单个实例异常不影响其它
+                }
+            }
+        }
+        return out;
+    }
+
+    /** 递增序号：保证「延迟补写」只对最后一次切换生效（用户快速连点时不会把旧状态写回去）。 */
+    private static volatile int sApplySeq;
+
+    /**
+     * 按当前显秒状态刷新所有存活时钟，并在 250ms / 800ms 后再各补写一次。
+     *
+     * <p>补写的作用：系统（HyperOS 的 AOSP Clock、下拉面板/AOD 时钟、第三方主题模块）会在我们
+     * 写入之后继续按自己的格式 setText；若最后一次写入发生在别的实例上，可见时钟就停在旧文本，
+     * 肉眼就是「秒数卡住几秒到一分钟」。这里保证切换后的最后写入一定是我们。</p>
+     */
+    private static void applySecondsToAllClocks() {
+        final int seq = ++sApplySeq;
+        writeSecondsStateNow();
+        Handler h = sTouchHandler;
+        if (h == null) {
+            return;
+        }
+        for (long delay : new long[]{250L, 800L}) {
+            h.postDelayed(() -> {
+                if (seq == sApplySeq) {
+                    writeSecondsStateNow();
+                }
+            }, delay);
+        }
+    }
+
+    /** 立刻把当前显秒状态写一遍到所有存活时钟（不做延迟补写）。 */
+    private static void writeSecondsStateNow() {
+        List<TextView> clocks = liveStatusBarClocks();
+        boolean on = secondsOn();
+        if (!clocks.isEmpty()) {
+            for (TextView v : clocks) {
+                try {
+                    if (on) {
+                        writeTime(v);
+                        installTicker(v);
+                    } else {
+                        stopTicker(v);
+                        writeMinuteOnly(v);
+                    }
+                } catch (Throwable t) {
+                    noteHookError(t);
+                }
+            }
+            return;
+        }
+        // 没有存活实例（还没布局/被隐藏）时回退到缓存视图，保持旧行为。
+        TextView clock = sClockView;
+        if (clock == null || !isClockEnabled(clock)) {
+            return;
+        }
+        try {
+            if (on) {
+                writeTime(clock);
+                installTicker(clock);
+            } else {
+                stopTicker(clock);
+                writeMinuteOnly(clock);
+            }
+        } catch (Throwable t) {
+            noteHookError(t);
+        }
+    }
+
     // 测试卡片（诊断）：候选时钟清单与逐项启用
     // ==================================================================
 
@@ -1804,14 +1924,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             XposedBridge.log(LOG_PREFIX + "seconds toggled -> " + enabled);
         }
         // 该时钟已被用户停用：不写文本/颜色（仅更新全局显秒内存态）。
-        if (isClockEnabled(view)) {
-            if (enabled) {
-                writeTime(view);
-                installTicker(view);
-            } else {
-                stopTicker(view);
-                writeMinuteOnly(view);
-            }
+        // 但必须写「所有存活的时钟实例」，不能只写 sClockView 那一个：HyperOS 上状态栏同时存在
+        // Clock + MiuiClock 两个实例，只写一个会让另一个停在旧文本上，表现为「秒数卡住不动」。
+        if (isClockEnabled(view) || !liveStatusBarClocks().isEmpty()) {
+            applySecondsToAllClocks();
         }
     }
 
@@ -2131,7 +2247,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             base = view.getText();
         }
         // 同 applyRedToBaseText：零宽空格破坏 HH:mm 模式匹配，防 setText 链重建剥 span。
-        String text = base.toString();
+        // 顺带把系统可能自带的秒截掉（HyperOS 的 AOSP Clock 会按 HH:mm:ss 写入）：不截的话
+        // 「关闭显秒」写回去的还是带秒文本，秒数看起来根本没关。
+        String text = toHourMinute(base);
         if (!text.endsWith("\u200B")) {
             text = text + "\u200B";
         }
@@ -2170,7 +2288,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 对策：补一个零宽空格 \u200B 破坏 HH:mm 完整匹配，重建逻辑放过我们的文本，
         // Span 自然存活。零宽字符不占布局宽度、不可见；系统下次分钟更新给新纯文本，
         // 由本方法再次追加，自洽。若真凶不是模式匹配，此字符无害，循环兜底。
-        String text = base.toString();
+        // 同上：base 可能自带秒（HyperOS 的 AOSP Clock 按 HH:mm:ss 写），显秒关时必须截掉。
+        String text = toHourMinute(base);
         if (!text.endsWith("\u200B")) {
             text = text + "\u200B";
         }
@@ -2562,17 +2681,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         // 关键：显秒关着的时候 ticker 跑在「自适应补色」模式，下一次自我调度可能排到 30 秒后。
         // 若不先摘掉旧 ticker，任务到点开显秒后会沿用那条长延时，秒数僵住十几秒才恢复走动（用户实测「延迟好几秒」即此因）。
+        for (TextView v : liveStatusBarClocks()) {
+            stopTicker(v);
+        }
         stopTicker(clock);
         publishEffectiveSeconds(clock.getContext() == null
                 ? null : clock.getContext().getContentResolver());
-        if (secondsOn()) {
-            writeTime(clock);
-            installTicker(clock);
-        } else {
-            installTicker(clock);
-            writeMinuteOnly(clock);
-        }
-        refreshClockNow();
+        // 所有存活实例一起切（HyperOS 的 Clock + MiuiClock 双实例，只写一个会留下卡住的旧文本）。
+        applySecondsToAllClocks();
     }
 
     // ==================================================================
@@ -3452,11 +3568,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             // 配置变了要重写一次：幂等短路会保留旧 span（旧端点色 / 旧渐变开关）。
             sForceRewrite = true;
-            if (secondsOn()) {
-                writeTime(clock);
-            } else {
-                writeMinuteOnly(clock);
-            }
+            // 对所有存活实例一起重写（HyperOS 双实例，只写一个会留下旧颜色/旧文本）。
+            writeSecondsStateNow();
         } catch (Throwable ignored) {
             // 重绘失败不影响系统时钟自身的刷新
         }

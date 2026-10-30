@@ -6,6 +6,25 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc249，下面按版本记录。
 
+### vc250 ~ vc251（第三方 ROM 兼容：HyperOS「点时间关显秒后秒数卡住」修复 + Probe 版）
+
+- **用户反馈（澎湃OS 3.305，另一台小米设备）**：状态栏正在显秒时点一下时间，理论上是关闭显秒，实际效果是「秒数卡住不动」，有时几秒恢复、极限一分钟才恢复。
+- **日志定位（用户提供的 LSPosed 日志，模块日志前缀 `ColorOSClockSeconds: `）**：
+  - 该机状态栏同时存在多个时钟实例：`CONFIG CLOCK: clock | com.android.systemui.statusbar.policy.Clock` 与 `com.android.systemui.statusbar.views.MiuiClock`；`pickClockView: total=3 laid=2 inBar=2`。
+  - 外部每秒 3 次 setText 全部落在**尺寸 0x0 的隐藏实例**上（`PROBE setText res=clock cls=...statusbar.policy.Clock` + `refreshClockRect: bounds=Rect(0,0-0,0) size=0x0 attached=true`）。
+  - 旧版 `configureClockView` 无条件 `sClockView = view`，缓存每秒被这个隐藏实例劫持；用户点一下关显秒时，文本写进了不可见的视图，真正显示的时钟停在最后一次带秒的文本上 → 几秒到一分钟（等系统下一次分钟更新）才自愈。
+  - 秒关窗口内一条 `WRITE:` 都没有；日志还留下 `color-keepalive: seconds off, delay=16000ms lastWrote=0`。
+- **修复（通用路径，所有 ROM 受益）**：
+  - `configureClockView`：只在「真的显示在状态栏上」时抢占缓存（已挂载 / 可见 / alpha≥0.2 / 宽高>0 / 屏幕 y∈[0,220]），`sClockView == null` 时仍允许兜底缓存。
+  - `pickClockView`：跳过不可见或近乎全透明的「双胞胎」实例。
+  - 新增 `liveStatusBarClocks()`（所有存活时钟实例快照）、`writeSecondsStateNow()`（按当前显秒状态对**每个**存活实例各写一次）与 `applySecondsToAllClocks()`（先写一次，再在 250ms / 800ms 各补写一次，用 `sApplySeq` 序号保证只对最后一次切换生效）。
+  - 点击切换显秒（`toggleSeconds`）、任务到点切换（`applyTaskState`）、配置变更重写（`refreshClockNow`）全部改为走 `writeSecondsStateNow()`，不再只写 `sClockView`。
+  - `writeMinuteOnly` / `applyRedToBaseText` 改用 `toHourMinute(base)`：系统（AOSP Clock）按 `HH:mm:ss` 写入时，关闭显秒写回去的文本也要把秒截掉，否则秒数看起来根本没关。
+- **ColorOS 15 回归验证（PHK110 / Android 15，vc251 Probe）**：点击一次 → 模块日志 `seconds toggled -> false`，状态栏立刻变 `21:51`（渐变与逐位颜色均保留）；再点一次 → `seconds toggled -> true`，立刻变 `21:51:47`；`logcat -b crash` FATAL = 0。
+- **Probe 包**：`deliverables/ClockSeconds-Probe-v251-2026-10-30-2147.apk`（versionCode 251 / `1.2.0-probe.20261030-2147`），用于请该澎湃用户装后复验；若仍卡住需再取一份 LSPosed 日志（重点看 `clock view cached; bounds=` 与 `WRITE:` 是否落在同一个 rect 上）。
+- 版本：versionCode 250（Probe，`1.2.0-probe.20261030-2050`，无代码改动，纯交付包）→ 251（本修复）。
+
+
 ### vc249（正式发版 1.2.0：README 21 语言重写 + 两张颜色效果图）
 
 - 版本号去掉测试后缀：versionCode 249 / versionName `1.2.0`（测试线最后一版为 vc248 / 1.2.0-test.20261030-1930）。
