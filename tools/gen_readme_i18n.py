@@ -71,10 +71,10 @@ RAW = 'https://raw.githubusercontent.com/kelebao/ClockSeconds/main/'
 
 # Badges are wrapped in links so they are clickable:/n#   version -> Releases, lsposed -> module repo, stars -> stargazers, license -> LICENSE
 BADGES = (
-    '[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)]({repo}/releases/latest)\n'
+    '[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)]({repo}/releases/latest)\n'
     '![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)\n'
     '[![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)]({mod}/releases)\n'
-    '![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)\n'
+    '![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)\n'
     '[![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)]({repo}/stargazers)\n'
     '[![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)]({repo}/blob/main/LICENSE)'
 ).format(repo=REPO, mod=MODULE_REPO)
@@ -140,6 +140,14 @@ def render(t, cur, base=''):
     for name, desc in t['rows']:
         L.append('| %s | %s |' % (name, desc))
     L.append('')
+    # colour modes showcase (two side-by-side screenshots)
+    L += ['## ' + t['h_colors'], '', t['colors_intro'], '', '<table><tr>']
+    for img, cap in (('colors-digit.png', t['cap_digit']),
+                     ('colors-gradient.png', t['cap_grad'])):
+        L += ['<td align="center" width="50%">',
+              '<img src="%s" alt="%s" width="100%%">' % (shot(img, cur, base), cap),
+              '<br>', cap, '</td>']
+    L += ['</tr></table>', '']
     # install
     L.append('## ' + t['h_install'])
     L.append('')

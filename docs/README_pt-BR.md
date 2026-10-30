@@ -6,14 +6,14 @@
 
 <div align="center">
 
-# Segundos na hora（Show Seconds in Time）
+# Segundos no relógio da barra de status (Show Seconds in Time)
 
-Mostre os **segundos** na hora da barra de status, alterne com um único toque e mantenha a **dezena da hora em vermelho**.<br>O caminho principal usa apenas APIs públicas do AOSP (a compatibilidade com classes privadas do fabricante é opcional, só para OPPO/OnePlus/realme e ignorada quando ausente). Verificado em dispositivo real com ColorOS 15; também cobre Xiaomi, OnePlus, Honor, vivo, Samsung e outros grandes fabricantes.
+Mostra os **segundos** no relógio da barra de status, alternando com um toque. Você pode dar **uma cor a cada dígito** ou aplicar um **gradiente** na sequência toda.<br>**Toque longo** abre uma janela translúcida com o **horário da rede** (arrastar, tamanho, gradiente); as **tarefas próprias** ligam os segundos na hora escolhida.<br>O caminho principal usa apenas APIs públicas do AOSP (classes fechadas da OPPO / OnePlus / realme são opcionais e ignoradas quando não existem). Testado no ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.0.9-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
-![coloros](https://img.shields.io/badge/ColorOS%2015-verified-success.svg?style=flat-square)
+![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
 [![stars](https://img.shields.io/github/stars/kelebao/ClockSeconds.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/stargazers)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/blob/main/LICENSE)
 
@@ -23,133 +23,144 @@ Mostre os **segundos** na hora da barra de status, alterne com um único toque e
 
 ## Recursos
 
-| Recurso | Descrição |
+| Recurso | Detalhe |
 |------|------|
-| Segundos | A hora da barra de status mostra os segundos (`HH:mm:ss` / `h:mm:ss a`, segue a configuração de 12/24 horas do sistema) |
-| Toque para alternar | **Tocar** na hora da barra de status alterna a exibição dos segundos; também é possível usar **toque duplo** na página de configurações |
-| Cor da dezena | A cor da **dezena da hora** é **personalizável** (paleta de 8 cores) ou **desativável** para voltar à cor do sistema; horas de um único dígito (ex. `9:45`) não têm dezena e ficam intactas. Efetivo em todos os fabricantes |
-| Prévia ao pressionar | **Pressionar** a hora da barra de status abre uma **janela flutuante de vidro fosco** com a **hora da rede** em tempo real; arrastável, redimensionável pelo ◣ (canto inferior esquerdo), toque na hora para ver **fechar** (✕ canto superior) / **redimensionar**; o tamanho do texto se adapta à janela |
-| Hora da rede | A página de configurações compara seu relógio com a **hora padrão da rede** em tempo real; se a diferença for grande, toque em **Sincronizar** para ligar o horário automático do sistema |
-| Sem adb | As configurações vão para `Settings.Secure`; sem a permissão `WRITE_SECURE_SETTINGS` o módulo usa um broadcast tratado pelo SystemUI — **não precisa de adb** |
-| Idiomas da interface | A interface do app está traduzida em **21 idiomas** (segue o idioma do sistema automaticamente): 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული |
-| Persistência | O estado é salvo em `Settings.Secure`, compartilhado entre processos e mantido após reinícios do SystemUI |
-| Compatibilidade | Verificado no ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); também funciona direto em outros fabricantes com root como Xiaomi / Honor / Redmi / Samsung. O caminho principal usa apenas APIs públicas do AOSP, então o modo de segurança do LSPosed não é acionado. Android 10 no mínimo |
-| Tile rápido | Adicione um tile "Mostrar segundos" no painel, alterne com um toque |
-| Flutuante aprimorado | Posição e tamanho do flutuante são **lembrados**; **toque duplo** na hora também alterna |
-| Detecção configurável | Se o relógio não for detectado em outros aparelhos, toque em **Detecção automática** nas Configurações ou informe o nome do recurso (ex. clock) manualmente |
+| Segundos na barra | `HH:mm:ss` / `h:mm:ss a`, respeita o formato 12/24 h e o fuso horário. Um **espaço de largura zero** é adicionado no fim para os temas não removerem as cores; se as cores caírem, o texto é redesenhado (pausa de 5 minutos). |
+| Alternar com um toque | **Tocar** no horário liga ou desliga os segundos (pode escolher **toque duplo**); o **toque longo** é da janela de prévia. Dentro de uma tarefa aparece o aviso de que ela está no controle. |
+| Cor por dígito / gradiente | Seis dígitos **cada um com sua cor** (10 predefinições + barras HSV + cor do sistema) e os dois-pontos centralizados opticamente. Ou um **gradiente** da cor inicial à final (6 conjuntos, pontas editáveis, escurecido em fundo claro). A prévia **se desenha sozinha**, então bate com a barra pixel a pixel. |
+| Prévia no toque longo | Janela translúcida com o **horário da rede**; arraste para mover, canto ◣ para o tamanho, posição e tamanho **ficam guardados**; aceita gradiente e dígitos de largura fixa. |
+| Tarefas próprias | Janelas **a cada hora** ou **a cada dia**: ligar os segundos N minutos antes por M minutos e depois restaurar. Mudança de hora ou fuso é recalculada na hora, com revisão a cada 60 segundos. |
+| Comparação com o horário da rede | Mostra a diferença para o **horário da rede**; um toque em **Sincronizar** liga o ajuste automático do sistema. |
+| Sem precisar de adb | A escrita vai para `Settings.Secure`; sem `WRITE_SECURE_SETTINGS` um broadcast faz a SystemUI escrever — **nenhum recurso exige adb**. |
+| Bloco rápido | Adicione o bloco “Mostrar segundos” para alternar sem abrir o aplicativo. |
+| Nome do recurso do relógio | Se o relógio não for detectado, toque em **Detectar automaticamente** ou informe o nome do recurso (por exemplo `clock`). |
+| 21 idiomas de interface | Segue o idioma do sistema: 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული; os demais usam inglês. |
+| Armazenamento / alcance | O estado fica em `Settings.Secure`, é compartilhado entre processos e sobrevive a reinicializações. **Testado no ColorOS 15 / 16 (Android 15 / 16)**; o núcleo usa apenas APIs públicas, então outras marcas devem funcionar, mas só OPPO / OnePlus foram testadas. Mínimo Android 10. |
+
+## Modos de cor
+
+Duas formas de colorir, alternadas no cartão **Cores dos dígitos**: **por dígito** ou **gradiente** na sequência toda.
+
+<table><tr>
+<td align="center" width="50%">
+<img src="screenshots/colors-digit.png" alt="Por dígito: cada número com sua cor, dois-pontos centralizados opticamente" width="100%">
+<br>
+Por dígito: cada número com sua cor, dois-pontos centralizados opticamente
+</td>
+<td align="center" width="50%">
+<img src="screenshots/colors-gradient.png" alt="Gradiente: da cor inicial à final, 6 conjuntos ou pontas próprias" width="100%">
+<br>
+Gradiente: da cor inicial à final, 6 conjuntos ou pontas próprias
+</td>
+</tr></table>
 
 ## Instalação
 
-1. Baixe o APK mais recente na página [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)
-2. Ative o módulo no **LSPosed**, escopo: **Interface do sistema (`com.android.systemui`)**
-3. Reinicie o processo SystemUI ou reinicie o dispositivo
-4. Abra a página de configurações pelo **gerenciador do LSPosed** (nenhum ícone é criado na tela inicial)
+1. Baixe o APK em [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)
+2. Ative o módulo no **LSPosed** e marque o escopo **Interface do sistema** (`com.android.systemui`)
+3. Reinicie o processo da SystemUI ou o aparelho
+4. A tela de ajustes abre pelo **gerenciador do LSPosed** (não cria ícone no launcher)
 
-> Requer root (LSPosed). Para conceder `WRITE_SECURE_SETTINGS` e poder escrever em `Settings.Secure`:
+> Precisa de root (LSPosed). **Normalmente não é preciso permissão adb**: a escrita usa `Settings.Secure` e, sem `WRITE_SECURE_SETTINGS`, um broadcast faz a SystemUI escrever. Para a tela de ajustes escrever **direto**:
 > ```bash
 > adb shell pm grant io.github.kelebao.colorosclockseconds android.permission.WRITE_SECURE_SETTINGS
 > ```
-> Sem ela, você ainda pode alternar tocando na hora da barra de status (essa ação roda dentro do processo SystemUI, que já tem a permissão por natureza).
+> Sem conceder nada continua funcionando: toques, tarefas e janela rodam dentro da SystemUI.
 
 ## Uso
 
-- **Toque na hora da barra de status**: alterna a exibição dos segundos (gesto padrão).
-- A alternância é implementada com um teste de acerto de toque global, então ela **nunca entra em conflito com "puxar para baixo o painel de notificações"**—— um toque puro alterna, um arrasto continua puxando o painel. Se preferir, você pode trocar o gesto para **toque duplo** na página de configurações.
-- A página de configurações mostra o estado atual, o gesto escolhido e um botão de atualizar.
+- **Toque no horário**: segundos on/off (padrão); nos ajustes dá para usar **toque duplo**.
+- **Toque longo**: janela translúcida com o **horário da rede**, arraste para mover; tocar no horário mostra **fechar** (canto superior direito) e **tamanho** (inferior esquerdo).
+- O cartão **Cores dos dígitos** tem duas páginas e a própria aba é o interruptor.
+- O cartão **Tarefas próprias** agenda janelas como “segundos 2 minutos antes de cada hora”.
+- A troca usa uma verificação global do toque e **não conflita com o painel** de notificações.
 
 ## Prévia
 
 <table><tr>
 <td align="center" width="50%">
-<img src="screenshots/statusbar-seconds-off.jpg" alt="Segundos desativados: `15:06` — o dígito da dezena da hora `1` continua vermelho" width="100%">
+<img src="screenshots/statusbar-seconds-off.jpg" alt="Sem segundos: `15:06`, a dezena da hora mantém a cor" width="100%">
 <br>
-Segundos desativados: `15:06` — o dígito da dezena da hora `1` continua vermelho
+Sem segundos: `15:06`, a dezena da hora mantém a cor
 </td>
 <td align="center" width="50%">
-<img src="screenshots/statusbar-seconds-on.jpg" alt="Segundos ativados: `15:06:03` — minutos e segundos mantêm a cor do sistema" width="100%">
+<img src="screenshots/statusbar-seconds-on.jpg" alt="Com segundos: `15:06:03`, minutos e segundos na cor do sistema" width="100%">
 <br>
-Segundos ativados: `15:06:03` — minutos e segundos mantêm a cor do sistema
+Com segundos: `15:06:03`, minutos e segundos na cor do sistema
 </td>
 </tr></table>
 
 ## Como funciona
 
-O módulo só hooka o **SystemUI**, usando a abordagem legacy Xposed bem testada,
-e **o caminho principal usa apenas APIs públicas do AOSP, e a compatibilidade com classes privadas do fabricante é opcional e ignorada quando ausente**, então não quebra o estado interno do sistema nem aciona o modo de segurança do LSPosed:
+O módulo só faz hook na **SystemUI** e usa a API legacy estável do Xposed.
+**O núcleo usa apenas APIs públicas do AOSP; classes de fabricante são opcionais e ignoradas quando não existem**, então não quebra o sistema nem dispara o modo de segurança do LSPosed:
 
-- **Segundos**: hook do estável `TextView.setText` (after) para cachear o texto bruto que o sistema coloca na hora da barra de status,
-  depois hook do `TextView.onDraw` (before) para sobrescrever a exibição com `textoBruto:ss` depois que o sistema tiver definido o texto,
-  movido por um `Handler` de 1 segundo. Os segundos acrescentados herdam a cor do próprio texto da hora (medido `#ccffffff`).
-  Além disso, a dezena da hora é pintada de vermelho (um `ForegroundColorSpan` vermelho nesse único caractere), estejam os segundos sendo exibidos ou não;
-  minutos e segundos nunca ficam vermelhos; horas de um único dígito não têm dezena e ficam intactas.
-- **Alternar**: o painel de notificações da ColorOS intercepta toques na área da barra de status, então o `OnTouchListener` do próprio hora nunca recebe eventos.
-  O módulo por isso hooka o `View.dispatchTouchEvent` global e só inverte o interruptor `Settings.Secure` quando o toque cai dentro
-  dos limites de tela da hora reconhecido e quase não se move (toque) ou é um segundo toque dentro de 350 ms (toque duplo). O módulo **não consome**
-  nenhum evento de toque, então puxar para baixo o painel de notificações funciona como sempre.
+- **Segundos**: `TextView.setText` (after) guarda o texto do sistema e `TextView.onDraw` (before) escreve `original:ss`, atualizando a cada segundo via `Handler`.
+- **Cor por dígito**: um `ForegroundColorSpan` por caractere (spans estranhos são removidos); os dois-pontos sobem 0.11em porque layouts com vários trechos colocam o glifo mais baixo.
+- **Gradiente**: `CharacterStyle` chama `setShader` em `updateDrawState`; a prévia **se desenha sozinha** (`GradientTimeView`) porque o ColorOS 15 quantiza o shader por trecho de texto.
+- **Alternar**: o painel intercepta os toques na barra, então o módulo faz hook global em `View.dispatchTouchEvent` e só alterna quando o toque cai dentro do relógio sem arrastar; o evento **não é consumido**.
+- **Tarefas**: checar “o horário local está na janela” com timers exatos nas bordas e revisão a cada 60 segundos.
 
-## Nota sobre economia de energia
+## Consumo
 
-- **Segundos LIGADOS**: o módulo precisa de um timer de 1 segundo para mover as atualizações (o custo inerente de mostrar segundos, cerca de 60 redesenhos do hora por minuto).
-- **Segundos DESLIGADOS**: o módulo **para esse timer imediatamente** (`stopTicker`)—— nenhum despertar por segundo e nenhuma leitura entre processos.
-  Ele volta ao ritmo original do sistema de "atualizar uma vez por minuto", então desligar os segundos economiza energia de verdade.
-- O estado é guardado em **cache dentro do processo** (`sSecondsEnabled`), então o timer não lê `Settings.Secure` a cada segundo (evitando um IPC por segundo).
-- Nenhum formatador de tempo é construído: o módulo reutiliza o texto bruto do sistema e apenas acrescenta `:ss`, então não há overhead de formatação.
-- O timer mantém apenas uma **referência fraca** à view e só continua enquanto a view estiver `isAttachedToWindow()`; quando a view é destruída, ele sai automaticamente.
+- **Com segundos**: timer a cada segundo (custo inevitável). Medido na SystemUI por núcleo: 7.0% desligado, 7.25% ligado (60 s).
+- **Sem segundos**: o timer **para na hora** (`stopTicker`), sem despertar a cada segundo.
+- A **proteção de cor** desacelera 2s → 4s → … → 30s e encerra após 5 minutos sem perdas.
+- O estado é **cacheado no processo**; as tarefas usam `Handler.postDelayed`: **sem WakeLock nem AlarmManager**, não acordam o sono profundo.
 
-## Build
+## Compilar
 
-Requer **JDK 17+** (17 ou 21 recomendados) e **Android SDK Platform 35** (o Build-Tools 35 é instalado automaticamente pelo AGP).
+É preciso **JDK 17+** (17 ou 21) e **Android SDK Platform 35** (o AGP baixa o Build-Tools 35).
 
 ```bash
 export JAVA_HOME=/path/to/jdk-17-or-21
 ./gradlew assembleDebug
 ```
 
-## Backup e desenvolvimento contínuo (importante)
+## Backup e continuidade do desenvolvimento (importante)
 
-No diretório `ClockSeconds/`, **todos os arquivos exceto `build/` e `.gradle/` devem ser mantidos** (a parte de código tem apenas cerca de 140 KB):
+Na pasta `ClockSeconds/` guarde **tudo menos `build/` e `.gradle/`** (o código tem ~300 KB):
 
-| Categoria | Arquivo | Nota |
+| Categoria | Arquivos | Observação |
 |------|------|------|
-| Scripts de build | `settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle.properties` | Versão, dependências, parâmetros do compilador |
+| Arquivos de build | `settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle.properties`, `keystore.properties` | Versões, dependências, parâmetros, assinatura |
 | Gradle Wrapper | `gradlew`, `gradlew.bat`, `gradle/wrapper/*` | Fixa o Gradle 8.14.5 |
-| Código-fonte | `app/src/main/java/**` (3 arquivos `.java`) | O corpo da lógica do módulo |
-| Recursos | `app/src/main/res/**` | Strings (chinês padrão + 21 idiomas values-xx), tema |
-| Metadados do Xposed | `app/src/main/resources/META-INF/xposed/*` | Classe de entrada, escopo, versão da API |
-| Manifest | `app/src/main/AndroidManifest.xml` | Permissões, Activity |
-| Documentação | `README*.md` | Documentação em 21 idiomas |
-| CI | `.github/workflows/release.yml` | Tag gera build assinado |
+| Código | `app/src/main/java/**` (20 `.java`) | Lógica do módulo, ajustes, classes de desenho |
+| Recursos | `app/src/main/res/**` | Textos (22 idiomas), temas |
+| Metadados Xposed | `app/src/main/resources/META-INF/xposed/*` | Classe de entrada, escopo, nível de API |
+| Manifest | `app/src/main/AndroidManifest.xml` | Permissões, atividades |
+| Ferramentas | `tools/**` | Gerador do README, checagem i18n, script de release |
+| Documentos | `README*.md`, `docs/**`, `CHANGELOG.md` | Descrição, capturas, histórico de versões |
+| CI | `.github/workflows/*.yml` | Build assinado na tag |
 
 ## Solução de problemas
 
 <details>
-<summary>Expandir as etapas de solução de problemas</summary>
+<summary>Ver passos</summary>
 
-Verifique o logcat:
+Veja o logcat:
 
-- Os **builds Release** removem todos os logs de diagnóstico pelo portão `BuildConfig.DEBUG` (menor, mais limpo); nada deste módulo aparece no logcat.
-- Para investigar, instale temporariamente o **build debug** (`assembleDebug`, assinado com a mesma chave de produção, então pode ser instalado por cima do Release) e filtre pela TAG:
+- **Builds release** escondem todos os logs de diagnóstico atrás de `BuildConfig.DEBUG`.
+- Para depurar instale um **build debug** (`assembleDebug`, mesma chave) e filtre:
 
   ```bash
   adb logcat -s ColorOSClockSeconds
   ```
 
-- Se os segundos não aparecem de forma alguma: primeiro confirme se o LSPosed está com o escopo SystemUI marcado e reiniciado; depois verifique se o interruptor ficou salvo como desligado—
-  dá para ler / forçar pelo adb:
+- Sem segundos: confira o escopo “Interface do sistema” no LSPosed e reinicie; depois leia ou grave a chave:
 
   ```bash
-  adb shell settings get secure coloros_clock_seconds_enabled   # 1=ligado 0=desligado
+  adb shell settings get secure coloros_clock_seconds_enabled   # 1=on 0=off
   adb shell settings put  secure coloros_clock_seconds_enabled 1
   ```
 
-- Se não funcionar em um dispositivo que não seja ColorOS: instale o build debug e olhe as linhas `candidate:` / `CONFIG CLOCK:` no log
-  para ver se o nome do recurso / nome da classe da hora da barra de status do seu dispositivo está coberto pelas regras de reconhecimento; se não estiver, uma linha de regra extra basta.
+- Cores ou segundos voltam sozinhos: o sistema ou o tema reconstrói o texto e o módulo redesenha; se não voltar, procure `color-guard stopped` / `span-theft` no log debug.
 
 </details>
 
-## Feedback
+## Sugestões
 
-Tem dúvidas, sugestões ou comentários? Deixe uma mensagem em [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) — respondo o quanto antes.
+Dúvidas e propostas em [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues).
 
 ## License
 

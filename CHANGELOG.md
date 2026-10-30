@@ -2,9 +2,18 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 248）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 249）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc248；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc249，下面按版本记录。
+
+### vc249（正式发版 1.2.0：README 21 语言重写 + 两张颜色效果图）
+
+- 版本号去掉测试后缀：versionCode 249 / versionName `1.2.0`（测试线最后一版为 vc248 / 1.2.0-test.20261030-1930）。
+- README 正文重写为当前真实功能：11 行功能表、颜色效果两图、安装 / 使用 / 原理 / 耗电 / 编译 / 备份 / 排查共七节。
+- 其余 20 种语言 README 全部重写为同一新结构与当前内容（English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული）。`tools/readme_l10n_a..u.py` 换成新 schema，21 份 slot 键必须完全一致，缺一即 `KeyError`。
+- README 新增「颜色效果」段：`docs/screenshots/colors-digit.png`（逐位颜色）与 `docs/screenshots/colors-gradient.png`（整串渐变），真机截图裁切合成（状态栏 + 预览卡两段），由 `tools/gen_readme_i18n.py` 统一插入，README.md 仍是生成物、禁止手改。
+- 生成器徽章：版本 1.0.9 → 1.2.0，ColorOS 15 → ColorOS 15/16（PHP110 ColorOS 16 / PHK110 ColorOS 15 两台真机验证）。
+
 
 ### vc248（任务编辑页恢复「动作」行：显秒，默认选中）
 

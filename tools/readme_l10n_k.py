@@ -3,178 +3,153 @@
 
 TEXTS = {
     'es': {
-        'title': 'Segundos en la hora（Show Seconds in Time）',
+        'title': 'Segundos en la barra de estado (Show Seconds in Time)',
         'tagline': (
-            'Muestra los **segundos** en la hora de la barra de estado, alterna con un solo toque '
-            'y mantén la **decena de la hora en rojo**.<br>'
-            'La ruta principal usa solo API públicas de AOSP (la compatibilidad con clases privadas del fabricante es opcional, solo para OPPO/OnePlus/realme y se omite si no existe). Verificado en dispositivo real con ColorOS 15; '
-            'también cubre Xiaomi, OnePlus, Honor, vivo, Samsung y otros fabricantes importantes.'
+            'Muestra los **segundos** en el reloj de la barra de estado, se alterna con un toque. Puedes dar '
+            '**un color a cada dígito** o aplicar un **degradado** a toda la cadena.<br>'
+            '**Mantén pulsado** para abrir una ventana translúcida con la **hora de red** (arrastrar, tamaño, '
+            'degradado); las **tareas propias** activan los segundos a la hora indicada.<br>'
+            'El camino principal solo usa API públicas de AOSP (las clases privadas de OPPO / OnePlus / realme '
+            'son opcionales y se omiten si no existen). Probado en ColorOS 15 / 16.'
         ),
         'h_features': 'Funciones',
         'th_feature': 'Función',
-        'th_desc': 'Descripción',
+        'th_desc': 'Detalle',
         'rows': [
-            ('Segundos',
-             'El hora de la barra de estado muestra los segundos (`HH:mm:ss` / `h:mm:ss a`, sigue el ajuste de 12/24 horas del sistema)'),
-            ('Tocar para alternar',
-             '**Tocar** la hora de la barra de estado alterna la visualización de segundos; también se puede cambiar a **doble toque** en la página de ajustes'),
-            ('Color de la decena',
-             'El color de la **decena de la hora** es **personalizable** (paleta de 8 colores) o '
-             '**desactivable** para volver al color del sistema; las horas de un solo dígito '
-             '(p. ej. `9:45`) no tienen decena y quedan intactas. Efectivo en todos los fabricantes'),
-            ('Vista al mantener pulsado',
-             '**Mantener pulsada** la hora de la barra de estado abre una **ventana flotante de '
-             'cristal esmerilado** con la **hora de red** en tiempo real; arrastrable, '
-             'redimensionable con ◣ (abajo a la izquierda), toca la hora para ver **cerrar** '
-             '(✕ arriba a la derecha) / **redimensionar**; el tamaño del texto se adapta a la ventana'),
-            ('Hora de red',
-             'La página de ajustes compara tu reloj con la **hora estándar de red** en tiempo real; '
-             'si la desviación es grande, toca **Sincronizar** para activar la hora automática del sistema'),
-            ('Sin adb',
-             'Los ajustes se escriben en `Settings.Secure`; sin el permiso `WRITE_SECURE_SETTINGS` '
-             'el módulo usa automáticamente un broadcast que procesa SystemUI — '
-             '**no se necesita adb**'),
-            ('Idiomas de la interfaz',
-             'La interfaz de la app está traducida a **21 idiomas** (sigue automáticamente el idioma del sistema): '
-             '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
-             'Deutsch, Español, Français, Українська, Polski, Português (Brasil), '
-             'فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული'),
-            ('Persistencia',
-             'El estado es un segundo toque guarda en `Settings.Secure`, se comparte entre procesos y sobrevive a los reinicios de SystemUI'),
-            ('Compatibilidad',
-             'Verificado en ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); también funciona tal cual '
-             'en otros fabricantes con root como Xiaomi / Honor / Redmi / Samsung. La ruta principal usa solo API públicas de '
-             'AOSP, así que no dispara el modo seguro de LSPosed. Mínimo Android 10'),            ('Mosaico rápido',
-             'Añade un mosaico "Mostrar segundos" en el panel, alterna con un toque'),
-            ('Mejoras flotante',
-             'La posición y tamaño del flotante se **recuerdan**; **doble toque** en la hora también alterna'),
-            ('Detección configurable',
-             'Si el reloj no se detecta en otros dispositivos, pulsa **Detección automática** en Ajustes o indica su nombre de recurso (p. ej. clock) manualmente'),
-
+            ('Segundos en la barra',
+             '`HH:mm:ss` / `h:mm:ss a`, respeta el formato de 12/24 h y la zona horaria. Al final se añade un '
+             '**espacio de ancho cero** para que los temas no borren los colores; si se pierden, se redibuja solo '
+             '(pausa de 5 minutos).'),
+            ('Alternar con un toque',
+             '**Tocar** la hora activa o desactiva los segundos (se puede elegir **doble toque**); **mantener '
+             'pulsado** queda para la ventana de vista previa. Dentro de una tarea avisa de que la controla la tarea.'),
+            ('Color por dígito / degradado',
+             'Seis dígitos **cada uno con su color** (10 preajustes + barras HSV + color del sistema) y los dos '
+             'puntos centrados ópticamente. O un **degradado** de color inicial a final (6 juegos, extremos '
+             'editables, se oscurece sobre fondo claro). La tarjeta de vista previa **se dibuja sola**, así que '
+             'coincide píxel a píxel con la barra.'),
+            ('Vista previa al mantener pulsado',
+             'Ventana translúcida con la **hora de red**; arrastra para mover, esquina ◣ para el tamaño, posición '
+             'y tamaño **se recuerdan**; admite degradado y cifras de ancho fijo.'),
+            ('Tareas propias',
+             'Ventanas **cada hora** o **cada día**: activar los segundos N minutos antes durante M minutos y '
+             'luego restaurar. Si cambias la hora o la zona se recalcula al instante, con repaso cada 60 segundos.'),
+            ('Comparación con la hora de red',
+             'Muestra la desviación frente a la **hora de red**; un toque en **Sincronizar** activa el ajuste '
+             'automático del sistema.'),
+            ('Sin necesidad de adb',
+             'La configuración se escribe en `Settings.Secure`; sin `WRITE_SECURE_SETTINGS` se envía un broadcast '
+             'y la SystemUI escribe por ti: **ninguna función requiere adb**.'),
+            ('Baldosa rápida',
+             'Añade la baldosa «Mostrar segundos» para alternar sin abrir la aplicación.'),
+            ('Nombre del recurso del reloj',
+             'Si no se detecta, pulsa **Detección automática** o escribe el nombre del recurso (por ejemplo `clock`).'),
+            ('21 idiomas de interfaz',
+             'Sigue el idioma del sistema: 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, '
+             'ไทย, Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, '
+             'Bahasa Indonesia, Italiano, Ελληνικά, ქართული; el resto usa inglés.'),
+            ('Almacenamiento / alcance',
+             'El estado se guarda en `Settings.Secure`, se comparte entre procesos y persiste tras reiniciar. '
+             '**Probado en ColorOS 15 / 16 (Android 15 / 16)**; el núcleo usa solo API públicas, así que otros '
+             'fabricantes deberían funcionar, pero solo se ha probado en OPPO / OnePlus. Mínimo Android 10.'),
         ],
+        'h_colors': 'Modos de color',
+        'colors_intro': (
+            'Dos formas de colorear, se cambian en la tarjeta **Colores de dígitos**: **por dígito** '
+            'o **degradado** en toda la cadena.'
+        ),
+        'cap_digit': 'Por dígito: cada cifra con su color, puntos suspensivos centrados ópticamente',
+        'cap_grad': 'Degradado: de color inicial a final, 6 juegos o extremos propios',
         'h_install': 'Instalación',
         'install': [
-            'Descarga el APK más reciente de la página [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
-            'Activa el módulo en **LSPosed**, ámbito: **Interfaz del sistema (`com.android.systemui`)**',
-            'Reinicia el proceso SystemUI o reinicia el dispositivo',
-            'Abre la página de configuración desde el **administrador de LSPosed** (no es un segundo toque crea icono en el lanzador)',
+            'Descarga el APK desde [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
+            'Activa el módulo en **LSPosed** y marca el ámbito **Interfaz del sistema** (`com.android.systemui`)',
+            'Reinicia el proceso de SystemUI o el dispositivo',
+            'Los ajustes se abren desde el **gestor de LSPosed** (no se crea icono en el lanzador)',
         ],
         'note1': (
-            'Requiere root (LSPosed). Para conceder `WRITE_SECURE_SETTINGS` y poder escribir '
-            'en `Settings.Secure`:'
+            'Requiere root (LSPosed). **Normalmente no hacen falta permisos adb**: se escribe en '
+            '`Settings.Secure` y, sin `WRITE_SECURE_SETTINGS`, mediante broadcast que resuelve la SystemUI. '
+            'Para que los ajustes escriban **directamente**, concede:'
         ),
-        'note2': (
-            'Sin ella todavía puedes alternar tocando la hora de la barra de estado '
-            '(esa acción se ejecuta dentro del proceso SystemUI, que ya tiene el permiso de fábrica).'
-        ),
+        'note2': 'Sin conceder nada funciona igual: toques, tareas y ventana corren dentro de la SystemUI.',
         'h_usage': 'Uso',
         'usage': [
-            '**Toca la hora de la barra de estado**: alterna la visualización de segundos (gesto predeterminado).',
-            'El alternado es un segundo toque implementa con una prueba de acierto de toque global, así que **nunca '
-            'entra en conflicto con "deslizar hacia abajo el panel de notificaciones"**—— un toque puro '
-            'alterna, un deslizamiento sigue bajando el panel. Si lo prefieres, puedes cambiar el '
-            'gesto a **doble toque** en la página de configuración.',
-            'La página de configuración muestra el estado actual, el gesto elegido y un botón de actualización.',
+            '**Toca la hora**: segundos on/off (por defecto); en ajustes puedes poner **doble toque**.',
+            '**Mantén pulsado**: ventana translúcida con la **hora de red**, arrastra para mover; al tocar la hora '
+            'aparecen **cerrar** (arriba derecha) y **tamaño** (abajo izquierda).',
+            'La tarjeta **Colores de dígitos** tiene dos páginas y la pestaña es el interruptor.',
+            'La tarjeta **Tareas propias** planifica ventanas como «segundos 2 minutos antes de cada hora».',
+            'El cambio usa una comprobación global del toque y **no interfiere con bajar el panel**.',
         ],
         'h_demo': 'Vista previa',
-        'cap_off': 'Segundos desactivados: `15:06` — la decena de la hora `1` sigue en rojo',
-        'cap_on': 'Segundos activados: `15:06:03` — minutos y segundos mantienen el color del sistema',
+        'cap_off': 'Sin segundos: `15:06`, la decena de hora conserva su color',
+        'cap_on': 'Con segundos: `15:06:03`, minutos y segundos con el color del sistema',
         'h_how': 'Cómo funciona',
         'how_intro': [
-            'El módulo solo engancha **SystemUI**, con el enfoque legacy Xposed bien probado,',
-            'y **la ruta principal usa solo API públicas de AOSP, y la compatibilidad con clases privadas del fabricante es opcional y se omite si no existe**, por lo que no rompe el estado '
-            'interno del sistema ni dispara el modo seguro de LSPosed:',
+            'El módulo solo engancha la **SystemUI** y usa la API legacy estable de Xposed.',
+            '**El núcleo usa solo API públicas de AOSP; las clases de fabricante son opcionales y se omiten si no '
+            'existen**, por lo que no rompe el sistema ni dispara el modo seguro de LSPosed:',
         ],
         'how': [
-            '**Segundos**: engancha el estable `TextView.setText` (after) para cachear el texto '
-            'en crudo que el sistema pone en la hora de la barra de estado,\n'
-            'luego engancha `TextView.onDraw` (before) para sobrescribir la visualización con '
-            '`textoCrudo:ss` después de que el sistema lo haya fijado,\n'
-            'impulsado por un `Handler` de 1 segundo. Los segundos añadidos heredan el color de '
-            'texto propio de la hora (medido `#ccffffff`).\n'
-            'Además, la decena de la hora se tiñe de rojo (un `ForegroundColorSpan` rojo sobre ese '
-            'único carácter), tanto si los segundos se muestran como si no;\n'
-            'los minutos y los segundos nunca se tiñen; las horas de un solo dígito no tienen decena '
-            'y quedan intactas.',
-            '**Alternar**: El panel de notificaciones de ColorOS intercepta los toques en la zona '
-            'de la barra de estado, así que el `OnTouchListener` propio de la hora nunca recibe eventos.\n'
-            'Por eso el módulo engancha el `View.dispatchTouchEvent` global y solo gira el '
-            'interruptor `Settings.Secure` cuando la pulsación cae dentro\n'
-            'de los límites en pantalla de la hora reconocido y apenas se mueve (toque) o es un segundo toque '
-            'dentro de 350 ms (doble toque). El módulo **no consume**\n'
-            'ningún evento de toque, de modo que deslizar hacia abajo el panel de notificaciones '
-            'funciona como siempre.',
+            '**Segundos**: `TextView.setText` (after) guarda el texto del sistema y `TextView.onDraw` (before) '
+            'escribe `original:ss`, refresco cada segundo con `Handler`.',
+            '**Color por dígito**: un `ForegroundColorSpan` por carácter (se quitan spans ajenos); los dos puntos '
+            'se suben 0.11em porque los diseños con varios tramos dejan el glifo más bajo.',
+            '**Degradado**: `CharacterStyle` llama a `setShader` en `updateDrawState`; la vista previa **se dibuja '
+            'sola** (`GradientTimeView`) porque ColorOS 15 cuantiza el shader por tramo de texto.',
+            '**Alternar**: el panel intercepta los toques en la barra, así que el módulo engancha '
+            '`View.dispatchTouchEvent` global y solo cambia si el toque cae dentro del reloj sin arrastrar; el '
+            'evento **no se consume**.',
+            '**Tareas**: comprobar «¿la hora local cae en la ventana?» con temporizadores exactos en los bordes y '
+            'repaso cada 60 segundos.',
         ],
-        'h_power': 'Nota sobre ahorro de energía',
+        'h_power': 'Consumo',
         'power': [
-            '**Segundos ACTIVADOS**: el módulo necesita un temporizador de 1 segundo para las '
-            'actualizaciones (el coste inherente de mostrar segundos, unas 60 repintados del '
-            'hora por minuto).',
-            '**Segundos DESACTIVADOS**: el módulo **detiene ese temporizador de inmediato** '
-            '(`stopTicker`)—— sin ningún despertar por segundo y sin lecturas entre procesos.\n'
-            'Vuelve al ritmo original del sistema de "actualizar una vez por minuto", así que '
-            'desactivar los segundos ahorra energía de verdad.',
-            'El estado es un segundo toque almacena en **caché dentro del proceso** (`sSecondsEnabled`), así que el '
-            'temporizador no lee `Settings.Secure` cada segundo (se evita un IPC por segundo).',
-            'No es un segundo toque construye ningún formateador de tiempo: el módulo reutiliza el texto en crudo '
-            'del sistema y solo añade `:ss`, así que no hay sobrecoste de formateo.',
-            'El temporizador solo guarda una **referencia débil** a la vista y solo continúa '
-            'mientras la vista esté `isAttachedToWindow()`; cuando la vista se destruye, sale automáticamente.',
+            '**Con segundos**: temporizador cada segundo (coste inevitable). Medido en SystemUI por núcleo: '
+            '7.0% apagado, 7.25% encendido (60 s).',
+            '**Sin segundos**: el temporizador **se detiene** (`stopTicker`), no hay despertares por segundo.',
+            '**Protección de color** retrocede 2s → 4s → … → 30s y termina tras 5 minutos sin pérdidas.',
+            'El estado se **cachea en el proceso**; las tareas usan `Handler.postDelayed`: **sin WakeLock ni '
+            'AlarmManager**, no despiertan el sueño profundo.',
         ],
-        'h_build': 'Compilación',
-        'build_intro': (
-            'Requiere **JDK 17+** (se recomienda 17 o 21) y **Android SDK Platform 35** '
-            '(Build-Tools 35 lo instala AGP automáticamente).'
-        ),
-        'h_backup': 'Copia de seguridad y desarrollo continuado (importante)',
-        'backup_intro': (
-            'En el directorio `ClockSeconds/`, **hay que conservar todos los archivos '
-            'salvo `build/` y `.gradle/`** (la parte de código solo pesa unos 140 KB):'
-        ),
+        'h_build': 'Compilar',
+        'build_intro': 'Hace falta **JDK 17+** (17 o 21) y **Android SDK Platform 35** (AGP descarga Build-Tools 35).',
+        'h_backup': 'Copia y continuación del desarrollo (importante)',
+        'backup_intro': 'En la carpeta `ClockSeconds/` guarda **todo menos `build/` y `.gradle/`** (el código son ~300 KB):',
         'th_backup_cat': 'Categoría',
-        'th_backup_files': 'Archivo',
+        'th_backup_files': 'Archivos',
         'th_backup_note': 'Nota',
         'backup_rows': [
-            ('Scripts de compilación',
-             '`settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle.properties`',
-             'Versión, dependencias, parámetros del compilador'),
+            ('Archivos de compilación', '`settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, '
+             '`gradle.properties`, `keystore.properties`', 'Versiones, dependencias, parámetros, firma'),
             ('Gradle Wrapper', '`gradlew`, `gradlew.bat`, `gradle/wrapper/*`', 'Fija Gradle 8.14.5'),
-            ('Código fuente', '`app/src/main/java/**` (3 archivos `.java`)', 'El cuerpo de la lógica del módulo'),
-            ('Recursos', '`app/src/main/res/**`',
-             'Cadenas (chino por defecto + 21 idiomas values-xx), tema'),
-            ('Metadatos de Xposed', '`app/src/main/resources/META-INF/xposed/*`',
-             'Clase de entrada, ámbito, versión de API'),
-            ('Manifiesto', '`app/src/main/AndroidManifest.xml`', 'Permisos, Activity'),
-            ('Documentación', '`README*.md`', 'Documentación en 21 idiomas'),
-            ('CI', '`.github/workflows/release.yml`', 'Etiqueta produce compilación firmada'),
+            ('Código', '`app/src/main/java/**` (20 `.java`)', 'Lógica del módulo, ajustes, clases de dibujo'),
+            ('Recursos', '`app/src/main/res/**`', 'Textos (22 idiomas), temas'),
+            ('Metadatos Xposed', '`app/src/main/resources/META-INF/xposed/*`', 'Clase de entrada, ámbito, nivel de API'),
+            ('Manifest', '`app/src/main/AndroidManifest.xml`', 'Permisos, actividades'),
+            ('Herramientas', '`tools/**`', 'Generador de README, comprobación i18n, script de release'),
+            ('Documentos', '`README*.md`, `docs/**`, `CHANGELOG.md`', 'Descripción, capturas, registro de cambios'),
+            ('CI', '`.github/workflows/*.yml`', 'Compilación firmada con etiqueta'),
         ],
         'h_trouble': 'Solución de problemas',
-        'trouble_summary': 'Desplegar los pasos de solución de problemas',
-        'trouble_intro': 'Consulta el logcat:',
+        'trouble_summary': 'Ver pasos',
+        'trouble_intro': 'Mira logcat:',
         'trouble': [
-            ('b', 'Las **compilaciones Release** eliminan todos los registros de diagnóstico '
-                  'mediante la puerta `BuildConfig.DEBUG` (más pequeño y limpio); en logcat no '
-                  'aparece nada de este módulo.'),
-            ('b', 'Para investigar, instala temporalmente la **compilación debug** (`assembleDebug`, '
-                  'firmada con la misma clave de producción, así que puede instalarse encima de la '
-                  'Release directamente) y filtra por TAG:'),
+            ('b', 'Las **compilaciones Release** ocultan todos los registros de diagnóstico tras `BuildConfig.DEBUG`.'),
+            ('b', 'Para depurar instala una **compilación debug** (`assembleDebug`, misma clave) y filtra:'),
             ('code', ['adb logcat -s ColorOSClockSeconds']),
-            ('b', 'Si no aparecen segundos en absoluto: confirma primero que LSPosed tiene marcado '
-                  'el ámbito SystemUI y se ha reiniciado; luego comprueba si el interruptor quedó '
-                  'persistido como desactivado——\n'
-                  'se puede leer / forzar por adb:'),
+            ('b', 'No aparecen segundos: revisa el ámbito «Interfaz del sistema» en LSPosed y reinicia; luego lee o '
+                  'escribe el interruptor:'),
             ('code', [
-                'adb shell settings get secure coloros_clock_seconds_enabled   # 1=activado 0=desactivado',
+                'adb shell settings get secure coloros_clock_seconds_enabled   # 1=on 0=off',
                 'adb shell settings put  secure coloros_clock_seconds_enabled 1',
             ]),
-            ('b', 'Si no surte efecto en un dispositivo que no sea ColorOS: instala la compilación '
-                  'debug y mira las líneas `candidate:` / `CONFIG CLOCK:` del registro\n'
-                  'para ver si el nombre de recurso / nombre de clase de la hora de la barra de '
-                  'estado de tu dispositivo está cubierto por las reglas de reconocimiento; '
-                  'si no lo está, basta con añadir una línea de regla.'),
+            ('b', 'Los colores o los segundos vuelven solos: el sistema o el tema reconstruye el texto y el módulo '
+                  'redibuja; si no se recupera busca `color-guard stopped` / `span-theft` en el log debug.'),
         ],
-        'h_feedback': 'Comentarios',
-        'feedback': '¿Tienes preguntas, sugerencias o comentarios? Deja un mensaje en [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues) y te responderé lo antes posible.',
+        'h_feedback': 'Sugerencias',
+        'feedback': 'Dudas y propuestas en [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues).',
         'h_license': 'License',
     },
 }

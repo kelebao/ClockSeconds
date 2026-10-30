@@ -3,169 +3,150 @@
 
 TEXTS = {
     'vi': {
-        'title': 'Hiển thị giây（Show Seconds in Time）',
+        'title': 'Hiển thị giây trên đồng hồ (Show Seconds in Time)',
         'tagline': (
-            'Hiển thị **giây** trên thời gian thanh trạng thái, bật/tắt bằng một lần chạm, '
-            'và giữ **hàng chục của giờ luôn màu đỏ**.<br>'
-            'Luồng chính chỉ dùng API công khai của AOSP (tương thích lớp私有 chỉ là tùy chọn, dành cho OPPO/OnePlus/realme và bỏ qua nếu không có). Đã xác minh trên máy thật '
-            'ColorOS 15; đồng thời hỗ trợ Xiaomi, OnePlus, Honor, vivo, Samsung và các hãng lớn khác.'
+            'Hiển thị **giây** trên thanh trạng thái, chạm để bật/tắt. Có thể **tô màu từng chữ số** '
+            'hoặc phủ **dải màu chuyển** lên cả chuỗi.<br>'
+            '**Nhấn giữ** để mở cửa sổ kính mờ hiển thị **giờ mạng** (kéo, đổi kích thước, có cả dải màu); '
+            '**tác vụ tự đặt** tự bật giây đúng giờ.<br>'
+            'Phần lõi chỉ dùng API công khai của AOSP (lớp riêng của OPPO / OnePlus / realme là tuỳ chọn, '
+            'không có thì bỏ qua). Đã kiểm chứng trên ColorOS 15 / 16.'
         ),
         'h_features': 'Tính năng',
         'th_feature': 'Tính năng',
         'th_desc': 'Mô tả',
         'rows': [
-            ('Hiển thị giây',
-             'Thời gian thanh trạng thái hiển thị đến giây (`HH:mm:ss` / `h:mm:ss a`, theo cài đặt 12/24 giờ của hệ thống)'),
-            ('Chạm để bật/tắt',
-             '**Chạm** vào thời gian thanh trạng thái để bật/tắt hiển thị giây; cũng có thể đổi thành **nhấn đúp** trong trang cài đặt'),
-            ('Màu chữ số giờ',
-             'Màu **hàng chục của giờ** có thể **tùy chỉnh** (8 màu) hoặc **tắt** để trở lại màu '
-             'hệ thống; giờ một chữ số (ví dụ `9:45`) không có hàng chục nên không bị đổi. '
-             'Có hiệu lực trên mọi nhà sản xuất'),
-            ('Xem trước khi nhấn giữ',
-             '**Nhấn giữ** thời gian thanh trạng thái để hiện **cửa sổ nổi mờ** hiển thị '
-             '**giờ mạng** thời gian thực; kéo để di chuyển, kéo ◣ góc dưới trái để đổi kích thước, '
-             'nhấn vào thời gian để hiện nút **đóng** (✕ góc phải) / **kéo giãn**; '
-             'cỡ chữ tự theo cửa sổ'),
-            ('Giờ mạng',
-             'Trang cài đặt so sánh đồng hồ với **giờ chuẩn mạng** theo thời gian thực; '
-             'nếu lệch lớn hãy nhấn **Đồng bộ** để bật tự động đặt giờ hệ thống'),
-            ('Không cần adb',
-             'Cài đặt ghi vào `Settings.Secure`; nếu không có quyền `WRITE_SECURE_SETTINGS`, '
-             'module tự chuyển sang broadcast do SystemUI xử lý — **không cần cấp quyền adb**'),
-            ('Ngôn ngữ giao diện',
-             'Giao diện ứng dụng đã hỗ trợ **21 ngôn ngữ** (tự động theo ngôn ngữ hệ thống): '
-             '简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
-             'Deutsch, Español, Français, Українська, Polski, Português (Brasil), '
-             'فارسی, العربية, Bahasa Indonesia, Italiano, Ελληνικά, ქართული'),
-            ('Lưu trữ bền vững',
-             'Trạng thái lưu trong `Settings.Secure`, dùng chung giữa các tiến trình, giữ nguyên sau khi khởi động lại SystemUI'),
-            ('Phạm vi tương thích',
-             'Đã xác minh trên ColorOS 15 / 16 / 17 (OPPO / OnePlus / realme); cũng hoạt động ngay '
-             'trên các hãng đã root khác như Xiaomi / Honor / Redmi / Samsung. Luồng chính chỉ dùng API công khai của AOSP nên '
-             'không kích hoạt chế độ an toàn LSPosed. Hỗ trợ tối thiểu Android 10'),            ('Ô vuông nhanh',
-             'Thêm ô "Hiện giây" vào bảng thông báo, bật/tắt bằng một chạm'),
-            ('Cải tiến float',
-             'Vị trí & kích thước float được **nhớ**; **nhấn đúp** thời gian cũng bật/tắt giây'),
-            ('Nhận diện cấu hình',
-             'Nếu đồng hồ không tự nhận diện, hãy nhấn **Tự phát hiện** trong Cài đặt, hoặc nhập tên tài nguyên (vd clock) thủ công'),
-
+            ('Giây trên thanh trạng thái',
+             '`HH:mm:ss` / `h:mm:ss a`, theo định dạng 12/24 giờ và múi giờ của hệ thống. Cuối chuỗi được thêm '
+             '**khoảng trắng độ rộng 0** để module giao diện không xoá mất màu, và tự vẽ lại khi mất màu (nghỉ 5 phút).'),
+            ('Chạm để chuyển',
+             '**Chạm** vào thời gian để bật/tắt giây (có thể chọn **chạm hai lần**); **nhấn giữ** dành cho cửa sổ xem trước; '
+             'trong khung giờ có tác vụ, chạm sẽ báo "tác vụ đang điều khiển".'),
+            ('Màu từng chữ số / dải màu',
+             'Sáu chữ số **mỗi số một màu** (10 màu sẵn + thanh HSV + theo hệ thống), dấu hai chấm tự căn quang học; '
+             'hoặc **dải màu** từ màu đầu đến màu cuối (6 bộ sẵn, tự chọn hai đầu, nền sáng tự làm tối). '
+             'Thẻ xem trước được **tự vẽ** nên khớp từng điểm ảnh với thanh trạng thái.'),
+            ('Cửa sổ xem trước',
+             'Cửa sổ kính mờ hiển thị **giờ mạng**; kéo để di chuyển, kéo góc ◣ để đổi kích thước, vị trí và kích thước '
+             '**được ghi nhớ**; có dải màu, chữ số đều nhau.'),
+            ('Tác vụ tự đặt',
+             'Khung **mỗi giờ** hoặc **mỗi ngày**: bật giây trước N phút trong M phút rồi trả lại như cũ. '
+             'Đổi giờ hệ thống hoặc múi giờ sẽ tính lại ngay, kèm bước dự phòng 60 giây.'),
+            ('So sánh giờ mạng',
+             'Hiển thị chênh lệch giữa **giờ mạng** và giờ máy; nhấn **Đồng bộ** để bật "tự động đặt giờ" của hệ thống.'),
+            ('Không cần cấp quyền adb',
+             'Ghi cấu hình ưu tiên qua `Settings.Secure`; nếu thiếu `WRITE_SECURE_SETTINGS` thì dùng broadcast để '
+             'SystemUI ghi hộ — **không cần lệnh adb** cho bất kỳ tính năng nào.'),
+            ('Ô trong bảng thông báo',
+             'Thêm ô "Hiện giây" vào bảng thông báo để bật/tắt mà không cần mở ứng dụng.'),
+            ('Tên tài nguyên đồng hồ',
+             'Nếu không tự nhận ra, nhấn **Tự dò** hoặc tự nhập tên tài nguyên (ví dụ `clock`).'),
+            ('21 ngôn ngữ giao diện',
+             'Theo ngôn ngữ hệ thống: 简体中文, English, 繁體中文, 日本語, 한국어, Türkçe, Русский, Tiếng Việt, ไทย, '
+             'Deutsch, Español, Français, Українська, Polski, Português (Brasil), فارسی, العربية, Bahasa Indonesia, '
+             'Italiano, Ελληνικά, ქართული; ngôn ngữ khác dùng tiếng Anh.'),
+            ('Lưu trữ / phạm vi',
+             'Trạng thái lưu trong `Settings.Secure`, dùng chung giữa các tiến trình và giữ sau khi khởi động lại. '
+             '**Đã kiểm chứng trên ColorOS 15 / 16 (Android 15 / 16)**; lõi chỉ dùng API công khai nên hãng khác '
+             'cũng nên chạy được, nhưng mới thử trên OPPO / OnePlus. Tối thiểu Android 10.'),
         ],
+        'h_colors': 'Kiểu tô màu',
+        'colors_intro': (
+            'Hai cách tô màu, chuyển trong thẻ **Màu chữ số**: **từng chữ số** (mỗi số một màu) '
+            'hoặc **dải màu** cho cả chuỗi.'
+        ),
+        'cap_digit': 'Từng chữ số: mỗi số một màu, dấu hai chấm căn quang học',
+        'cap_grad': 'Dải màu: từ màu đầu đến màu cuối, 6 bộ sẵn hoặc tự chọn',
         'h_install': 'Cài đặt',
         'install': [
-            'Tải APK mới nhất từ trang [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
-            'Bật module trong **LSPosed**, phạm vi: **Giao diện hệ thống (`com.android.systemui`)**',
-            'Khởi động lại tiến trình SystemUI hoặc khởi động lại thiết bị',
-            'Mở trang cài đặt từ **trình quản lý LSPosed** (không tạo biểu tượng trên màn hình chính)',
+            'Tải APK mới nhất từ [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest)',
+            'Bật module trong **LSPosed** và chọn phạm vi **Giao diện hệ thống** (`com.android.systemui`)',
+            'Khởi động lại tiến trình SystemUI hoặc khởi động lại máy',
+            'Mở trang cài đặt từ **trình quản lý LSPosed** (không tạo biểu tượng ở màn hình chính)',
         ],
         'note1': (
-            'Cần root (LSPosed). Để ghi vào `Settings.Secure` cần cấp quyền '
-            '`WRITE_SECURE_SETTINGS`:'
+            'Cần root (LSPosed). **Thường không cần quyền adb**: ghi qua `Settings.Secure`, thiếu '
+            '`WRITE_SECURE_SETTINGS` thì dùng broadcast để SystemUI ghi hộ. Muốn trang cài đặt ghi **trực tiếp**, hãy cấp:'
         ),
-        'note2': (
-            'Khi chưa cấp quyền vẫn có thể bật/tắt bằng cách chạm vào thời gian thanh trạng thái '
-            '(thao tác này chạy bên trong tiến trình SystemUI, vốn đã có quyền sẵn).'
-        ),
-        'h_usage': 'Cách dùng',
+        'note2': 'Không cấp cũng không ảnh hưởng: chạm, tác vụ và cửa sổ nổi đều chạy trong SystemUI.',
+        'h_usage': 'Sử dụng',
         'usage': [
-            '**Chạm vào thời gian thanh trạng thái**: bật/tắt hiển thị giây (cử chỉ mặc định).',
-            'Việc bật/tắt được thực hiện bằng phép kiểm tra chạm toàn cục, nên **không bao giờ xung đột '
-            'với "kéo xuống thanh thông báo"** — chạm thuần túy thì bật/tắt, vuốt vẫn kéo thanh thông báo '
-            'như thường. Nếu quen hơn, bạn có thể đổi cử chỉ thành **nhấn đúp** trong trang cài đặt.',
-            'Trang cài đặt cho xem trạng thái hiện tại, cử chỉ đang dùng và làm mới trạng thái.',
+            '**Chạm vào thời gian**: bật/tắt giây (mặc định); có thể chọn **chạm hai lần** trong cài đặt.',
+            '**Nhấn giữ thời gian**: cửa sổ kính mờ hiện **giờ mạng**, kéo để di chuyển, chạm vào thời gian để hiện nút '
+            '**đóng** (trên phải) và **đổi cỡ** (dưới trái).',
+            'Thẻ **Màu chữ số** có hai trang và chính thẻ tab là công tắc: **từng chữ số** hoặc **dải màu**.',
+            'Thẻ **Tác vụ tự đặt** đặt các khung kiểu "bật giây trước mỗi giờ 2 phút".',
+            'Việc chuyển dùng kiểm tra chạm toàn cục nên **không xung đột với việc kéo bảng thông báo**.',
+            'Trang cài đặt hiển thị trạng thái, thao tác, màu, chênh lệch giờ mạng và nút **đồng bộ** một chạm.',
         ],
         'h_demo': 'Xem trước',
-        'cap_off': 'Tắt giây: `15:06` — chữ số hàng chục của giờ `1` vẫn màu đỏ',
-        'cap_on': 'Bật giây: `15:06:03` — phút và giây giữ màu hệ thống',
-        'h_how': 'Nguyên lý hoạt động',
+        'cap_off': 'Tắt giây: `15:06`, hàng chục giờ giữ màu đã chọn',
+        'cap_on': 'Bật giây: `15:06:03`, phút và giây giữ màu hệ thống',
+        'h_how': 'Nguyên lý',
         'how_intro': [
-            'Module chỉ hook **một tiến trình SystemUI**, theo mẫu legacy Xposed vững chắc,',
-            '**luồng chính chỉ dùng API công khai của AOSP, còn tương thích lớp私有 là tùy chọn và bỏ qua nếu không có**, nên không phá vỡ '
-            'trạng thái nội bộ hệ thống và không kích hoạt chế độ an toàn LSPosed:',
+            'Module chỉ hook **SystemUI** và dùng API legacy Xposed ổn định.',
+            '**Lõi chỉ dùng API công khai của AOSP, lớp riêng của hãng là tuỳ chọn và bỏ qua khi không có**, '
+            'nên không phá trạng thái hệ thống và không kích hoạt chế độ an toàn của LSPosed:',
         ],
         'how': [
-            '**Hiển thị giây**: hook `TextView.setText` (after) ổn định để lưu văn bản gốc mà hệ thống '
-            'đặt lên thời gian thanh trạng thái,\n'
-            'sau đó hook `TextView.onDraw` (before) để ghi đè hiển thị thành `văn bản gốc:ss` '
-            'ngay sau khi hệ thống đã đặt xong văn bản,\n'
-            'với `Handler` chu kỳ 1 giây điều khiển. Giây được thêm vào giữ nguyên màu chữ của thời gian '
-            'hệ thống (đo thực tế là `#ccffffff`).\n'
-            'Đồng thời tô đỏ "hàng chục của giờ" (thêm một đoạn `ForegroundColorSpan` màu đỏ cho ký tự đó), '
-            'dù bật hay tắt hiển thị giây đều giữ màu đỏ;\n'
-            'phút và giây không bị tô đỏ; giờ một chữ số không có hàng chục nên không bị đổi.',
-            '**Bật/tắt**: Bảng điều khiển thông báo của ColorOS chặn sự kiện chạm ở vùng thanh trạng thái, '
-            'nên `OnTouchListener` của chính thời gian không nhận được sự kiện.\n'
-            'Vì vậy module chuyển sang hook `View.dispatchTouchEvent` toàn cục, chỉ lật công tắc '
-            '`Settings.Secure` khi điểm nhấn rơi trong biên màn hình\n'
-            'của thời gian đã nhận diện và gần như không dịch chuyển (chạm) hoặc là lần chạm thứ hai trong 350ms (nhấn đúp). '
-            'Module **không tiêu thụ**\n'
-            'bất kỳ sự kiện chạm nào, nên việc kéo xuống thanh thông báo vẫn như thường.',
+            '**Giây**: hook `TextView.setText` (after) để lưu văn bản gốc, rồi `TextView.onDraw` (before) ghi '
+            '`gốc:ss`, cập nhật mỗi giây bằng `Handler`.',
+            '**Màu từng số**: mỗi chữ số một `ForegroundColorSpan` (bỏ span lạ trước); dấu hai chấm được nâng '
+            '0.11em bằng `CharacterStyle` vì bố cục nhiều run đặt glyph thấp hơn.',
+            '**Dải màu**: `CharacterStyle` gọi `setShader` trong `updateDrawState`; thẻ xem trước **tự vẽ** '
+            '(`GradientTimeView`) vì ColorOS 15 lượng tử hoá shader theo run.',
+            '**Chuyển trạng thái**: bảng thông báo nuốt chạm trên thanh trạng thái nên module hook '
+            '`View.dispatchTouchEvent` toàn cục và chỉ đổi khi điểm nhấn nằm trong đồng hồ và gần như không di chuyển. '
+            'Không **tiêu thụ** sự kiện.',
+            '**Tác vụ**: xác định "giờ địa phương có trong khung không", hẹn giờ chính xác ở biên và dự phòng 60 giây.',
         ],
-        'h_power': 'Giải thích về tiết kiệm điện',
+        'h_power': 'Tiêu thụ điện',
         'power': [
-            '**Khi bật hiển thị giây**: module cần bộ đếm thời gian chu kỳ 1 giây để làm mới '
-            '(đây là chi phí cố hữu của việc "hiện giây", khoảng 60 lần vẽ lại thời gian mỗi phút).',
-            '**Khi tắt hiển thị giây**: module **dừng ngay bộ đếm thời gian đó** (`stopTicker`), '
-            'không còn bất kỳ lần đánh thức mỗi giây, cũng không còn đọc liên tiến trình,\n'
-            'trở về nhịp "làm mới mỗi phút một lần" vốn có của hệ thống, nên tắt hiển thị giây '
-            'thực sự tiết kiệm điện hơn.',
-            'Trạng thái được lưu trong **bộ nhớ đệm nội tiến trình** (`sSecondsEnabled`), bộ đếm thời gian '
-            'không đọc `Settings.Secure` mỗi giây (tránh IPC mỗi giây).',
-            'Module không tạo bất kỳ bộ định dạng thời gian nào, tái sử dụng trực tiếp văn bản gốc của '
-            'hệ thống và chỉ nối thêm `:ss`, nên không có chi phí bộ định dạng.',
-            'Bộ đếm thời gian chỉ giữ **tham chiếu yếu** tới view, và chỉ tiếp tục khi view '
-            '`isAttachedToWindow()`, view bị hủy thì tự thoát.',
+            '**Bật giây**: cần hẹn giờ 1 giây (chi phí cố hữu). Đo SystemUI một nhân: 7.0% khi tắt, 7.25% khi bật (60 s).',
+            '**Tắt giây**: hẹn giờ **dừng ngay** (`stopTicker`), không đánh thức mỗi giây.',
+            '**Giữ màu** giãn 2s → 4s → … → 30s và tự dừng sau 5 phút không mất màu.',
+            'Trạng thái **lưu trong tiến trình**, không đọc `Settings.Secure` mỗi giây.',
+            'Dự phòng tác vụ dùng `Handler.postDelayed`: **không WakeLock, không AlarmManager**.',
         ],
-        'h_build': 'Build',
-        'build_intro': (
-            'Cần **JDK 17+** (khuyến nghị 17 hoặc 21) và **Android SDK Platform 35** '
-            '(Build-Tools 35 do AGP tự cài).'
-        ),
-        'h_backup': 'Sao lưu & phát triển tiếp (quan trọng)',
-        'backup_intro': (
-            'Trong thư mục `ClockSeconds/`, **mọi file trừ `build/` và `.gradle/` '
-            'đều phải giữ lại** (phần mã nguồn chỉ khoảng 140 KB):'
-        ),
+        'h_build': 'Biên dịch',
+        'build_intro': 'Cần **JDK 17+** (khuyến nghị 17 hoặc 21) và **Android SDK Platform 35** (AGP tự tải Build-Tools 35).',
+        'h_backup': 'Sao lưu và tiếp tục phát triển (quan trọng)',
+        'backup_intro': 'Trong thư mục `ClockSeconds/` giữ **mọi thứ trừ `build/` và `.gradle/`** (phần mã chỉ ~300 KB):',
         'th_backup_cat': 'Loại',
         'th_backup_files': 'Tệp',
         'th_backup_note': 'Ghi chú',
         'backup_rows': [
-            ('Script build',
-             '`settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle.properties`',
-             'Phiên bản, phụ thuộc, tham số biên dịch'),
-            ('Gradle Wrapper', '`gradlew`, `gradlew.bat`, `gradle/wrapper/*`', 'Cố định Gradle 8.14.5'),
-            ('Mã nguồn', '`app/src/main/java/**` (3 tệp `.java`)', 'Thân logic của module'),
-            ('Tài nguyên', '`app/src/main/res/**`',
-             'Chuỗi (mặc định tiếng Trung + 21 ngôn ngữ values-xx), chủ đề'),
-            ('Siêu dữ liệu Xposed', '`app/src/main/resources/META-INF/xposed/*`',
-             'Lớp vào, phạm vi, phiên bản API'),
-            ('Manifest', '`app/src/main/AndroidManifest.xml`', 'Quyền, Activity'),
-            ('Tài liệu', '`README*.md`', 'Tài liệu 21 ngôn ngữ'),
-            ('CI', '`.github/workflows/release.yml`', 'Đẩy tag là ra bản ký'),
+            ('Tệp biên dịch',
+             '`settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle.properties`, `keystore.properties`',
+             'Phiên bản, phụ thuộc, tham số, ký'),
+            ('Gradle Wrapper', '`gradlew`, `gradlew.bat`, `gradle/wrapper/*`', 'Ghim Gradle 8.14.5'),
+            ('Mã nguồn', '`app/src/main/java/**` (20 tệp `.java`)', 'Logic module, trang cài đặt, lớp vẽ'),
+            ('Tài nguyên', '`app/src/main/res/**`', 'Chuỗi (22 ngôn ngữ), chủ đề'),
+            ('Siêu dữ liệu Xposed', '`app/src/main/resources/META-INF/xposed/*`', 'Lớp vào, phạm vi, mức API'),
+            ('Manifest', '`app/src/main/AndroidManifest.xml`', 'Quyền, activity'),
+            ('Script công cụ', '`tools/**`', 'Bộ tạo README, kiểm tra i18n, script phát hành'),
+            ('Tài liệu', '`README*.md`, `docs/**`, `CHANGELOG.md`', 'Mô tả, ảnh chụp, nhật ký'),
+            ('CI', '`.github/workflows/*.yml`', 'Bản ký khi tạo tag'),
         ],
-        'h_trouble': 'Xử lý sự cố',
-        'trouble_summary': 'Mở các bước xử lý sự cố',
+        'h_trouble': 'Khắc phục',
+        'trouble_summary': 'Xem các bước',
         'trouble_intro': 'Xem logcat:',
         'trouble': [
-            ('b', '**Bản build Release** đã dùng cổng `BuildConfig.DEBUG` để loại bỏ toàn bộ '
-                  'log chẩn đoán (nhỏ hơn, sạch hơn); logcat không in ra log của module này.'),
-            ('b', 'Khi cần xử lý sự cố, hãy tạm cài **bản build debug** (`assembleDebug`, ký bằng '
-                  'cùng khóa production nên cài đè trực tiếp lên bản release), rồi lọc theo TAG:'),
+            ('b', '**Bản release** ẩn mọi log chẩn đoán sau `BuildConfig.DEBUG`.'),
+            ('b', 'Khi cần gỡ lỗi, cài **bản debug** (`assembleDebug`, ký cùng khoá) rồi lọc:'),
             ('code', ['adb logcat -s ColorOSClockSeconds']),
-            ('b', 'Nếu hoàn toàn không hiện giây: trước hết xác nhận LSPosed đã tick phạm vi SystemUI '
-                  'và đã khởi động lại; sau đó kiểm tra công tắc có bị lưu ở trạng thái tắt không ——\n'
-                  'có thể đọc / ghi cưỡng chế qua adb:'),
+            ('b', 'Không có giây: kiểm tra phạm vi System UI trong LSPosed và khởi động lại; sau đó đọc hoặc ghi đè công tắc:'),
             ('code', [
                 'adb shell settings get secure coloros_clock_seconds_enabled   # 1=bật 0=tắt',
                 'adb shell settings put  secure coloros_clock_seconds_enabled 1',
             ]),
-            ('b', 'Nếu không có tác dụng trên máy không phải ColorOS: cài bản debug xem log ở dòng '
-                  '`candidate:` / `CONFIG CLOCK:`,\n'
-                  'xác nhận tên tài nguyên / tên lớp của thời gian thanh trạng thái trên máy đó có nằm '
-                  'trong quy tắc nhận diện không; nếu không thì chỉ cần bổ sung một dòng quy tắc.'),
+            ('b', 'Màu hoặc giây tự trở về: hệ thống hoặc chủ đề đang dựng lại văn bản và module tự vẽ lại; '
+                  'nếu mãi không hồi, tìm `color-guard stopped` / `span-theft` trong log debug.'),
+            ('b', 'Không chạy trên máy không phải ColorOS: xem `candidate:` / `CONFIG CLOCK:` trong bản debug để biết '
+                  'lớp hoặc tên tài nguyên đồng hồ có khớp quy tắc nhận diện không.'),
         ],
         'h_feedback': 'Phản hồi',
-        'feedback': 'Có câu hỏi, góp ý hoặc chia sẻ? Hãy để lại lời nhắn tại [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues), tôi sẽ phản hồi sớm nhất có thể.',
+        'feedback': 'Câu hỏi, góp ý: mở [GitHub Issues](https://github.com/kelebao/ClockSeconds/issues).',
         'h_license': 'License',
     },
 }

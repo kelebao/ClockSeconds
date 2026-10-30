@@ -51,6 +51,13 @@ TEXTS = {
              '**ColorOS 15 / 16（Android 15 / 16）已真机验证**；核心链路只用 AOSP 公开 API，理论上其它厂商同样生效，'
              '但作者手上只有 OPPO / 一加的机器，**其它厂商尚未真机验证**。最低支持 Android 10'),
         ],
+        'h_colors': '颜色效果',
+        'colors_intro': (
+            '两种上色方式，随时在「数字颜色」卡里切换：'
+            '**逐位颜色**（六个数字各自一色）与**整串渐变**（起点色 → 终点色平滑过渡）。'
+        ),
+        'cap_digit': '逐位颜色：六位数字各选一色，冒号自动光学居中',
+        'cap_grad': '整串渐变：起点色 → 终点色平滑过渡，6 套预设、两端自定义',
         'h_install': '安装',
         'install': [
             '从 [**Releases**](https://github.com/kelebao/ClockSeconds/releases/latest) 下载最新版 APK',
