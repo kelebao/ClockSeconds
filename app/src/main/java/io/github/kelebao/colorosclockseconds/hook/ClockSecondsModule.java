@@ -116,6 +116,30 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /** 进程内缓存的显秒开关（默认开启）；点击切换与首次遇到时钟时刷新。 */
     private static volatile boolean sSecondsEnabled;
+
+    // ---------------- 自定义任务（定时显秒 / 定时关秒） ----------------
+
+    /** 任务列表（Secure 里的 JSON，见 {@link io.github.kelebao.colorosclockseconds.ClockTask}）。 */
+    private static volatile List<io.github.kelebao.colorosclockseconds.ClockTask> sTasks =
+            Collections.emptyList();
+    /** 当前是否有任务要求强制显秒 / 强制关秒；两者同时命中时「关」优先。 */
+    private static volatile boolean sTaskShow;
+    private static volatile boolean sTaskHide;
+    private static android.os.Handler sTaskHandler;
+
+    /**
+     * 生效中的显秒状态 = 总开关 {@link #sSecondsEnabled} 叠加任务窗口。
+     * 所有「要不要显示秒」的判断都必须走这里，不要直接读 {@link #sSecondsEnabled}。
+     */
+    private static boolean secondsOn() {
+        if (sTaskHide) {
+            return false;
+        }
+        if (sTaskShow) {
+            return true;
+        }
+        return sSecondsEnabled;
+    }
     private static volatile boolean sStateLoaded;
     /** 配置广播接收器是否已注册（只注册一次）。 */
     private static volatile boolean sConfigReceiverRegistered;
@@ -324,7 +348,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         logSpans(view, "after-system");
                     }
                     configureClockView(view);
-                    if (sSecondsEnabled) {
+                    if (secondsOn()) {
                         installTicker(view);
                         refreshClock(view);
                         // 系统/第三方主题模块（如 dev.puitheme.StatusBarModule）常在 setText 之后
@@ -368,7 +392,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             refreshClockRect(view);
                         }
                         // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
-                        if (sSecondsEnabled) {
+                        if (secondsOn()) {
                             refreshClock(view);
                         }
                     }
@@ -779,7 +803,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             }
                         }
                         CONFIGURED.remove(v);
-                    } else if (sSecondsEnabled && isStatusBarClock(v)) {
+                    } else if (secondsOn() && isStatusBarClock(v)) {
                         installTicker(v);
                         refreshClock(v);
                     }
@@ -816,7 +840,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         for (WeakReference<TextView> ref : sClockCandidates) {
             TextView v = ref.get();
             if (v != null && isStatusBarClock(v) && isClockEnabled(v)
-                    && sSecondsEnabled && !CONFIGURED.contains(v)) {
+                    && secondsOn() && !CONFIGURED.contains(v)) {
                 try {
                     configureClockView(v);
                     // 关键：停用时 stopTicker 已把秒表移除，重新启用必须重新装秒表，
@@ -841,6 +865,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         org.json.JSONObject root = new org.json.JSONObject();
         try {
             root.put("secondsEnabled", sSecondsEnabled);
+            root.put("secondsOn", secondsOn());
+            root.put("taskShow", sTaskShow);
+            root.put("taskHide", sTaskHide);
+            root.put("taskCount", sTasks.size());
             root.put("gesture", ClockSecondsConfig.getGesture(cr));
             root.put("lastTouchX", (int) sLastTouchX);
             root.put("lastTouchY", (int) sLastTouchY);
@@ -1671,6 +1699,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             sSecondsEnabled = ClockSecondsConfig.isEnabled(context.getContentResolver());
             // ColorOS 17：让系统原生显秒开关跟随本模块状态（非 ColorOS 17 时内部直接返回）。
             mirrorNativeSeconds(context.getContentResolver(), sSecondsEnabled);
+            // 任务窗口决定「此刻到底显不显秒」，状态加载时一并算出来。
+            reloadTasks(context);
             if (!sCustomRuleLoaded) {
                 sCustomRule = ClockSecondsConfig.getClockRule(context.getContentResolver());
                 sCustomRuleLoaded = true;
@@ -2309,7 +2339,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 try {
                     // 用户已停用该时钟时不再补色/补秒，避免「全关仍有颜色」。
                     if (isStatusBarClock(view) && isClockEnabled(view)) {
-                        if (sSecondsEnabled) {
+                        if (secondsOn()) {
                             // 显秒开：重走 writeTime（会重新追加秒 + 上色），
                             // 避免被系统异步 Runnable 的纯文本覆盖后秒也一起丢。
                             writeTime(view);
@@ -2329,9 +2359,100 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     private static void refreshClock(TextView view) {
-        if (isStatusBarClock(view) && isClockEnabled(view) && sSecondsEnabled) {
+        if (isStatusBarClock(view) && isClockEnabled(view) && secondsOn()) {
             writeTime(view);
         }
+    }
+
+    // ==================================================================
+    // 自定义任务：窗口计算与定时翻转
+    // ==================================================================
+
+    /** 从 Secure 重读任务列表，重算当前窗口并安排下一次翻转。 */
+    private static void reloadTasks(Context context) {
+        if (context == null) {
+            return;
+        }
+        try {
+            sTasks = io.github.kelebao.colorosclockseconds.ClockTask.parse(
+                    ClockSecondsConfig.getTasksJson(context.getContentResolver()));
+        } catch (Throwable t) {
+            sTasks = Collections.emptyList();
+        }
+        evaluateTasks();
+    }
+
+    /** 重算任务窗口状态；状态变了立刻刷新时钟，并把定时器对齐到下一次翻转。 */
+    private static void evaluateTasks() {
+        try {
+            long now = System.currentTimeMillis();
+            boolean show = false;
+            boolean hide = false;
+            long next = Long.MAX_VALUE;
+            for (io.github.kelebao.colorosclockseconds.ClockTask t : sTasks) {
+                if (t == null || !t.enabled) {
+                    continue;
+                }
+                if (t.windowContains(now)) {
+                    if (t.action == io.github.kelebao.colorosclockseconds.ClockTask.ACTION_HIDE) {
+                        hide = true;
+                    } else {
+                        show = true;
+                    }
+                }
+                long nt = t.nextTransition(now);
+                if (nt < next) {
+                    next = nt;
+                }
+            }
+            boolean changed = show != sTaskShow || hide != sTaskHide;
+            sTaskShow = show;
+            sTaskHide = hide;
+            scheduleTaskTick(next == Long.MAX_VALUE ? -1L : next - now + 300L);
+            if (changed) {
+                if (BuildConfig.DEBUG) {
+                    XposedBridge.log(LOG_PREFIX + "TASK state show=" + show + " hide=" + hide);
+                }
+                applyTaskState();
+            }
+        } catch (Throwable t) {
+            noteHookError(t);
+        }
+    }
+
+    /** 安排下一次窗口翻转的定时器（delayMs <= 0 表示没有未来翻转，不排）。 */
+    private static void scheduleTaskTick(long delayMs) {
+        if (sTaskHandler == null) {
+            sTaskHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        }
+        sTaskHandler.removeCallbacks(TASK_TICK);
+        if (delayMs > 0) {
+            // 上限 6 小时：任务被删/改后旧定时器最多残留这么久，每次广播都会重排。
+            sTaskHandler.postDelayed(TASK_TICK, Math.min(delayMs, 6L * 3600_000L));
+        }
+    }
+
+    private static final Runnable TASK_TICK = new Runnable() {
+        @Override
+        public void run() {
+            evaluateTasks();
+        }
+    };
+
+    /** 任务把显秒翻了个面：按新状态重写时钟文本并同步 ticker。 */
+    private static void applyTaskState() {
+        TextView clock = sClockView;
+        if (clock == null || !isClockEnabled(clock)) {
+            return;
+        }
+        if (secondsOn()) {
+            writeTime(clock);
+            installTicker(clock);
+        } else {
+            installTicker(clock);
+            writeMinuteOnly(clock);
+        }
+        refreshClockNow();
     }
 
     // ==================================================================
@@ -2348,7 +2469,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 显秒关：给该时钟单独启动/续期守护窗口（窗口内稳定无掉色才会自动停）。
             // 注意：守护截止时间按"视图"独立保存，避免多个时钟共享一个静态导致
             // 一个时钟停了把其它时钟的守护窗口也误重置（旧版共享静态会导致 ticker 永不自动停）。
-            if (!sSecondsEnabled) {
+            if (!secondsOn()) {
                 ticker.guardUntil = SystemClock.uptimeMillis() + COLOR_COOLDOWN_MS;
             }
             // View.post 在 SystemUI 早于主 Looper 准备好时也是安全的：Android 会把动作排队到视图挂载后执行。
@@ -2413,11 +2534,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 仍保持每秒轮询，以便亮屏的瞬间立即恢复走秒。
             // 注：系统省电模式不再暂停走秒（vc221 按用户要求删除该行为）。
             Context ctx = view.getContext();
-            if (sSecondsEnabled && !isInteractive(ctx)) {
+            if (secondsOn() && !isInteractive(ctx)) {
                 view.postDelayed(this, 1000L);
                 return;
             }
-            if (sSecondsEnabled) {
+            if (secondsOn()) {
                 refreshClock(view);
                 // 对齐到下一秒边界，避免每秒漂移。
                 long delay = 1000L - (System.currentTimeMillis() % 1000L);
@@ -2799,6 +2920,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
+        filter.addAction(ClockSecondsConfig.ACTION_SET_TASKS);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
@@ -2837,6 +2959,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 ClockSecondsConfig.setGradientEnabled(cr, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
                                 reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_TASKS.equals(action)) {
+                                // 自定义任务整份覆盖写：设置页每次改动都发全量列表，这里直接落盘再重算窗口。
+                                ClockSecondsConfig.setTasksJson(cr, intent.getStringExtra(
+                                        ClockSecondsConfig.EXTRA_TASKS));
+                                reloadTasks(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR.equals(action)) {
                                 // 渐变端点色（0 = 起点，1 = 终点）：取色即生效。
@@ -2887,7 +3015,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     sCustomRule = best; // 立即生效，无需重启
                                     ClockSecondsConfig.setClockRule(cr, best);
                                     // 让新规则命中的时钟立即接管（正常也会在下一次 setText 自动配置）。
-                                    if (sSecondsEnabled) {
+                                    if (secondsOn()) {
                                         for (WeakReference<TextView> ref : sClockCandidates) {
                                             TextView v = ref.get();
                                             if (v != null && isStatusBarClock(v)
@@ -3104,7 +3232,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         sSecondsEnabled = en;
                                         TextView clock = sClockView;
                                         if (clock != null && isClockEnabled(clock)) {
-                                            if (en) {
+                                            if (secondsOn()) {
                                                 writeTime(clock);
                                                 installTicker(clock);
                                             } else {
@@ -3114,6 +3242,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         }
                                     } else if (ClockSecondsConfig.CLOCK_TEST_ENABLED_KEY.equals(key)) {
                                         applyClockTestToActive(ocr);
+                                    } else if (ClockSecondsConfig.TASKS_KEY.equals(key)) {
+                                        // 任务列表被外部（adb / 设置页直写）改动：重算窗口。
+                                        reloadTasks(context);
                                     }
                                 } catch (Throwable ignored2) {
                                     // 同步失败不影响系统
@@ -3124,6 +3255,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 ClockSecondsConfig.MODULE_SECONDS_KEY), false, sSecureObserver);
                         ocr.registerContentObserver(android.provider.Settings.Secure.getUriFor(
                                 ClockSecondsConfig.CLOCK_TEST_ENABLED_KEY), false, sSecureObserver);
+                        ocr.registerContentObserver(android.provider.Settings.Secure.getUriFor(
+                                ClockSecondsConfig.TASKS_KEY), false, sSecureObserver);
                     } catch (Throwable ignored2) {
                         // 监听注册失败不影响广播路径
                     }
@@ -3179,7 +3312,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             // 配置变了要重写一次：幂等短路会保留旧 span（旧端点色 / 旧渐变开关）。
             sForceRewrite = true;
-            if (sSecondsEnabled) {
+            if (secondsOn()) {
                 writeTime(clock);
             } else {
                 writeMinuteOnly(clock);

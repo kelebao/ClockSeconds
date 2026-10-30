@@ -2,10 +2,18 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 222）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 223）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc222；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：未发布。** 测试线从 vc37 累积到 vc223；正式发版时本段即为 v1.2.0 的更新内容。
 
+### vc223（自定义任务 + 散光最亮 + 删「小时颜色」卡）
+
+- **统计行右卡换成「自定义任务」**：原来那张「小时颜色」小卡（色点 + 色号）整卡删除，相关的 `refreshColorSummary()`、`colorDotView` / `colorValueView` 字段与呼吸分支一并删除。新卡没任务时显示「无任务」，有任务时显示「N 个任务」，全部关闭时显示「已全部关闭」。
+- **点卡片弹出「自定义任务」弹窗**：从点击的那一点**圆形展开**铺满一张卡片（`ViewAnimationUtils.createCircularReveal`，280ms），里面是任务列表 + 右下角圆形「＋」按钮；点「＋」进编辑页，点任务行进同一条的编辑页。
+- **任务能做什么**：触发方式可选**每整点**或**自定义时间（HH:mm）**；可设**提前 N 分钟**开始（0~59）；可设**持续 M 分钟**（1~180）；动作可选**显秒**或**关闭显秒**——即「到点自动开秒 / 到点自动关秒」，两条规则同时命中时「关闭」优先。
+- **落地方式**：任务列表以 JSON 存 Secure `coloros_clock_seconds_tasks`；设置页无 `WRITE_SECURE_SETTINGS` 时走广播 `ACTION_SET_TASKS` 由 SystemUI 里的模块代写并轮询校验。模块侧新增任务引擎（`reloadTasks` / `evaluateTasks` / `applyTaskState` + 精确定时器），把「是否显秒」统一收口到 `secondsOn()`（任务命中 > 总开关）。
+- **散光呼吸亮度调到最亮**：端点色点的散光中间色 35% → 65% 不透明度，呼吸亮度从平方衰减改为线性（峰值满亮），谷底强度 0.45 → 0.68，扩散半径谷底 0.58 → 0.72，看起来更亮、起伏仍明显。
+- **i18n 补齐**：新增 28 条任务相关文案（22 条界面 + 6 条摘要模板），并把此前遗漏的 6 个键（`settings_digit_sum_v2` / `settings_digit_tab_digit` / `settings_gradient_title` / `settings_gradient_start` / `settings_gradient_end` / `swatch_brown`）补进全部 20 个语言目录——`tools/check_i18n.py` 从「6 键不一致」恢复为 **130 键 × 22 文件全部一致**。
 ### vc222（渐变预设换色）
 
 - 第一套预设（黄绿 `#C3F823` → 紫 `#5E32FE`）保持不变，其余五套按用户指定换色：

@@ -57,6 +57,9 @@ public final class ClockSecondsConfig {
     public static final String HOUR_COLOR_KEY = "coloros_clock_seconds_hour_color";
     public static final int HOUR_COLOR_DEFAULT = 0xFFF44336;
 
+    /** 自定义任务列表（JSON 数组，元素见 {@link ClockTask}）。设置页经广播写入，SystemUI 侧读取。 */
+    public static final String TASKS_KEY = "coloros_clock_seconds_tasks";
+
     /** 小时颜色总开关（1 = 启用，0 = 关闭并恢复系统默认样式）。默认启用。 */
     public static final String HOUR_COLOR_ENABLED_KEY =
             "coloros_clock_seconds_hour_color_enabled";
@@ -178,6 +181,12 @@ public final class ClockSecondsConfig {
     /** 设置页 → SystemUI 写入渐变端点色（{@link #EXTRA_SLOT} 0=起点 1=终点，{@link #EXTRA_COLOR}）。 */
     public static final String ACTION_SET_GRADIENT_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_COLOR";
+
+    /** 设置页 → SystemUI 写入整份自定义任务列表（{@link #EXTRA_TASKS}）。 */
+    public static final String ACTION_SET_TASKS =
+            "io.github.kelebao.colorosclockseconds.action.SET_TASKS";
+    /** String extra：自定义任务列表 JSON。 */
+    public static final String EXTRA_TASKS = "tasks";
     /** 一键对时：让 SystemUI 打开系统「自动设置时间」。 */
     public static final String ACTION_SYNC_TIME =
             "io.github.kelebao.colorosclockseconds.action.SYNC_TIME";
@@ -306,6 +315,17 @@ public final class ClockSecondsConfig {
     /** 写入小时颜色开关。 */
     public static void setHourColorEnabled(ContentResolver resolver, boolean enabled) {
         Settings.Secure.putInt(resolver, HOUR_COLOR_ENABLED_KEY, enabled ? 1 : 0);
+    }
+
+    /** 读取自定义任务列表 JSON（空串表示没有任务）。 */
+    public static String getTasksJson(ContentResolver resolver) {
+        String v = Settings.Secure.getString(resolver, TASKS_KEY);
+        return v == null ? "" : v;
+    }
+
+    /** 写入自定义任务列表 JSON（null 归一为空串）。 */
+    public static void setTasksJson(ContentResolver resolver, String json) {
+        Settings.Secure.putString(resolver, TASKS_KEY, json == null ? "" : json);
     }
 
     // ==================================================================

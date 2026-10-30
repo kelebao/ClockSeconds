@@ -3,6 +3,7 @@ package io.github.kelebao.colorosclockseconds.settings;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -31,6 +32,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import io.github.kelebao.colorosclockseconds.ArcTickDrawable;
 import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
+import io.github.kelebao.colorosclockseconds.ClockTask;
 import io.github.kelebao.colorosclockseconds.CloseCrossView;
 import io.github.kelebao.colorosclockseconds.ColonLiftSpan;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
@@ -48,10 +50,15 @@ import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.GridLayout;
+import android.widget.NumberPicker;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -140,7 +147,17 @@ public final class ModuleSettingsActivity extends Activity {
     /** 预览时间所在的背景板容器。 */
     private FrameLayout previewPlate;
     /** 当前选中色块的「荧光呼吸」光晕 drawable（高频刷新）。 */
-    private BreathSwatchDrawable mBreathSwatch;
+    /** 自定义任务卡右下角的数值行（无任务 / N 个任务）。 */
+    private TextView mTaskValueView;
+    /** 任务列表缓存（Secure 里 JSON 的解析结果）。 */
+    private java.util.List<ClockTask> mTasks = new java.util.ArrayList<>();
+    /** 任务弹窗里放列表页/编辑页的宿主容器。 */
+    private FrameLayout mTaskHost;
+    /** 任务列表容器（每次刷新重建子视图）。 */
+    private LinearLayout mTaskListContainer;
+    /** 上一次点「自定义任务」卡的屏幕坐标：弹窗从这个点圆形展开。 */
+    private int mTaskTapX;
+    private int mTaskTapY;
     /** 预览卡顶部半弧刻度盘 drawable（高频刷新旋转）。 */
     private ArcTickDrawable mArcTicks;
     private final PressTiltEffect mPressTilt = new PressTiltEffect();   // 全卡片按压倾斜效果
@@ -257,8 +274,6 @@ public final class ModuleSettingsActivity extends Activity {
     private TextView netTimeView;
     private TextView previewHintView;
     private TextView syncView;
-    private TextView colorValueView;
-    private View colorDotView;
     private LinearLayout mClockTestList;          // 测试卡片：候选时钟列表容器
     private final Map<String, Boolean> mClockEnabled = new HashMap<>();  // 测试卡片：key -> 是否启用
     private TextView mDiagView;                   // 诊断卡片：结果展示
@@ -359,15 +374,10 @@ public final class ModuleSettingsActivity extends Activity {
         @Override
         public void run() {
             long now = System.currentTimeMillis();
-            if (mBreathSwatch != null) {
-                // 关闭小时颜色时，色块光晕呼吸也停止（强度归零、光晕不绘制）。
-                mBreathSwatch.setBreath(ClockSecondsConfig.isHourColorEnabled(getContentResolver())
-                        ? ClockSecondsConfig.breathIntensity(now) : 0f);
-            }
             if (mGradBreath != null) {
-                // 渐变端点色点：谷底 0.45 → 峰值 1.0（最亮），周期 1200ms（比数字光晕的 3s 快一倍多）。
+                // 渐变端点色点：谷底 0.68 → 峰值 1.0（最亮），周期 1200ms（比数字光晕快）。
                 double gp = (now % GRAD_BREATH_PERIOD_MS) / (double) GRAD_BREATH_PERIOD_MS;
-                mGradBreath.setBreath(0.45f + 0.55f * (float) ((1 - Math.cos(gp * 2 * Math.PI)) / 2));
+                mGradBreath.setBreath(0.68f + 0.32f * (float) ((1 - Math.cos(gp * 2 * Math.PI)) / 2));
             }
             // 预览卡滚出屏幕时跳过弧的高频刷新（省电/省 CPU）；色块光晕照常（它可能在视口内）。
             if (mArcTicks != null
@@ -1018,43 +1028,41 @@ public final class ModuleSettingsActivity extends Activity {
         gestureCard.setOnClickListener(v -> showGestureDialog(gestureValue));
         row.addView(gestureCard);
 
-        LinearLayout colorCard = statCard();
+        LinearLayout taskCard = statCard();
         LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         lp2.leftMargin = dp(6);
-        colorCard.setLayoutParams(lp2);
-        colorCard.addView(statLabel(R.string.settings_color_title));
+        taskCard.setLayoutParams(lp2);
+        taskCard.addView(statLabel(R.string.settings_task_title));
 
-        LinearLayout colorRow = new LinearLayout(this);
-        colorRow.setOrientation(LinearLayout.HORIZONTAL);
-        // 贴底：与左卡的值行底部对齐（水平方向仍靠起始边）。
-        colorRow.setGravity(Gravity.BOTTOM | Gravity.START);
-        colorRow.setPadding(0, dp(8), 0, 0);
-        colorRow.setLayoutParams(new LinearLayout.LayoutParams(
+        mTaskValueView = new TextView(this);
+        mTaskValueView.setTextSize(16f);
+        mTaskValueView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        mTaskValueView.setTextColor(text());
+        // 贴底：与左卡的值行底部对齐；长文案省略显示，不撑宽卡片。
+        mTaskValueView.setGravity(Gravity.BOTTOM | Gravity.START);
+        mTaskValueView.setPadding(0, dp(8), 0, 0);
+        mTaskValueView.setMaxLines(1);
+        mTaskValueView.setEllipsize(TextUtils.TruncateAt.END);
+        mTaskValueView.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-
-        colorDotView = new View(this);
-        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(26), dp(26));
-        dotLp.rightMargin = dp(8);
-        colorDotView.setLayoutParams(dotLp);
-        colorRow.addView(colorDotView);
-
-        colorValueView = new TextView(this);
-        colorValueView.setTextSize(16f);
-        colorValueView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        colorValueView.setTextColor(text());
-        // 占满色点右侧剩余宽度：长文案省略显示，而不是把卡片撑宽。
-        colorValueView.setMaxLines(1);
-        colorValueView.setEllipsize(TextUtils.TruncateAt.END);
-        colorValueView.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        colorRow.addView(colorValueView);
-        colorCard.addView(colorRow);
-        row.addView(colorCard);
+        taskCard.addView(mTaskValueView);
+        // 记下按下的屏幕坐标：任务弹窗要从这个点圆形展开铺满卡片。
+        taskCard.setOnTouchListener((v, e) -> {
+            if (e.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                int[] loc = new int[2];
+                v.getLocationOnScreen(loc);
+                mTaskTapX = loc[0] + (int) e.getX();
+                mTaskTapY = loc[1] + (int) e.getY();
+            }
+            return false;
+        });
+        taskCard.setOnClickListener(v -> showTaskDialog());
+        row.addView(taskCard);
 
         mStatsRow = row;
         root.addView(row);
-        refreshColorSummary();
+        refreshTaskSummary();
     }
 
     /**
@@ -1188,7 +1196,6 @@ public final class ModuleSettingsActivity extends Activity {
                 if (ok) {
                     mCfgHourColorOn = checked;
                     refreshDigitSwatches();
-                    refreshColorSummary();
                     updatePreview();
                 } else {
                     reverting[0] = true;
@@ -2813,7 +2820,6 @@ public final class ModuleSettingsActivity extends Activity {
             if (!mCfgHourColorOn && mDigitSwitch != null && !mDigitSwitch.isChecked()) {
                 mDigitSwitch.setChecked(true);   // 监听里会写入启用状态并刷新界面
             }
-            refreshColorSummary();
             updatePreview();            // 字色 / 下划线 / 水滴颜色一起跟着变
             if (previewView != null) {
                 previewView.post(this::positionMark);
@@ -4476,25 +4482,588 @@ public final class ModuleSettingsActivity extends Activity {
         updatePreview();
     }
 
-    private void refreshColorSummary() {
-        int color = ClockSecondsConfig.getHourColor(getContentResolver());
-        boolean enabled = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
-        if (colorDotView != null) {
-            // 小结绿点：实心圆 + 荧光呼吸光晕（颜色=当前小时色），由 breathTick 驱动。
-            BreathSwatchDrawable dot = new BreathSwatchDrawable(color, true, 0x22000000, dp(1));
-            colorDotView.setBackground(dot);
-            colorDotView.setContentDescription(swatchDesc(color));   // 无障碍：读屏播报「颜色名 + 色号」
-            colorDotView.setAlpha(enabled ? 1f : 0.35f);
-            mBreathSwatch = dot;
+    /** 自定义任务卡右下角那行：没有任务写「无任务」，有任务写启用条数。 */
+    private void refreshTaskSummary() {
+        if (mTaskValueView == null) {
+            return;
         }
-        if (colorValueView != null) {
-            colorValueView.setText(hexOf(color));
-            colorValueView.setAlpha(enabled ? 1f : 0.45f);
+        List<ClockTask> tasks = ClockTask.parse(ClockSecondsConfig.getTasksJson(getContentResolver()));
+        mTasks = tasks;
+        if (tasks.isEmpty()) {
+            mTaskValueView.setText(R.string.settings_task_empty);
+            mTaskValueView.setAlpha(0.55f);
+            return;
+        }
+        int enabled = 0;
+        for (ClockTask t : tasks) {
+            if (t.enabled) {
+                enabled++;
+            }
+        }
+        mTaskValueView.setAlpha(1f);
+        if (enabled == 0) {
+            mTaskValueView.setText(R.string.settings_task_all_off);
+        } else {
+            mTaskValueView.setText(getString(R.string.settings_task_count, enabled));
         }
     }
 
+    /**
+     * 「自定义任务」弹窗：从点卡片的那一点圆形展开，铺满一张卡片。
+     *
+     * <p>里面分两页：列表页（右下角「＋」新建）与编辑页（新建 / 修改同一条任务）。</p>
+     */
+    private void showTaskDialog() {
+        mTasks = ClockTask.parse(ClockSecondsConfig.getTasksJson(getContentResolver()));
+        final Dialog dialog = new Dialog(this,
+                android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
+        final FrameLayout overlay = new FrameLayout(this);
+        overlay.setBackgroundColor(0x99000000);
+        overlay.setOnClickListener(v -> dialog.dismiss());
+
+        final LinearLayout sheet = new LinearLayout(this);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(dp(20), dp(16), dp(20), dp(12));
+        GradientDrawable sheetBg = new GradientDrawable();
+        sheetBg.setCornerRadius(dp(28));
+        sheetBg.setColor(night ? DARK_CARD : LIGHT_CARD);
+        sheet.setBackground(sheetBg);
+        sheet.setClickable(true);
+        FrameLayout.LayoutParams sheetLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        sheetLp.setMargins(dp(14), dp(96), dp(14), dp(96));
+        overlay.addView(sheet, sheetLp);
+
+        // 标题行
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = new TextView(this);
+        title.setText(R.string.settings_task_title);
+        title.setTextSize(20f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        header.addView(title, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView close = new TextView(this);
+        close.setText("\u2715");
+        close.setTextSize(16f);
+        close.setTextColor(text2());
+        close.setGravity(Gravity.CENTER);
+        close.setBackground(circleBg(dp(32), night ? 0x22FFFFFF : 0x11000000));
+        close.setOnClickListener(v -> dialog.dismiss());
+        header.addView(close, new LinearLayout.LayoutParams(dp(32), dp(32)));
+        sheet.addView(header);
+
+        // 内容宿主：列表页 / 编辑页互斥
+        mTaskHost = new FrameLayout(this);
+        sheet.addView(mTaskHost, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        mTaskHost.addView(buildTaskListPage(), new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        refreshTaskList();
+
+        dialog.setOnDismissListener(d -> mTaskHost = null);
+        dialog.setContentView(overlay);
+        sheet.setVisibility(View.INVISIBLE);
+        dialog.show();
+        // 圆形展开：圆心 = 按下那一点相对 sheet 的坐标，半径 = 圆心到最远角的距离。
+        sheet.post(() -> {
+            int[] loc = new int[2];
+            sheet.getLocationOnScreen(loc);
+            int cx = Math.max(0, Math.min(sheet.getWidth(), mTaskTapX - loc[0]));
+            int cy = Math.max(0, Math.min(sheet.getHeight(), mTaskTapY - loc[1]));
+            sheet.setVisibility(View.VISIBLE);
+            float radius = (float) Math.hypot(
+                    Math.max(cx, sheet.getWidth() - cx),
+                    Math.max(cy, sheet.getHeight() - cy));
+            if (radius <= 0f) {
+                return;
+            }
+            android.animation.Animator anim = android.view.ViewAnimationUtils
+                    .createCircularReveal(sheet, cx, cy, 0f, radius);
+            anim.setDuration(280L);
+            anim.start();
+        });
+    }
+
+    /** 任务弹窗的列表页：滚动列表 + 右下角「＋」。 */
+    private FrameLayout buildTaskListPage() {
+        FrameLayout page = new FrameLayout(this);
+        ScrollView sv = new ScrollView(this);
+        sv.setVerticalScrollBarEnabled(false);
+        sv.setClipToPadding(false);
+        mTaskListContainer = new LinearLayout(this);
+        mTaskListContainer.setOrientation(LinearLayout.VERTICAL);
+        mTaskListContainer.setPadding(0, dp(12), 0, dp(88));
+        sv.addView(mTaskListContainer, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        page.addView(sv, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        TextView add = new TextView(this);
+        add.setText("\uFF0B");
+        add.setTextSize(26f);
+        add.setTextColor(0xFFFFFFFF);
+        add.setGravity(Gravity.CENTER);
+        GradientDrawable addBg = new GradientDrawable();
+        addBg.setShape(GradientDrawable.OVAL);
+        addBg.setColor(accent());
+        add.setBackground(addBg);
+        add.setElevation(dp(6));
+        FrameLayout.LayoutParams addLp = new FrameLayout.LayoutParams(dp(56), dp(56));
+        addLp.gravity = Gravity.BOTTOM | Gravity.END;
+        addLp.setMargins(0, 0, dp(2), dp(10));
+        page.addView(add, addLp);
+        add.setOnClickListener(v -> openTaskEditor(null));
+        return page;
+    }
+
+    /** 回到列表页（保存 / 删除之后）。 */
+    private void showTaskListPage() {
+        if (mTaskHost == null) {
+            return;
+        }
+        FrameLayout page = buildTaskListPage();
+        mTaskHost.removeAllViews();
+        mTaskHost.addView(page, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        page.setAlpha(0f);
+        page.animate().alpha(1f).setDuration(160L).start();
+        refreshTaskList();
+    }
+
+    /** 重建任务行。 */
+    private void refreshTaskList() {
+        if (mTaskListContainer == null) {
+            return;
+        }
+        mTaskListContainer.removeAllViews();
+        if (mTasks.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText(R.string.settings_task_empty_hint);
+            empty.setTextSize(14f);
+            empty.setTextColor(text2());
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(8), dp(56), dp(8), dp(56));
+            mTaskListContainer.addView(empty);
+            return;
+        }
+        for (int i = 0; i < mTasks.size(); i++) {
+            mTaskListContainer.addView(makeTaskRow(mTasks.get(i), i));
+        }
+    }
+
+    private View makeTaskRow(final ClockTask task, final int index) {
+        LinearLayout rowView = new LinearLayout(this);
+        rowView.setOrientation(LinearLayout.VERTICAL);
+        rowView.setPadding(dp(14), dp(12), dp(14), dp(12));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(16));
+        bg.setColor(night ? 0xFF1E1E1E : 0xFFF4F4F6);
+        rowView.setBackground(bg);
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowLp.bottomMargin = dp(10);
+        rowView.setLayoutParams(rowLp);
+        rowView.setAlpha(task.enabled ? 1f : 0.55f);
+
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView name = new TextView(this);
+        name.setText(TextUtils.isEmpty(task.name)
+                ? getString(R.string.settings_task_default_name, index + 1) : task.name);
+        name.setTextSize(16f);
+        name.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        name.setTextColor(text());
+        name.setMaxLines(1);
+        name.setEllipsize(TextUtils.TruncateAt.END);
+        top.addView(name, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        Switch sw = new Switch(this);
+        sw.setChecked(task.enabled);
+        sw.setOnCheckedChangeListener((v, checked) -> {
+            task.enabled = checked;
+            applyTasks(new ArrayList<>(mTasks), this::refreshTaskList);
+        });
+        top.addView(sw, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        rowView.addView(top);
+
+        TextView sum = new TextView(this);
+        sum.setText(task.summary(this));
+        sum.setTextSize(13f);
+        sum.setTextColor(text2());
+        sum.setPadding(0, dp(4), 0, 0);
+        rowView.addView(sum);
+
+        rowView.setOnClickListener(v -> openTaskEditor(task));
+        return rowView;
+    }
+
+    /** 编辑页：新建（existing == null）或修改一条任务。 */
+    private void openTaskEditor(final ClockTask existing) {
+        if (mTaskHost == null) {
+            return;
+        }
+        final boolean isNew = existing == null;
+        final ClockTask draft = isNew ? new ClockTask() : existing.copy();
+        if (isNew) {
+            draft.id = System.currentTimeMillis();
+            draft.durationMin = 5;
+            draft.enabled = true;
+        }
+
+        ScrollView sv = new ScrollView(this);
+        sv.setVerticalScrollBarEnabled(false);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(0, dp(4), 0, dp(12));
+        sv.addView(box, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        // 返回（不保存）
+        TextView back = new TextView(this);
+        back.setText("\u2039 " + getString(R.string.settings_task_back));
+        back.setTextSize(14f);
+        back.setTextColor(text2());
+        back.setPadding(0, dp(4), 0, dp(10));
+        back.setOnClickListener(v -> showTaskListPage());
+        box.addView(back);
+
+        // 名称
+        box.addView(editorLabel(R.string.settings_task_name));
+        final EditText nameInput = new EditText(this);
+        nameInput.setText(taskText(draft.name));
+        nameInput.setHint(R.string.settings_task_name_hint);
+        nameInput.setTextSize(15f);
+        nameInput.setTextColor(text());
+        nameInput.setSingleLine(true);
+        box.addView(nameInput);
+
+        // 触发方式
+        box.addView(editorLabel(R.string.settings_task_trigger));
+        final RadioGroup triggerGroup = new RadioGroup(this);
+        triggerGroup.setOrientation(RadioGroup.HORIZONTAL);
+        final RadioButton rbHourly = makeRadio(R.string.settings_task_trigger_hourly);
+        final RadioButton rbDaily = makeRadio(R.string.settings_task_trigger_daily);
+        triggerGroup.addView(rbHourly);
+        triggerGroup.addView(rbDaily);
+        (draft.trigger == ClockTask.TRIGGER_DAILY ? rbDaily : rbHourly).setChecked(true);
+        box.addView(triggerGroup);
+
+        // 自定义时间（只有「自定义时间」时才显示）
+        final LinearLayout timeRow = new LinearLayout(this);
+        timeRow.setOrientation(LinearLayout.HORIZONTAL);
+        timeRow.setGravity(Gravity.CENTER_VERTICAL);
+        final EditText hourInput = makeNumberInput(draft.hour);
+        final EditText minuteInput = makeNumberInput(draft.minute);
+        timeRow.addView(hourInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        TextView colon = new TextView(this);
+        colon.setText(":");
+        colon.setTextSize(18f);
+        colon.setTextColor(text2());
+        colon.setPadding(dp(6), 0, dp(6), 0);
+        timeRow.addView(colon);
+        timeRow.addView(minuteInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        timeRow.setVisibility(draft.trigger == ClockTask.TRIGGER_DAILY ? View.VISIBLE : View.GONE);
+        box.addView(timeRow);
+        triggerGroup.setOnCheckedChangeListener((g, id) -> timeRow.setVisibility(
+                id == rbDaily.getId() ? View.VISIBLE : View.GONE));
+
+        // 提前开始
+        final TextView advValue = new TextView(this);
+        advValue.setTextSize(13f);
+        advValue.setTextColor(text2());
+        box.addView(editorLabelRow(R.string.settings_task_advance, advValue));
+        final SeekBar advBar = new SeekBar(this);
+        advBar.setMax(ClockTask.ADVANCE_MAX);
+        advBar.setProgress(draft.advanceMin);
+        box.addView(advBar);
+        updateAdvanceLabel(advValue, advBar.getProgress());
+        advBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                updateAdvanceLabel(advValue, progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
+        // 持续时长
+        final TextView durValue = new TextView(this);
+        durValue.setTextSize(13f);
+        durValue.setTextColor(text2());
+        box.addView(editorLabelRow(R.string.settings_task_duration, durValue));
+        final SeekBar durBar = new SeekBar(this);
+        durBar.setMax(ClockTask.DURATION_MAX - ClockTask.DURATION_MIN);
+        durBar.setProgress(Math.max(0, draft.durationMin - ClockTask.DURATION_MIN));
+        box.addView(durBar);
+        updateDurationLabel(durValue, durBar.getProgress());
+        durBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                updateDurationLabel(durValue, progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
+        // 动作
+        box.addView(editorLabel(R.string.settings_task_action));
+        final RadioGroup actionGroup = new RadioGroup(this);
+        actionGroup.setOrientation(RadioGroup.HORIZONTAL);
+        final RadioButton rbShow = makeRadio(R.string.settings_task_action_show);
+        final RadioButton rbHide = makeRadio(R.string.settings_task_action_hide);
+        actionGroup.addView(rbShow);
+        actionGroup.addView(rbHide);
+        (draft.action == ClockTask.ACTION_HIDE ? rbHide : rbShow).setChecked(true);
+        box.addView(actionGroup);
+
+        // 底部：删除（仅编辑已有）/ 保存
+        LinearLayout buttons = new LinearLayout(this);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        buttons.setGravity(Gravity.CENTER_VERTICAL);
+        buttons.setPadding(0, dp(16), 0, 0);
+        if (!isNew) {
+            TextView del = new TextView(this);
+            del.setText(R.string.settings_task_delete);
+            del.setTextSize(15f);
+            del.setTextColor(0xFFE5484D);
+            del.setGravity(Gravity.CENTER);
+            del.setPadding(dp(18), dp(12), dp(18), dp(12));
+            del.setOnClickListener(v -> {
+                List<ClockTask> next = new ArrayList<>();
+                for (ClockTask t : mTasks) {
+                    if (t.id != draft.id) {
+                        next.add(t);
+                    }
+                }
+                applyTasks(next, this::showTaskListPage);
+            });
+            buttons.addView(del, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+        TextView save = new TextView(this);
+        save.setText(R.string.settings_task_save);
+        save.setTextSize(15f);
+        save.setTextColor(0xFFFFFFFF);
+        save.setGravity(Gravity.CENTER);
+        save.setPadding(dp(18), dp(12), dp(18), dp(12));
+        GradientDrawable saveBg = new GradientDrawable();
+        saveBg.setCornerRadius(dp(999));
+        saveBg.setColor(accent());
+        save.setBackground(saveBg);
+        save.setOnClickListener(v -> {
+            draft.name = nameInput.getText().toString().trim();
+            draft.trigger = rbDaily.isChecked()
+                    ? ClockTask.TRIGGER_DAILY : ClockTask.TRIGGER_HOURLY;
+            draft.hour = parseIntOr(hourInput.getText().toString(), draft.hour);
+            draft.minute = parseIntOr(minuteInput.getText().toString(), draft.minute);
+            draft.advanceMin = advBar.getProgress();
+            draft.durationMin = durBar.getProgress() + ClockTask.DURATION_MIN;
+            draft.action = rbHide.isChecked() ? ClockTask.ACTION_HIDE : ClockTask.ACTION_SHOW;
+            draft.normalize();
+            List<ClockTask> next = new ArrayList<>(mTasks);
+            boolean replaced = false;
+            for (int i = 0; i < next.size(); i++) {
+                if (next.get(i).id == draft.id) {
+                    next.set(i, draft);
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) {
+                next.add(draft);
+            }
+            applyTasks(next, this::showTaskListPage);
+        });
+        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        saveLp.leftMargin = isNew ? 0 : dp(10);
+        buttons.addView(save, saveLp);
+        box.addView(buttons);
+
+        FrameLayout editorPage = new FrameLayout(this);
+        editorPage.addView(sv, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mTaskHost.removeAllViews();
+        mTaskHost.addView(editorPage, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        editorPage.setAlpha(0f);
+        editorPage.animate().alpha(1f).setDuration(160L).start();
+    }
+
+    private String taskText(String value) {
+        return value == null ? "" : value;
+    }
+
+    private TextView editorLabel(int textRes) {
+        TextView label = new TextView(this);
+        label.setText(textRes);
+        label.setTextSize(13f);
+        label.setTextColor(text2());
+        label.setPadding(0, dp(14), 0, dp(2));
+        return label;
+    }
+
+    private LinearLayout editorLabelRow(int textRes, TextView valueView) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(14), 0, dp(2));
+        TextView label = new TextView(this);
+        label.setText(textRes);
+        label.setTextSize(13f);
+        label.setTextColor(text2());
+        row.addView(label, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(valueView);
+        return row;
+    }
+
+    private RadioButton makeRadio(int textRes) {
+        RadioButton rb = new RadioButton(this);
+        rb.setText(textRes);
+        rb.setTextSize(15f);
+        rb.setTextColor(text());
+        rb.setId(View.generateViewId());
+        return rb;
+    }
+
+    private EditText makeNumberInput(int value) {
+        EditText input = new EditText(this);
+        input.setText(String.format(Locale.US, "%02d", value));
+        input.setTextSize(18f);
+        input.setTextColor(text());
+        input.setGravity(Gravity.CENTER);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        input.setMaxLines(1);
+        input.setFilters(new android.text.InputFilter[]{
+                new android.text.InputFilter.LengthFilter(2)});
+        return input;
+    }
+
+    private void updateAdvanceLabel(TextView view, int minutes) {
+        if (view == null) {
+            return;
+        }
+        view.setText(minutes <= 0
+                ? getString(R.string.settings_task_advance_zero)
+                : getString(R.string.settings_task_advance_value, minutes));
+    }
+
+    private void updateDurationLabel(TextView view, int progress) {
+        if (view == null) {
+            return;
+        }
+        view.setText(getString(R.string.settings_task_duration_value,
+                progress + ClockTask.DURATION_MIN));
+    }
+
+    private int parseIntOr(String raw, int fallback) {
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (Throwable ignored) {
+            return fallback;
+        }
+    }
+
+    private GradientDrawable circleBg(int size, int color) {
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.OVAL);
+        bg.setColor(color);
+        bg.setSize(size, size);
+        return bg;
+    }
+
+    /**
+     * 写任务列表：先试直写 Secure；没有 WRITE_SECURE_SETTINGS 时广播给 SystemUI 里的模块代写。
+     *
+     * <p>任务列表是字符串，所以另有一个 {@link #verifyWriteString} 做轮询校验。</p>
+     */
+    private void applyTasks(final List<ClockTask> tasks, final Runnable afterOk) {
+        final String json = ClockTask.toJson(tasks);
+        mTasks = tasks;
+        refreshTaskSummary();
+        final int seq = mWriteSeq.incrementAndGet();
+        final Runnable guarded = () -> {
+            if (mWriteSeq.get() == seq && afterOk != null) {
+                afterOk.run();
+            }
+        };
+        Intent broadcast = new Intent(ClockSecondsConfig.ACTION_SET_TASKS)
+                .putExtra(ClockSecondsConfig.EXTRA_TASKS, json)
+                .setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+        try {
+            Settings.Secure.putString(getContentResolver(), ClockSecondsConfig.TASKS_KEY, json);
+            guarded.run();
+            // 直写成功也广播一次，让 SystemUI 里的模块立刻重算（不靠轮询）。
+            try {
+                sendBroadcast(broadcast);
+            } catch (Throwable ignored2) {
+                // 广播失败不影响直写结果
+            }
+            return;
+        } catch (SecurityException ignored) {
+            // 无 WRITE_SECURE_SETTINGS：走广播路径
+        }
+        try {
+            sendBroadcast(broadcast);
+        } catch (Throwable t) {
+            toastWriteFailed();
+            return;
+        }
+        verifyWriteString(json, 0, seq, ok -> {
+            if (ok) {
+                guarded.run();
+            } else {
+                toastWriteFailed();
+            }
+        });
+    }
+
+    private void verifyWriteString(final String expected, final int attempt, final int seq,
+                                   final java.util.function.Consumer<Boolean> onResult) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        if (mWriteSeq.get() != seq) {
+            return;
+        }
+        String actual = null;
+        try {
+            actual = Settings.Secure.getString(getContentResolver(), ClockSecondsConfig.TASKS_KEY);
+        } catch (Throwable ignored) {
+            // 读取失败按未生效处理
+        }
+        if (expected.equals(actual)) {
+            onResult.accept(true);
+            return;
+        }
+        if (attempt >= 8) {
+            onResult.accept(false);
+            return;
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(
+                () -> verifyWriteString(expected, attempt + 1, seq, onResult), 250);
+    }
+
     // ==================================================================
-    // 小时颜色
+    // 自定义任务
     // ==================================================================
 
     /**

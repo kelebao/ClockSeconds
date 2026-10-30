@@ -10,7 +10,7 @@ import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 
 /**
- * 小时颜色色块：实心圆 + （选中时）一圈随呼吸明灭的荧光光晕，光晕颜色 = 色块本身颜色。
+ * 色点：实心圆 + （选中时）一圈随呼吸明灭的荧光散光，散光颜色 = 色点本身颜色。
  *
  * <p>光晕是「散光」而不是「光环」：用径向渐变从圆心向外连续衰减，呼吸时同时改变
  * <b>扩散半径</b>与<b>亮度</b>——亮时向外铺开、暗时收拢变淡，看不出明确的环状边界。</p>
@@ -75,17 +75,19 @@ public class BreathSwatchDrawable extends Drawable {
             if (mHaloShader == null || mShaderW != bw || mShaderH != bh) {
                 final int rgb = mColor & 0x00FFFFFF;
                 mHaloShader = new RadialGradient(cx, cy, r,
-                        new int[]{rgb | 0xFF000000, rgb | 0x59000000, rgb | 0x00000000},
-                        new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP);
+                        new int[]{rgb | 0xFF000000, rgb | 0xA6000000, rgb | 0x00000000},
+                        new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP);
                 mShaderW = bw;
                 mShaderH = bh;
             }
-            // 呼吸：亮时向外铺开（半径 ×1.0），暗时收拢（半径 ×0.58），亮度按平方衰减让谷底更暗。
-            final float k = 0.58f + 0.42f * mIntensity;
+            // 呼吸：亮时向外铺开（半径 ×1.0），暗时收拢（半径 ×0.72）。
+            // 亮度线性跟随强度（不再平方衰减）——用户要求「散光呼吸亮度调到最亮」，
+            // 峰值 1.0 时整圈散光满亮，谷底也保留 0.68 的可见度。
+            final float k = 0.72f + 0.28f * mIntensity;
             mHaloMatrix.setScale(k, k, cx, cy);
             mHaloShader.setLocalMatrix(mHaloMatrix);
             mHaloPaint.setShader(mHaloShader);
-            mHaloPaint.setAlpha(Math.round(255f * mIntensity * mIntensity));
+            mHaloPaint.setAlpha(Math.round(255f * mIntensity));
             canvas.drawCircle(cx, cy, r, mHaloPaint);
         }
 
