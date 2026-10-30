@@ -2,9 +2,16 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 241）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 242）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc241；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：未发布。** 测试线从 vc37 累积到 vc242；正式发版时本段即为 v1.2.0 的更新内容。
+
+### vc242（任务窗口内点击状态栏时间：给出提示、不再偷改总开关）
+
+- **现象**：点状态栏时间「没反应」。用户复现时刻是 16:58:00–17:00:00 —— 正好是他自己那条「每整点提前 2 分钟、持续 2 分钟」的自定义任务窗口。
+- **根因**：任务窗口会**接管**此刻显不显秒（secondsOn() 先看 sTaskShow / sTaskHide）。此时点击只改了总开关 coloros_clock_seconds_enabled，状态栏却仍按任务显示 → 看起来毫无反应；更糟的是窗口结束后总开关已经悄悄变了，用户会认为「它自己乱变」。
+- **修法**：toggleSeconds() 开头判断 sTaskShow || sTaskHide，命中则**不改开关**，只弹一条 Toast：「任务进行中：显秒已由「自定义任务」接管」（隐藏类任务显示对应文案）。
+- **验证**（真机 65DUBAJFWKWSVGXS）：临时任务覆盖当前时间 → 日志 TASK state show=true，点时钟后 settings get secure coloros_clock_seconds_enabled 保持 1 不变，dumpsys window 里出现 mDrawState=HAS_DRAWN 的 Toast 窗（com.android.systemui，BOTTOM CENTER）；测完已还原用户原任务。
 
 ### vc240 ~ vc241（修「预览渐变与状态栏渐变有色差」）
 

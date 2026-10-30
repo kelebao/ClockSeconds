@@ -12,6 +12,8 @@ import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -27,6 +29,7 @@ import android.view.ViewParent;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
@@ -1760,10 +1763,38 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
+    /**
+     * 任务窗口期间提示用户：此刻显不显秒由「自定义任务」决定，点一下改总开关也不会立刻生效，
+     * 反而会在窗口结束后莫名其妙地变状态，所以这里直接不改开关、只给一句提示。
+     */
+    private static void toastTaskOverride(Context context, boolean showing) {
+        try {
+            final String msg = showing
+                    ? "任务进行中：显秒已由「自定义任务」接管"
+                    : "任务进行中：隐藏秒已由「自定义任务」接管";
+            final Context ctx = context.getApplicationContext() != null
+                    ? context.getApplicationContext() : context;
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show();
+                    } catch (Throwable ignored) {
+                    }
+                }
+            });
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** 点击 / 长按时钟：翻转显秒开关并立即刷新。 */
     private static void toggleSeconds(TextView view) {
         Context context = view.getContext();
         if (context == null) {
+            return;
+        }
+        if (sTaskShow || sTaskHide) {
+            toastTaskOverride(context, sTaskShow);
             return;
         }
         ContentResolver resolver = context.getContentResolver();
