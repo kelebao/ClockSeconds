@@ -141,4 +141,8 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_mark_mode_weekday">Dia da semana</string>
     <string name="settings_mark_mode_period">Período do dia</string>
     <string name="settings_mark_periods">Madrugada,Início da manhã,Manhã,Meio-dia,Tarde,Noite,Noite alta</string>
+    <string name="settings_qs_clock_title">Segundos no painel</string>
+    <string name="settings_qs_clock_desc">Igual ao relógio da barra de status</string>
+    <string name="settings_keyguard_clock_title">Segundos na tela de bloqueio</string>
+    <string name="settings_keyguard_clock_desc">Igual ao relógio da barra de status</string>
 </resources>

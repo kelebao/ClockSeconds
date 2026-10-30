@@ -141,4 +141,8 @@
     <string name="settings_mark_mode_weekday">วันในสัปดาห์</string>
     <string name="settings_mark_mode_period">ช่วงเวลาของวัน</string>
     <string name="settings_mark_periods">ดึก,เช้าตรู่,เช้า,เที่ยง,บ่าย,เย็น,ดึกมาก</string>
+    <string name="settings_qs_clock_title">วินาทีในแผงการแจ้งเตือน</string>
+    <string name="settings_qs_clock_desc">เหมือนนาฬิกาแถบสถานะ</string>
+    <string name="settings_keyguard_clock_title">วินาทีบนหน้าจอล็อก</string>
+    <string name="settings_keyguard_clock_desc">เหมือนนาฬิกาแถบสถานะ</string>
 </resources>

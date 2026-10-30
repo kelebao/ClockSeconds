@@ -141,4 +141,8 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_mark_mode_weekday">Hari dalam minggu</string>
     <string name="settings_mark_mode_period">Waktu hari</string>
     <string name="settings_mark_periods">Malam,Dini pagi,Pagi,Siang,Sore,Malam,Larut malam</string>
+    <string name="settings_qs_clock_title">Detik di panel notifikasi</string>
+    <string name="settings_qs_clock_desc">Sama seperti jam di bilah status</string>
+    <string name="settings_keyguard_clock_title">Detik di layar kunci</string>
+    <string name="settings_keyguard_clock_desc">Sama seperti jam di bilah status</string>
 </resources>

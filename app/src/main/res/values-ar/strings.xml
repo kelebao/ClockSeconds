@@ -141,4 +141,8 @@
     <string name="settings_mark_mode_weekday">يوم الأسبوع</string>
     <string name="settings_mark_mode_period">فترة اليوم</string>
     <string name="settings_mark_periods">ليل,فجر,صباح,ظهر,بعد الظهر,مساء,آخر الليل</string>
+    <string name="settings_qs_clock_title">ثواني لوحة الإشعارات</string>
+    <string name="settings_qs_clock_desc">مثل ساعة شريط الحالة</string>
+    <string name="settings_keyguard_clock_title">ثواني شاشة القفل</string>
+    <string name="settings_keyguard_clock_desc">مثل ساعة شريط الحالة</string>
 </resources>

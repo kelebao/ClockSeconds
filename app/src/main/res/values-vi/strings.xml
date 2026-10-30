@@ -141,4 +141,8 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_mark_mode_weekday">Thứ trong tuần</string>
     <string name="settings_mark_mode_period">Buổi trong ngày</string>
     <string name="settings_mark_periods">Khuya,Sáng sớm,Buổi sáng,Buổi trưa,Buổi chiều,Buổi tối,Đêm muộn</string>
+    <string name="settings_qs_clock_title">Giây ở bảng thông báo</string>
+    <string name="settings_qs_clock_desc">Giống đồng hồ thanh trạng thái</string>
+    <string name="settings_keyguard_clock_title">Giây ở màn hình khóa</string>
+    <string name="settings_keyguard_clock_desc">Giống đồng hồ thanh trạng thái</string>
 </resources>

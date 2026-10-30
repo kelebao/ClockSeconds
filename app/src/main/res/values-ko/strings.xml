@@ -141,4 +141,8 @@
     <string name="settings_mark_mode_weekday">요일</string>
     <string name="settings_mark_mode_period">시간대</string>
     <string name="settings_mark_periods">심야,이른 아침,오전,정오,오후,저녁,늦은 밤</string>
+    <string name="settings_qs_clock_title">알림 패널 초 표시</string>
+    <string name="settings_qs_clock_desc">상태 표시줄 시계와 동일하게 동작합니다</string>
+    <string name="settings_keyguard_clock_title">잠금 화면 초 표시</string>
+    <string name="settings_keyguard_clock_desc">상태 표시줄 시계와 동일하게 동작합니다</string>
 </resources>

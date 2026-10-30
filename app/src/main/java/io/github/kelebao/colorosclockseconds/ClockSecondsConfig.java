@@ -186,6 +186,14 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
     public static final String ACTION_SET_GRADIENT_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_COLOR";
 
+    /** 设置页 → SystemUI 写入「通知栏（下拉面板）时间」开关（{@link #EXTRA_ENABLED}）。 */
+    public static final String ACTION_SET_QS_CLOCK =
+            "io.github.kelebao.colorosclockseconds.action.SET_QS_CLOCK";
+
+    /** 设置页 → SystemUI 写入「锁屏时间」开关（{@link #EXTRA_ENABLED}）。 */
+    public static final String ACTION_SET_KEYGUARD_CLOCK =
+            "io.github.kelebao.colorosclockseconds.action.SET_KEYGUARD_CLOCK";
+
     /** 设置页 → SystemUI 写入「时间后缀」配置（周几 / 时段），
      *  附带 {@link #EXTRA_ENABLED}、{@link #EXTRA_MODE} 与 {@link #EXTRA_MARK_PERIODS}。 */
     public static final String ACTION_SET_MARK =
@@ -500,6 +508,65 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
 
     /** 时段个数：固定 7 档。 */
     public static final int MARK_PERIOD_COUNT = 7;
+
+    /**
+     * 通知栏（下拉通知面板）时间是否跟随状态栏：显秒 + 同样的逐位颜色 / 渐变。
+     *
+     * <p>默认关闭：面板时钟与状态栏时钟是不同控件（ColorOS 上是 qs_footer_clock / oplus_qs_clock），
+     * 有些用户只想要状态栏显秒、不希望通知栏也跟着变，所以单独给一个开关。</p>
+     */
+    public static final String QS_CLOCK_ENABLED_KEY = "coloros_clock_seconds_qs_clock_enabled";
+
+    /** 通知栏时间是否跟随状态栏（默认关闭）。 */
+    public static boolean isQsClockEnabled(ContentResolver resolver) {
+        try {
+            return resolver != null
+                    && Settings.Secure.getInt(resolver, QS_CLOCK_ENABLED_KEY, 0) == 1;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 写入「通知栏时间跟随状态栏」开关。 */
+    public static void setQsClockEnabled(ContentResolver resolver, boolean enabled) {
+        if (resolver == null) {
+            return;
+        }
+        try {
+            Settings.Secure.putInt(resolver, QS_CLOCK_ENABLED_KEY, enabled ? 1 : 0);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 锁屏大时钟是否跟随状态栏：显秒 + 同样的逐位颜色 / 渐变。
+     *
+     * <p>默认关闭。ColorOS 把锁屏大时钟拆成 4 个 TextView（时十 / 时个 / 冒号 / 分），
+     * 所以「跟随」的含义是：在这几个视图上套用同一套颜色，并给「分」追加秒。</p>
+     */
+    public static final String KEYGUARD_CLOCK_ENABLED_KEY =
+            "coloros_clock_seconds_keyguard_clock_enabled";
+
+    /** 锁屏时钟是否跟随状态栏（默认关闭）。 */
+    public static boolean isKeyguardClockEnabled(ContentResolver resolver) {
+        try {
+            return resolver != null
+                    && Settings.Secure.getInt(resolver, KEYGUARD_CLOCK_ENABLED_KEY, 0) == 1;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 写入「锁屏时间跟随状态栏」开关。 */
+    public static void setKeyguardClockEnabled(ContentResolver resolver, boolean enabled) {
+        if (resolver == null) {
+            return;
+        }
+        try {
+            Settings.Secure.putInt(resolver, KEYGUARD_CLOCK_ENABLED_KEY, enabled ? 1 : 0);
+        } catch (Throwable ignored) {
+        }
+    }
 
     /** 后缀是否开启（默认关闭）。 */
     public static boolean isMarkEnabled(ContentResolver resolver) {

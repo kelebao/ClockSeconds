@@ -141,4 +141,8 @@
     <string name="settings_mark_mode_weekday">曜日</string>
     <string name="settings_mark_mode_period">時間帯</string>
     <string name="settings_mark_periods">深夜,早朝,午前,正午,午後,夕方,夜</string>
+    <string name="settings_qs_clock_title">通知パネルの秒表示</string>
+    <string name="settings_qs_clock_desc">ステータスバーの時計と同じ設定に従います</string>
+    <string name="settings_keyguard_clock_title">ロック画面の秒表示</string>
+    <string name="settings_keyguard_clock_desc">ステータスバーの時計と同じ設定に従います</string>
 </resources>

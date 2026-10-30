@@ -141,4 +141,8 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_mark_mode_weekday">Jour de la semaine</string>
     <string name="settings_mark_mode_period">Moment de la journée</string>
     <string name="settings_mark_periods">Nuit,Tôt le matin,Matin,Midi,Après-midi,Soir,Tard le soir</string>
+    <string name="settings_qs_clock_title">Secondes dans le panneau</string>
+    <string name="settings_qs_clock_desc">Comme l’horloge de la barre d’état</string>
+    <string name="settings_keyguard_clock_title">Secondes de l’écran de verrouillage</string>
+    <string name="settings_keyguard_clock_desc">Comme l’horloge de la barre d’état</string>
 </resources>

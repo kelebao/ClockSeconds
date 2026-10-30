@@ -2,10 +2,25 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 256）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 271）— 时分秒逐位取色、预览卡展开取色
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc263 ~ vc271（通知栏时间 / 锁屏时间各加一个开关）
+
+- **新功能（需求 m26879 / m26923）**：「数字颜色」卡下面依次多两张卡片 ——「通知栏时间显秒」与「锁屏时间显秒」，**都默认关闭**，描述统一写「功能跟随状态栏时间状态一样」：打开后对应的时钟与状态栏完全一致（显秒 + 逐位颜色 / 渐变 + 任务窗口生效），关掉立刻恢复系统原样。
+- **通知栏**：面板顶部大时钟 `qs_footer_clock` / `oplus_qs_clock` 由 `isQsClock()` 识别、`QS_CLOCKS` 弱引用登记；面板收起（`isShown()` 为假）ticker 立刻摘掉，展开时由 setText / onDraw 钩子重新接管。
+- **锁屏（本次重点）**：ColorOS 的锁屏大时钟**不是单个 TextView**，而是「时十 / 时个 / 冒号 / 分」四个 `com.oplus.keyguard.clock.base.widget.CustomizedTextView`（resource id：`clock_time_hour_first_txt`、`clock_time_hour_second_txt`、`clock_time_symbol_text`、`clock_time_minutes_txt`）。模块接管这四个视图：给「分」追加 `:ss`，四个视图统一上色。
+- **AOD / 解锁自动停**：`isLiveKeyguardClock()` 要求 `isShown()` + `isInteractive()` —— 息屏显示（AOD）上不刷新（省电 + 避免烧屏），解锁后 ticker 立即摘除。
+- **换行修复（vc265）**：整排宽度已被系统占满（实测父容器 876px、字号 289px），秒固定 0.5 倍会被挤到第二行。
+- **整排等比缩小（vc268）**：先按「HH:mm:ss 需要多宽」反算缩放系数（下限 0.55），四个视图一起 `setTextSize`，秒再按剩余空间取值 —— 晚间的锁屏时钟整体只小一圈，秒清楚可读；关闭开关时按记录的系统原始字号还原。
+- **缩放预算修正（vc269）**：不能用「分」视图自身宽度当预算（它是 `wrap_content`，宽度会随我们写的文本一起变）—— 实测那样会一路缩到 0.2 倍、秒只有 44px 高。改用父容器可用宽度减去时/冒号宽度后再算秒的字号比例。
+- **等宽数字（vc270）**：分钟视图补 `setFontFeatureSettings("tnum")`，否则秒每秒变化时整排 `wrap_content` 重新量宽 → 锁屏时钟左右抖动。
+- **上色不再被吞（vc266）**：`colorKeyguardOnly()` 原来用 `TextUtils.equals()` 判幂等 —— 它不比较 span，而「时 / 冒号」视图文本每分钟才变，结果首次上色后再也进不来（实测「0」一直是系统灰）。改为 `keyguardColored()`：字符相同且渐变时确有 `GradientTextSpan`、逐位时 `ForegroundColorSpan` 数 ≥ 数字数 才跳过。
+- **渐变切片**：锁屏四个视图各取整条渐变上的一小段（按视图在整排里的横向位置插值），拼起来是一条完整渐变，而不是每个视图各画一整条。
+- **i18n**：22 个 `strings.xml` 各加 4 键（`settings_qs_clock_title/desc`、`settings_keyguard_clock_title/desc`）；`tools/check_i18n.py` 141 键 × 22 文件一致。
+- **真机验证（ColorOS 16 / PHP110）**：模块日志 `KG fit avail=1006 base=289 need=1129 factor=0.891 target=258`、`KG write=08:19 scale=0.52 lines=1`；锁屏 `uiautomator dump` 读到 `clock_time_minutes_txt="50:27"`（秒已追加）；卡片开关点击后 Secure `coloros_clock_seconds_keyguard_clock_enabled` = 1；`logcat -b crash` FATAL = 0。
+- 版本：vc263 `1.2.0-test.20261031-0215` → vc271 `1.2.0-test.20261031-0420`。
 ### vc257 ~ vc262（下拉通知面板的时间也显秒、也上色）
 
 - **需求**：通知栏（下拉面板）上的时间要和状态栏一模一样 —— 同样显秒、同样的逐位颜色 / 渐变，并且点状态栏时间切换显秒时，面板时间自动跟着变。

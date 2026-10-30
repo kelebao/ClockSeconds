@@ -141,4 +141,8 @@
     <string name="settings_mark_mode_weekday">День тижня</string>
     <string name="settings_mark_mode_period">Частина доби</string>
     <string name="settings_mark_periods">Ніч,Ранній ранок,Ранок,Полудень,День,Вечір,Пізня ніч</string>
+    <string name="settings_qs_clock_title">Секунди в панелі сповіщень</string>
+    <string name="settings_qs_clock_desc">Як годинник у рядку стану</string>
+    <string name="settings_keyguard_clock_title">Секунди на екрані блокування</string>
+    <string name="settings_keyguard_clock_desc">Як годинник у рядку стану</string>
 </resources>
