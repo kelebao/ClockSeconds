@@ -1187,6 +1187,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     tv.setSingleLine(true);
                     tv.setEllipsize(null);
                     tv.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                    // 表格数字（等宽数字）：否则每秒数字宽度不同，渐变色带宽度随之变化，
+                    // 视觉上会像「渐变在流动」（预览卡早就设置了 tnum，浮窗漏了）。
+                    tv.setFontFeatureSettings("tnum");
                     tv.setTextColor(0xFFFFFFFF);
                     tv.setGravity(Gravity.CENTER);
                     tv.setPadding(floatDp(context, 16), floatDp(context, 10),
