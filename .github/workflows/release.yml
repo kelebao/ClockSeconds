@@ -55,8 +55,18 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Attach APK to GitHub Release
+      # 只往"已存在的" Release 追加 APK，避免 CI 抢先建一个正文为空、附件名不规范的 Release。
+      # 正式 Release（含更新说明 + io.github.kelebao.colorosclockseconds_<versionName>.apk）由维护者在本地创建。
+      - name: Attach APK to an existing GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: app/build/outputs/apk/release/app-release.apk
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF#refs/tags/}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" app/build/outputs/apk/release/app-release.apk --clobber
+            echo "uploaded app-release.apk to existing release $tag"
+          else
+            echo "no release for $tag yet — skipped (maintainer creates it with notes and the canonical APK name)"
+          fi
