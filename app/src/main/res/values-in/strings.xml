@@ -110,6 +110,8 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_task_trigger">Pemicu</string>
     <string name="settings_task_trigger_hourly">Setiap jam</string>
     <string name="settings_task_trigger_daily">Waktu khusus</string>
+    <string name="settings_task_action">Aksi</string>
+    <string name="settings_task_action_show">Aktifkan detik</string>
     <string name="settings_task_advance">Mulai lebih awal</string>
     <string name="settings_task_advance_zero">Tepat pada jam</string>
     <string name="settings_task_advance_value">%1$d menit lebih awal</string>

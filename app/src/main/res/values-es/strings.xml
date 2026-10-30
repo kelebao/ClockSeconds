@@ -110,6 +110,8 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_task_trigger">Disparador</string>
     <string name="settings_task_trigger_hourly">Cada hora</string>
     <string name="settings_task_trigger_daily">Hora personalizada</string>
+    <string name="settings_task_action">Acción</string>
+    <string name="settings_task_action_show">Activar segundos</string>
     <string name="settings_task_advance">Empezar antes</string>
     <string name="settings_task_advance_zero">En punto</string>
     <string name="settings_task_advance_value">%1$d min antes</string>

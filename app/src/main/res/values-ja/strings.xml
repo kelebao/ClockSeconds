@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">トリガー</string>
     <string name="settings_task_trigger_hourly">毎時</string>
     <string name="settings_task_trigger_daily">時刻を指定</string>
+    <string name="settings_task_action">動作</string>
+    <string name="settings_task_action_show">秒を表示</string>
     <string name="settings_task_advance">前倒し開始</string>
     <string name="settings_task_advance_zero">毎時ちょうど</string>
     <string name="settings_task_advance_value">%1$d 分前</string>

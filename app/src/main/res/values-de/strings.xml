@@ -116,6 +116,8 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_task_trigger">Auslöser</string>
     <string name="settings_task_trigger_hourly">Jede Stunde</string>
     <string name="settings_task_trigger_daily">Eigene Uhrzeit</string>
+    <string name="settings_task_action">Aktion</string>
+    <string name="settings_task_action_show">Sekunden einschalten</string>
     <string name="settings_task_advance">Früher starten</string>
     <string name="settings_task_advance_zero">Zur vollen Stunde</string>
     <string name="settings_task_advance_value">%1$d Min. früher</string>

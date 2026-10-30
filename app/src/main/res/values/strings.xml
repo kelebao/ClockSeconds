@@ -110,6 +110,8 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_task_trigger">Trigger</string>
     <string name="settings_task_trigger_hourly">Every hour</string>
     <string name="settings_task_trigger_daily">Custom time</string>
+    <string name="settings_task_action">Action</string>
+    <string name="settings_task_action_show">Turn seconds on</string>
     <string name="settings_task_advance">Start early</string>
     <string name="settings_task_advance_zero">On the hour</string>
     <string name="settings_task_advance_value">%1$d min early</string>

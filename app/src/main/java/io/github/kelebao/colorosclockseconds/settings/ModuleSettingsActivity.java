@@ -5108,6 +5108,15 @@ public final class ModuleSettingsActivity extends Activity {
             }
         });
 
+        // 动作（目前只有「开启显秒」一种；保留单选结构，便于以后加「关闭显秒」等）
+        box.addView(editorLabel(R.string.settings_task_action));
+        final RadioGroup actionGroup = new RadioGroup(this);
+        actionGroup.setOrientation(RadioGroup.HORIZONTAL);
+        final RadioButton rbShow = makeRadio(R.string.settings_task_action_show);
+        rbShow.setChecked(true);
+        actionGroup.addView(rbShow);
+        box.addView(actionGroup);
+
         // 底部：删除（仅编辑已有）/ 保存
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
@@ -5150,7 +5159,8 @@ public final class ModuleSettingsActivity extends Activity {
             draft.minute = parseIntOr(minuteInput.getText().toString(), draft.minute);
             draft.advanceMin = advBar.getProgress();
             draft.durationMin = durBar.getProgress() + ClockTask.DURATION_MIN;
-            draft.action = ClockTask.ACTION_SHOW;
+            // 动作单选目前只有「开启显秒」，界面固定选中；保留读取以便将来扩展
+            draft.action = rbShow.isChecked() ? ClockTask.ACTION_SHOW : ClockTask.ACTION_SHOW;
             draft.normalize();
             List<ClockTask> next = new ArrayList<>(mTasks);
             boolean replaced = false;

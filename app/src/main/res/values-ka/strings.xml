@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">ტრიგერი</string>
     <string name="settings_task_trigger_hourly">ყოველ საათში</string>
     <string name="settings_task_trigger_daily">მორგებული დრო</string>
+    <string name="settings_task_action">მოქმედება</string>
+    <string name="settings_task_action_show">წამების ჩართვა</string>
     <string name="settings_task_advance">დაწყება ადრე</string>
     <string name="settings_task_advance_zero">ზუსტად საათზე</string>
     <string name="settings_task_advance_value">%1$d წუთით ადრე</string>

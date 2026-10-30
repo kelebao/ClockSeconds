@@ -110,6 +110,8 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_task_trigger">Tetikleyici</string>
     <string name="settings_task_trigger_hourly">Her saat</string>
     <string name="settings_task_trigger_daily">Özel saat</string>
+    <string name="settings_task_action">Eylem</string>
+    <string name="settings_task_action_show">Saniyeleri aç</string>
     <string name="settings_task_advance">Erken başlat</string>
     <string name="settings_task_advance_zero">Tam saatte</string>
     <string name="settings_task_advance_value">%1$d dk erken</string>

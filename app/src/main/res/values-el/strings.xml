@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">Ενεργοποίηση</string>
     <string name="settings_task_trigger_hourly">Κάθε ώρα</string>
     <string name="settings_task_trigger_daily">Προσαρμοσμένη ώρα</string>
+    <string name="settings_task_action">Ενέργεια</string>
+    <string name="settings_task_action_show">Ενεργοποίηση δευτερολέπτων</string>
     <string name="settings_task_advance">Έναρξη νωρίτερα</string>
     <string name="settings_task_advance_zero">Ακριβώς στη στροφή</string>
     <string name="settings_task_advance_value">%1$d λεπτά νωρίτερα</string>

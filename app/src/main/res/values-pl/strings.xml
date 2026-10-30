@@ -110,6 +110,8 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_task_trigger">Wyzwalacz</string>
     <string name="settings_task_trigger_hourly">Co godzinę</string>
     <string name="settings_task_trigger_daily">Własna godzina</string>
+    <string name="settings_task_action">Akcja</string>
+    <string name="settings_task_action_show">Włącz sekundy</string>
     <string name="settings_task_advance">Rozpocznij wcześniej</string>
     <string name="settings_task_advance_zero">Dokładnie o pełnej godzinie</string>
     <string name="settings_task_advance_value">%1$d min wcześniej</string>

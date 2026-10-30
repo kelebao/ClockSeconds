@@ -110,6 +110,8 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_task_trigger">Déclencheur</string>
     <string name="settings_task_trigger_hourly">Chaque heure</string>
     <string name="settings_task_trigger_daily">Heure personnalisée</string>
+    <string name="settings_task_action">Action</string>
+    <string name="settings_task_action_show">Activer les secondes</string>
     <string name="settings_task_advance">Démarrer plus tôt</string>
     <string name="settings_task_advance_zero">À l\'heure pile</string>
     <string name="settings_task_advance_value">%1$d min plus tôt</string>

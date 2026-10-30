@@ -117,6 +117,8 @@
     <string name="settings_task_trigger">触发方式</string>
     <string name="settings_task_trigger_hourly">每整点</string>
     <string name="settings_task_trigger_daily">自定义时间</string>
+    <string name="settings_task_action">动作</string>
+    <string name="settings_task_action_show">开启显秒</string>
     <string name="settings_task_advance">提前开始</string>
     <string name="settings_task_advance_zero">整点开始</string>
     <string name="settings_task_advance_value">提前 %1$d 分钟</string>

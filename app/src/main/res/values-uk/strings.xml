@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">Спрацьовування</string>
     <string name="settings_task_trigger_hourly">Щогодини</string>
     <string name="settings_task_trigger_daily">Заданий час</string>
+    <string name="settings_task_action">Дія</string>
+    <string name="settings_task_action_show">Увімкнути секунди</string>
     <string name="settings_task_advance">Почати раніше</string>
     <string name="settings_task_advance_zero">Рівно щогодини</string>
     <string name="settings_task_advance_value">за %1$d хв до</string>

@@ -110,6 +110,8 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_task_trigger">Kích hoạt</string>
     <string name="settings_task_trigger_hourly">Mỗi giờ</string>
     <string name="settings_task_trigger_daily">Giờ tùy chỉnh</string>
+    <string name="settings_task_action">Hành động</string>
+    <string name="settings_task_action_show">Bật giây</string>
     <string name="settings_task_advance">Bắt đầu sớm</string>
     <string name="settings_task_advance_zero">Đúng giờ chẵn</string>
     <string name="settings_task_advance_value">sớm %1$d phút</string>

@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">Срабатывание</string>
     <string name="settings_task_trigger_hourly">Каждый час</string>
     <string name="settings_task_trigger_daily">Заданное время</string>
+    <string name="settings_task_action">Действие</string>
+    <string name="settings_task_action_show">Включить секунды</string>
     <string name="settings_task_advance">Начать раньше</string>
     <string name="settings_task_advance_zero">Ровно в час</string>
     <string name="settings_task_advance_value">за %1$d мин до</string>

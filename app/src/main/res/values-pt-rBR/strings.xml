@@ -110,6 +110,8 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_task_trigger">Gatilho</string>
     <string name="settings_task_trigger_hourly">A cada hora</string>
     <string name="settings_task_trigger_daily">Hora personalizada</string>
+    <string name="settings_task_action">Ação</string>
+    <string name="settings_task_action_show">Ativar segundos</string>
     <string name="settings_task_advance">Começar antes</string>
     <string name="settings_task_advance_zero">Na hora exata</string>
     <string name="settings_task_advance_value">%1$d min antes</string>

@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">트리거</string>
     <string name="settings_task_trigger_hourly">매시 정각</string>
     <string name="settings_task_trigger_daily">시간 지정</string>
+    <string name="settings_task_action">동작</string>
+    <string name="settings_task_action_show">초 표시</string>
     <string name="settings_task_advance">미리 시작</string>
     <string name="settings_task_advance_zero">정각 시작</string>
     <string name="settings_task_advance_value">%1$d분 전</string>

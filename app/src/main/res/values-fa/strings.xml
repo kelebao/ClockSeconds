@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">محرک</string>
     <string name="settings_task_trigger_hourly">هر ساعت</string>
     <string name="settings_task_trigger_daily">زمان دلخواه</string>
+    <string name="settings_task_action">عمل</string>
+    <string name="settings_task_action_show">روشن کردن ثانیه‌ها</string>
     <string name="settings_task_advance">شروع زودتر</string>
     <string name="settings_task_advance_zero">دقیقاً سر ساعت</string>
     <string name="settings_task_advance_value">%1$d دقیقه زودتر</string>

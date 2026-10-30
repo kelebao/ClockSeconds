@@ -110,6 +110,8 @@
     <string name="settings_task_trigger">ตัวกระตุ้น</string>
     <string name="settings_task_trigger_hourly">ทุกชั่วโมง</string>
     <string name="settings_task_trigger_daily">เวลาที่กำหนด</string>
+    <string name="settings_task_action">การกระทำ</string>
+    <string name="settings_task_action_show">เปิดวินาที</string>
     <string name="settings_task_advance">เริ่มก่อนเวลา</string>
     <string name="settings_task_advance_zero">ตรงชั่วโมง</string>
     <string name="settings_task_advance_value">ก่อน %1$d นาที</string>
