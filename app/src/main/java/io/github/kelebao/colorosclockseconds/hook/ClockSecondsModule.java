@@ -1793,6 +1793,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /** 用「系统原文本 + :ss」覆写时钟（追加的秒继承系统时钟文字色，自动跟随 12/24 制）。 */
     private static void writeTime(TextView view) {
+        publishSystemTextColor(view);
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
             base = view.getText();
@@ -2058,22 +2059,31 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         return true;
     }
 
+    /** 上一次已发布的系统文字色（避免每秒都写 Secure）。 */
+    private static volatile int sPublishedSysTextColor = Integer.MIN_VALUE;
+
     /**
-     * 按状态栏明暗适配颜色：系统文字为深色 ⇒ 背景浅，此时把过亮的颜色压暗（保持色相），
-     * 避免白色/黄色在浅色状态栏上"消失"；深色背景则原样使用。
+     * 按状态栏明暗适配颜色：转发到 {@link ClockSecondsConfig#adaptColorForBackground}，
+     * 设置页预览与状态栏共用同一套规则（各写一份必然对不上）。
      */
     private static int adaptColorForBackground(int color, int systemTextColor) {
-        boolean lightBackground = Color.luminance(systemTextColor) < 0.5f;
-        if (!lightBackground) {
-            return color;
+        return ClockSecondsConfig.adaptColorForBackground(color, systemTextColor);
+    }
+
+    /**
+     * 把状态栏时钟**当前**的系统文字色记到 Secure，供设置页预览复现同一套配色。
+     * 只在颜色变化时才写（换壁纸/换深浅色时各写一次），每秒调用也只是读一个静态字段。
+     */
+    private static void publishSystemTextColor(TextView view) {
+        try {
+            final int c = view.getCurrentTextColor();
+            if (c == sPublishedSysTextColor) {
+                return;
+            }
+            sPublishedSysTextColor = c;
+            ClockSecondsConfig.setSystemTextColor(view.getContext().getContentResolver(), c);
+        } catch (Throwable ignored) {
         }
-        if (Color.luminance(color) <= 0.55f) {
-            return color;
-        }
-        return Color.rgb(
-                (int) (Color.red(color) * 0.42f),
-                (int) (Color.green(color) * 0.42f),
-                (int) (Color.blue(color) * 0.42f));
     }
 
     /** 颜色总开关（默认启用）；读取失败按启用处理，保持原有观感。 */
@@ -2087,6 +2097,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /** 关闭显秒后，立即把文本回退为系统原文本，并应用小时十位数红色样式。 */
     private static void writeMinuteOnly(TextView view) {
+        publishSystemTextColor(view);
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
             base = view.getText();

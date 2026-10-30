@@ -105,9 +105,11 @@ public final class ModuleSettingsActivity extends Activity {
     /**
      * 每一位数字可选的颜色（第一项为默认红）。
      *
-     * <p><b>挑选规则（vc147 起，硬性）：亮度必须 ≤ 0.55。</b>
-     * 状态栏会按背景明暗自适配颜色（{@code ClockSecondsModule.adaptColorForBackground}）：
-     * 浅色背景上亮度超过 0.55 的颜色会被各通道 ×0.42 压暗，好让它在浅壁纸上还看得见。
+     * <p><b>挑选规则（vc147 起）：亮度最好 ≤ 0.85。</b>
+     * 状态栏会按背景明暗自适配颜色（{@code ClockSecondsConfig.adaptColorForBackground}）：
+     * 浅色背景上亮度超过 0.85（接近纯白）的颜色才会被各通道 ×0.42 压暗，好在浅壁纸上还看得见。
+     * vc241 起阈值由 0.55 提到 0.85：琥珀/黄/lime 这类鲜艳色不再被压暗，
+     * 于是和设置页预览完全一致（用户反馈「个别颜色有色差」）。
      * 原来的琥珀 {@code #FFC107} 亮度 0.594，压暗后变成 {@code #6B5102} 一坨暗橄榄 ——
      * 用户在设置里点了「琥珀」，状态栏却画出一个脏兮兮的暗黄绿，前后对不上
      * （用户反馈：「预选里的暗橄榄黄色换掉，用户就选不着了」）。
@@ -2846,52 +2848,28 @@ public final class ModuleSettingsActivity extends Activity {
      * <p>深底：深色数字（如深绿 #183419）几乎和卡片融成一片，光晕也就没东西可发光 →
      * 向白色混合到亮度 0.30 以上，色相保留、明度提上来（vc66 修）。</p>
      */
-    private int adaptPreviewColor(int color) {
-        if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-            return text();
-        }
-        final int system = text();
-        if (Color.luminance(system) >= 0.5f) {      // 深色主题（浅字深底）：提亮到看得见
-            return brightenForDark(color, 0.32f);
-        }
-        // 浅色主题（白卡）：直接返回**用户选的原色**。
-        //
-        // 这里前后试过三种做法，全都因为「颜色变了」被否：
-        //   vc66 起 各通道 ×0.42 压暗 → 亮色在白底看得清了，但数字变深棕；
-        //   vc143  提亮到亮度 0.72 → 纯黄这类色相明度已到顶，只好挪 22° 色相补救，
-        //          结果选的黄显示成琥珀橙（用户：「颜色不一样，误导用户」）；
-        //   vc144~ 原色不动。
-        // 结论：预览卡是「我选的颜色长什么样」的展示窗，不是调色板，任何自动改色都是错的。
-        // 白底上确实不好看，但那是用户自己选的颜色，必须如实显示。
-        return color;
-    }
-
-
-    /**
-     * 深色底上把过暗的颜色提亮：优先**抬高 HSV 明度**（保住色相与饱和度，绿还是绿），
-     * 明度顶到头还达不到目标亮度时，再向白色混一点（很暗的颜色只能这样）。
+        /**
+     * 预览卡配色：**直接复刻状态栏此刻的配色**，不再自己按卡片明暗另算一套。
      *
-     * <p>vc66 第一版直接向白混，深绿 #183419 会被冲成橄榄绿；vc67 改成先提明度。</p>
+     * <p>状态栏会按壁纸明暗自适应：背景偏亮时把亮度 &gt; 0.55 的颜色各通道 ×0.42 压暗。
+     * 以前预览按「白卡/深卡」自己算（浅色主题原样、深色主题提亮），于是亮度两头的颜色
+     * （琥珀、青、lime 这类亮色，或深绿这类暗色）在预览里和状态栏里就不一样了 ——
+     * 用户看到的就是「个别颜色有色差」。</p>
+     *
+     * <p>现在两边共用 {@link ClockSecondsConfig#adaptColorForBackground}，并且用模块每秒
+     * 采样写入的「状态栏当前文字色」（{@link ClockSecondsConfig#SYS_TEXT_COLOR_KEY}）判断
+     * 背景明暗 —— 状态栏画成什么样，预览就显示什么样。</p>
      */
-    private static int brightenForDark(int color, float targetLum) {
-        if (Color.luminance(color) >= targetLum) {
-            return color;
+    private int adaptPreviewColor(int color) {
+        final int sys = ClockSecondsConfig.getSystemTextColor(getContentResolver(), text());
+        if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            return sys;
         }
-        final float[] hsv = new float[3];
-        Color.colorToHSV(color, hsv);
-        int best = color;
-        for (int i = 0; i < 24 && hsv[2] < 1f; i++) {
-            hsv[2] = Math.min(1f, hsv[2] * 1.22f + 0.015f);
-            best = Color.HSVToColor(hsv);
-            if (Color.luminance(best) >= targetLum) {
-                return best;
-            }
-        }
-        final float lum = Color.luminance(best);
-        float t = (targetLum - lum) / (1f - Math.min(0.999f, lum));
-        t = Math.min(0.75f, Math.max(0f, t));
-        return blendColor(best, 0xFFFFFFFF, t);
+        return ClockSecondsConfig.adaptColorForBackground(color, sys);
     }
+
+
+        // vc240：brightenForDark 已删除 —— 预览不再自己提亮，改为完全复刻状态栏配色。
 
     /** 选中位被抬起的高度：向上移动一点点，一眼看出「正在编辑这一位」。 */
     private int liftPx() {
@@ -4487,7 +4465,11 @@ public final class ModuleSettingsActivity extends Activity {
                 if (follow && !dim) {
                     continue;   // 跟随系统且不淡：用默认文字色，不必加 span
                 }
-                final int shown = follow ? text() : adaptPreviewColor(color);
+                // 「跟随系统」时用状态栏采样回来的文字色，才和状态栏一模一样。
+                final int shown = follow
+                        ? (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                                ? adaptPreviewColor(color) : text())
+                        : adaptPreviewColor(color);
                 sb.setSpan(new ForegroundColorSpan(dim ? dimColor(shown) : shown), i, i + 1,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }

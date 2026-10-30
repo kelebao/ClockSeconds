@@ -1,6 +1,7 @@
 package io.github.kelebao.colorosclockseconds;
 
 import android.content.ContentResolver;
+import android.graphics.Color;
 import android.provider.Settings;
 import java.util.Locale;
 
@@ -382,6 +383,58 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
             return;
         }
         Settings.Secure.putInt(resolver, start ? GRADIENT_START_KEY : GRADIENT_END_KEY, color);
+    }
+    // ==================================================================
+    // 状态栏当前文字色（由 SystemUI 侧模块采样写入）
+    // ==================================================================
+
+    /**
+     * 状态栏时钟**当前**的系统文字色：模块每秒采样、只在变化时写一次；0 = 还没采样过。
+     *
+     * <p>状态栏会按背景明暗自适应颜色（背景偏亮就把过亮的颜色压暗）。设置页预览要
+     * 「和状态栏一模一样」，就必须拿到这个值，否则预览按白卡算、状态栏按壁纸算，
+     * 亮度大于 0.55 的那些颜色（黄、青、lime）就会有色差。</p>
+     */
+    public static final String SYS_TEXT_COLOR_KEY = "coloros_clock_seconds_sys_text_color";
+
+    /** 读取状态栏当前文字色；没采样过时返回 def。 */
+    public static int getSystemTextColor(ContentResolver resolver, int def) {
+        return resolver == null ? def
+                : Settings.Secure.getInt(resolver, SYS_TEXT_COLOR_KEY, def);
+    }
+
+    /** 写入状态栏当前文字色（仅 SystemUI 侧模块调用）。 */
+    public static void setSystemTextColor(ContentResolver resolver, int color) {
+        if (resolver == null) {
+            return;
+        }
+        try {
+            Settings.Secure.putInt(resolver, SYS_TEXT_COLOR_KEY, color);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 状态栏配色规则（**唯一实现**，模块与设置页共用，两边不要各写一份）。
+     *
+     * <p>系统文字是深色 = 背景偏亮，此时把亮度过高的颜色各通道 ×0.42 压暗（保持色相），
+     * 免得白/黄在浅色壁纸上「消失」；背景偏暗则原样输出。</p>
+     */
+    public static int adaptColorForBackground(int color, int systemTextColor) {
+        final boolean lightBackground = Color.luminance(systemTextColor) < 0.5f;
+        if (!lightBackground) {
+            return color;
+        }
+        // 阈值 0.85（vc241 由 0.55 提高）：只有「接近纯白」的颜色才真的会在浅色壁纸上消失，
+        // 琥珀/黄/lime 这些视觉亮度 0.6~0.8 的鲜艳色在浅底上依然清楚 —— 它们一被压暗，
+        // 状态栏就会画出一坨深棕，和设置页预览对不上（用户反馈「个别颜色有色差」）。
+        if (Color.luminance(color) <= 0.85f) {
+            return color;
+        }
+        return Color.rgb(
+                (int) (Color.red(color) * 0.42f),
+                (int) (Color.green(color) * 0.42f),
+                (int) (Color.blue(color) * 0.42f));
     }
 
     /** 渐变是否启用（默认关闭）。 */
