@@ -20,3 +20,6 @@ cyc_*.png
 # Python 缓存
 __pycache__/
 *.pyc
+
+# 用户反馈的 LSPosed 日志包（体积大，仅本地保留）
+反馈日志/

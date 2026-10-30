@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -189,11 +190,21 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 长按弹出浮窗的按住时长（毫秒）。Android 长按标准 500ms。 */
     private static final long LONG_PRESS_MS = 500L;
 
+    /** 单次点击的最长按下时长 / 最大位移（触屏卡顿时放宽；长按 500ms 仍可区分）。 */
+    private static final long TAP_MAX_MS = 480L;
+    private static final float TAP_SLOP_PX = 24f;
+    /** 双击配对的两次点击最大间隔。 */
+    private static final long DOUBLE_TAP_MS = 450L;
+    /** 单击模式下抑制「顺手双击」造成的连续取反。 */
+    private static final long TOGGLE_DEBOUNCE_MS = 220L;
+
     /** 点击/长按检测状态（全局单次手势，避免重复触发）。 */
     private static volatile boolean sPendingTap;
     private static long sDownTime;
     /** 双击手势：上一次点击的时间戳（0 = 无待配对点击）。 */
     private static long sLastTapTime;
+    /** 上一次真正切换显秒的时间戳（单击模式去抖用）。 */
+    private static long sLastToggleAt;
     private static float sDownX, sDownY;
     private static android.os.Handler sTouchHandler;
     private static Runnable sLongPressTask;
@@ -1172,9 +1183,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 refreshClockRect(sClockView); // 每次按下刷新边界，覆盖旋转/状态变化
                 float x = ev.getRawX(), y = ev.getRawY();
                 boolean hit;
-                synchronized (sClockRectLock) {
-                    hit = sClockRect.contains((int) x, (int) y);
-                }
+                // 用外扩后的热区判定：状态栏时钟矩形只有 ~156x80px，点偏几像素就落空。
+                final Rect hitArea = tappableClockArea();
+                hit = hitArea.contains((int) x, (int) y);
                 // 记录最近一次按下的坐标、时间与命中结论，供「运行诊断」一次性输出。
                 sLastTouchX = x;
                 sLastTouchY = y;
@@ -1182,7 +1193,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 sLastHit = hit;
                 if (BuildConfig.DEBUG) {
                     XposedBridge.log(LOG_PREFIX + "touch DOWN at (" + x + "," + y + ") rect="
-                            + sClockRect + " hit=" + hit);
+                            + sClockRect + " area=" + hitArea + " hit=" + hit);
                 }
                 if (hit) {
                     // 先清掉可能残留的旧长按任务，防止泄漏累积导致误弹。
@@ -1241,17 +1252,23 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         long dt = ev.getEventTime() - sDownTime;
                         float dx = Math.abs(ev.getRawX() - sDownX);
                         float dy = Math.abs(ev.getRawY() - sDownY);
-                        if (dt < 400 && dx < 16 && dy < 16) {
-                            toggleSeconds(sClockView);
+                        if (dt < TAP_MAX_MS && dx < TAP_SLOP_PX && dy < TAP_SLOP_PX) {
+                            long now = ev.getEventTime();
+                            // 默认「单击」模式下用户顺手双击会连触发两次（开→关，看起来像没反应），
+                            // 因此 TOGGLE_DEBOUNCE_MS 内的第二次点击视为同一次手势，不再取反。
+                            if (now - sLastToggleAt >= TOGGLE_DEBOUNCE_MS) {
+                                sLastToggleAt = now;
+                                toggleSeconds(sClockView);
+                            }
                         }
                     } else if (gesture == ClockSecondsConfig.GESTURE_DOUBLE_TAP) {
                         long dt = ev.getEventTime() - sDownTime;
                         float dx = Math.abs(ev.getRawX() - sDownX);
                         float dy = Math.abs(ev.getRawY() - sDownY);
-                        if (dt < 400 && dx < 16 && dy < 16) {
-                            // 350ms 内第二次点击才算双击；第一次只记录时间。
+                        if (dt < TAP_MAX_MS && dx < TAP_SLOP_PX && dy < TAP_SLOP_PX) {
+                            // 450ms 内第二次点击才算双击；第一次只记录时间（卡顿设备上间隔常 >350ms）。
                             long now = ev.getEventTime();
-                            if (now - sLastTapTime <= 350) {
+                            if (now - sLastTapTime <= DOUBLE_TAP_MS) {
                                 sLastTapTime = 0;
                                 toggleSeconds(sClockView);
                             } else {
@@ -1828,6 +1845,39 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } catch (Throwable ignored) {
             // 文本刷新失败静默
         }
+    }
+
+    /**
+     * 时钟的可点击热区：在真实时钟矩形外侧扩一圈
+     * （左右 16dp、上 6dp、下 18dp，下沿夹到状态栏高度内，避免抢走应用内手势）。
+     * 依据：澎湃 OS 用户日志里 14 次点空全部只差 4~12px，状态栏时钟矩形高只有 80px。
+     */
+    private static Rect tappableClockArea() {
+        Rect out = new Rect();
+        synchronized (sClockRectLock) {
+            out.set(sClockRect);
+        }
+        if (out.isEmpty()) {
+            return out;
+        }
+        try {
+            Context ctx = sClockView != null ? sClockView.getContext() : null;
+            if (ctx != null) {
+                int mx = floatDp(ctx, 16);
+                int left = out.left, right = out.right, top = out.top, bottom = out.bottom;
+                out.left = Math.max(0, left - mx);
+                out.right = right + mx;
+                out.top = Math.max(0, top - floatDp(ctx, 6));
+                out.bottom = bottom + floatDp(ctx, 18);
+                int bar = statusBarHeight(ctx);
+                if (bar > 0 && out.bottom > bar) {
+                    out.bottom = bar;
+                }
+            }
+        } catch (Throwable ignored) {
+            // 尺寸取不到就退回原矩形
+        }
+        return out;
     }
 
     private static int statusBarHeight(Context context) {
