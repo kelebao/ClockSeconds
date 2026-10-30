@@ -126,9 +126,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 任务列表（Secure 里的 JSON，见 {@link io.github.kelebao.colorosclockseconds.ClockTask}）。 */
     private static volatile List<io.github.kelebao.colorosclockseconds.ClockTask> sTasks =
             Collections.emptyList();
-    /** 当前是否有任务要求强制显秒 / 强制关秒；两者同时命中时「关」优先。 */
+    /** 当前是否有任务窗口生效（vc250 起只剩「显秒」动作，「关闭显秒」已删除）。 */
     private static volatile boolean sTaskShow;
-    private static volatile boolean sTaskHide;
+    /** 「任务进行中」提示文案，由设置页按当前系统语言推送（模块自己的资源在 SystemUI 进程里取不到）。 */
+    private static volatile String sToastTaskText;
     private static android.os.Handler sTaskHandler;
 
     /**
@@ -136,9 +137,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 所有「要不要显示秒」的判断都必须走这里，不要直接读 {@link #sSecondsEnabled}。
      */
     private static boolean secondsOn() {
-        if (sTaskHide) {
-            return false;
-        }
         if (sTaskShow) {
             return true;
         }
@@ -871,7 +869,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             root.put("secondsEnabled", sSecondsEnabled);
             root.put("secondsOn", secondsOn());
             root.put("taskShow", sTaskShow);
-            root.put("taskHide", sTaskHide);
             root.put("taskCount", sTasks.size());
             root.put("gesture", ClockSecondsConfig.getGesture(cr));
             root.put("lastTouchX", (int) sLastTouchX);
@@ -1767,11 +1764,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 任务窗口期间提示用户：此刻显不显秒由「自定义任务」决定，点一下改总开关也不会立刻生效，
      * 反而会在窗口结束后莫名其妙地变状态，所以这里直接不改开关、只给一句提示。
      */
-    private static void toastTaskOverride(Context context, boolean showing) {
+    private static void toastTaskOverride(Context context) {
         try {
-            final String msg = showing
-                    ? "任务进行中：显秒已由「自定义任务」接管"
-                    : "任务进行中：隐藏秒已由「自定义任务」接管";
+            String pushed = sToastTaskText;
+            final String msg = (pushed == null || pushed.isEmpty())
+                    ? "任务进行中：显秒已由「自定义任务」接管" : pushed;
             final Context ctx = context.getApplicationContext() != null
                     ? context.getApplicationContext() : context;
             new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -1793,8 +1790,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (context == null) {
             return;
         }
-        if (sTaskShow || sTaskHide) {
-            toastTaskOverride(context, sTaskShow);
+        if (sTaskShow) {
+            toastTaskOverride(context);
             return;
         }
         ContentResolver resolver = context.getContentResolver();
@@ -2493,7 +2490,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         try {
             // 只发布「任务窗口的覆盖值」：没有任务命中就写 -1，让设置页回落到总开关（避免读到过期值）。
-            int override = sTaskShow ? 1 : (sTaskHide ? 0 : -1);
+            int override = sTaskShow ? 1 : -1;
             ClockSecondsConfig.setEffectiveSeconds(cr, override);
         } catch (Throwable t) {
             noteHookError(t);
@@ -2505,34 +2502,28 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             long now = System.currentTimeMillis();
             boolean show = false;
-            boolean hide = false;
             long next = Long.MAX_VALUE;
             for (io.github.kelebao.colorosclockseconds.ClockTask t : sTasks) {
                 if (t == null || !t.enabled) {
                     continue;
                 }
                 if (t.windowContains(now)) {
-                    if (t.action == io.github.kelebao.colorosclockseconds.ClockTask.ACTION_HIDE) {
-                        hide = true;
-                    } else {
-                        show = true;
-                    }
+                    show = true;
                 }
                 long nt = t.nextTransition(now);
                 if (nt < next) {
                     next = nt;
                 }
             }
-            boolean changed = show != sTaskShow || hide != sTaskHide;
+            boolean changed = show != sTaskShow;
             sTaskShow = show;
-            sTaskHide = hide;
             scheduleTaskTick(next == Long.MAX_VALUE ? -1L : next - now + 300L);
             if (changed) {
                 if (BuildConfig.DEBUG) {
-                    XposedBridge.log(LOG_PREFIX + "TASK state show=" + show + " hide=" + hide);
+                    XposedBridge.log(LOG_PREFIX + "TASK state show=" + show);
                 }
                 applyTaskState();
-            } else if (show || hide) {
+            } else if (show) {
                 // 兜底：窗口内每分钟重放一次。applyTaskState 在时钟视图还没抓到时会直接返回，
                 // 而那时状态已经记为「已生效」，之后不再有 changed 事件 → 秒数永远不出现。
                 applyTaskState();
@@ -3050,6 +3041,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
         filter.addAction(ClockSecondsConfig.ACTION_SET_TASKS);
+        filter.addAction(ClockSecondsConfig.ACTION_SET_TOAST_TEXT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_CLOCK_RULE);
@@ -3080,7 +3072,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 reloadTasks(ctx);
                                 return;
                             }
-                            if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
+                            if (ClockSecondsConfig.ACTION_SET_TOAST_TEXT.equals(action)) {
+            // 只存文案，不涉及配置；设置页每次回到前台都会推一次，覆盖语言切换后的旧文案。
+            sToastTaskText = intent.getStringExtra(ClockSecondsConfig.EXTRA_TOAST_TEXT);
+            return;
+        }
+        if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
                                 // 旧接口：等同「设置 0 号位（时十）颜色」，兼容老的设置页广播。
                                 ClockSecondsConfig.setDigitColor(cr, 0, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR, HOUR_COLOR_FALLBACK));

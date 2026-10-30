@@ -122,17 +122,14 @@
     <string name="settings_task_advance_value">提前 %1$d 分钟</string>
     <string name="settings_task_duration">持续时长</string>
     <string name="settings_task_duration_value">%1$d 分钟</string>
-    <string name="settings_task_action">动作</string>
-    <string name="settings_task_action_show">显秒</string>
-    <string name="settings_task_action_hide">关闭显秒</string>
     <string name="settings_task_delete">删除任务</string>
     <string name="settings_task_save">保存</string>
     <string name="settings_task_default_name">任务 %1$d</string>
     <string name="settings_task_back">返回</string>
+    <string name="task_toast_running">任务进行中：显秒已由「自定义任务」接管</string>
     <string name="task_when_hourly">每整点</string>
     <string name="task_when_hourly_advance">每整点前 %1$d 分钟</string>
     <string name="task_when_daily">每天 %1$s</string>
     <string name="task_advance_suffix">前 %1$d 分钟</string>
     <string name="task_fmt_show">%1$s显秒，持续 %2$d 分钟</string>
-    <string name="task_fmt_hide">%1$s关闭显秒，持续 %2$d 分钟</string>
 </resources>

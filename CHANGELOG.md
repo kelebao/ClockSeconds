@@ -2,10 +2,21 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 246）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 247）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：未发布。** 测试线从 vc37 累积到 vc245；正式发版时本段即为 v1.2.0 的更新内容。
+> **状态：未发布。** 测试线从 vc37 累积到 vc247；正式发版时本段即为 v1.2.0 的更新内容。
 
+### vc247（21 种语言补齐 + 删除「关闭显秒」任务动作）
+
+- **App 界面多语言真正补齐（用户要求「把 app 里多国语言适配了」）**：
+  - 之前 22 个 `values*/strings.xml` 的**键集合**是一致的，但最新两批文案（渐变 / 数字颜色页签 / 自定义任务 / 新色板名等 30 个键）在除中文外的 19 个语言里都是**英文原文**，等于没翻译；Turkish 整个任务卡 31 键全部是英文。
+  - 本次把这 31 个键在 19 个语言里**全部人工翻译**（ja/ko/zh-TW/ru/uk/pl/de/fr/it/es/pt-BR/vi/th/in/ar/fa/el/ka/tr），并修掉 8 处历史漏译（de 的 Version/Sync/Cyan/Palette、fr 的 Cyan/Palette、es 的 General、in 的 Amber）。
+  - `values/`（默认兜底）原本是**中文**，系统语言不在 21 种内时会跳中文 —— 改为**英文兜底**（= values-en 全文）。
+  - 字符串里的**未转义撇号**会让 aapt2 直接编译失败（韩语任务 toast 报 `unescaped apostrophe`），已全部按 `\'` 转义。
+  - 校验：`tools/check_i18n.py` 通过（22 个文件 × 127 键完全一致，退出码 0）。
+- **任务 toast 跟随界面语言**：模块跑在 SystemUI 进程，读不到本模块的资源，因此新增 `ACTION_SET_TOAST_TEXT` 广播，由设置页把当前语言的「任务进行中：显秒已由「自定义任务」接管」推给模块；模块缓存后弹 Toast，为空时回退中文。
+- **删除「关闭显秒」动作（用户要求）**：任务编辑页整段「动作」单选（开启/关闭显秒）已移除，任务现在只做**到点开启秒**；`ClockTask.ACTION_HIDE` 改名 `ACTION_LEGACY_HIDE` 并在 `normalize()` 里把旧数据的 `action=1` 归一到显秒，历史任务不会失效（只是语义变成显秒）。模块侧删除 `sTaskHide` 字段与所有分支，`secondsOn()` / `publishEffectiveSeconds()` / `evaluateTasks()` / `buildDiagnostic` / `toggleSeconds()` 同步精简。
+- 版本：versionCode 247 / `1.2.0-test.20261030-1920`；单测通过；装机后心跳 `1793358661303|1.2.0-test.20261030-1920|247`，crash FATAL = 0。
 ### vc246（ColorOS 15 上「预览卡渐变不均匀」彻底修好：预览改成自绘）
 
 - **现象**：ColorOS 15（PHK110 / Android 15）机器上，设置页预览卡的时间渐变**不均匀**——每个数字像是被单独灌了一个纯色，整串只有 3 档颜色跳变（用户原话「随机渐变」）；同一台机器的**状态栏**渐变正常，ColorOS 17 机器上预览也正常。

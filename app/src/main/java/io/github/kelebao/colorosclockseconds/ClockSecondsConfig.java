@@ -187,6 +187,11 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
             "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_COLOR";
 
     /** 设置页 → SystemUI 写入整份自定义任务列表（{@link #EXTRA_TASKS}）。 */
+    /** 设置页把「任务进行中」提示文案推给模块（模块在 SystemUI 进程里弹 toast，用当前系统语言）。 */
+    public static final String ACTION_SET_TOAST_TEXT =
+            "io.github.kelebao.colorosclockseconds.action.SET_TOAST_TEXT";
+    public static final String EXTRA_TOAST_TEXT = "toastText";
+
     public static final String ACTION_SET_TASKS =
             "io.github.kelebao.colorosclockseconds.action.SET_TASKS";
     /** String extra：自定义任务列表 JSON。 */

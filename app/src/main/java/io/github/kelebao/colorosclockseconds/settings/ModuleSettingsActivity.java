@@ -512,9 +512,23 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+        pushToastText();
         if (mDigitGrid != null) {
             // 回到前台 / 状态栏改了颜色：同步色块选中环与摘要行。
             refreshDigitSwatches();
+        }
+    }
+
+    /** 把「任务进行中」提示文案推给 SystemUI 模块：模块进程里拿不到本应用的资源，只能由我们按当前语言推过去。 */
+    private void pushToastText() {
+        try {
+            Intent it = new Intent(ClockSecondsConfig.ACTION_SET_TOAST_TEXT)
+                    .setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE)
+                    .putExtra(ClockSecondsConfig.EXTRA_TOAST_TEXT,
+                            getString(R.string.task_toast_running));
+            sendBroadcast(it);
+        } catch (Throwable ignored) {
+            // 推不过去时模块会退回内置中文文案，不影响功能
         }
     }
 
@@ -5094,17 +5108,6 @@ public final class ModuleSettingsActivity extends Activity {
             }
         });
 
-        // 动作
-        box.addView(editorLabel(R.string.settings_task_action));
-        final RadioGroup actionGroup = new RadioGroup(this);
-        actionGroup.setOrientation(RadioGroup.HORIZONTAL);
-        final RadioButton rbShow = makeRadio(R.string.settings_task_action_show);
-        final RadioButton rbHide = makeRadio(R.string.settings_task_action_hide);
-        actionGroup.addView(rbShow);
-        actionGroup.addView(rbHide);
-        (draft.action == ClockTask.ACTION_HIDE ? rbHide : rbShow).setChecked(true);
-        box.addView(actionGroup);
-
         // 底部：删除（仅编辑已有）/ 保存
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
@@ -5147,7 +5150,7 @@ public final class ModuleSettingsActivity extends Activity {
             draft.minute = parseIntOr(minuteInput.getText().toString(), draft.minute);
             draft.advanceMin = advBar.getProgress();
             draft.durationMin = durBar.getProgress() + ClockTask.DURATION_MIN;
-            draft.action = rbHide.isChecked() ? ClockTask.ACTION_HIDE : ClockTask.ACTION_SHOW;
+            draft.action = ClockTask.ACTION_SHOW;
             draft.normalize();
             List<ClockTask> next = new ArrayList<>(mTasks);
             boolean replaced = false;

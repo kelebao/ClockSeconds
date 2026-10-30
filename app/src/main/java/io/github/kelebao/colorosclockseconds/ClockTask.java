@@ -22,8 +22,8 @@ import java.util.Locale;
  * <p>窗口 = {@code [触发点 - advanceMin, 触发点 - advanceMin + durationMin)}，
  * 即「提前 N 分钟开始」，持续 M 分钟后自动结束。窗口可以跨整点/跨天。</p>
  *
- * <p>动作：{@link #ACTION_SHOW} 窗口内强制显秒（即使总开关关着），
- * {@link #ACTION_HIDE} 窗口内强制关闭秒（即使总开关开着）。两者同时命中时「关闭」优先。</p>
+ * <p>动作：窗口内强制显秒（即使总开关关着）。vc250 起已删除「窗口内关闭秒」的动作，
+ * 旧数据里 {@code action=1} 的任务在读取时统一归为显秒。</p>
  *
  * <p>本类不碰 Android 设置存储，序列化格式由 {@link #toJson(List)} / {@link #parse(String)}
  * 负责，读写 Secure 见 {@link ClockSecondsConfig#getTasksJson}。</p>
@@ -34,7 +34,8 @@ public final class ClockTask {
     public static final int TRIGGER_DAILY = 1;
 
     public static final int ACTION_SHOW = 0;
-    public static final int ACTION_HIDE = 1;
+    /** 已废弃：旧数据可能仍带 1，读取时归一为 {@link #ACTION_SHOW}。 */
+    public static final int ACTION_LEGACY_HIDE = 1;
 
     /** 提前量的上限（分钟）。 */
     public static final int ADVANCE_MAX = 59;
@@ -74,9 +75,8 @@ public final class ClockTask {
         if (trigger != TRIGGER_DAILY) {
             trigger = TRIGGER_HOURLY;
         }
-        if (action != ACTION_HIDE) {
-            action = ACTION_SHOW;
-        }
+        // 「关闭显秒」动作已删除：任何来源（含旧数据）一律归为显秒。
+        action = ACTION_SHOW;
         hour = ((hour % 24) + 24) % 24;
         minute = ((minute % 60) + 60) % 60;
         advanceMin = Math.max(0, Math.min(ADVANCE_MAX, advanceMin));
@@ -147,9 +147,7 @@ public final class ClockTask {
         } else {
             when = ctx.getString(R.string.task_when_hourly);
         }
-        return action == ACTION_HIDE
-                ? ctx.getString(R.string.task_fmt_hide, when, durationMin)
-                : ctx.getString(R.string.task_fmt_show, when, durationMin);
+        return ctx.getString(R.string.task_fmt_show, when, durationMin);
     }
 
     // ==================================================================
