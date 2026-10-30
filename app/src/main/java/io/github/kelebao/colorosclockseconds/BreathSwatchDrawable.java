@@ -5,41 +5,37 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 
 /**
- * 色点：实心圆 + （选中时）外圈一条绕圈旋转的亮弧（「旋转亮弧」方案，vc224 起）。
+ * 色点：实心圆 + （选中时）向外扩散的双涟漪（「双涟漪」方案，vc227 起）。
  *
- * <p>为什么不用「明暗呼吸」：人眼对<b>位置变化</b>的敏感度远高于明暗变化，所以同样的
- * 视觉强度下，一条绕圈转的弧比一团忽明忽暗的散光更容易被看见——这正是「散光呼吸
- * 看不清楚」的解法。</p>
+ * <p>为什么不靠明暗呼吸：人眼对<b>位置变化</b>和<b>扩散方向</b>的敏感度远高于明暗变化，
+ * 所以两圈从色点边缘向外扩散、边扩边淡，比一团忽明忽暗的散光更容易被看见。</p>
  *
- * <p>画法：一圈很淡的轨道（提示「这里有一整圈」）+ 一段 105° 的亮弧 + 身后 45° 拖尾
- * + 弧头一个小光点。相位由外部 {@link #setPhase(float)} 每 50ms 推进一次，本类不做动画、
- * 不持有定时器。</p>
+ * <p>画法：两圈同心圆环，相位错开半圈（0.5），半径从实心圆边缘线性扩到色块边缘，
+ * 透明度按 {@code (1-k)^1.2} 淡出，粗细按色块半径等比缩放。相位由外部
+ * {@link #setPhase(float)} 每 50ms 推进一次，本类不做动画、不持有定时器。</p>
  */
 public class BreathSwatchDrawable extends Drawable {
 
-    /** 亮弧转一圈的周期（毫秒）；外部按 {@code (now % SPIN_PERIOD_MS) / SPIN_PERIOD_MS} 算相位。 */
-    public static final long SPIN_PERIOD_MS = 2200L;
+    /** 一圈涟漪扩散到消失的周期（毫秒）；外部按 {@code (now % RIPPLE_PERIOD_MS) / RIPPLE_PERIOD_MS} 算相位。 */
+    public static final long RIPPLE_PERIOD_MS = 1600L;
 
     /** 实心圆半径占色块半径的比例（默认值）。 */
     private static final float SOLID = 0.70f;
-    /** 轨道半径占色块半径的比例：0.84 留出描边余量，避免弧被 bounds 裁掉。 */
-    private static final float RING = 0.84f;
-    /** 亮弧张角（度）。 */
-    private static final float ARC_SWEEP = 105f;
-    /** 亮弧身后的拖尾张角（度）。 */
-    private static final float TAIL_SWEEP = 45f;
+    /** 涟漪扩散到的最大半径占色块半径的比例：留 2% 余量，避免被 bounds 裁掉。 */
+    private static final float RIPPLE_MAX = 0.98f;
+    /** 两圈涟漪的相位间隔（半圈）。 */
+    private static final float RIPPLE_PHASE_GAP = 0.5f;
+    /** 涟漪峰值透明度（0..255）。 */
+    private static final float RIPPLE_ALPHA = 255f;
+    /** 淡出曲线指数：0.7 让环在扩散中段仍然清楚（1.2 会衰减太快，肉眼只剩一闪）。 */
+    private static final float RIPPLE_FADE_POW = 0.7f;
 
     private final Paint mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint mTrackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint mTailPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint mArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint mHeadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final RectF mRingRect = new RectF();
+    private final Paint mRipplePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private final int mColor;
     private final boolean mSelected;
@@ -47,8 +43,10 @@ public class BreathSwatchDrawable extends Drawable {
     private final float mStrokeWidth;
     private final float mSolidRatio;
 
-    /** 旋转相位 0..1（0 = 弧在 12 点方向）。 */
+    /** 涟漪相位 0..1；0 与 0.5 分别是两圈刚从色点边缘出发的时刻。 */
     private float mPhase;
+    /** Drawable 整体透明度（View 状态变化时会调 setAlpha），涟漪透明度按它等比缩放。 */
+    private int mAlpha = 255;
 
     public BreathSwatchDrawable(int color, boolean selected, int strokeColor, float strokeWidth) {
         this(color, selected, strokeColor, strokeWidth, SOLID);
@@ -66,19 +64,11 @@ public class BreathSwatchDrawable extends Drawable {
         mStrokePaint.setStyle(Paint.Style.STROKE);
         mStrokePaint.setStrokeWidth(strokeWidth);
         mStrokePaint.setColor(strokeColor);
-        mTrackPaint.setStyle(Paint.Style.STROKE);
-        mTrackPaint.setColor(color);
-        mTrackPaint.setAlpha(52);
-        mTailPaint.setStyle(Paint.Style.STROKE);
-        mTailPaint.setColor(color);
-        mTailPaint.setAlpha(88);
-        mArcPaint.setStyle(Paint.Style.STROKE);
-        mArcPaint.setColor(color);
-        mHeadPaint.setStyle(Paint.Style.FILL);
-        mHeadPaint.setColor(color);
+        mRipplePaint.setStyle(Paint.Style.STROKE);
+        mRipplePaint.setColor(color);
     }
 
-    /** 推进旋转相位（0..1，可传任意实数，内部取小数部分）；仅选中色点会高频调用。 */
+    /** 推进涟漪相位（0..1，可传任意实数，内部取小数部分）；仅选中色点会高频调用。 */
     public void setPhase(float phase) {
         mPhase = phase - (float) Math.floor(phase);
         invalidateSelf();
@@ -92,26 +82,23 @@ public class BreathSwatchDrawable extends Drawable {
         final float r = b.width() / 2f;
         final float solid = r * mSolidRatio;
 
-        // 选中：外圈轨道 + 旋转亮弧（不做明暗呼吸，靠位置变化传达「在动」）
+        // 选中：两圈向外扩散的涟漪（靠位置/扩散方向传达「在动」，不靠明暗）
         if (mSelected) {
-            final float ringR = r * RING;
-            final float sw = Math.max(3f, r * 0.085f);
-            mRingRect.set(cx - ringR, cy - ringR, cx + ringR, cy + ringR);
-            mTrackPaint.setStrokeWidth(sw);
-            canvas.drawCircle(cx, cy, ringR, mTrackPaint);
-
-            // 0 度在 3 点方向、顺时针为正；-90 度起画即从 12 点开始
-            final float head = -90f + mPhase * 360f;
-            mTailPaint.setStrokeWidth(sw * 1.15f);
-            canvas.drawArc(mRingRect, head - TAIL_SWEEP, TAIL_SWEEP, false, mTailPaint);
-            mArcPaint.setStrokeWidth(sw * 1.5f);
-            canvas.drawArc(mRingRect, head, ARC_SWEEP, false, mArcPaint);
-
-            // 弧头光点：让「头」比「尾」更亮，旋转方向一眼可读
-            final double rad = Math.toRadians(head);
-            final float hx = cx + (float) (Math.cos(rad) * ringR);
-            final float hy = cy + (float) (Math.sin(rad) * ringR);
-            canvas.drawCircle(hx, hy, sw * 1.35f, mHeadPaint);
+            final float outer = r * RIPPLE_MAX;
+            final float start = solid * 1.02f;
+            mRipplePaint.setStrokeWidth(Math.max(2.5f, r * 0.095f));
+            for (int i = 0; i < 2; i++) {
+                float k = mPhase + (i == 0 ? 0f : RIPPLE_PHASE_GAP);
+                k -= (float) Math.floor(k);
+                final float radius = start + (outer - start) * k;
+                final int a = Math.round(RIPPLE_ALPHA
+                        * (float) Math.pow(1f - k, RIPPLE_FADE_POW) * (mAlpha / 255f));
+                if (a <= 0) {
+                    continue;
+                }
+                mRipplePaint.setAlpha(Math.min(255, a));
+                canvas.drawCircle(cx, cy, radius, mRipplePaint);
+            }
         }
 
         // 实心圆
@@ -125,22 +112,17 @@ public class BreathSwatchDrawable extends Drawable {
 
     @Override
     public void setAlpha(int alpha) {
+        mAlpha = alpha;
         mFillPaint.setAlpha(alpha);
         mStrokePaint.setAlpha(alpha);
-        mTrackPaint.setAlpha(Math.round(alpha * 52f / 255f));
-        mTailPaint.setAlpha(Math.round(alpha * 88f / 255f));
-        mArcPaint.setAlpha(alpha);
-        mHeadPaint.setAlpha(alpha);
+        invalidateSelf();
     }
 
     @Override
     public void setColorFilter(ColorFilter colorFilter) {
         mFillPaint.setColorFilter(colorFilter);
         mStrokePaint.setColorFilter(colorFilter);
-        mTrackPaint.setColorFilter(colorFilter);
-        mTailPaint.setColorFilter(colorFilter);
-        mArcPaint.setColorFilter(colorFilter);
-        mHeadPaint.setColorFilter(colorFilter);
+        mRipplePaint.setColorFilter(colorFilter);
     }
 
     @Override

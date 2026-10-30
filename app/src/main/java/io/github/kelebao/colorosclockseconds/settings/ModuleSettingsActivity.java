@@ -374,8 +374,8 @@ public final class ModuleSettingsActivity extends Activity {
             long now = System.currentTimeMillis();
             if (mGradBreath != null) {
                 // 渐变端点色点：外圈亮弧绕圈（「旋转亮弧」方案，vc224 换掉看不清的散光呼吸）。
-                mGradBreath.setPhase((now % BreathSwatchDrawable.SPIN_PERIOD_MS)
-                        / (float) BreathSwatchDrawable.SPIN_PERIOD_MS);
+                mGradBreath.setPhase((now % BreathSwatchDrawable.RIPPLE_PERIOD_MS)
+                        / (float) BreathSwatchDrawable.RIPPLE_PERIOD_MS);
             }
             // 预览卡滚出屏幕时跳过弧的高频刷新（省电/省 CPU）；色块光晕照常（它可能在视口内）。
             if (mArcTicks != null
