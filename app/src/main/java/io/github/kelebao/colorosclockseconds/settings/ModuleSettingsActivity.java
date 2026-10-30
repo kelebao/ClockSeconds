@@ -38,6 +38,7 @@ import io.github.kelebao.colorosclockseconds.ColonLiftSpan;
 import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
 import io.github.kelebao.colorosclockseconds.HsvPickerView;
 import io.github.kelebao.colorosclockseconds.DigitGlowDrawable;
+import io.github.kelebao.colorosclockseconds.DustTitleView;
 import io.github.kelebao.colorosclockseconds.SlantCardDrawable;
 import io.github.kelebao.colorosclockseconds.UnderlineDrawable;
 import io.github.kelebao.colorosclockseconds.WavyLineView;
@@ -163,6 +164,7 @@ public final class ModuleSettingsActivity extends Activity {
     private final PressTiltEffect mPressTilt = new PressTiltEffect();   // 全卡片按压倾斜效果
     private View mPreviewCard;                    // 预览卡：判断是否滚出屏幕，跳过弧的高频刷新
     private View mColorCard;                      // 数字颜色卡：展开取色时用 translationY 顶住不上移
+    private DustTitleView mDustTitle;             // 顶部标题的粉尘点阵效果（点一下会炸开）
     private final Rect mTmpVisible = new Rect();
     // 时间格式化缓存（预览每秒刷新；SimpleDateFormat 仅主线程用，可安全缓存）
     private final java.text.SimpleDateFormat mFmtSec =
@@ -721,12 +723,11 @@ public final class ModuleSettingsActivity extends Activity {
         texts.setLayoutParams(new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-        TextView title = new TextView(this);
-        title.setText(R.string.settings_title);
-        title.setTextSize(24f);
-        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        title.setTextColor(text());
-        texts.addView(title);
+        // 标题用「文字由粉尘点阵聚拢成形」的效果（移植自 D:\MyApp\TextDust）：
+        // 进入设置页时从随机散点聚成字，点一下会炸开再聚回来；拖动不会抢走页面滚动。
+        mDustTitle = new DustTitleView(this, getString(R.string.settings_title), text(),
+                24f * getResources().getDisplayMetrics().scaledDensity);
+        texts.addView(mDustTitle);
         row.addView(texts);
 
         chipView = new TextView(this);
