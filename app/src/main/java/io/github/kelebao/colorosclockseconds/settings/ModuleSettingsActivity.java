@@ -622,6 +622,12 @@ public final class ModuleSettingsActivity extends Activity {
         scroll.setFillViewport(true);
         // targetSdk 35 起系统强制边到边：内容会画到状态栏/导航栏下面，这里按系统栏高度留白，
         // 并保留裁剪（clipToPadding 默认 true），滚动时内容不会钻到状态栏图标下面。
+        //
+        // 但并非所有机器都真的边到边：Android 15 以下（或厂商关闭了强制边到边）时，窗口本身
+        // 已经从状态栏下方开始，系统仍然会把「状态栏高度」当 inset 发下来 —— 再叠加一次就会
+        // 在状态栏下面多出一条和状态栏一样高的空白带（用户反馈的「上面一块空白」）。
+        // 这里用「根视图在屏幕上的 y 偏移」和「根视图高度 vs 整屏高度」两个信号判断窗口有没有画到
+        // 状态栏下面，只有真的边到边才留白。
         scroll.setOnApplyWindowInsetsListener((v, insets) -> {
             int top;
             int bottom;
@@ -633,6 +639,46 @@ public final class ModuleSettingsActivity extends Activity {
             } else {
                 top = insets.getSystemWindowInsetTop();
                 bottom = insets.getSystemWindowInsetBottom();
+            }
+            final android.view.View rootView = v.getRootView();
+            final int rootH = rootView.getHeight();
+            int screenH = 0;
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= 30) {
+                    android.view.WindowManager wm = getSystemService(android.view.WindowManager.class);
+                    if (wm != null) {
+                        screenH = wm.getMaximumWindowMetrics().getBounds().height();
+                    }
+                }
+                if (screenH <= 0) {
+                    android.util.DisplayMetrics rdm = new android.util.DisplayMetrics();
+                    getWindowManager().getDefaultDisplay().getRealMetrics(rdm);
+                    screenH = rdm.heightPixels;
+                }
+            } catch (Throwable ignored) {
+                screenH = 0;
+            }
+            // 两个独立信号，任一命中就说明「窗口已经落在系统栏下方」：
+            //   ① 根视图在屏幕上的 y 偏移 > 0（窗口被系统下移了）；
+            //   ② 根视图高度明显小于整屏高度（窗口比屏幕矮一截）。
+            int decorY = 0;
+            try {
+                int[] loc = new int[2];
+                rootView.getLocationOnScreen(loc);
+                decorY = loc[1];
+            } catch (Throwable ignored) {
+                decorY = 0;
+            }
+            final boolean belowSystemBars =
+                    decorY > dp(8)
+                            || (rootH > 0 && screenH > 0 && rootH < screenH - dp(8));
+            if (belowSystemBars) {
+                top = 0;
+                bottom = 0;
+            }
+            if (BuildConfig.DEBUG) {
+                appendInsetLog("insets rootH=" + rootH + " screenH=" + screenH + " decorY=" + decorY
+                        + " below=" + belowSystemBars + " padT=" + top + " padB=" + bottom);
             }
             v.setPadding(0, top, 0, bottom);
             return insets;
@@ -2151,6 +2197,24 @@ public final class ModuleSettingsActivity extends Activity {
         try {
             java.io.File f = new java.io.File(getFilesDir(), "fit.log");
             if (f.length() > 64 * 1024) {
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
+            }
+            java.io.FileWriter w = new java.io.FileWriter(f, true);
+            w.write(System.currentTimeMillis() + " " + line + "\n");
+            w.close();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 仅 DEBUG：把窗口 inset 判定写进 files/insets.log（用于确认「多一条空白带」的机器走的是哪条分支）。 */
+    private void appendInsetLog(String line) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        try {
+            java.io.File f = new java.io.File(getFilesDir(), "insets.log");
+            if (f.length() > 32 * 1024) {
                 //noinspection ResultOfMethodCallIgnored
                 f.delete();
             }
