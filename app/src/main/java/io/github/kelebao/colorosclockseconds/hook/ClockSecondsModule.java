@@ -341,13 +341,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // 这样即使某些厂商的时钟 id 没被识别，设置页改颜色/手势也能写进去。
                     registerConfigReceiver(view.getContext());
                     // 缓存系统原始文本（追加的秒继承系统时钟文字色），供 writeTime 在其后追加秒。
-                    if (isStatusBarClock(view) && param.args != null && param.args.length > 0
+                    final boolean barClock = isStatusBarClock(view);
+                    final boolean qsClock = !barClock && isQsClock(view);
+                    if ((barClock || qsClock) && param.args != null && param.args.length > 0
                             && param.args[0] instanceof CharSequence) {
                         BASE_TEXT.put(view, (CharSequence) param.args[0]);
                     }
                     logCandidate(view);
                     // DEBUG 探针：打印每一次命中状态栏时钟的 setText（含调用者），定位颜色覆盖源。
-                    if (isStatusBarClock(view)) {
+                    if (barClock) {
                         logProbeSetText(view, param.args != null && param.args.length > 0
                                 ? param.args[0] : null);
                         // 抓凶探针 B：hook 时钟真实运行类的 setText（每类一次）。
@@ -357,9 +359,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // （同时登记到测试卡片清单，供设置页逐项勾选定位状态栏时钟）。
                     recordCandidate(view);
                     // 非状态栏时钟，或用户在测试卡片里停用了该时钟 → 不接管（不显秒、不标红）。
-                    if (!isStatusBarClock(view) || !isClockEnabled(view)) {
+                    if ((!barClock && !qsClock) || !isClockEnabled(view)) {
                         return;
                     }
+                    // 面板时钟：面板收起时不可见（detach / 0 尺寸），此时不接管、不装 ticker；
+                    // 展开后第一帧绘制由 onDraw 钩子兜住「首次接管」。
+                    if (qsClock && !isLiveQsClock(view)) {
+                        return;
+                    }
+
                     // 诊断探针：在系统 setText 之后、我们补色之前 dump Span 状态。
                     // ColorOS 17 的 StatClock 疑似在 setText 层把 CharSequence 洗成非 Spanned
                     // （实测：我们的 setText(sb) 后 getText() 立刻 not Spanned，而 ColorOS 15 正常）。
@@ -369,7 +377,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     if (BuildConfig.DEBUG) {
                         logSpans(view, "after-system");
                     }
-                    configureClockView(view);
+                    if (barClock) {
+                        // 只有状态栏时钟能成为 sClockView（长按热区 / 触摸切换都靠它）
+                        configureClockView(view);
+                    } else {
+                        QS_CLOCKS.add(view);
+                    }
                     if (secondsOn()) {
                         installTicker(view);
                         refreshClock(view);
@@ -416,6 +429,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
                         if (secondsOn()) {
                             refreshClock(view);
+                        }
+                    } else if (isQsClock(view)) {
+                        // 下拉面板时钟：面板展开时系统不一定会再 setText（文本没变），
+                        // 所以在绘制时兜一次「首次接管」；ticker 已在跑时什么都不做。
+                        if (isClockEnabled(view) && secondsOn()
+                                && isLiveQsClock(view) && !ACTIVE.containsKey(view)) {
+                            QS_CLOCKS.add(view);
+                            installTicker(view);
+                            refreshClock(view);
+                        } else if (isClockEnabled(view) && !secondsOn()
+                                && isLiveQsClock(view) && countColons(view.getText()) > 1) {
+                            // 显秒关掉时面板可能正收着（收着不会 setText），再展开就会残留上一帧
+                            // 我们写过的带秒文本。这里一次性改回 HH:mm（带颜色）；改完只有 1 个冒号，
+                            // 条件不再命中，不会每帧重写。
+                            QS_CLOCKS.add(view);
+                            writeMinuteOnly(view);
                         }
                     }
                 } catch (Throwable t) {
@@ -768,6 +797,69 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         return out;
     }
 
+    /**
+     * 下拉通知面板顶部的大时钟（ColorOS：oplus_qs_clock / OplusQSClock）。
+     *
+     * <p>它和状态栏时钟一样是 TextView，setText 钩子本来就能拿到，但 isClockNameExcluded
+     * 刻意排除了 qsclock（三星 QSClockIndicatorView 资源名就是 clock，误中会把 sClockView
+     * 指到面板时钟，面板收起时 0 尺寸 → 长按热区为空）。这里单独识别它，只用于
+     * 「同样显秒、同样上色」，绝不写 sClockView、绝不参与触摸切换。</p>
+     */
+    private static boolean isQsClock(TextView view) {
+        if (view == null) {
+            return false;
+        }
+        try {
+            // ColorOS 16 实测两个都被 setText 覆盖：
+            //   qs_footer_clock | SimpleQsClock  → 下拉通知面板顶部那个大时钟（旁边带「10月31日 星期六」）
+            //   oplus_qs_clock  | OplusQSClock   → 二次下拉的控制中心大时钟
+            String name = resourceName(view);
+            if ("qs_footer_clock".equals(name) || "oplus_qs_clock".equals(name)) {
+                return true;
+            }
+            String cls = view.getClass().getName().toLowerCase(Locale.ROOT);
+            // SimpleQsClock / OplusQSClock / 三星 QSClockIndicatorView 都落在这里。
+            // 这类视图以前被 isClockNameExcluded 排除（怕抢走 sClockView），
+            // 现在走独立通道、绝不写 sClockView，所以可以放心接管。
+            return cls.contains("qsclock");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 面板时钟是否真的在显示：面板收起时会 detach 或变 0 尺寸，此时不能给它装 ticker。 */
+    private static boolean isLiveQsClock(TextView view) {
+        try {
+            // isShown() 同时要求「自己 + 所有祖先都 VISIBLE + 已 attach + 窗口可见」，
+            // 面板收起（QS 窗口 dismiss）时立刻变 false —— 用它才能及时停掉面板时钟的每秒写入。
+            return view != null && view.isShown() && view.getAlpha() >= 0.2f
+                    && view.getWidth() > 0 && view.getHeight() > 0;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 见过并接管的全部面板时钟实例（弱引用，面板回收后自动消失）。 */
+    private static final java.util.Set<TextView> QS_CLOCKS =
+            Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
+
+    /** 存活的面板时钟实例（与 liveStatusBarClocks 分开：面板时钟的 y 远超状态栏区域）。 */
+    private static List<TextView> liveQsClocks() {
+        List<TextView> out = new ArrayList<>();
+        synchronized (QS_CLOCKS) {
+            for (TextView v : new ArrayList<>(QS_CLOCKS)) {
+                try {
+                    if (isClockEnabled(v) && isLiveQsClock(v)) {
+                        out.add(v);
+                    }
+                } catch (Throwable ignored) {
+                    // 单个实例异常不影响其它
+                }
+            }
+        }
+        return out;
+    }
+
     /** 递增序号：保证「延迟补写」只对最后一次切换生效（用户快速连点时不会把旧状态写回去）。 */
     private static volatile int sApplySeq;
 
@@ -796,7 +888,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /** 立刻把当前显秒状态写一遍到所有存活时钟（不做延迟补写）。 */
     private static void writeSecondsStateNow() {
-        List<TextView> clocks = liveStatusBarClocks();
+        List<TextView> clocks = new ArrayList<>(liveStatusBarClocks());
+        clocks.addAll(liveQsClocks());
         boolean on = secondsOn();
         if (!clocks.isEmpty()) {
             for (TextView v : clocks) {
@@ -1992,7 +2085,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 该时钟已被用户停用：不写文本/颜色（仅更新全局显秒内存态）。
         // 但必须写「所有存活的时钟实例」，不能只写 sClockView 那一个：HyperOS 上状态栏同时存在
         // Clock + MiuiClock 两个实例，只写一个会让另一个停在旧文本上，表现为「秒数卡住不动」。
-        if (isClockEnabled(view) || !liveStatusBarClocks().isEmpty()) {
+        if (isClockEnabled(view) || !liveStatusBarClocks().isEmpty() || !liveQsClocks().isEmpty()) {
             applySecondsToAllClocks();
         }
     }
@@ -2017,7 +2110,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         final int timeEnd = text.length();
         // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前
         // —— 零宽空格必须留在整串最末尾，写反就丢了 ColorOS 模式匹配防护。
-        text = appendMark(text, view.getContext());
+        // 下拉面板时钟旁边本来就有日期（ColorOS 显示「10月31日 星期六」），
+        // 再拼「周六」会重复，所以时间后缀只加给状态栏时钟。
+        if (!isQsClock(view)) {
+            text = appendMark(text, view.getContext());
+        }
         // 零宽空格破坏 HH:mm:ss 模式匹配：ColorOS 17 的 StatClock / setTextWithRedOneStyle 以及
         // 第三方状态栏主题模块（如 dev.puitheme.StatusBarModule）会按 HH:mm(:ss) 模式重建文本，
         // 重建时剥掉外来 Span → 显秒开时自定义颜色被反复洗掉（用户反馈「颜色闪没 1~2 秒」）。
@@ -2033,7 +2130,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         styleMark(sb, view, timeEnd);
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
-                    + (base instanceof android.text.Spannable));
+                    + (base instanceof android.text.Spannable)
+                    + (isQsClock(view) ? " qs=" + resourceName(view) : ""));
         }
         // 幂等短路：字符没变就跳过 setText。
         // 【vc207 教训】这里绝不能被绕过：onDraw → refreshClock → writeTime → setText → invalidate
@@ -2437,7 +2535,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String text = toHourMinute(base);
         final int timeEnd = text.length();
         // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前（零宽空格必须留在最末尾）。
-        text = appendMark(text, view.getContext());
+        // 下拉面板时钟旁边本来就有日期（ColorOS 显示「10月31日 星期六」），
+        // 再拼「周六」会重复，所以时间后缀只加给状态栏时钟。
+        if (!isQsClock(view)) {
+            text = appendMark(text, view.getContext());
+        }
         if (!text.endsWith("\u200B")) {
             text = text + "\u200B";
         }
@@ -2481,7 +2583,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String text = toHourMinute(base);
         final int timeEnd = text.length();
         // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前（零宽空格必须留在最末尾）。
-        text = appendMark(text, view.getContext());
+        // 下拉面板时钟旁边本来就有日期（ColorOS 显示「10月31日 星期六」），
+        // 再拼「周六」会重复，所以时间后缀只加给状态栏时钟。
+        if (!isQsClock(view)) {
+            text = appendMark(text, view.getContext());
+        }
         if (!text.endsWith("\u200B")) {
             text = text + "\u200B";
         }
@@ -2766,7 +2872,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     private static void refreshClock(TextView view) {
-        if (isStatusBarClock(view) && isClockEnabled(view) && secondsOn()) {
+        // 下拉面板时钟（qs_footer_clock / oplus_qs_clock）也走这里：
+        // isStatusBarClock 对它们是 false（当年为防抢 sClockView 而排除），只放行状态栏会让
+        // 面板时钟「装了 ticker 却永远不写秒」——vc257/vc258 实测就是这个原因没生效。
+        if ((isStatusBarClock(view) || isQsClock(view)) && isClockEnabled(view) && secondsOn()) {
             writeTime(view);
         }
     }
@@ -2877,6 +2986,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         for (TextView v : liveStatusBarClocks()) {
             stopTicker(v);
         }
+        for (TextView v : liveQsClocks()) {
+            stopTicker(v);
+        }
         stopTicker(clock);
         publishEffectiveSeconds(clock.getContext() == null
                 ? null : clock.getContext().getContentResolver());
@@ -2971,6 +3083,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
 
             firstDetachedAt = 0L;
+            // 下拉面板时钟：面板一收起就停掉本 ticker（否则会在不可见的视图上永久每秒 setText）。
+            // 下次展开时由 setText / onDraw 钩子重新接管。
+            if (isQsClock(view) && !isLiveQsClock(view)) {
+                synchronized (ACTIVE) {
+                    ACTIVE.remove(view);
+                }
+                return;
+            }
             // 熄屏：暂停秒级刷新（让状态栏秒数冻结在最后一帧），亮屏后自动续走；
             // 仍保持每秒轮询，以便亮屏的瞬间立即恢复走秒。
             // 注：系统省电模式不再暂停走秒（vc221 按用户要求删除该行为）。

@@ -4,7 +4,19 @@
 
 ## v1.2.0（测试线 versionCode 37 ~ 256）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc249，下面按版本记录。
+> **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
+
+### vc257 ~ vc262（下拉通知面板的时间也显秒、也上色）
+
+- **需求**：通知栏（下拉面板）上的时间要和状态栏一模一样 —— 同样显秒、同样的逐位颜色 / 渐变，并且点状态栏时间切换显秒时，面板时间自动跟着变。
+- **目标控件（ColorOS 15 / 16 两台真机实测一致）**：面板顶部那个大时钟是 `qs_footer_clock` / `com.oplus.systemui.qs.widget.SimpleQsClock`；二次下拉的控制中心大时钟是 `oplus_qs_clock` / `OplusQSClock`。两者都接管。锁屏时钟 `keyguard_status_bar_clock`、QS 底部小时钟与通知里的计时器不碰。
+- **为什么以前不生效**：面板时钟被 `isClockNameExcluded` 刻意排除（当年怕它抢走 `sClockView` → 面板收起时尺寸为 0 → 长按热区变空）。现在改用独立通道：`isQsClock()` 识别、`QS_CLOCKS` 弱引用集合登记，**只写文本/颜色，绝不写 `sClockView`**，触摸与长按仍只认状态栏时钟。
+- **真凶（vc260）**：`refreshClock()` 原来的门是 `isStatusBarClock(view) && …`，面板时钟不是状态栏时钟 → ticker 装上了却永远不写秒。改成同时放行 `isQsClock(view)` 后立即生效。
+- **面板收起自动停**：`isLiveQsClock()` 用 `isShown()` 判定，面板一收起 ticker 立刻摘掉（不会在不可见视图上永久每秒 setText）；再展开时由 `setText` / `onDraw` 钩子重新接管。
+- **后缀不重复**：面板时钟旁边本来就有「10月31日 星期六」，所以「时间后缀（周几/时段）」只加给状态栏，面板不加。
+- **关显秒时回退**：面板收着时不会收到 setText，再展开会残留上一帧的带秒文本；`onDraw` 钩子补了一条「发现还有 2 个冒号就改回 HH:mm（保留颜色）」的兜底，改完不再触发。
+- **真机验证（ColorOS 16 / PHP110 与 ColorOS 15 / PHK110）**：模块日志每秒 `WRITE: [01:20:28] baseRed=true qs=qs_footer_clock`；面板时钟显示 `01:20:28` 且呈橙→粉→紫渐变（与状态栏端点色一致），右侧日期不重叠；关闭显秒后面板变 `01:25`（颜色保留）；面板收起后 6 秒内无新增写入；`logcat -b crash` FATAL = 0。
+- 版本：vc257 `1.2.0-test.20261031-0110` → vc262 `1.2.0-test.20261031-0155`。
 
 ### vc256（时间后缀只保留在状态栏）
 
