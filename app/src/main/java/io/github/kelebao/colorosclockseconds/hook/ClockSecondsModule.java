@@ -1654,10 +1654,27 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             if (sFloatHourColorEnabled) {
                 int[] colors = digitColors(tv);
                 if (sGradientOn) {
-                    // Float window: shader origin is the view origin here (same as the status bar),
-                    // so pass 0. Measured on device: passing the text width mirrors the band and the
-                    // gradient runs backwards (left=end color, right=start color).
-                    applyGradient(sb, tv, colors, 0f);
+                    // 色带起点必须落在「文字左边缘」。浮窗是居中的 TextView：若从视图原点（0）起算，
+                    // 文字只看到色带的中后段，MIRROR 折叠后在文字中间出现「蓝顶」、两端回退 ——
+                    // 就是用户看到的「悬浮时间的渐变和预览不一样」。
+                    // 实测（1240x2772@560，band=411px，倍数扫参 -1…1）：xoff = +B/2 时文字正好覆盖
+                    // 0→1 整条色带（t 0.08→0.81，与设置页预览卡的 0.11→0.79 同一条曲线）；
+                    // 传 0 是「中间蓝顶两端回退」，传 −B/2 是整条反向。
+                    float textW = tv.getPaint().measureText(sb, 0, sb.length());
+                    float xoff = textW * 0.5f;
+                    if (BuildConfig.DEBUG) {
+                        // 扫参用：Secure 键里写一个乘数（如 "0" / "-1" / "0.5"），xoff = textW × 该值。
+                        try {
+                            String ov = android.provider.Settings.Secure.getString(
+                                    context.getContentResolver(),
+                                    "coloros_clock_seconds_debug_float_xoff");
+                            if (ov != null && ov.length() > 0) {
+                                xoff = textW * Float.parseFloat(ov);
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                    applyGradient(sb, tv, colors, xoff);
                 } else {
                     int systemTextColor = tv.getCurrentTextColor();
                     for (int i = 0; i < sb.length(); i++) {

@@ -2102,14 +2102,21 @@ public final class ModuleSettingsActivity extends Activity {
                 final int platePadB = previewPlate.getPaddingBottom();
                 final int usableH = plateHForFit - platePadT - platePadB;
                 if (usableH > 0) {
-                    // 实测字形墨迹高 ≈ 字号 × 1.17；再加上整体上移 10dp 的占用，
-                    // 用 0.86 的安全系数（≈ 1/1.17）保证字形完全落在 plate 内、不被裁。
-                    // 实测字形墨迹高 ≈ 字号×1.17，再加整体上移 10dp。用 0.855（=1/1.17）近似上限，
-                    // 再乘 0.96 留亚像素余量 → 0.82。既让矮卡数字尽量大，又不裁底。
-                    final float glyphRatioInv = 0.82f;   // 字号 / 字形墨迹高，留余量
-                    final float maxByH = usableH * glyphRatioInv;
-                    if (size > maxByH && maxByH >= sp(30)) {
-                        size = maxByH;
+                    // vc235：不再用「字号 × 0.82」这类经验系数（个别密度/机型上偏大，展开后
+                    // 数字下半段会被下方「网络时间」行盖住）。直接量这串字符在当前字号下的
+                    // 真实墨迹高度（Paint.getTextBounds，与字体/机型/密度无关），按 plate 可用
+                    // 高等比缩字号，任何分辨率都不会超出。
+                    final float preCapSize = size;
+                    final float inkH = measureInkHeight(previewView.getText(), size);
+                    final float maxInk = Math.max(0f, usableH - dp(2));
+                    if (inkH > maxInk) {
+                        size = size * (maxInk / inkH);
+                    }
+                    if (BuildConfig.DEBUG) {
+                        appendFitLog("cap avail=" + avail + " preSize=" + Math.round(preCapSize)
+                                + " ink=" + Math.round(inkH) + " usableH=" + usableH
+                                + " postSize=" + Math.round(size) + " plateH=" + plateHForFit
+                                + " padT=" + platePadT + " padB=" + platePadB);
                     }
                 }
             }
@@ -2121,6 +2128,36 @@ public final class ModuleSettingsActivity extends Activity {
             android.util.Log.d("CS-FIT", "avail=" + avail + " gaps=" + gaps + " perUnit=" + perUnit
                     + " size=" + Math.round(size) + " spacing=" + mExpandedSpacingEm
                     + " min34=" + Math.round(sp(34)) + " max58=" + Math.round(sp(58)));
+        }
+    }
+
+    /** 量「text 在当前字号下」的真实墨迹高度（px）。用 Paint.getTextBounds，不依赖 Layout。 */
+    private float measureInkHeight(CharSequence text, float sizePx) {
+        if (text == null || text.length() == 0 || sizePx <= 0f) {
+            return 0f;
+        }
+        final android.text.TextPaint tp = new android.text.TextPaint(previewView.getPaint());
+        tp.setTextSize(sizePx);
+        final android.graphics.Rect r = new android.graphics.Rect();
+        tp.getTextBounds(text.toString(), 0, text.length(), r);
+        return r.height() > 0 ? r.height() : sizePx * 0.72f;
+    }
+
+    /** 仅 DEBUG：把展开排版尺寸追加写进 files/fit.log（ColorOS 会丢应用 logcat，只能写文件取证）。 */
+    private void appendFitLog(String line) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        try {
+            java.io.File f = new java.io.File(getFilesDir(), "fit.log");
+            if (f.length() > 64 * 1024) {
+                //noinspection ResultOfMethodCallIgnored
+                f.delete();
+            }
+            java.io.FileWriter w = new java.io.FileWriter(f, true);
+            w.write(System.currentTimeMillis() + " " + line + "\n");
+            w.close();
+        } catch (Throwable ignored) {
         }
     }
 
@@ -2181,6 +2218,27 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         if (layout.getLineCount() <= 1) {
+            // vc235：行数没问题还要确认「字高」没超出 plate 可用高（矮卡/个别分辨率下数字
+            // 下段会被下方「网络时间」行盖住）。超了按比例缩字号重排。
+            final int plateUsable = ((mPlateFoldH > 0 ? mPlateFoldH
+                    : (previewPlate == null ? 0 : previewPlate.getHeight()))
+                    - (previewPlate == null ? 0 : previewPlate.getPaddingTop())
+                    - (previewPlate == null ? 0 : previewPlate.getPaddingBottom()));
+            final float inkNow = measureInkHeight(previewView.getText(),
+                    previewView.getTextSize());
+            if (plateUsable > 0 && inkNow > plateUsable - dp(1) && mFitGuard < 8) {
+                mFitGuard++;
+                mSizeShrink *= Math.max(0.80f, (plateUsable - dp(1)) / inkNow);
+                computeExpandedMetrics();
+                previewView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, mExpandedSizePx);
+                previewView.setLetterSpacing(mExpandedSpacingEm);
+                if (BuildConfig.DEBUG) {
+                    appendFitLog("shrink ink=" + Math.round(inkNow) + " usable=" + plateUsable
+                            + " -> size=" + Math.round(mExpandedSizePx));
+                }
+                previewView.post(this::fitExpandedText);
+                return;
+            }
             mFitGuard = 0;
             // 字号/字距可能在上一轮被收紧过（含显秒开关切换引发的重排），
             // 下划线与光晕是按「当前字形墨迹」定位的，这里必须跟着重算一次，
