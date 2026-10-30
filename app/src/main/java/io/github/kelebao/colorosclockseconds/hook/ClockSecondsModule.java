@@ -1,5 +1,6 @@
 package io.github.kelebao.colorosclockseconds.hook;
 
+
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -1625,20 +1626,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // 读不到用默认值
                 }
             }
-            if (sFloatHourColorEnabled) {
-                int[] colors = digitColors(tv);
-                int systemTextColor = tv.getCurrentTextColor();
-                for (int i = 0; i < sb.length(); i++) {
-                    int slot = ClockSecondsConfig.slotOfChar(sb, i);
-                    if (slot < 0 || slot >= colors.length
-                            || colors[slot] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-                        continue;
-                    }
-                    sb.setSpan(new ForegroundColorSpan(colors[slot]), i, i + 1,
-                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
-            }
             // 自适应字号：取宽高允许的较小值，保证 "HH:mm:ss" 完整放进窗口。
+            // 注意必须放在上色之前：渐变要按最终字号量文字宽度来定位色带。
             try {
                 float density = context.getResources().getDisplayMetrics().density;
                 int availW = (tv.getWidth() > 0 ? tv.getWidth() : floatDp(context, 88))
@@ -1659,7 +1648,43 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             } catch (Throwable ignored) {
                 // 字号自适应失败就用当前字号
             }
+            if (sFloatHourColorEnabled) {
+                int[] colors = digitColors(tv);
+                if (sGradientOn) {
+                    // Float window: shader origin is the view origin here (same as the status bar),
+                    // so pass 0. Measured on device: passing the text width mirrors the band and the
+                    // gradient runs backwards (left=end color, right=start color).
+                    applyGradient(sb, tv, colors, 0f);
+                } else {
+                    int systemTextColor = tv.getCurrentTextColor();
+                    for (int i = 0; i < sb.length(); i++) {
+                        int slot = ClockSecondsConfig.slotOfChar(sb, i);
+                        if (slot < 0 || slot >= colors.length
+                                || colors[slot] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                            continue;
+                        }
+                        sb.setSpan(new ForegroundColorSpan(colors[slot]), i, i + 1,
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                }
+            }
             tv.setText(sb);
+            if (BuildConfig.DEBUG) {
+                CharSequence cs = tv.getText();
+                int gspans = -1;
+                if (cs instanceof android.text.Spanned) {
+                    gspans = ((android.text.Spanned) cs)
+                            .getSpans(0, cs.length(), GradientTextSpan.class).length;
+                }
+                float band = tv.getPaint().measureText(sb, 0, sb.length());
+                XposedBridge.log(LOG_PREFIX + "FLOAT text=" + text
+                        + " size=" + Math.round(tv.getTextSize())
+                        + " grad=" + sGradientOn + " gspans=" + gspans
+                        + " band=" + Math.round(band)
+                        + " tvW=" + tv.getWidth() + " tvH=" + tv.getHeight()
+                        + " winW=" + (lp == null ? -1 : lp.width)
+                        + " winH=" + (lp == null ? -1 : lp.height));
+            }
         } catch (Throwable ignored) {
             // 文本刷新失败静默
         }
@@ -1902,6 +1927,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * @return 需要维护颜色的字符下标（掉色判定沿用同一套逻辑）
      */
     private static int[] applyGradient(SpannableStringBuilder sb, TextView view, int[] colors) {
+        return applyGradient(sb, view, colors, 0f);
+    }
+
+    /**
+     * 同上，额外指定色带在画笔坐标系里的起点偏移。
+     * 状态栏时钟文字从布局原点开始，传 0 即可；居中排版的 TextView（设置页预览卡、悬浮时间窗）
+     * 必须传「文字实测宽度」，否则文字只落在 MIRROR 色带的后半段、视觉上整条渐变反向。
+     */
+    private static int[] applyGradient(SpannableStringBuilder sb, TextView view, int[] colors,
+                                       float xOffset) {
         // 剥掉外来 / 上一轮的前景色：主题模块与 OplusClockExImpl 会塞 ForegroundColorSpan，
         // 其中还有 #0 透明色（会让数字直接消失），留着会和 shader 抢画笔。
         ForegroundColorSpan[] oldFg = sb.getSpans(0, sb.length(), ForegroundColorSpan.class);
@@ -1931,7 +1966,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 ? colors[colors.length - 1] : sGradientEnd;
         int c0 = gradientEdgeColor(rawStart, systemTextColor);
         int c1 = gradientEdgeColor(rawEnd, systemTextColor);
-        sb.setSpan(new GradientTextSpan(view, sb, c0, c1), 0, len,
+        sb.setSpan(new GradientTextSpan(view, sb, c0, c1, xOffset), 0, len,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         int[] starts = new int[len];
         int n = 0;
