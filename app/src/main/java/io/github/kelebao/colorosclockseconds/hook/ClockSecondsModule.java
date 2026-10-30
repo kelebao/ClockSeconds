@@ -1763,10 +1763,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             long netNow = System.currentTimeMillis() + offsetMs;
             String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
-            final int timeEnd = text.length();
-            // 时间后缀（周几 / 时段）拼在时间后面：色带与逐位上色只覆盖前 timeEnd 个字符，
-            // 下面的字号估算也只按时间本身的长度算，否则后缀会把数字整体压小。
-            text = appendMark(text, context);
+
             SpannableStringBuilder sb = new SpannableStringBuilder(text);
             // 数字颜色用进程内缓存（设置变更经广播更新），首次读取一次。
             if (!sFloatColorLoaded) {
@@ -1794,7 +1791,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     availH = lp.height - tv.getPaddingTop() - tv.getPaddingBottom();
                 }
                 // "HH:mm:ss" 数字宽约 0.62em、冒号约 0.35em，平均按 0.55em/字符估算。
-                float maxByW = availW / (timeEnd * 0.55f) / density;
+                float maxByW = availW / (text.length() * 0.55f) / density;
                 float maxByH = availH * 0.62f / density;
                 float size = Math.max(10f, Math.min(60f, Math.min(maxByW, maxByH)));
                 tv.setTextSize(size);
@@ -1816,7 +1813,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // 实测（1240x2772@560，band=411px，倍数扫参 -1…1）：xoff = +B/2 时文字正好覆盖
                     // 0→1 整条色带（t 0.08→0.81，与设置页预览卡的 0.11→0.79 同一条曲线）；
                     // 传 0 是「中间蓝顶两端回退」，传 −B/2 是整条反向。
-                    float textW = tv.getPaint().measureText(sb, 0, timeEnd);
+                    float textW = tv.getPaint().measureText(sb, 0, sb.length());
                     float xoff = textW * 0.5f;
                     if (BuildConfig.DEBUG) {
                         // 扫参用：Secure 键里写一个乘数（如 "0" / "-1" / "0.5"），xoff = textW × 该值。
@@ -1830,11 +1827,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         } catch (Throwable ignored) {
                         }
                     }
-                    applyGradient(sb, tv, colors, xoff, timeEnd);
+                    applyGradient(sb, tv, colors, xoff);
                 } else {
                     int systemTextColor = tv.getCurrentTextColor();
-                    // 后缀不参与逐位上色（它由 styleMark 单独处理）。
-                    for (int i = 0; i < timeEnd; i++) {
+                    for (int i = 0; i < sb.length(); i++) {
                         int slot = ClockSecondsConfig.slotOfChar(sb, i);
                         if (slot < 0 || slot >= colors.length
                                 || colors[slot] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
@@ -1845,7 +1841,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     }
                 }
             }
-            styleMark(sb, tv, timeEnd);
             tv.setText(sb);
             if (BuildConfig.DEBUG) {
                 CharSequence cs = tv.getText();

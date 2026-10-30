@@ -1818,31 +1818,7 @@ public final class ModuleSettingsActivity extends Activity {
         updatePreview();
     }
 
-    /** 预览卡上的后缀文本（与模块同规则：周几 / 7 档时段，前导一个空格）；展开取色时不显示。 */
-    private String previewMarkSuffix() {
-        if (!mCfgMarkOn || mDigitsExpanded) {
-            return "";
-        }
-        final java.util.Calendar cal = java.util.Calendar.getInstance();
-        String label = "";
-        if (mCfgMarkMode == ClockSecondsConfig.MARK_MODE_WEEKDAY) {
-            final String[] names = new java.text.DateFormatSymbols().getShortWeekdays();
-            final int dow = cal.get(java.util.Calendar.DAY_OF_WEEK);
-            if (dow >= 0 && dow < names.length && names[dow] != null) {
-                label = names[dow];
-            }
-        } else {
-            final String[] parts = ClockSecondsConfig.splitMarkPeriods(mCfgMarkPeriods);
-            final int idx = ClockSecondsConfig.periodIndexForHour(
-                    cal.get(java.util.Calendar.HOUR_OF_DAY));
-            if (idx >= 0 && idx < parts.length) {
-                label = parts[idx];
-            }
-        }
-        return label.isEmpty() ? "" : " " + label;
-    }
-
-    // 数字颜色：预览卡展开取色 / 六位分别上色
+        // 数字颜色：预览卡展开取色 / 六位分别上色
     // ==================================================================
 
     /** 点预览时间：展开成逐位取色（数字放大拉开，下方两张统计卡让位）。 */
@@ -4604,9 +4580,6 @@ public final class ModuleSettingsActivity extends Activity {
         private float mGradShift;
         private Shader mGradShader;
         private float mGradShaderBand = -1f;
-        /** 后缀起点（<=0 表示没有后缀）与后缀颜色：后缀不参与渐变，单独绘制。 */
-        private int mMarkStart = -1;
-        private int mMarkColor = 0;
 
         GradientTimeView(android.content.Context context) {
             super(context);
@@ -4633,15 +4606,6 @@ public final class ModuleSettingsActivity extends Activity {
             invalidate();
         }
 
-        /** 后缀起点与颜色：起点之后的字符不参与渐变，用这个颜色 + 0.62 倍字号单独画。 */
-        void setMark(int start, int color) {
-            if (mMarkStart == start && mMarkColor == color) {
-                return;
-            }
-            mMarkStart = start;
-            mMarkColor = color;
-            invalidate();
-        }
 
         /** 调试用色带平移（像素），仅 DEBUG 包由 Secure 键控制。 */
         void setGradientShift(float shift) {
@@ -4664,20 +4628,17 @@ public final class ModuleSettingsActivity extends Activity {
             }
             final Paint paint = getPaint();
             final int len = cs.length();
-            // 居中按整行（时间 + 后缀）算宽；色带只覆盖时间部分。
-            final float full = paint.measureText(cs, 0, len);
-            final int markStart = (mMarkStart > 0 && mMarkStart < len) ? mMarkStart : -1;
-            final float band = markStart > 0 ? paint.measureText(cs, 0, markStart) : full;
-            if (full <= 0f || band <= 0f) {
+            final float band = paint.measureText(cs, 0, len);
+            if (band <= 0f) {
                 return;
             }
             if (mGradShader == null || Math.abs(mGradShaderBand - band) > 0.01f) {
-                final float sx0 = (getWidth() - full) / 2f + mGradShift;
+                final float sx0 = (getWidth() - band) / 2f + mGradShift;
                 mGradShader = new LinearGradient(sx0, 0f, sx0 + band, 0f,
                         mGradC0, mGradC1, Shader.TileMode.CLAMP);
                 mGradShaderBand = band;
             }
-            final float x0 = (getWidth() - full) / 2f + mGradShift;
+            final float x0 = (getWidth() - band) / 2f + mGradShift;
             final Paint.FontMetricsInt fm = paint.getFontMetricsInt();
             float baseline = (getHeight() - (fm.descent - fm.ascent)) / 2f - fm.ascent;
             if (getLayout() != null) {
@@ -4699,17 +4660,7 @@ public final class ModuleSettingsActivity extends Activity {
             canvas.save();
             canvas.translate(ox, oy);
             paint.setShader(mGradShader);
-            final int timeEnd = markStart > 0 ? markStart : len;
-            canvas.drawText(cs, 0, timeEnd, x0, baseline, paint);
-            if (markStart > 0) {
-                // 后缀：无 shader、0.62 倍字号、弱化色，紧接时间右边缘（同一基线）。
-                paint.setShader(null);
-                paint.setColor(mMarkColor);
-                final float size = paint.getTextSize();
-                paint.setTextSize(size * 0.62f);
-                canvas.drawText(cs, markStart, len, x0 + band, baseline, paint);
-                paint.setTextSize(size);
-            }
+            canvas.drawText(cs, 0, len, x0, baseline, paint);
             canvas.restore();
             paint.setShader(saveShader);
             paint.setColor(saveColor);
@@ -4743,10 +4694,8 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
         mNowDate.setTime(System.currentTimeMillis());
         final String text = (showSec ? mFmtSec : mFmtNoSec).format(mNowDate);
-        final int timeEnd = text.length();
-        // 时间后缀（周几 / 时段）：预览卡也显示，才与状态栏一致（展开取色时不显示）。
-        final String mark = previewMarkSuffix();
-        final SpannableStringBuilder sb = new SpannableStringBuilder(text + mark);
+        // 时间后缀只在状态栏显示（用户 m26480：悬浮时间与预览卡都不要后缀）。
+        final SpannableStringBuilder sb = new SpannableStringBuilder(text);
         // 总开关关掉时整串回到默认文字色（用户 m19679 反馈「关闭颜色开关预览还是彩色」）：
         // 渐变同样受 hourOn 门控，与状态栏 applyDigitColors 里「先判 hourColorEnabled 再判 sGradientOn」保持一致。
         if (mCfgGradientOn && hourOn) {
@@ -4775,14 +4724,12 @@ public final class ModuleSettingsActivity extends Activity {
             ((GradientTimeView) previewView).setGradientColors(
                     adaptPreviewColor(gradientTargetColor(0)),
                     adaptPreviewColor(gradientTargetColor(1)));
-            // 色带只铺在时间上，后缀单独用弱化色画（见 GradientTimeView.onDraw）。
-            ((GradientTimeView) previewView).setMark(timeEnd, text2());
+
         } else {
             ((GradientTimeView) previewView).clearGradient();
             // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
             // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
-            // 后缀不参与逐位上色（由下面的 RelativeSizeSpan + 弱化色统一处理）。
-            for (int i = 0; i < timeEnd; i++) {
+            for (int i = 0; i < sb.length(); i++) {
                 final char ch = sb.charAt(i);
                 if (ch == ':' || ch == '：') {
                     // 冒号光学居中：逐位上色把文本切成多个 run 后，冒号会落到基线上，
@@ -4814,14 +4761,6 @@ public final class ModuleSettingsActivity extends Activity {
                 sb.setSpan(new ForegroundColorSpan(dim ? dimColor(shown) : shown), i, i + 1,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            if (!mark.isEmpty()) {
-                // 后缀比数字小一号、颜色弱化 —— 与状态栏 styleMark 的观感一致。
-                sb.setSpan(new android.text.style.RelativeSizeSpan(0.62f), timeEnd, sb.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                sb.setSpan(new ForegroundColorSpan(text2()), timeEnd, sb.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            ((GradientTimeView) previewView).setMark(-1, 0);
         }
         previewView.setText(sb);
 
