@@ -60,6 +60,9 @@ public final class ClockSecondsConfig {
     /** 自定义任务列表（JSON 数组，元素见 {@link ClockTask}）。设置页经广播写入，SystemUI 侧读取。 */
     public static final String TASKS_KEY = "coloros_clock_seconds_tasks";
 
+/** 「此刻状态栏是否真的在显秒」（1=是，0=否）。任务窗口会临时覆盖总开关，设置页预览据此决定显不显秒。 */
+public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effective";
+
     /** 小时颜色总开关（1 = 启用，0 = 关闭并恢复系统默认样式）。默认启用。 */
     public static final String HOUR_COLOR_ENABLED_KEY =
             "coloros_clock_seconds_hour_color_enabled";
@@ -326,6 +329,22 @@ public final class ClockSecondsConfig {
     /** 写入自定义任务列表 JSON（null 归一为空串）。 */
     public static void setTasksJson(ContentResolver resolver, String json) {
         Settings.Secure.putString(resolver, TASKS_KEY, json == null ? "" : json);
+    }
+
+/** 读「此刻是否显秒」；未写过返回 -1（调用方应回落到总开关）。 */
+public static int getEffectiveSeconds(ContentResolver resolver) {
+    return Settings.Secure.getInt(resolver, EFFECTIVE_SECONDS_KEY, -1);
+}
+
+    /**
+     * 由 SystemUI 侧的模块写「任务窗口对显秒的覆盖值」：-1 = 没有任务命中（跟随总开关），
+     * 1 = 窗口强制显秒，0 = 窗口强制关秒。设置页预览据此覆盖总开关。
+     */
+    public static void setEffectiveSeconds(ContentResolver resolver, int override) {
+        if (resolver == null) {
+            return;
+        }
+        Settings.Secure.putInt(resolver, EFFECTIVE_SECONDS_KEY, override);
     }
 
     // ==================================================================

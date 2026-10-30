@@ -4285,6 +4285,10 @@ public final class ModuleSettingsActivity extends Activity {
             seconds = ClockSecondsConfig.isEnabled(getContentResolver());
             hourOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         }
+        // 任务窗口会临时把显秒翻面（如整点前 2 分钟自动开秒）：优先用模块发布的「此刻是否真的显秒」，
+        // 未写过（-1）时回落到总开关。否则到点显秒时预览仍停在 HH:mm。
+        final int effSec = ClockSecondsConfig.getEffectiveSeconds(getContentResolver());
+        final boolean showSec = effSec >= 0 ? (effSec == 1) : seconds;
         if (mCfgDigitColors == null || mCfgDigitColors.length < ClockSecondsConfig.DIGIT_COUNT) {
             mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
         }
@@ -4292,7 +4296,7 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
         mNowDate.setTime(System.currentTimeMillis());
-        final String text = (seconds ? mFmtSec : mFmtNoSec).format(mNowDate);
+        final String text = (showSec ? mFmtSec : mFmtNoSec).format(mNowDate);
         final SpannableStringBuilder sb = new SpannableStringBuilder(text);
         // 总开关关掉时整串回到默认文字色（用户 m19679 反馈「关闭颜色开关预览还是彩色」）：
         // 渐变同样受 hourOn 门控，与状态栏 applyDigitColors 里「先判 hourColorEnabled 再判 sGradientOn」保持一致。
@@ -4483,12 +4487,17 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 自定义任务卡右下角那行：没有任务写「无任务」，有任务写启用条数。 */
     private void refreshTaskSummary() {
+        List<ClockTask> tasks = ClockTask.parse(ClockSecondsConfig.getTasksJson(getContentResolver()));
+        mTasks = tasks;
+        updateTaskSummary(tasks);
+    }
+
+    /** 只用给定的内存列表刷新任务卡文字（不回读 Secure，避免写盘还没落地时读到旧值）。 */
+    private void updateTaskSummary(List<ClockTask> tasks) {
         if (mTaskValueView == null) {
             return;
         }
-        List<ClockTask> tasks = ClockTask.parse(ClockSecondsConfig.getTasksJson(getContentResolver()));
-        mTasks = tasks;
-        if (tasks.isEmpty()) {
+        if (tasks == null || tasks.isEmpty()) {
             mTaskValueView.setText(R.string.settings_task_empty);
             mTaskValueView.setAlpha(0.55f);
             return;
@@ -4505,6 +4514,24 @@ public final class ModuleSettingsActivity extends Activity {
         } else {
             mTaskValueView.setText(getString(R.string.settings_task_count, enabled));
         }
+    }
+
+    /** 任务编辑器里的滑杆：加大拇指、加高触摸区，单手也好拖（原来裸 SeekBar 拇指只有 ~20dp）。 */
+    private SeekBar makeTaskSlider(int max, int progress) {
+        SeekBar bar = new SeekBar(this);
+        bar.setMax(max);
+        bar.setProgress(progress);
+        GradientDrawable thumb = new GradientDrawable();
+        thumb.setShape(GradientDrawable.OVAL);
+        thumb.setColor(accent());
+        thumb.setStroke(dp(2), 0xFFFFFFFF);
+        thumb.setSize(dp(30), dp(30));
+        bar.setThumb(thumb);
+        bar.setThumbOffset(0);
+        bar.setSplitTrack(false);
+        bar.setPadding(dp(16), dp(12), dp(16), dp(12));
+        bar.setMinimumHeight(dp(52));
+        return bar;
     }
 
     /**
@@ -4796,9 +4823,7 @@ public final class ModuleSettingsActivity extends Activity {
         advValue.setTextSize(13f);
         advValue.setTextColor(text2());
         box.addView(editorLabelRow(R.string.settings_task_advance, advValue));
-        final SeekBar advBar = new SeekBar(this);
-        advBar.setMax(ClockTask.ADVANCE_MAX);
-        advBar.setProgress(draft.advanceMin);
+        final SeekBar advBar = makeTaskSlider(ClockTask.ADVANCE_MAX, draft.advanceMin);
         box.addView(advBar);
         updateAdvanceLabel(advValue, advBar.getProgress());
         advBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -4821,9 +4846,8 @@ public final class ModuleSettingsActivity extends Activity {
         durValue.setTextSize(13f);
         durValue.setTextColor(text2());
         box.addView(editorLabelRow(R.string.settings_task_duration, durValue));
-        final SeekBar durBar = new SeekBar(this);
-        durBar.setMax(ClockTask.DURATION_MAX - ClockTask.DURATION_MIN);
-        durBar.setProgress(Math.max(0, draft.durationMin - ClockTask.DURATION_MIN));
+        final SeekBar durBar = makeTaskSlider(ClockTask.DURATION_MAX - ClockTask.DURATION_MIN,
+                Math.max(0, draft.durationMin - ClockTask.DURATION_MIN));
         box.addView(durBar);
         updateDurationLabel(durValue, durBar.getProgress());
         durBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -5016,20 +5040,20 @@ public final class ModuleSettingsActivity extends Activity {
      */
     private void applyTasks(final List<ClockTask> tasks, final Runnable afterOk) {
         final String json = ClockTask.toJson(tasks);
+        // 乐观更新：先用内存里的新列表刷新卡片与列表页，再去写盘。
+        // 旧版这里调 refreshTaskSummary()，它会从 Secure 回读（此刻还没写进去，读到的是旧列表）
+        // 并把 mTasks 覆盖掉 —— 表现就是「开关点两次才生效」「保存后看不到新任务」。
         mTasks = tasks;
-        refreshTaskSummary();
+        updateTaskSummary(tasks);
+        if (afterOk != null) {
+            afterOk.run();
+        }
         final int seq = mWriteSeq.incrementAndGet();
-        final Runnable guarded = () -> {
-            if (mWriteSeq.get() == seq && afterOk != null) {
-                afterOk.run();
-            }
-        };
         Intent broadcast = new Intent(ClockSecondsConfig.ACTION_SET_TASKS)
                 .putExtra(ClockSecondsConfig.EXTRA_TASKS, json)
                 .setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
         try {
             Settings.Secure.putString(getContentResolver(), ClockSecondsConfig.TASKS_KEY, json);
-            guarded.run();
             // 直写成功也广播一次，让 SystemUI 里的模块立刻重算（不靠轮询）。
             try {
                 sendBroadcast(broadcast);
@@ -5047,9 +5071,13 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         verifyWriteString(json, 0, seq, ok -> {
-            if (ok) {
-                guarded.run();
-            } else {
+            if (!ok && mWriteSeq.get() == seq) {
+                // 写盘真失败：回滚成 Secure 里的真实状态，别让界面显示假成功
+                mTasks = ClockTask.parse(ClockSecondsConfig.getTasksJson(getContentResolver()));
+                updateTaskSummary(mTasks);
+                if (afterOk != null) {
+                    afterOk.run();
+                }
                 toastWriteFailed();
             }
         });

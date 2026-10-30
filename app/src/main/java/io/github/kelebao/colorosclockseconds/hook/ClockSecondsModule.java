@@ -1726,6 +1726,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         ClockSecondsConfig.setEnabled(resolver, enabled);
         sSecondsEnabled = enabled;
         mirrorNativeSeconds(resolver, enabled);
+        publishEffectiveSeconds(resolver);
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "seconds toggled -> " + enabled);
         }
@@ -2380,6 +2381,26 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             sTasks = Collections.emptyList();
         }
         evaluateTasks();
+        publishEffectiveSeconds(context.getContentResolver());
+    }
+
+    /**
+     * 把「此刻状态栏到底显不显秒」写给设置页预览用。
+     *
+     * <p>任务窗口会临时覆盖总开关，而设置页只能读 Secure，看不到 SystemUI 里的 sTaskShow/sTaskHide；
+     * 没有这个键，到点开显秒时设置页预览仍停在 HH:mm（用户反馈）。</p>
+     */
+    private static void publishEffectiveSeconds(ContentResolver cr) {
+        if (cr == null) {
+            return;
+        }
+        try {
+            // 只发布「任务窗口的覆盖值」：没有任务命中就写 -1，让设置页回落到总开关（避免读到过期值）。
+            int override = sTaskShow ? 1 : (sTaskHide ? 0 : -1);
+            ClockSecondsConfig.setEffectiveSeconds(cr, override);
+        } catch (Throwable t) {
+            noteHookError(t);
+        }
     }
 
     /** 重算任务窗口状态；状态变了立刻刷新时钟，并把定时器对齐到下一次翻转。 */
@@ -2451,6 +2472,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (clock == null || !isClockEnabled(clock)) {
             return;
         }
+        // 关键：显秒关着的时候 ticker 跑在「自适应补色」模式，下一次自我调度可能排到 30 秒后。
+        // 若不先摘掉旧 ticker，任务到点开显秒后会沿用那条长延时，秒数僵住十几秒才恢复走动（用户实测「延迟好几秒」即此因）。
+        stopTicker(clock);
+        publishEffectiveSeconds(clock.getContext() == null
+                ? null : clock.getContext().getContentResolver());
         if (secondsOn()) {
             writeTime(clock);
             installTicker(clock);
@@ -3315,6 +3341,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 // 关闭时无需续订，已在内存态标记。
             }
         }
+        publishEffectiveSeconds(cr);
         refreshClockNow();
     }
 
