@@ -367,17 +367,15 @@ public final class ModuleSettingsActivity extends Activity {
             ticker.postDelayed(this, 1000L);
         }
     };
-    /** 渐变端点色点的呼吸周期（比数字光晕快，用户要求「呼吸快些」）。 */
-    private static final long GRAD_BREATH_PERIOD_MS = 1200L;
-    /** 选中色块荧光光晕 + 半弧刻度盘的高频刷新（~50ms）。 */
+    /** 选中色块旋转亮弧 + 半弧刻度盘的高频刷新（~50ms）。 */
     private final Runnable breathTick = new Runnable() {
         @Override
         public void run() {
             long now = System.currentTimeMillis();
             if (mGradBreath != null) {
-                // 渐变端点色点：谷底 0.68 → 峰值 1.0（最亮），周期 1200ms（比数字光晕快）。
-                double gp = (now % GRAD_BREATH_PERIOD_MS) / (double) GRAD_BREATH_PERIOD_MS;
-                mGradBreath.setBreath(0.68f + 0.32f * (float) ((1 - Math.cos(gp * 2 * Math.PI)) / 2));
+                // 渐变端点色点：外圈亮弧绕圈（「旋转亮弧」方案，vc224 换掉看不清的散光呼吸）。
+                mGradBreath.setPhase((now % BreathSwatchDrawable.SPIN_PERIOD_MS)
+                        / (float) BreathSwatchDrawable.SPIN_PERIOD_MS);
             }
             // 预览卡滚出屏幕时跳过弧的高频刷新（省电/省 CPU）；色块光晕照常（它可能在视口内）。
             if (mArcTicks != null
@@ -1421,11 +1419,12 @@ public final class ModuleSettingsActivity extends Activity {
         // 未选中的只画实心圆，不占呼吸节拍。
         final boolean sel0 = on && mGradTarget == 0;
         final boolean sel1 = on && mGradTarget == 1;
+        // 选中指示就是外圈那条旋转亮弧，不再额外画紫色描边（两圈同心太吵）。
         BreathSwatchDrawable b0 = new BreathSwatchDrawable(
-                swatchColor(gradientTargetColor(0), on), sel0, accent(), sel0 ? dp(2) : 0f,
+                swatchColor(gradientTargetColor(0), on), sel0, accent(), 0f,
                 EDGE_SOLID_RATIO);
         BreathSwatchDrawable b1 = new BreathSwatchDrawable(
-                swatchColor(gradientTargetColor(1), on), sel1, accent(), sel1 ? dp(2) : 0f,
+                swatchColor(gradientTargetColor(1), on), sel1, accent(), 0f,
                 EDGE_SOLID_RATIO);
         dot0.setBackground(b0);
         dot1.setBackground(b1);
@@ -4565,6 +4564,26 @@ public final class ModuleSettingsActivity extends Activity {
 
         dialog.setOnDismissListener(d -> mTaskHost = null);
         dialog.setContentView(overlay);
+        // Theme_Translucent_NoTitleBar_Fullscreen 自带 FLAG_FULLSCREEN，会把状态栏整条隐藏
+        // （用户反馈「进自定义任务界面状态栏没了」）。这里显式清掉全屏标志，并让状态栏
+        // 图标颜色跟随日/夜间，保持与设置页一致。
+        android.view.Window win = dialog.getWindow();
+        if (win != null) {
+            win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            win.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            win.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+            win.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                    android.view.WindowManager.LayoutParams.MATCH_PARENT);
+            android.view.View dialogDecor = win.getDecorView();
+            int uiFlags = dialogDecor.getSystemUiVisibility();
+            uiFlags &= ~android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
+            if (night) {
+                uiFlags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            } else {
+                uiFlags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            dialogDecor.setSystemUiVisibility(uiFlags);
+        }
         sheet.setVisibility(View.INVISIBLE);
         dialog.show();
         // 圆形展开：圆心 = 按下那一点相对 sheet 的坐标，半径 = 圆心到最远角的距离。

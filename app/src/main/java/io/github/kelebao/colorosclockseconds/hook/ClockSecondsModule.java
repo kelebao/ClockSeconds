@@ -2414,6 +2414,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     XposedBridge.log(LOG_PREFIX + "TASK state show=" + show + " hide=" + hide);
                 }
                 applyTaskState();
+            } else if (show || hide) {
+                // 兜底：窗口内每分钟重放一次。applyTaskState 在时钟视图还没抓到时会直接返回，
+                // 而那时状态已经记为「已生效」，之后不再有 changed 事件 → 秒数永远不出现。
+                applyTaskState();
             }
         } catch (Throwable t) {
             noteHookError(t);
@@ -2427,8 +2431,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         sTaskHandler.removeCallbacks(TASK_TICK);
         if (delayMs > 0) {
-            // 上限 6 小时：任务被删/改后旧定时器最多残留这么久，每次广播都会重排。
-            sTaskHandler.postDelayed(TASK_TICK, Math.min(delayMs, 6L * 3600_000L));
+            // 上限 60 秒：不只为「任务被删/改后旧定时器残留」，更重要的兜底是——系统时间被
+            // 手动改、时区切换、休眠唤醒后 uptimeMillis 与墙上时钟不再对齐，精确定时器会错过
+            // 翻转点。每分钟重算一次窗口，最多迟 60 秒就能自我纠正（一次 Runnable，开销可忽略）。
+            sTaskHandler.postDelayed(TASK_TICK, Math.min(delayMs, 60_000L));
         }
     }
 
@@ -2932,12 +2938,25 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_RESTART_SYSTEMUI);
                 filter.addAction(ClockSecondsConfig.ACTION_RUN_DIAGNOSTIC);
                 filter.addAction(ClockSecondsConfig.ACTION_PING_MODULE);
+        // 系统时间/时区/日期被改：任务窗口与定时器都是按旧时间算的，必须整份重算。
+        filter.addAction(Intent.ACTION_TIME_CHANGED);
+        filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+        filter.addAction(Intent.ACTION_DATE_CHANGED);
                 BroadcastReceiver receiver = new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context ctx, Intent intent) {
                         try {
                             String action = intent.getAction();
                             ContentResolver cr = ctx.getContentResolver();
+                            if (Intent.ACTION_TIME_CHANGED.equals(action)
+                                    || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
+                                    || Intent.ACTION_DATE_CHANGED.equals(action)) {
+                                // 改系统时间后，已排的 Handler 定时器仍按旧时间点等待（postDelayed 走
+                                // uptimeMillis），窗口状态也是旧时间算的 → 任务永远不会在正确时刻触发。
+                                // 这里立刻重算窗口并按新时间重排下一次翻转（用户实测「提前 2 分钟开秒」不生效即此因）。
+                                reloadTasks(ctx);
+                                return;
+                            }
                             if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR.equals(action)) {
                                 // 旧接口：等同「设置 0 号位（时十）颜色」，兼容老的设置页广播。
                                 ClockSecondsConfig.setDigitColor(cr, 0, intent.getIntExtra(
