@@ -689,6 +689,9 @@ public final class ModuleSettingsActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(18), dp(18), dp(18), dp(28));
+        // 标题的粉尘炸开时会飞出 root 的 padding 区，这里别裁它。
+        root.setClipChildren(false);
+        root.setClipToPadding(false);
         mColumn = root;
         scroll.addView(root, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -717,6 +720,8 @@ public final class ModuleSettingsActivity extends Activity {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(dp(4), 0, dp(4), dp(16));
+        row.setClipChildren(false);
+        row.setClipToPadding(false);
 
         LinearLayout texts = new LinearLayout(this);
         texts.setOrientation(LinearLayout.VERTICAL);
@@ -727,10 +732,13 @@ public final class ModuleSettingsActivity extends Activity {
         // 进入设置页时从随机散点聚成字，点一下会炸开再聚回来；拖动不会抢走页面滚动。
         mDustTitle = new DustTitleView(this, getString(R.string.settings_title), text(),
                 24f * getResources().getDisplayMetrics().scaledDensity);
-        // 竖直 LinearLayout 的默认子 LayoutParams 是 MATCH_PARENT，会把标题撑满一行、
-        // 粉尘再在自己内部居中 —— 位置就和原来的 TextView 不一样了。这里显式给 WRAP_CONTENT。
+        // 宽度必须给满一行：粉尘炸开后是飞在画布上的，画布只有文字那么宽的话就被「框」住了。
+        // 位置靠 DustTitleView 内部横向左对齐（ox = padL）来保证，不靠 WRAP_CONTENT。
         texts.addView(mDustTitle, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        // 粉尘要飞出自己那一小块画布，得把上面几层的裁剪关掉（默认 clipChildren=true 会切边）。
+        texts.setClipChildren(false);
+        texts.setClipToPadding(false);
         row.addView(texts);
 
         chipView = new TextView(this);
