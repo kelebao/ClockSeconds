@@ -80,6 +80,18 @@ public class DustTitleView extends View {
         for (int b = 0; b < BUCKETS; b++) bucketPts[b] = new float[0];
     }
 
+    /** 横向留白：只要够容纳抗锯齿的那一点点边，太大标题就会往右偏。 */
+    private int padX() {
+        // 只留 2px（约 0.6dp）容纳抗锯齿：留成 dp 级会把标题整体往右推几 dp，
+        // 位置就和原来的 TextView 对不上了（实测 2dp 会偏 13px）。
+        return 2;
+    }
+
+    /** 纵向留白：多留一点，防止字形上下边缘被位图裁掉。 */
+    private int padY() {
+        return Math.max(2, Math.round(4f * mDensity));
+    }
+
     /** 重放一次「聚拢成形」动画（切换页面/回到前台时可以再叫一次）。 */
     public void replay() {
         long seed = System.nanoTime();
@@ -98,9 +110,10 @@ public class DustTitleView extends View {
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         float tw = shapePaint.measureText(mText);
-        int pad = Math.max(2, Math.round(4f * mDensity));
-        int w = (int) Math.ceil(tw) + pad * 2;
-        int h = (int) Math.ceil(shapePaint.descent() - shapePaint.ascent()) + pad * 2;
+        int px = padX();
+        int py = padY();
+        int w = (int) Math.ceil(tw) + px * 2;
+        int h = (int) Math.ceil(shapePaint.descent() - shapePaint.ascent()) + py * 2;
         setMeasuredDimension(resolveSize(w, widthSpec), resolveSize(h, heightSpec));
     }
 
@@ -115,16 +128,17 @@ public class DustTitleView extends View {
         if (w <= 0 || h <= 0 || mText == null || mText.isEmpty()) return;
 
         final float ts = mTextPx;
-        final int pad = Math.max(2, Math.round(4f * mDensity));
+        final int padL = padX();
+        final int padT = padY();
 
         shapePaint.setTextSize(ts);
-        int bw = (int) Math.ceil(shapePaint.measureText(mText)) + pad * 2;
-        int bh = (int) Math.ceil(shapePaint.descent() - shapePaint.ascent()) + pad * 2;
+        int bw = (int) Math.ceil(shapePaint.measureText(mText)) + padL * 2;
+        int bh = (int) Math.ceil(shapePaint.descent() - shapePaint.ascent()) + padT * 2;
         if (bw <= 0 || bh <= 0) return;
 
         Bitmap bmp = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
         Canvas bc = new Canvas(bmp);
-        bc.drawText(mText, pad, pad - shapePaint.ascent(), shapePaint);
+        bc.drawText(mText, padL, padT - shapePaint.ascent(), shapePaint);
         int[] argb = new int[bw * bh];
         bmp.getPixels(argb, 0, bw, 0, 0, bw, bh);
         bmp.recycle();
@@ -141,7 +155,8 @@ public class DustTitleView extends View {
         baseR = step * 0.62f;
         touchR = 90f * mDensity;
 
-        int ox = (w - bw) / 2;
+        // 横向左对齐（跟原来的 TextView 一模一样的位置），纵向居中。
+        int ox = padL;
         int oy = (h - bh) / 2;
 
         int cnt = 0;

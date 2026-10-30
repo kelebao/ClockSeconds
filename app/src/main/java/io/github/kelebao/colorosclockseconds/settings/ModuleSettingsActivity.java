@@ -727,7 +727,10 @@ public final class ModuleSettingsActivity extends Activity {
         // 进入设置页时从随机散点聚成字，点一下会炸开再聚回来；拖动不会抢走页面滚动。
         mDustTitle = new DustTitleView(this, getString(R.string.settings_title), text(),
                 24f * getResources().getDisplayMetrics().scaledDensity);
-        texts.addView(mDustTitle);
+        // 竖直 LinearLayout 的默认子 LayoutParams 是 MATCH_PARENT，会把标题撑满一行、
+        // 粉尘再在自己内部居中 —— 位置就和原来的 TextView 不一样了。这里显式给 WRAP_CONTENT。
+        texts.addView(mDustTitle, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         row.addView(texts);
 
         chipView = new TextView(this);
