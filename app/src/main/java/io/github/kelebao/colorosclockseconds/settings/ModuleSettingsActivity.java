@@ -24,6 +24,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -4387,74 +4388,23 @@ public final class ModuleSettingsActivity extends Activity {
     /** 预览渐变色带的绘制原点缓存：{宽, 字号, 字距, 字符数, 原点}。 */
     private float[] mGradOriginCache;
 
-    /**
-     * 量出「预览文字在绘制坐标里的左边缘」，用作渐变 shader 的起点。
-     *
-     * <p>为什么必须实测而不是套公式：居中 TextView 把文字画到画布上的位置，并不等于
-     * (view 宽 - 文字宽) / 2 —— 真机实测 ColorOS 17 上文字要比左偏移再往右一个文字宽，
-     * 而 ColorOS 15 上文字几乎从 0 起画。猜公式在两台机器上结论正好相反
-     * （一台正向、一台反向），所以只能离屏渲染一次、直接量最左一列墨迹。</p>
-     */
-    private float previewDrawOrigin() {
-        try {
-            final int w = previewView.getWidth();
-            final int h = previewView.getHeight();
-            if (w <= 0 || h <= 0) {
-                return 0f;
-            }
-            final float ts = previewView.getTextSize();
-            final float ls = previewView.getLetterSpacing();
-            final int len = previewView.length();
-            if (mGradOriginCache != null && mGradOriginCache[0] == w && mGradOriginCache[1] == ts
-                    && mGradOriginCache[2] == ls && mGradOriginCache[3] == len) {
-                return mGradOriginCache[4];
-            }
-            TextView probe = new TextView(this);
-            probe.setTypeface(previewView.getTypeface());
-            probe.setTextSize(TypedValue.COMPLEX_UNIT_PX, ts);
-            probe.setLetterSpacing(ls);
-            probe.setGravity(previewView.getGravity());
-            probe.setIncludeFontPadding(previewView.getIncludeFontPadding());
-            probe.setTextColor(0xFFFFFFFF);
-            probe.setSingleLine(true);
-            probe.setFontFeatureSettings("tnum");
-            probe.setText(previewView.getText() == null ? "" : previewView.getText().toString());
-            probe.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY));
-            probe.layout(0, 0, w, h);
-            Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-            bmp.eraseColor(0);
-            probe.draw(new Canvas(bmp));
-            int[] px = new int[w * h];
-            bmp.getPixels(px, 0, w, 0, 0, w, h);
-            bmp.recycle();
-            float origin = 0f;
-            scan:
-            for (int x = 0; x < w; x++) {
-                for (int y = 0; y < h; y++) {
-                    if ((px[y * w + x] >>> 24) > 24) {
-                        origin = x;
-                        break scan;
-                    }
-                }
-            }
-            mGradOriginCache = new float[]{w, ts, ls, len, origin};
-            if (BuildConfig.DEBUG) {
-                try {
-                    java.io.FileWriter fw = new java.io.FileWriter(
-                            new java.io.File(getFilesDir(), "grad.log"), true);
-                    fw.write("origin w=" + w + " h=" + h + " ts=" + ts + " ls=" + ls
-                            + " len=" + len + " origin=" + origin + "\n");
-                    fw.close();
-                } catch (Throwable ignored) {
-                }
-            }
-            return origin;
-        } catch (Throwable ignored) {
-            return 0f;
-        }
-    }
-    /** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色；同时刷新状态胶囊。 */
+    /**
+     * 预览渐变 shader 的色带起点。
+     *
+     * <p>预览卡是居中 TextView，文字并不从画布 x=0 起画，而渐变 shader 按画布坐标铺，
+     * 所以色带起点必须与「文字左边缘」对齐，否则整条渐变会反向（MIRROR 折返）。</p>
+     *
+     * <p>这个位置不能套公式：真机实测（两台机器分辨率、字号、布局完全相同）
+     * Android 15 / ColorOS 15 上取 0 才正向，Android 16 / ColorOS 17 上要右移一个文字宽。
+     * 差异来自系统文本绘制对 paint shader 坐标的处理，离屏渲染（软件绘制）两台都量出 0，
+     * 因此只能按系统版本分支；换机型/系统版本后请用调试钩子
+     * settings put secure coloros_clock_seconds_debug_xoff <float> 重新扫参。</p>
+     */
+    private float gradientPreviewOffset(float band) {
+        return Build.VERSION.SDK_INT >= 36 ? band : 0f;
+    }
+
+/** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色；同时刷新状态胶囊。 */
     private void updatePreview() {
         if (previewView == null) {
             return;
@@ -4492,7 +4442,7 @@ public final class ModuleSettingsActivity extends Activity {
             // 所以要传「文字实测宽度」而不是「文字左偏移 (view 宽 - 文字宽) / 2」。
             // 传左偏移或传 0（vc194 之前）时，文字都落在 MIRROR 色带的后半段，渐变整个反向
             // （真机表现：预览卡绿→红，状态栏红→绿）。改布局方式后必须重新扫参确认。
-            final float gradXOff = previewDrawOrigin();
+            final float gradXOff = gradientPreviewOffset(previewView.getPaint().measureText(sb, 0, sb.length()));
             float gradXOffUse = gradXOff;
             if (BuildConfig.DEBUG) {
                 // 调试钩子：settings put secure coloros_clock_seconds_debug_xoff <float> 可强制覆盖色带偏移。
