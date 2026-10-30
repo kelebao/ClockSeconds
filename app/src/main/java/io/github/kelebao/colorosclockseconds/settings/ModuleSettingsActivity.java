@@ -17,6 +17,9 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.Shader;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -181,6 +184,7 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean mCfgSeconds;
     private boolean mCfgHourColorOn;
     private boolean mCfgGradientOn;
+    // 调试开关（仅 DEBUG 包）：切换预览文字的渲染路径，用于定位「ColorOS 15 预览渐变按字形跳变」。
     private int mCfgGradStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private int mCfgGradEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private int mCfgHourColor;
@@ -849,7 +853,7 @@ public final class ModuleSettingsActivity extends Activity {
         mMarkView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         previewPlate.addView(mMarkView);
 
-        previewView = new TextView(this);
+        previewView = new GradientTimeView(this);
         previewView.setTextSize(44f);
         // 数字用「中粗 + 假粗」两层叠出更敦实的笔画：sans-serif-medium 在展开成 6 位大字时
         // 笔画偏细、跟状态栏那组粗数字对不上（用户要求「散开的 6 个数字变粗点」）。
@@ -4388,23 +4392,109 @@ public final class ModuleSettingsActivity extends Activity {
     /** 预览渐变色带的绘制原点缓存：{宽, 字号, 字距, 字符数, 原点}。 */
     private float[] mGradOriginCache;
 
+
     /**
-     * 预览渐变 shader 的色带起点。
+     * 预览时间专用 TextView：渐变模式下自己画一遍文字。
      *
-     * <p>预览卡是居中 TextView，文字并不从画布 x=0 起画，而渐变 shader 按画布坐标铺，
-     * 所以色带起点必须与「文字左边缘」对齐，否则整条渐变会反向（MIRROR 折返）。</p>
-     *
-     * <p>这个位置不能套公式：真机实测（两台机器分辨率、字号、布局完全相同）
-     * Android 15 / ColorOS 15 上取 0 才正向，Android 16 / ColorOS 17 上要右移一个文字宽。
-     * 差异来自系统文本绘制对 paint shader 坐标的处理，离屏渲染（软件绘制）两台都量出 0，
-     * 因此只能按系统版本分支；换机型/系统版本后请用调试钩子
-     * settings put secure coloros_clock_seconds_debug_xoff <float> 重新扫参。</p>
+     * <p>为什么不用 GradientTextSpan：那是给状态栏/悬浮窗用的（那段文本我们只能挂 span）。
+     * 预览卡是我们自己的 View，交给 TextView 画时 shader 会按「run」被量化——
+     * ColorOS 15 上实测同一个 shader 被拆成 3 段纯色（数字一跳就换色块，看着像随机渐变），
+     * 且色带原点随系统版本漂移（Android 15 偏左、Android 16 偏右一个文字宽）。
+     * 自己 canvas.drawText 一次：色带起点 = 文字左边缘、宽度 = 文字宽度，跨版本一致。</p>
      */
-    private float gradientPreviewOffset(float band) {
-        return Build.VERSION.SDK_INT >= 36 ? band : 0f;
+    private static class GradientTimeView extends TextView {
+        private int mGradC0 = 0;
+        private int mGradC1 = 0;
+        private boolean mGradOn;
+        private float mGradShift;
+        private Shader mGradShader;
+        private float mGradShaderBand = -1f;
+
+        GradientTimeView(android.content.Context context) {
+            super(context);
+        }
+
+        /** 打开渐变绘制；c0/c1 已按背景适配过。 */
+        void setGradientColors(int c0, int c1) {
+            if (mGradOn && mGradC0 == c0 && mGradC1 == c1) {
+                return;
+            }
+            mGradOn = true;
+            mGradC0 = c0;
+            mGradC1 = c1;
+            mGradShader = null;
+            invalidate();
+        }
+
+        void clearGradient() {
+            if (!mGradOn) {
+                return;
+            }
+            mGradOn = false;
+            mGradShader = null;
+            invalidate();
+        }
+
+        /** 调试用色带平移（像素），仅 DEBUG 包由 Secure 键控制。 */
+        void setGradientShift(float shift) {
+            if (mGradShift == shift) {
+                return;
+            }
+            mGradShift = shift;
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            if (!mGradOn) {
+                super.onDraw(canvas);
+                return;
+            }
+            final CharSequence cs = getText();
+            if (cs == null || cs.length() == 0) {
+                return;
+            }
+            final Paint paint = getPaint();
+            final float band = paint.measureText(cs, 0, cs.length());
+            if (band <= 0f) {
+                return;
+            }
+            if (mGradShader == null || Math.abs(mGradShaderBand - band) > 0.01f) {
+                final float x0 = (getWidth() - band) / 2f + mGradShift;
+                mGradShader = new LinearGradient(x0, 0f, x0 + band, 0f,
+                        mGradC0, mGradC1, Shader.TileMode.CLAMP);
+                mGradShaderBand = band;
+            }
+            final float x0 = (getWidth() - band) / 2f + mGradShift;
+            final Paint.FontMetricsInt fm = paint.getFontMetricsInt();
+            float baseline = (getHeight() - (fm.descent - fm.ascent)) / 2f - fm.ascent;
+            if (getLayout() != null) {
+                final int lb = getLayout().getLineBaseline(0);
+                if (lb > 0) {
+                    baseline = lb;
+                }
+            }
+            final int saveColor = paint.getColor();
+            final Shader saveShader = paint.getShader();
+            // 画布原点不是视图原点：硬件画布的 clip 会带上视图在父容器里的绝对位置
+            // （本机实测 clip.left=523801），直接按 (0,0) 画会整条落到视图外、什么都不显示。
+            // 视图完整可见时 clip 与视图矩形等大，用 clip 左上角做原点；一旦被父容器裁掉一部分，
+            // clip 左上角就不再等于视图左上角，此时退回 (0,0)——那块本来在可视区外，看不到错位。
+            final android.graphics.Rect cb = new android.graphics.Rect();
+            canvas.getClipBounds(cb);
+            final float ox = cb.width() >= getWidth() - 1 ? cb.left : 0f;
+            final float oy = cb.height() >= getHeight() - 1 ? cb.top : 0f;
+            canvas.save();
+            canvas.translate(ox, oy);
+            paint.setShader(mGradShader);
+            canvas.drawText(cs, 0, cs.length(), x0, baseline, paint);
+            canvas.restore();
+            paint.setShader(saveShader);
+            paint.setColor(saveColor);
+        }
     }
 
-/** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色；同时刷新状态胶囊。 */
+    /** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色；同时刷新状态胶囊。 */
     private void updatePreview() {
         if (previewView == null) {
             return;
@@ -4442,7 +4532,7 @@ public final class ModuleSettingsActivity extends Activity {
             // 所以要传「文字实测宽度」而不是「文字左偏移 (view 宽 - 文字宽) / 2」。
             // 传左偏移或传 0（vc194 之前）时，文字都落在 MIRROR 色带的后半段，渐变整个反向
             // （真机表现：预览卡绿→红，状态栏红→绿）。改布局方式后必须重新扫参确认。
-            final float gradXOff = gradientPreviewOffset(previewView.getPaint().measureText(sb, 0, sb.length()));
+            final float gradXOff = 0f;   // 色带由 GradientTimeView 按文字边界自己铺，不需要偏移
             float gradXOffUse = gradXOff;
             if (BuildConfig.DEBUG) {
                 // 调试钩子：settings put secure coloros_clock_seconds_debug_xoff <float> 可强制覆盖色带偏移。
@@ -4455,12 +4545,13 @@ public final class ModuleSettingsActivity extends Activity {
                 } catch (Throwable ignored) {
                 }
             }
-            sb.setSpan(new GradientTextSpan(previewView, sb,
+            // 自己画（见 GradientTimeView 注释）：色带起点 = 文字左边缘，不再依赖 shader 原点。
+            ((GradientTimeView) previewView).setGradientShift(gradXOffUse);
+            ((GradientTimeView) previewView).setGradientColors(
                     adaptPreviewColor(gradientTargetColor(0)),
-                    adaptPreviewColor(gradientTargetColor(1)),
-                    gradXOffUse), 0, sb.length(),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    adaptPreviewColor(gradientTargetColor(1)));
         } else {
+            ((GradientTimeView) previewView).clearGradient();
             // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
             // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
             for (int i = 0; i < sb.length(); i++) {
