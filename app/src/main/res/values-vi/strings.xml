@@ -133,4 +133,12 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Một màu</string>
     <string name="settings_gradient_start">Màu bắt đầu</string>
     <string name="settings_gradient_end">Màu kết thúc</string>
+    <string name="settings_mark_title">Hậu tố thời gian</string>
+    <string name="settings_mark_summary_off">Tắt — chạm để chọn</string>
+    <string name="settings_mark_summary_weekday">Thứ trong tuần sau giờ (VD: T7)</string>
+    <string name="settings_mark_summary_period">Buổi trong ngày sau giờ (VD: Sáng)</string>
+    <string name="settings_mark_dialog_title">Hiển thị sau giờ</string>
+    <string name="settings_mark_mode_weekday">Thứ trong tuần</string>
+    <string name="settings_mark_mode_period">Buổi trong ngày</string>
+    <string name="settings_mark_periods">Khuya,Sáng sớm,Buổi sáng,Buổi trưa,Buổi chiều,Buổi tối,Đêm muộn</string>
 </resources>

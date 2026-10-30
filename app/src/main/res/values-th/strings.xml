@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">สีเดียว</string>
     <string name="settings_gradient_start">สีเริ่มต้น</string>
     <string name="settings_gradient_end">สีสิ้นสุด</string>
+    <string name="settings_mark_title">คำต่อท้ายเวลา</string>
+    <string name="settings_mark_summary_off">ปิด — แตะเพื่อเลือก</string>
+    <string name="settings_mark_summary_weekday">วันในสัปดาห์หลังเวลา (เช่น ส.)</string>
+    <string name="settings_mark_summary_period">ช่วงเวลาของวันหลังเวลา (เช่น เช้า)</string>
+    <string name="settings_mark_dialog_title">แสดงหลังเวลา</string>
+    <string name="settings_mark_mode_weekday">วันในสัปดาห์</string>
+    <string name="settings_mark_mode_period">ช่วงเวลาของวัน</string>
+    <string name="settings_mark_periods">ดึก,เช้าตรู่,เช้า,เที่ยง,บ่าย,เย็น,ดึกมาก</string>
 </resources>

@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">単色</string>
     <string name="settings_gradient_start">開始色</string>
     <string name="settings_gradient_end">終了色</string>
+    <string name="settings_mark_title">時刻の接尾辞</string>
+    <string name="settings_mark_summary_off">オフ — タップで選択</string>
+    <string name="settings_mark_summary_weekday">時刻の後に曜日（例：土）</string>
+    <string name="settings_mark_summary_period">時刻の後に時間帯（例：午前）</string>
+    <string name="settings_mark_dialog_title">時刻の後に表示するもの</string>
+    <string name="settings_mark_mode_weekday">曜日</string>
+    <string name="settings_mark_mode_period">時間帯</string>
+    <string name="settings_mark_periods">深夜,早朝,午前,正午,午後,夕方,夜</string>
 </resources>

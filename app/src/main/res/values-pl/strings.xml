@@ -133,4 +133,12 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Jednokolorowy</string>
     <string name="settings_gradient_start">Kolor początkowy</string>
     <string name="settings_gradient_end">Kolor końcowy</string>
+    <string name="settings_mark_title">Sufiks godziny</string>
+    <string name="settings_mark_summary_off">Wył. — dotknij, aby wybrać</string>
+    <string name="settings_mark_summary_weekday">Dzień tygodnia po godzinie (np. sob)</string>
+    <string name="settings_mark_summary_period">Pora dnia po godzinie (np. rano)</string>
+    <string name="settings_mark_dialog_title">Pokazuj po godzinie</string>
+    <string name="settings_mark_mode_weekday">Dzień tygodnia</string>
+    <string name="settings_mark_mode_period">Pora dnia</string>
+    <string name="settings_mark_periods">Noc,Wczesny ranek,Rano,Południe,Popołudnie,Wieczór,Późna noc</string>
 </resources>

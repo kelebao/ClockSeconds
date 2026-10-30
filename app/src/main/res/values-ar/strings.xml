@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">لون واحد</string>
     <string name="settings_gradient_start">لون البداية</string>
     <string name="settings_gradient_end">لون النهاية</string>
+    <string name="settings_mark_title">لاحقة الوقت</string>
+    <string name="settings_mark_summary_off">إيقاف — اضغط للاختيار</string>
+    <string name="settings_mark_summary_weekday">يوم الأسبوع بعد الوقت (مثل السبت)</string>
+    <string name="settings_mark_summary_period">فترة اليوم بعد الوقت (مثل صباحًا)</string>
+    <string name="settings_mark_dialog_title">اعرض بعد الوقت</string>
+    <string name="settings_mark_mode_weekday">يوم الأسبوع</string>
+    <string name="settings_mark_mode_period">فترة اليوم</string>
+    <string name="settings_mark_periods">ليل,فجر,صباح,ظهر,بعد الظهر,مساء,آخر الليل</string>
 </resources>

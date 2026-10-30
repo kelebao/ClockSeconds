@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">單色</string>
     <string name="settings_gradient_start">起點色</string>
     <string name="settings_gradient_end">終點色</string>
+    <string name="settings_mark_title">時間後綴</string>
+    <string name="settings_mark_summary_off">已關閉，點一下選擇</string>
+    <string name="settings_mark_summary_weekday">時間後顯示星期幾（如 週六）</string>
+    <string name="settings_mark_summary_period">時間後顯示時段（如 上午）</string>
+    <string name="settings_mark_dialog_title">時間後面顯示什麼</string>
+    <string name="settings_mark_mode_weekday">星期幾</string>
+    <string name="settings_mark_mode_period">時段</string>
+    <string name="settings_mark_periods">凌晨,早上,上午,中午,下午,晚上,深夜</string>
 </resources>

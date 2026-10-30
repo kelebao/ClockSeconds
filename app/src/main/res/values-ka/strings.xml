@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">ერთი ფერი</string>
     <string name="settings_gradient_start">საწყისი ფერი</string>
     <string name="settings_gradient_end">დასასრული ფერი</string>
+    <string name="settings_mark_title">დროის სუფიქსი</string>
+    <string name="settings_mark_summary_off">გამორთულია — შეეხეთ ასარჩევად</string>
+    <string name="settings_mark_summary_weekday">კვირის დღე დროის შემდეგ (მაგ. შაბ)</string>
+    <string name="settings_mark_summary_period">დღის ნაწილი დროის შემდეგ (მაგ. დილა)</string>
+    <string name="settings_mark_dialog_title">აჩვენე დროის შემდეგ</string>
+    <string name="settings_mark_mode_weekday">კვირის დღე</string>
+    <string name="settings_mark_mode_period">დღის ნაწილი</string>
+    <string name="settings_mark_periods">ღამე,დილის ადრე,დილა,შუადღე,ნაშუადღევი,საღამო,გვიან ღამე</string>
 </resources>

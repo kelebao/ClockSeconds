@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">Одноцветный</string>
     <string name="settings_gradient_start">Начальный цвет</string>
     <string name="settings_gradient_end">Конечный цвет</string>
+    <string name="settings_mark_title">Суффикс времени</string>
+    <string name="settings_mark_summary_off">Выкл. — нажмите для выбора</string>
+    <string name="settings_mark_summary_weekday">День недели после времени (напр. сб)</string>
+    <string name="settings_mark_summary_period">Время суток после времени (напр. утро)</string>
+    <string name="settings_mark_dialog_title">Показывать после времени</string>
+    <string name="settings_mark_mode_weekday">День недели</string>
+    <string name="settings_mark_mode_period">Время суток</string>
+    <string name="settings_mark_periods">Ночь,Раннее утро,Утро,Полдень,День,Вечер,Поздняя ночь</string>
 </resources>

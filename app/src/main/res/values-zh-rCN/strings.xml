@@ -134,4 +134,12 @@
     <string name="task_when_daily">每天 %1$s</string>
     <string name="task_advance_suffix">前 %1$d 分钟</string>
     <string name="task_fmt_show">%1$s显秒，持续 %2$d 分钟</string>
+    <string name="settings_mark_title">时间后缀</string>
+    <string name="settings_mark_summary_off">已关闭，点一下选择</string>
+    <string name="settings_mark_summary_weekday">时间后显示周几（如 周六）</string>
+    <string name="settings_mark_summary_period">时间后显示时段（如 上午）</string>
+    <string name="settings_mark_dialog_title">时间后面显示什么</string>
+    <string name="settings_mark_mode_weekday">周几</string>
+    <string name="settings_mark_mode_period">时段</string>
+    <string name="settings_mark_periods">凌晨,早上,上午,中午,下午,晚上,深夜</string>
 </resources>

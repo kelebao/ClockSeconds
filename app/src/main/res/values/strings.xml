@@ -133,4 +133,12 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Single</string>
     <string name="settings_gradient_start">Start color</string>
     <string name="settings_gradient_end">End color</string>
+    <string name="settings_mark_title">Time suffix</string>
+    <string name="settings_mark_summary_off">Off — tap to choose</string>
+    <string name="settings_mark_summary_weekday">Weekday after the time (e.g. Sat)</string>
+    <string name="settings_mark_summary_period">Time of day after the time (e.g. Morning)</string>
+    <string name="settings_mark_dialog_title">Show after the time</string>
+    <string name="settings_mark_mode_weekday">Weekday</string>
+    <string name="settings_mark_mode_period">Time of day</string>
+    <string name="settings_mark_periods">Night,Early morning,Morning,Noon,Afternoon,Evening,Late night</string>
 </resources>

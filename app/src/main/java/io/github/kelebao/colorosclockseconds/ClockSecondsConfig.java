@@ -186,6 +186,15 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
     public static final String ACTION_SET_GRADIENT_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_COLOR";
 
+    /** 设置页 → SystemUI 写入「时间后缀」配置（周几 / 时段），
+     *  附带 {@link #EXTRA_ENABLED}、{@link #EXTRA_MODE} 与 {@link #EXTRA_MARK_PERIODS}。 */
+    public static final String ACTION_SET_MARK =
+            "io.github.kelebao.colorosclockseconds.action.SET_MARK";
+    /** int extra：后缀模式（{@link #MARK_MODE_WEEKDAY} / {@link #MARK_MODE_PERIOD}）。 */
+    public static final String EXTRA_MODE = "mode";
+    /** String extra：7 档时段文案，逗号分隔（凌晨,早上,上午,中午,下午,晚上,深夜）。 */
+    public static final String EXTRA_MARK_PERIODS = "markPeriods";
+
     /** 设置页 → SystemUI 写入整份自定义任务列表（{@link #EXTRA_TASKS}）。 */
     /** 设置页把「任务进行中」提示文案推给模块（模块在 SystemUI 进程里弹 toast，用当前系统语言）。 */
     public static final String ACTION_SET_TOAST_TEXT =
@@ -456,6 +465,152 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
         Settings.Secure.putInt(resolver, GRADIENT_ENABLED_KEY, enabled ? 1 : 0);
     }
 
+
+    // ==================================================================
+    // 时间后缀：周几 / 时段（默认关闭）
+    // ==================================================================
+
+    /**
+     * 时间后缀开关（1 = 在时间后面显示周几或时段，0 = 关闭）。默认关闭。
+     *
+     * <p>后缀拼在「时间」之后、零宽空格之前：{@code 10:23:45 周六\u200B}。
+     * 顺序不能变——零宽空格必须在整串最末尾（见 ClockSecondsModule#writeTime 注释），
+     * 放到中文中间就丢了「末尾零宽空格」那层防护，ColorOS 会按 HH:mm 模式重建文本剥掉颜色。</p>
+     */
+    public static final String MARK_ENABLED_KEY = "coloros_clock_seconds_mark_enabled";
+
+    /** 后缀模式：在时间后面显示周几（周一到周日，文案由系统按当前语言给出）。 */
+    public static final int MARK_MODE_WEEKDAY = 0;
+    /** 后缀模式：在时间后面显示 7 档时段（凌晨 / 早上 / 上午 / 中午 / 下午 / 晚上 / 深夜）。 */
+    public static final int MARK_MODE_PERIOD = 1;
+
+    /** 后缀模式存储键。 */
+    public static final String MARK_MODE_KEY = "coloros_clock_seconds_mark_mode";
+
+    /**
+     * 7 档时段文案存储键（逗号分隔，顺序 = 凌晨,早上,上午,中午,下午,晚上,深夜）。
+     *
+     * <p>模块跑在 SystemUI 进程里、拿不到设置页的资源，所以文案必须由设置页按当前语言
+     * 推给模块（随 {@link #ACTION_SET_MARK} 的 {@link #EXTRA_MARK_PERIODS}），再落到这里。</p>
+     */
+    public static final String MARK_PERIODS_KEY = "coloros_clock_seconds_mark_periods";
+
+    /** 时段文案兜底（设置页还没推过时用：简化中文，正常路径不会走到）。 */
+    public static final String MARK_PERIODS_FALLBACK = "凌晨,早上,上午,中午,下午,晚上,深夜";
+
+    /** 时段个数：固定 7 档。 */
+    public static final int MARK_PERIOD_COUNT = 7;
+
+    /** 后缀是否开启（默认关闭）。 */
+    public static boolean isMarkEnabled(ContentResolver resolver) {
+        try {
+            return resolver != null
+                    && Settings.Secure.getInt(resolver, MARK_ENABLED_KEY, 0) == 1;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 写入后缀开关。 */
+    public static void setMarkEnabled(ContentResolver resolver, boolean enabled) {
+        if (resolver == null) {
+            return;
+        }
+        try {
+            Settings.Secure.putInt(resolver, MARK_ENABLED_KEY, enabled ? 1 : 0);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 读取后缀模式；非法值回落到「时段」。 */
+    public static int getMarkMode(ContentResolver resolver) {
+        int mode;
+        try {
+            mode = resolver == null ? MARK_MODE_PERIOD
+                    : Settings.Secure.getInt(resolver, MARK_MODE_KEY, MARK_MODE_PERIOD);
+        } catch (Throwable t) {
+            mode = MARK_MODE_PERIOD;
+        }
+        return mode == MARK_MODE_WEEKDAY ? MARK_MODE_WEEKDAY : MARK_MODE_PERIOD;
+    }
+
+    /** 写入后缀模式。 */
+    public static void setMarkMode(ContentResolver resolver, int mode) {
+        if (resolver == null) {
+            return;
+        }
+        try {
+            Settings.Secure.putInt(resolver, MARK_MODE_KEY,
+                    mode == MARK_MODE_WEEKDAY ? MARK_MODE_WEEKDAY : MARK_MODE_PERIOD);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 读取 7 档时段文案原始串（可能为空）。 */
+    public static String getMarkPeriodsCsv(ContentResolver resolver) {
+        String csv = null;
+        try {
+            csv = resolver == null ? null
+                    : Settings.Secure.getString(resolver, MARK_PERIODS_KEY);
+        } catch (Throwable ignored) {
+        }
+        return csv == null ? "" : csv;
+    }
+
+    /** 写入 7 档时段文案（设置页按当前语言生成）。 */
+    public static void setMarkPeriods(ContentResolver resolver, String csv) {
+        if (resolver == null || csv == null) {
+            return;
+        }
+        try {
+            Settings.Secure.putString(resolver, MARK_PERIODS_KEY, csv);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 把时段文案串拆成固定长度 7 的数组；缺项 / 非法串用兜底文案补齐。
+     * 不能只做 split 后直接用下标 —— 老版本写过的值可能只有 6 段，越界会崩在每秒渲染路径上。
+     */
+    public static String[] splitMarkPeriods(String csv) {
+        String[] raw = (csv == null ? "" : csv).split(",");
+        String[] fallback = MARK_PERIODS_FALLBACK.split(",");
+        String[] out = new String[MARK_PERIOD_COUNT];
+        for (int i = 0; i < MARK_PERIOD_COUNT; i++) {
+            String v = i < raw.length ? raw[i].trim() : "";
+            out[i] = v.isEmpty() ? fallback[i] : v;
+        }
+        return out;
+    }
+
+    /**
+     * 小时（0~23）→ 时段下标。
+     * <p>凌晨 0–4 / 早上 5–7 / 上午 8–10 / 中午 11–12 / 下午 13–17 / 晚上 18–22 / 深夜 23。</p>
+     */
+    public static int periodIndexForHour(int hour24) {
+        if (hour24 < 0) {
+            return 0;
+        }
+        if (hour24 < 5) {
+            return 0;
+        }
+        if (hour24 < 8) {
+            return 1;
+        }
+        if (hour24 < 11) {
+            return 2;
+        }
+        if (hour24 < 13) {
+            return 3;
+        }
+        if (hour24 < 18) {
+            return 4;
+        }
+        if (hour24 < 23) {
+            return 5;
+        }
+        return 6;
+    }
 
     // ==================================================================
     // 六个数字位独立取色（时十 / 时个 / 分十 / 分个 / 秒十 / 秒个）

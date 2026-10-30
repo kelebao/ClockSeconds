@@ -184,6 +184,15 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean mCfgSeconds;
     private boolean mCfgHourColorOn;
     private boolean mCfgGradientOn;
+    /** 时间后缀（周几 / 时段）：总开关 + 模式（0 周几 / 1 时段）+ 7 档文案缓存。 */
+    private boolean mCfgMarkOn;
+    private int mCfgMarkMode = ClockSecondsConfig.MARK_MODE_PERIOD;
+    private String mCfgMarkPeriods = ClockSecondsConfig.MARK_PERIODS_FALLBACK;
+    /** 以代码回填开关状态时置位，避免触发 OnCheckedChangeListener 又写一次盘。 */
+    private boolean mMarkSyncing;
+    private Switch mMarkSwitch;
+    private TextView mMarkSummary;
+    private LinearLayout mMarkCard;
     // 调试开关（仅 DEBUG 包）：切换预览文字的渲染路径，用于定位「ColorOS 15 预览渐变按字形跳变」。
     private int mCfgGradStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private int mCfgGradEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
@@ -512,6 +521,9 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+        mCfgMarkOn = ClockSecondsConfig.isMarkEnabled(getContentResolver());
+        mCfgMarkMode = ClockSecondsConfig.getMarkMode(getContentResolver());
+        mCfgMarkPeriods = ClockSecondsConfig.getMarkPeriodsCsv(getContentResolver());
         pushToastText();
         if (mDigitGrid != null) {
             // 回到前台 / 状态栏改了颜色：同步色块选中环与摘要行。
@@ -724,6 +736,7 @@ public final class ModuleSettingsActivity extends Activity {
         buildPreviewCard(root);
         buildStatsRow(root);
         buildColorCard(root);
+        buildMarkCard(root);
         // 时钟探测（测试）与诊断与工具两张卡片仅用于排查问题，留 debug/probe 版；发布版不需要。
         if (BuildConfig.DEBUG) {
             buildClockTestCard(root);
@@ -1661,6 +1674,174 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     // ==================================================================
+    // ==================================================================
+    // 时间后缀：周几 / 时段
+    // ==================================================================
+
+    /**
+     * 「时间后缀」卡片：默认关闭。标题行右侧开关控制总开关；点卡片本体弹出二选一
+     * （周几 / 时段），选中即自动打开。后缀显示在时间后面（10:23:45 周六）。
+     *
+     * <p>周几名直接取系统按当前语言给的短名（模块侧 DateFormatSymbols），本应用不需要存；
+     * 7 档时段是自定义措辞，本应用按当前语言把 CSV 推给模块 —— 模块跑在 SystemUI 进程里，
+     * 读不到本应用的资源。</p>
+     */
+    private void buildMarkCard(LinearLayout root) {
+        mCfgMarkOn = ClockSecondsConfig.isMarkEnabled(getContentResolver());
+        mCfgMarkMode = ClockSecondsConfig.getMarkMode(getContentResolver());
+        mCfgMarkPeriods = ClockSecondsConfig.getMarkPeriodsCsv(getContentResolver());
+
+        LinearLayout card = card();
+        card.setPadding(dp(18), dp(16), dp(18), dp(16));
+        mMarkCard = card;
+
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setOrientation(LinearLayout.HORIZONTAL);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView title = new TextView(this);
+        title.setText(R.string.settings_mark_title);
+        title.setTextSize(15f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        title.setTextColor(text());
+        titleRow.addView(title);
+
+        TextView badge = new TextView(this);
+        badge.setText(R.string.settings_digit_new);
+        badge.setTextSize(9f);
+        badge.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        badge.setTextColor(accent());
+        badge.setPadding(dp(6), dp(1), dp(6), dp(1));
+        GradientDrawable badgeBg = new GradientDrawable();
+        badgeBg.setCornerRadius(dp(999));
+        badgeBg.setColor(night ? 0xFF3A2F5C : 0xFFE7DFFF);
+        badge.setBackground(badgeBg);
+        LinearLayout.LayoutParams badgeLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        badgeLp.leftMargin = dp(6);
+        badge.setLayoutParams(badgeLp);
+        titleRow.addView(badge);
+
+        View spacer = new View(this);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        titleRow.addView(spacer);
+
+        mMarkSwitch = new Switch(this);
+        mMarkSwitch.setChecked(mCfgMarkOn);
+        styleSwitch(mMarkSwitch);
+        mMarkSwitch.setOnCheckedChangeListener((button, checked) -> {
+            if (mMarkSyncing) {
+                return;
+            }
+            mCfgMarkOn = checked;
+            applyMarkConfig();
+        });
+        titleRow.addView(mMarkSwitch);
+        card.addView(titleRow);
+
+        mMarkSummary = new TextView(this);
+        mMarkSummary.setTextSize(11f);
+        mMarkSummary.setTextColor(text2());
+        mMarkSummary.setPadding(0, dp(6), 0, 0);
+        card.addView(mMarkSummary);
+
+        // 点卡片本体 = 选「周几 / 时段」；开关留在右上角，避免误触总开关。
+        card.setOnClickListener(v -> showMarkModeDialog());
+
+        syncMarkCard();
+        root.addView(card);
+    }
+
+    /** 二选一：时间后面显示「周几」还是「时段」。 */
+    private void showMarkModeDialog() {
+        final int checked = mCfgMarkMode == ClockSecondsConfig.MARK_MODE_WEEKDAY ? 0 : 1;
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_mark_dialog_title)
+                .setSingleChoiceItems(new CharSequence[]{
+                        getString(R.string.settings_mark_mode_weekday),
+                        getString(R.string.settings_mark_mode_period)},
+                        checked,
+                        (dialog, which) -> {
+                            dialog.dismiss();
+                            mCfgMarkMode = which == 0
+                                    ? ClockSecondsConfig.MARK_MODE_WEEKDAY
+                                    : ClockSecondsConfig.MARK_MODE_PERIOD;
+                            mCfgMarkOn = true;   // 选了就等于要用，顺手打开总开关
+                            applyMarkConfig();
+                        })
+                .show();
+    }
+
+    /** 把后缀的开关 / 模式 / 7 档文案推给模块（模块拿不到本应用的资源）。 */
+    private void applyMarkConfig() {
+        final String periods = markPeriodsCsv();
+        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_MARK)
+                .putExtra(ClockSecondsConfig.EXTRA_ENABLED, mCfgMarkOn ? 1 : 0)
+                .putExtra(ClockSecondsConfig.EXTRA_MODE, mCfgMarkMode)
+                .putExtra(ClockSecondsConfig.EXTRA_MARK_PERIODS, periods);
+        applyConfig(ClockSecondsConfig.MARK_ENABLED_KEY, mCfgMarkOn ? 1 : 0, intent, ok -> {
+            if (!ok) {
+                toastWriteFailed();
+            }
+            // 模式与文案不是整数键：有 WRITE_SECURE_SETTINGS 时直写（失败无所谓，
+            // 模块已经按广播 extras 生效；下次开界面由模块自己回写）。
+            try {
+                Settings.Secure.putInt(getContentResolver(),
+                        ClockSecondsConfig.MARK_MODE_KEY, mCfgMarkMode);
+                Settings.Secure.putString(getContentResolver(),
+                        ClockSecondsConfig.MARK_PERIODS_KEY, periods);
+            } catch (Throwable ignored) {
+            }
+            syncMarkCard();
+        });
+    }
+
+    /** 当前语言的 7 档时段文案（CSV，顺序固定：凌晨 … 深夜）。 */
+    private String markPeriodsCsv() {
+        return getString(R.string.settings_mark_periods).trim();
+    }
+
+    /** 刷新「时间后缀」卡片：开关状态 + 摘要文案，并让预览立刻跟着变。 */
+    private void syncMarkCard() {
+        if (mMarkSwitch != null) {
+            mMarkSyncing = true;
+            mMarkSwitch.setChecked(mCfgMarkOn);
+            mMarkSyncing = false;
+        }
+        if (mMarkSummary != null) {
+            mMarkSummary.setText(!mCfgMarkOn
+                    ? getString(R.string.settings_mark_summary_off)
+                    : getString(mCfgMarkMode == ClockSecondsConfig.MARK_MODE_WEEKDAY
+                            ? R.string.settings_mark_summary_weekday
+                            : R.string.settings_mark_summary_period));
+        }
+        updatePreview();
+    }
+
+    /** 预览卡上的后缀文本（与模块同规则：周几 / 7 档时段，前导一个空格）；展开取色时不显示。 */
+    private String previewMarkSuffix() {
+        if (!mCfgMarkOn || mDigitsExpanded) {
+            return "";
+        }
+        final java.util.Calendar cal = java.util.Calendar.getInstance();
+        String label = "";
+        if (mCfgMarkMode == ClockSecondsConfig.MARK_MODE_WEEKDAY) {
+            final String[] names = new java.text.DateFormatSymbols().getShortWeekdays();
+            final int dow = cal.get(java.util.Calendar.DAY_OF_WEEK);
+            if (dow >= 0 && dow < names.length && names[dow] != null) {
+                label = names[dow];
+            }
+        } else {
+            final String[] parts = ClockSecondsConfig.splitMarkPeriods(mCfgMarkPeriods);
+            final int idx = ClockSecondsConfig.periodIndexForHour(
+                    cal.get(java.util.Calendar.HOUR_OF_DAY));
+            if (idx >= 0 && idx < parts.length) {
+                label = parts[idx];
+            }
+        }
+        return label.isEmpty() ? "" : " " + label;
+    }
+
     // 数字颜色：预览卡展开取色 / 六位分别上色
     // ==================================================================
 
@@ -4423,6 +4604,9 @@ public final class ModuleSettingsActivity extends Activity {
         private float mGradShift;
         private Shader mGradShader;
         private float mGradShaderBand = -1f;
+        /** 后缀起点（<=0 表示没有后缀）与后缀颜色：后缀不参与渐变，单独绘制。 */
+        private int mMarkStart = -1;
+        private int mMarkColor = 0;
 
         GradientTimeView(android.content.Context context) {
             super(context);
@@ -4449,6 +4633,16 @@ public final class ModuleSettingsActivity extends Activity {
             invalidate();
         }
 
+        /** 后缀起点与颜色：起点之后的字符不参与渐变，用这个颜色 + 0.62 倍字号单独画。 */
+        void setMark(int start, int color) {
+            if (mMarkStart == start && mMarkColor == color) {
+                return;
+            }
+            mMarkStart = start;
+            mMarkColor = color;
+            invalidate();
+        }
+
         /** 调试用色带平移（像素），仅 DEBUG 包由 Secure 键控制。 */
         void setGradientShift(float shift) {
             if (mGradShift == shift) {
@@ -4469,17 +4663,21 @@ public final class ModuleSettingsActivity extends Activity {
                 return;
             }
             final Paint paint = getPaint();
-            final float band = paint.measureText(cs, 0, cs.length());
-            if (band <= 0f) {
+            final int len = cs.length();
+            // 居中按整行（时间 + 后缀）算宽；色带只覆盖时间部分。
+            final float full = paint.measureText(cs, 0, len);
+            final int markStart = (mMarkStart > 0 && mMarkStart < len) ? mMarkStart : -1;
+            final float band = markStart > 0 ? paint.measureText(cs, 0, markStart) : full;
+            if (full <= 0f || band <= 0f) {
                 return;
             }
             if (mGradShader == null || Math.abs(mGradShaderBand - band) > 0.01f) {
-                final float x0 = (getWidth() - band) / 2f + mGradShift;
-                mGradShader = new LinearGradient(x0, 0f, x0 + band, 0f,
+                final float sx0 = (getWidth() - full) / 2f + mGradShift;
+                mGradShader = new LinearGradient(sx0, 0f, sx0 + band, 0f,
                         mGradC0, mGradC1, Shader.TileMode.CLAMP);
                 mGradShaderBand = band;
             }
-            final float x0 = (getWidth() - band) / 2f + mGradShift;
+            final float x0 = (getWidth() - full) / 2f + mGradShift;
             final Paint.FontMetricsInt fm = paint.getFontMetricsInt();
             float baseline = (getHeight() - (fm.descent - fm.ascent)) / 2f - fm.ascent;
             if (getLayout() != null) {
@@ -4501,7 +4699,17 @@ public final class ModuleSettingsActivity extends Activity {
             canvas.save();
             canvas.translate(ox, oy);
             paint.setShader(mGradShader);
-            canvas.drawText(cs, 0, cs.length(), x0, baseline, paint);
+            final int timeEnd = markStart > 0 ? markStart : len;
+            canvas.drawText(cs, 0, timeEnd, x0, baseline, paint);
+            if (markStart > 0) {
+                // 后缀：无 shader、0.62 倍字号、弱化色，紧接时间右边缘（同一基线）。
+                paint.setShader(null);
+                paint.setColor(mMarkColor);
+                final float size = paint.getTextSize();
+                paint.setTextSize(size * 0.62f);
+                canvas.drawText(cs, markStart, len, x0 + band, baseline, paint);
+                paint.setTextSize(size);
+            }
             canvas.restore();
             paint.setShader(saveShader);
             paint.setColor(saveColor);
@@ -4535,7 +4743,10 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
         mNowDate.setTime(System.currentTimeMillis());
         final String text = (showSec ? mFmtSec : mFmtNoSec).format(mNowDate);
-        final SpannableStringBuilder sb = new SpannableStringBuilder(text);
+        final int timeEnd = text.length();
+        // 时间后缀（周几 / 时段）：预览卡也显示，才与状态栏一致（展开取色时不显示）。
+        final String mark = previewMarkSuffix();
+        final SpannableStringBuilder sb = new SpannableStringBuilder(text + mark);
         // 总开关关掉时整串回到默认文字色（用户 m19679 反馈「关闭颜色开关预览还是彩色」）：
         // 渐变同样受 hourOn 门控，与状态栏 applyDigitColors 里「先判 hourColorEnabled 再判 sGradientOn」保持一致。
         if (mCfgGradientOn && hourOn) {
@@ -4564,11 +4775,14 @@ public final class ModuleSettingsActivity extends Activity {
             ((GradientTimeView) previewView).setGradientColors(
                     adaptPreviewColor(gradientTargetColor(0)),
                     adaptPreviewColor(gradientTargetColor(1)));
+            // 色带只铺在时间上，后缀单独用弱化色画（见 GradientTimeView.onDraw）。
+            ((GradientTimeView) previewView).setMark(timeEnd, text2());
         } else {
             ((GradientTimeView) previewView).clearGradient();
             // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
             // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
-            for (int i = 0; i < sb.length(); i++) {
+            // 后缀不参与逐位上色（由下面的 RelativeSizeSpan + 弱化色统一处理）。
+            for (int i = 0; i < timeEnd; i++) {
                 final char ch = sb.charAt(i);
                 if (ch == ':' || ch == '：') {
                     // 冒号光学居中：逐位上色把文本切成多个 run 后，冒号会落到基线上，
@@ -4600,6 +4814,14 @@ public final class ModuleSettingsActivity extends Activity {
                 sb.setSpan(new ForegroundColorSpan(dim ? dimColor(shown) : shown), i, i + 1,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            if (!mark.isEmpty()) {
+                // 后缀比数字小一号、颜色弱化 —— 与状态栏 styleMark 的观感一致。
+                sb.setSpan(new android.text.style.RelativeSizeSpan(0.62f), timeEnd, sb.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(new ForegroundColorSpan(text2()), timeEnd, sb.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            ((GradientTimeView) previewView).setMark(-1, 0);
         }
         previewView.setText(sb);
 

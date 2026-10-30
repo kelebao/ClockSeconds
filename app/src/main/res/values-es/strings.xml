@@ -133,4 +133,12 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Un solo color</string>
     <string name="settings_gradient_start">Color inicial</string>
     <string name="settings_gradient_end">Color final</string>
+    <string name="settings_mark_title">Sufijo de la hora</string>
+    <string name="settings_mark_summary_off">Desactivado: toca para elegir</string>
+    <string name="settings_mark_summary_weekday">Día de la semana tras la hora (p. ej. sáb)</string>
+    <string name="settings_mark_summary_period">Momento del día tras la hora (p. ej. mañana)</string>
+    <string name="settings_mark_dialog_title">Mostrar tras la hora</string>
+    <string name="settings_mark_mode_weekday">Día de la semana</string>
+    <string name="settings_mark_mode_period">Momento del día</string>
+    <string name="settings_mark_periods">Madrugada,Mañana temprano,Mañana,Mediodía,Tarde,Noche,Medianoche</string>
 </resources>

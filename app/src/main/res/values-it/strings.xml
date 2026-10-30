@@ -133,4 +133,12 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Tinta unita</string>
     <string name="settings_gradient_start">Colore iniziale</string>
     <string name="settings_gradient_end">Colore finale</string>
+    <string name="settings_mark_title">Suffisso orario</string>
+    <string name="settings_mark_summary_off">Off — tocca per scegliere</string>
+    <string name="settings_mark_summary_weekday">Giorno della settimana dopo l\'ora (es. sab)</string>
+    <string name="settings_mark_summary_period">Fascia della giornata dopo l\'ora (es. mattina)</string>
+    <string name="settings_mark_dialog_title">Mostra dopo l\'ora</string>
+    <string name="settings_mark_mode_weekday">Giorno della settimana</string>
+    <string name="settings_mark_mode_period">Fascia della giornata</string>
+    <string name="settings_mark_periods">Notte,Prima mattina,Mattina,Mezzogiorno,Pomeriggio,Sera,Notte fonda</string>
 </resources>

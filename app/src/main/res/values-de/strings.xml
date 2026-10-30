@@ -133,4 +133,12 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="task_when_daily">täglich um %1$s</string>
     <string name="task_advance_suffix">, %1$d Min. früher</string>
     <string name="task_fmt_show">%1$s, Sekunden für %2$d Min. an</string>
+    <string name="settings_mark_title">Zeit-Suffix</string>
+    <string name="settings_mark_summary_off">Aus – zum Auswählen tippen</string>
+    <string name="settings_mark_summary_weekday">Wochentag nach der Uhrzeit (z. B. Sa)</string>
+    <string name="settings_mark_summary_period">Tageszeit nach der Uhrzeit (z. B. vormittags)</string>
+    <string name="settings_mark_dialog_title">Nach der Uhrzeit anzeigen</string>
+    <string name="settings_mark_mode_weekday">Wochentag</string>
+    <string name="settings_mark_mode_period">Tageszeit</string>
+    <string name="settings_mark_periods">Nachts,Früh morgens,Vormittags,Mittags,Nachmittags,Abends,Spät nachts</string>
 </resources>

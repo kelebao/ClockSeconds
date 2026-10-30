@@ -133,4 +133,12 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Uni</string>
     <string name="settings_gradient_start">Couleur de départ</string>
     <string name="settings_gradient_end">Couleur de fin</string>
+    <string name="settings_mark_title">Suffixe de l\'heure</string>
+    <string name="settings_mark_summary_off">Désactivé — toucher pour choisir</string>
+    <string name="settings_mark_summary_weekday">Jour de la semaine après l\'heure (ex. sam.)</string>
+    <string name="settings_mark_summary_period">Moment de la journée après l\'heure (ex. matin)</string>
+    <string name="settings_mark_dialog_title">Afficher après l\'heure</string>
+    <string name="settings_mark_mode_weekday">Jour de la semaine</string>
+    <string name="settings_mark_mode_period">Moment de la journée</string>
+    <string name="settings_mark_periods">Nuit,Tôt le matin,Matin,Midi,Après-midi,Soir,Tard le soir</string>
 </resources>

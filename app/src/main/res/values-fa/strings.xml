@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">تک‌رنگ</string>
     <string name="settings_gradient_start">رنگ شروع</string>
     <string name="settings_gradient_end">رنگ پایان</string>
+    <string name="settings_mark_title">پسوند زمان</string>
+    <string name="settings_mark_summary_off">خاموش — برای انتخاب ضربه بزنید</string>
+    <string name="settings_mark_summary_weekday">روز هفته پس از زمان (مثل شنبه)</string>
+    <string name="settings_mark_summary_period">بخش روز پس از زمان (مثل صبح)</string>
+    <string name="settings_mark_dialog_title">نمایش پس از زمان</string>
+    <string name="settings_mark_mode_weekday">روز هفته</string>
+    <string name="settings_mark_mode_period">بخش روز</string>
+    <string name="settings_mark_periods">شب,سپیده‌دم,صبح,ظهر,بعدازظهر,عصر,نیمه‌شب</string>
 </resources>

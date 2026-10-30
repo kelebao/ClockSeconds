@@ -34,7 +34,9 @@ import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.text.DateFormatSymbols;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -116,6 +118,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 渐变端点色缓存（{@code GRADIENT_COLOR_AUTO} = 跟随首位 / 末位数字）。 */
     private static volatile int sGradientStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private static volatile int sGradientEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+
+    /** 时间后缀缓存（周几 / 时段）：与颜色同批重读，每秒渲染路径零 binder。 */
+    private static volatile boolean sMarkLoaded;
+    private static volatile boolean sMarkOn;
+    private static volatile int sMarkMode = ClockSecondsConfig.MARK_MODE_PERIOD;
+    private static volatile String[] sMarkPeriods =
+            ClockSecondsConfig.MARK_PERIODS_FALLBACK.split(",");
     /** 无上色目标时复用的空数组（避免每帧分配）。 */
     private static final int[] NO_STARTS = new int[0];
 
@@ -1754,6 +1763,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             long netNow = System.currentTimeMillis() + offsetMs;
             String text = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date(netNow));
+            final int timeEnd = text.length();
+            // 时间后缀（周几 / 时段）拼在时间后面：色带与逐位上色只覆盖前 timeEnd 个字符，
+            // 下面的字号估算也只按时间本身的长度算，否则后缀会把数字整体压小。
+            text = appendMark(text, context);
             SpannableStringBuilder sb = new SpannableStringBuilder(text);
             // 数字颜色用进程内缓存（设置变更经广播更新），首次读取一次。
             if (!sFloatColorLoaded) {
@@ -1781,10 +1794,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     availH = lp.height - tv.getPaddingTop() - tv.getPaddingBottom();
                 }
                 // "HH:mm:ss" 数字宽约 0.62em、冒号约 0.35em，平均按 0.55em/字符估算。
-                float maxByW = availW / (text.length() * 0.55f) / density;
+                float maxByW = availW / (timeEnd * 0.55f) / density;
                 float maxByH = availH * 0.62f / density;
                 float size = Math.max(10f, Math.min(60f, Math.min(maxByW, maxByH)));
                 tv.setTextSize(size);
+                // 时间后缀会把整串撑宽（字号估算只按时间长度算），按实测宽度再收一次，
+                // 否则后缀会被浮窗右边缘裁掉。
+                float measured = tv.getPaint().measureText(sb, 0, sb.length());
+                if (measured > availW && measured > 0f) {
+                    tv.setTextSize(Math.max(10f, size * availW / measured));
+                }
             } catch (Throwable ignored) {
                 // 字号自适应失败就用当前字号
             }
@@ -1797,7 +1816,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // 实测（1240x2772@560，band=411px，倍数扫参 -1…1）：xoff = +B/2 时文字正好覆盖
                     // 0→1 整条色带（t 0.08→0.81，与设置页预览卡的 0.11→0.79 同一条曲线）；
                     // 传 0 是「中间蓝顶两端回退」，传 −B/2 是整条反向。
-                    float textW = tv.getPaint().measureText(sb, 0, sb.length());
+                    float textW = tv.getPaint().measureText(sb, 0, timeEnd);
                     float xoff = textW * 0.5f;
                     if (BuildConfig.DEBUG) {
                         // 扫参用：Secure 键里写一个乘数（如 "0" / "-1" / "0.5"），xoff = textW × 该值。
@@ -1811,10 +1830,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         } catch (Throwable ignored) {
                         }
                     }
-                    applyGradient(sb, tv, colors, xoff);
+                    applyGradient(sb, tv, colors, xoff, timeEnd);
                 } else {
                     int systemTextColor = tv.getCurrentTextColor();
-                    for (int i = 0; i < sb.length(); i++) {
+                    // 后缀不参与逐位上色（它由 styleMark 单独处理）。
+                    for (int i = 0; i < timeEnd; i++) {
                         int slot = ClockSecondsConfig.slotOfChar(sb, i);
                         if (slot < 0 || slot >= colors.length
                                 || colors[slot] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
@@ -1825,6 +1845,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     }
                 }
             }
+            styleMark(sb, tv, timeEnd);
             tv.setText(sb);
             if (BuildConfig.DEBUG) {
                 CharSequence cs = tv.getText();
@@ -1998,6 +2019,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         int second = (int) ((System.currentTimeMillis() / 1000) % 60);
         String ss = String.format(Locale.US, ":%02d", second);
         String text = hhmm + ss;
+        final int timeEnd = text.length();
+        // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前
+        // —— 零宽空格必须留在整串最末尾，写反就丢了 ColorOS 模式匹配防护。
+        text = appendMark(text, view.getContext());
         // 零宽空格破坏 HH:mm:ss 模式匹配：ColorOS 17 的 StatClock / setTextWithRedOneStyle 以及
         // 第三方状态栏主题模块（如 dev.puitheme.StatusBarModule）会按 HH:mm(:ss) 模式重建文本，
         // 重建时剥掉外来 Span → 显秒开时自定义颜色被反复洗掉（用户反馈「颜色闪没 1~2 秒」）。
@@ -2009,7 +2034,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
         // ColorOS 专属样式：仅把「小时十位数」标红（如 13 的 1、05 的 0），其余（含秒）保持系统原色。
         // 注：状态栏与浮窗的秒数字均保持系统原色；呼吸高亮仅用于设置页预览卡的刻度与色块。
-        applyDigitColors(sb, view);
+        applyDigitColors(sb, view, timeEnd);
+        styleMark(sb, view, timeEnd);
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "WRITE: [" + sb + "] baseRed="
                     + (base instanceof android.text.Spannable));
@@ -2082,19 +2108,31 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * @return 本次上色的字符起始下标（空数组 = 无需/无位上色），供掉色判定使用
      */
     private static int[] applyDigitColors(SpannableStringBuilder sb, TextView view) {
+        return applyDigitColors(sb, view, -1);
+    }
+
+    /**
+     * 同上，额外限定「时间文本」终点：{@code timeEnd} 之后是后缀（周几 / 时段），
+     * 既不参与逐位上色也不参与渐变（否则会被当成第 7、8 个字符算进色带）。
+     * 传 -1 表示整串都是时间文本。
+     */
+    private static int[] applyDigitColors(SpannableStringBuilder sb, TextView view,
+                                          int timeEnd) {
         if (!hourColorEnabled(view)) {
             // 总开关关闭：恢复系统默认样式，不加任何 Span。
             return NO_STARTS;
         }
         if (sGradientOn) {
             // 渐变模式：整串一个 CharacterStyle，颜色由 shader 生成，不再逐字符上色。
-            return applyGradient(sb, view, digitColors(view));
+            return applyGradient(sb, view, digitColors(view), 0f, timeEnd);
         }
         int[] colors = digitColors(view);
         int systemTextColor = view.getCurrentTextColor();
         int[] starts = new int[sb.length()];
         int n = 0;
-        for (int i = 0; i < sb.length(); i++) {
+        // 后缀从 timeEnd 起，不参与逐位上色（它自己有一套字号 / 弱化色样式）。
+        final int limit = (timeEnd > 0 && timeEnd < sb.length()) ? timeEnd : sb.length();
+        for (int i = 0; i < limit; i++) {
             char ch = sb.charAt(i);
             if (ch == ':' || ch == '：') {
                 // 冒号光学居中：逐位上色会把文本切成多个 run，冒号会被画在基线上（比整串一个 run 时
@@ -2152,6 +2190,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      */
     private static int[] applyGradient(SpannableStringBuilder sb, TextView view, int[] colors,
                                        float xOffset) {
+        return applyGradient(sb, view, colors, xOffset, -1);
+    }
+
+    /**
+     * 同上，额外限定色带终点：{@code colorEnd} 之后是后缀（周几 / 时段），不参与渐变
+     * —— 否则后缀会把色带拉长，时间段的渐变终点就对不上。传 -1 表示整串都是时间文本。
+     */
+    private static int[] applyGradient(SpannableStringBuilder sb, TextView view, int[] colors,
+                                       float xOffset, int colorEnd) {
         // 剥掉外来 / 上一轮的前景色：主题模块与 OplusClockExImpl 会塞 ForegroundColorSpan，
         // 其中还有 #0 透明色（会让数字直接消失），留着会和 shader 抢画笔。
         ForegroundColorSpan[] oldFg = sb.getSpans(0, sb.length(), ForegroundColorSpan.class);
@@ -2166,6 +2213,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 尾部零宽空格（防模式重建剥 span 用）不参与着色，否则右端会多算一格宽度。
         while (len > 0 && sb.charAt(len - 1) == '\u200B') {
             len--;
+        }
+        if (colorEnd > 0 && colorEnd < len) {
+            len = colorEnd;   // 后缀不参与渐变
         }
         if (len <= 0) {
             return NO_STARTS;
@@ -2235,7 +2285,97 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 读取失败保持上一次值，不影响上色。
         }
         sDigitColors = colors;
+        // 后缀配置（周几 / 时段）与颜色同批失效：下次渲染时按需重读，避免渲染路径打 binder。
+        sMarkLoaded = false;
         return colors;
+    }
+
+    // ==================================================================
+    // 时间后缀（周几 / 时段）：10:23:45 周六
+    // ==================================================================
+
+    /** 从 Secure 重读时间后缀配置（只在首次使用与收到 SET_MARK 广播后调用）。 */
+    private static void loadMarkConfig(Context ctx) {
+        try {
+            android.content.ContentResolver cr = ctx.getContentResolver();
+            sMarkMode = ClockSecondsConfig.getMarkMode(cr);
+            sMarkPeriods = ClockSecondsConfig.splitMarkPeriods(
+                    ClockSecondsConfig.getMarkPeriodsCsv(cr));
+            sMarkOn = ClockSecondsConfig.isMarkEnabled(cr);
+        } catch (Throwable ignored) {
+            // 读不到就保持上一次的值（首次失败则维持关闭 + 兜底文案），不影响时钟本身。
+        }
+        sMarkLoaded = true;
+    }
+
+    /**
+     * 时间后面的后缀文本（含前导空格）；关闭或取不到文案时返回空串。
+     *
+     * <p>周几直接用系统按当前语言给出的短名 —— {@link DateFormatSymbols#getShortWeekdays()}
+     * 的数组下标正好是 {@link Calendar#DAY_OF_WEEK}（1=周日 … 7=周六），所以这个模式不需要
+     * 设置页推文案；7 档时段是自定义措辞，必须由设置页按当前语言推过来（见 {@link #loadMarkConfig}），
+     * 因为模块跑在 SystemUI 进程里、拿不到设置页的资源。</p>
+     */
+    private static String markSuffixText(Context ctx) {
+        if (!sMarkLoaded) {
+            loadMarkConfig(ctx);
+        }
+        if (!sMarkOn) {
+            return "";
+        }
+        String label = "";
+        try {
+            Calendar cal = Calendar.getInstance();
+            if (sMarkMode == ClockSecondsConfig.MARK_MODE_WEEKDAY) {
+                String[] names = new DateFormatSymbols().getShortWeekdays();
+                int dow = cal.get(Calendar.DAY_OF_WEEK);
+                if (dow >= 0 && dow < names.length) {
+                    label = names[dow] == null ? "" : names[dow];
+                }
+            } else {
+                String[] periods = sMarkPeriods;
+                int idx = ClockSecondsConfig.periodIndexForHour(
+                        cal.get(Calendar.HOUR_OF_DAY));
+                if (periods != null && idx >= 0 && idx < periods.length
+                        && periods[idx] != null) {
+                    label = periods[idx];
+                }
+            }
+        } catch (Throwable ignored) {
+            // 取不到就不显示后缀（宁可不显示，也不能让每秒渲染路径抛异常）
+        }
+        return label.isEmpty() ? "" : " " + label;
+    }
+
+    /** 在时间文本后面追加后缀（关闭时原样返回）。 */
+    private static String appendMark(CharSequence timeText, Context ctx) {
+        String suffix = markSuffixText(ctx);
+        return suffix.isEmpty() ? timeText.toString() : timeText + suffix;
+    }
+
+    /**
+     * 给后缀上样式：字号缩到 0.62、颜色弱化（系统文字色 70% 不透明度）。
+     * 这样一眼能读出「这是附加信息」，宽度也只占两个数字左右，不会把右侧图标挤走。
+     *
+     * @param markStart 后缀起点（= 时间文本长度）；{@code <= 0} 表示没有后缀。
+     */
+    private static void styleMark(SpannableStringBuilder sb, TextView view, int markStart) {
+        if (markStart <= 0 || markStart >= sb.length()) {
+            return;
+        }
+        int end = sb.length();
+        while (end > markStart && sb.charAt(end - 1) == '\u200B') {
+            end--;
+        }
+        if (end <= markStart) {
+            return;
+        }
+        sb.setSpan(new android.text.style.RelativeSizeSpan(0.62f), markStart, end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int sys = view.getCurrentTextColor();
+        int dim = (sys & 0x00FFFFFF) | 0xB3000000;   // 70% 不透明度，保留背景色相
+        sb.setSpan(new ForegroundColorSpan(dim), markStart, end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     /** 目标文本所有已配置颜色的位是否仍带着前景色 Span（掉色判定用）。 */
@@ -2300,13 +2440,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 顺带把系统可能自带的秒截掉（HyperOS 的 AOSP Clock 会按 HH:mm:ss 写入）：不截的话
         // 「关闭显秒」写回去的还是带秒文本，秒数看起来根本没关。
         String text = toHourMinute(base);
+        final int timeEnd = text.length();
+        // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前（零宽空格必须留在最末尾）。
+        text = appendMark(text, view.getContext());
         if (!text.endsWith("\u200B")) {
             text = text + "\u200B";
         }
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
         APPLYING_STYLE.set(true);
         try {
-            applyDigitColors(sb, view);
+            applyDigitColors(sb, view, timeEnd);
+            styleMark(sb, view, timeEnd);
         } finally {
             APPLYING_STYLE.set(false);
         }
@@ -2340,6 +2484,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 由本方法再次追加，自洽。若真凶不是模式匹配，此字符无害，循环兜底。
         // 同上：base 可能自带秒（HyperOS 的 AOSP Clock 按 HH:mm:ss 写），显秒关时必须截掉。
         String text = toHourMinute(base);
+        final int timeEnd = text.length();
+        // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前（零宽空格必须留在最末尾）。
+        text = appendMark(text, view.getContext());
         if (!text.endsWith("\u200B")) {
             text = text + "\u200B";
         }
@@ -2347,10 +2494,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         APPLYING_STYLE.set(true);
         int[] starts;
         try {
-            starts = applyDigitColors(sb, view);
+            starts = applyDigitColors(sb, view, timeEnd);
         } finally {
             APPLYING_STYLE.set(false);
         }
+        styleMark(sb, view, timeEnd);
         // ⚠️ 不能只用 TextUtils.equals：被洗后的纯文本与目标文本字符相同，会误判为
         // 「已上色」而跳过补救（掉色将永远无法恢复）。必须确认当前文本每一个已配置颜色
         // 的位置真的还带着 span 才跳过；目标无需上色（全部跟随系统/颜色开关关闭）时直接跳过。
@@ -3218,6 +3366,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_MARK);
         filter.addAction(ClockSecondsConfig.ACTION_SET_TASKS);
         filter.addAction(ClockSecondsConfig.ACTION_SET_TOAST_TEXT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
@@ -3291,6 +3440,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.EXTRA_COLOR,
                                         ClockSecondsConfig.GRADIENT_COLOR_AUTO));
                                 reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_MARK.equals(action)) {
+                                // 时间后缀（周几 / 时段）：开关、模式、7 档文案一次广播全量覆盖。
+                                ClockSecondsConfig.setMarkEnabled(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_ENABLED, 0) == 1);
+                                ClockSecondsConfig.setMarkMode(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_MODE,
+                                        ClockSecondsConfig.MARK_MODE_PERIOD));
+                                ClockSecondsConfig.setMarkPeriods(cr, intent.getStringExtra(
+                                        ClockSecondsConfig.EXTRA_MARK_PERIODS));
+                                sMarkLoaded = false;   // 下次渲染按新的模式 / 文案重建后缀
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED.equals(action)) {
                                 ClockSecondsConfig.setHourColorEnabled(cr, intent.getIntExtra(

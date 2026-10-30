@@ -133,4 +133,12 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Warna tunggal</string>
     <string name="settings_gradient_start">Warna awal</string>
     <string name="settings_gradient_end">Warna akhir</string>
+    <string name="settings_mark_title">Sufiks waktu</string>
+    <string name="settings_mark_summary_off">Nonaktif — ketuk untuk memilih</string>
+    <string name="settings_mark_summary_weekday">Hari dalam minggu setelah jam (mis. Sab)</string>
+    <string name="settings_mark_summary_period">Waktu hari setelah jam (mis. Pagi)</string>
+    <string name="settings_mark_dialog_title">Tampilkan setelah jam</string>
+    <string name="settings_mark_mode_weekday">Hari dalam minggu</string>
+    <string name="settings_mark_mode_period">Waktu hari</string>
+    <string name="settings_mark_periods">Malam,Dini pagi,Pagi,Siang,Sore,Malam,Larut malam</string>
 </resources>

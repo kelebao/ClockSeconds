@@ -133,4 +133,12 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_digit_tab_digit">Tek renk</string>
     <string name="settings_gradient_start">Başlangıç rengi</string>
     <string name="settings_gradient_end">Bitiş rengi</string>
+    <string name="settings_mark_title">Saat son eki</string>
+    <string name="settings_mark_summary_off">Kapalı — seçmek için dokun</string>
+    <string name="settings_mark_summary_weekday">Saatten sonra haftanın günü (örn. Cmt)</string>
+    <string name="settings_mark_summary_period">Saatten sonra günün bölümü (örn. Sabah)</string>
+    <string name="settings_mark_dialog_title">Saatten sonra göster</string>
+    <string name="settings_mark_mode_weekday">Haftanın günü</string>
+    <string name="settings_mark_mode_period">Günün bölümü</string>
+    <string name="settings_mark_periods">Gece,Sabah erken,Sabah,Öğlen,Öğleden sonra,Akşam,Gece geç</string>
 </resources>

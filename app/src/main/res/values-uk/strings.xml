@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">Однотонний</string>
     <string name="settings_gradient_start">Початковий колір</string>
     <string name="settings_gradient_end">Кінцевий колір</string>
+    <string name="settings_mark_title">Суфікс часу</string>
+    <string name="settings_mark_summary_off">Вимк. — торкніться, щоб вибрати</string>
+    <string name="settings_mark_summary_weekday">День тижня після часу (напр. сб)</string>
+    <string name="settings_mark_summary_period">Частина доби після часу (напр. ранок)</string>
+    <string name="settings_mark_dialog_title">Показувати після часу</string>
+    <string name="settings_mark_mode_weekday">День тижня</string>
+    <string name="settings_mark_mode_period">Частина доби</string>
+    <string name="settings_mark_periods">Ніч,Ранній ранок,Ранок,Полудень,День,Вечір,Пізня ніч</string>
 </resources>

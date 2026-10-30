@@ -133,4 +133,12 @@
     <string name="settings_digit_tab_digit">단색</string>
     <string name="settings_gradient_start">시작 색상</string>
     <string name="settings_gradient_end">끝 색상</string>
+    <string name="settings_mark_title">시간 접미사</string>
+    <string name="settings_mark_summary_off">꺼짐 — 눌러서 선택</string>
+    <string name="settings_mark_summary_weekday">시간 뒤에 요일 표시 (예: 토)</string>
+    <string name="settings_mark_summary_period">시간 뒤에 시간대 표시 (예: 오전)</string>
+    <string name="settings_mark_dialog_title">시간 뒤에 표시할 항목</string>
+    <string name="settings_mark_mode_weekday">요일</string>
+    <string name="settings_mark_mode_period">시간대</string>
+    <string name="settings_mark_periods">심야,이른 아침,오전,정오,오후,저녁,늦은 밤</string>
 </resources>
