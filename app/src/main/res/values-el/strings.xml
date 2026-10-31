@@ -147,4 +147,7 @@
     <string name="settings_mark_periods">Νύχτα,Πρωί νωρίς,Πρωί,Μεσημέρι,Απόγευμα,Βράδυ,Αργά τη νύχτα</string>
     <string name="settings_qs_clock_title">Δευτερόλεπτα στον πίνακα ειδοποιήσεων</string>
     <string name="settings_qs_clock_desc">Όπως το ρολόι της γραμμής κατάστασης</string>
+    <string name="settings_gradient_saved">Αποθηκεύτηκε η διαβάθμιση</string>
+    <string name="settings_gradient_deleted">Διαγράφηκε η προσαρμοσμένη διαβάθμιση</string>
+    <string name="settings_gradient_full">Γέμισαν τα προσαρμοσμένα — παρατεταμένο πάτημα για διαγραφή</string>
 </resources>

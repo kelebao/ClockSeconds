@@ -147,4 +147,7 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_mark_periods">Malam,Dini pagi,Pagi,Siang,Sore,Malam,Larut malam</string>
     <string name="settings_qs_clock_title">Detik di panel notifikasi</string>
     <string name="settings_qs_clock_desc">Sama seperti jam di bilah status</string>
+    <string name="settings_gradient_saved">Gradien disimpan</string>
+    <string name="settings_gradient_deleted">Gradien kustom dihapus</string>
+    <string name="settings_gradient_full">Preset kustom penuh — tekan lama untuk menghapus</string>
 </resources>

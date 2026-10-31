@@ -147,4 +147,7 @@
     <string name="settings_mark_periods">ดึก,เช้าตรู่,เช้า,เที่ยง,บ่าย,เย็น,ดึกมาก</string>
     <string name="settings_qs_clock_title">วินาทีในแผงการแจ้งเตือน</string>
     <string name="settings_qs_clock_desc">เหมือนนาฬิกาแถบสถานะ</string>
+    <string name="settings_gradient_saved">บันทึกการไล่สีแล้ว</string>
+    <string name="settings_gradient_deleted">ลบการไล่สีที่กำหนดเองแล้ว</string>
+    <string name="settings_gradient_full">ชุดสีที่กำหนดเองเต็มแล้ว — กดค้างเพื่อลบ</string>
 </resources>

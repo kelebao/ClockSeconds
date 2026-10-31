@@ -147,4 +147,7 @@
     <string name="settings_mark_periods">심야,이른 아침,오전,정오,오후,저녁,늦은 밤</string>
     <string name="settings_qs_clock_title">알림 패널 초 표시</string>
     <string name="settings_qs_clock_desc">상태 표시줄 시계와 동일하게 동작합니다</string>
+    <string name="settings_gradient_saved">그라데이션 저장됨</string>
+    <string name="settings_gradient_deleted">사용자 지정 그라데이션 삭제됨</string>
+    <string name="settings_gradient_full">사용자 지정 프리셋이 가득 참(길게 눌러 삭제)</string>
 </resources>

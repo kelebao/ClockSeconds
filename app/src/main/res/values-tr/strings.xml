@@ -147,4 +147,7 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_mark_periods">Gece,Sabah erken,Sabah,Öğlen,Öğleden sonra,Akşam,Gece geç</string>
     <string name="settings_qs_clock_title">Bildirim panelinde saniye</string>
     <string name="settings_qs_clock_desc">Durum çubuğu saatiyle aynı</string>
+    <string name="settings_gradient_saved">Geçiş kaydedildi</string>
+    <string name="settings_gradient_deleted">Özel geçiş silindi</string>
+    <string name="settings_gradient_full">Özel ön ayarlar dolu — silmek için basılı tutun</string>
 </resources>

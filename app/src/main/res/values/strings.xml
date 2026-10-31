@@ -147,4 +147,7 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_mark_periods">Night,Early morning,Morning,Noon,Afternoon,Evening,Late night</string>
     <string name="settings_qs_clock_title">Shade clock seconds</string>
     <string name="settings_qs_clock_desc">Follows the status bar clock exactly</string>
+    <string name="settings_gradient_saved">Gradient saved</string>
+    <string name="settings_gradient_deleted">Custom gradient deleted</string>
+    <string name="settings_gradient_full">Custom presets full — long-press to delete</string>
 </resources>

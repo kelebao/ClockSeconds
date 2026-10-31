@@ -147,4 +147,7 @@
     <string name="settings_mark_periods">凌晨,早上,上午,中午,下午,晚上,深夜</string>
     <string name="settings_qs_clock_title">通知欄時間顯秒</string>
     <string name="settings_qs_clock_desc">功能跟隨狀態欄時間狀態一樣</string>
+    <string name="settings_gradient_saved">已儲存目前漸層</string>
+    <string name="settings_gradient_deleted">已刪除自訂漸層</string>
+    <string name="settings_gradient_full">自訂預設已滿，長按膠囊可刪除</string>
 </resources>

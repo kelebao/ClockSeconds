@@ -147,4 +147,7 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_mark_periods">Nachts,Früh morgens,Vormittags,Mittags,Nachmittags,Abends,Spät nachts</string>
     <string name="settings_qs_clock_title">Sekunden im Benachrichtigungsfeld</string>
     <string name="settings_qs_clock_desc">Wie die Uhr in der Statusleiste</string>
+    <string name="settings_gradient_saved">Verlauf gespeichert</string>
+    <string name="settings_gradient_deleted">Eigener Verlauf gelöscht</string>
+    <string name="settings_gradient_full">Eigene Presets voll – zum Löschen lange drücken</string>
 </resources>

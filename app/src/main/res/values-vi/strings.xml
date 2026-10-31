@@ -147,4 +147,7 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_mark_periods">Khuya,Sáng sớm,Buổi sáng,Buổi trưa,Buổi chiều,Buổi tối,Đêm muộn</string>
     <string name="settings_qs_clock_title">Giây ở bảng thông báo</string>
     <string name="settings_qs_clock_desc">Giống đồng hồ thanh trạng thái</string>
+    <string name="settings_gradient_saved">Đã lưu chuyển màu</string>
+    <string name="settings_gradient_deleted">Đã xóa chuyển màu tùy chỉnh</string>
+    <string name="settings_gradient_full">Mẫu tùy chỉnh đã đầy — nhấn giữ để xóa</string>
 </resources>

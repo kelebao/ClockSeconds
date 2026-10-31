@@ -147,4 +147,7 @@
     <string name="settings_mark_periods">ღამე,დილის ადრე,დილა,შუადღე,ნაშუადღევი,საღამო,გვიან ღამე</string>
     <string name="settings_qs_clock_title">წამები შეტყობინებების პანელში</string>
     <string name="settings_qs_clock_desc">როგორც სტატუსის ზოლის საათი</string>
+    <string name="settings_gradient_saved">გრადიენტი შენახულია</string>
+    <string name="settings_gradient_deleted">მორგებული გრადიენტი წაიშალა</string>
+    <string name="settings_gradient_full">მორგებული სავსეა — წასაშლელად დააჭირეთ ხანგრძლივად</string>
 </resources>

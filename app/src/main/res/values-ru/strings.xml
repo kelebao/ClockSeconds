@@ -147,4 +147,7 @@
     <string name="settings_mark_periods">Ночь,Раннее утро,Утро,Полдень,День,Вечер,Поздняя ночь</string>
     <string name="settings_qs_clock_title">Секунды в панели уведомлений</string>
     <string name="settings_qs_clock_desc">Как часы в строке состояния</string>
+    <string name="settings_gradient_saved">Градиент сохранён</string>
+    <string name="settings_gradient_deleted">Свой градиент удалён</string>
+    <string name="settings_gradient_full">Свои пресеты заполнены — долгое нажатие удаляет</string>
 </resources>

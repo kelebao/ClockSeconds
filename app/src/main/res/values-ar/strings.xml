@@ -147,4 +147,7 @@
     <string name="settings_mark_periods">ليل,فجر,صباح,ظهر,بعد الظهر,مساء,آخر الليل</string>
     <string name="settings_qs_clock_title">ثواني لوحة الإشعارات</string>
     <string name="settings_qs_clock_desc">مثل ساعة شريط الحالة</string>
+    <string name="settings_gradient_saved">تم حفظ التدرج</string>
+    <string name="settings_gradient_deleted">تم حذف التدرج المخصص</string>
+    <string name="settings_gradient_full">الإعدادات المخصصة ممتلئة — اضغط مطولًا للحذف</string>
 </resources>

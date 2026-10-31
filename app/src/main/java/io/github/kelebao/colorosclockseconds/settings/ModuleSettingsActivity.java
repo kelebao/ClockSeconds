@@ -1440,37 +1440,13 @@ public final class ModuleSettingsActivity extends Activity {
 
         // 渐变预设：每个胶囊就是一套「起点 → 终点」，点一下整套换掉（用户 m19814 的形态：
         // 左右渐变的长条、不写色值）。逐位颜色页的实心预设点在渐变页隐藏，两套预设不打架。
+        // 渐变预设：每个胶囊就是一套「起点 → 终点」，点一下整套换掉。vc282：内置 6 套之后跟
+        // 自定义胶囊（长按删除）与「+」胶囊（把当前起点/终点存进来），3 列动态排布。
         mGradPresetWrap = new LinearLayout(this);
         mGradPresetWrap.setOrientation(LinearLayout.VERTICAL);
         mGradPresetWrap.setPadding(0, dp(10), 0, 0);
-        for (int r = 0; r < 2; r++) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            if (r > 0) {
-                LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                rlp.topMargin = dp(8);
-                row.setLayoutParams(rlp);
-            }
-            for (int c = 0; c < 3; c++) {
-                final int idx = r * 3 + c;
-                if (idx >= GRADIENT_PRESETS.length) {
-                    break;
-                }
-                View pill = new View(this);
-                LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(0, dp(36), 1f);
-                plp.setMargins(dp(4), 0, dp(4), 0);
-                pill.setLayoutParams(plp);
-                pill.setClickable(true);
-                pill.setOnClickListener(v -> applyGradientPair(
-                        GRADIENT_PRESETS[idx][0], GRADIENT_PRESETS[idx][1]));
-                row.addView(pill);
-                mGradPresetPills.add(pill);
-            }
-            mGradPresetWrap.addView(row);
-        }
         box.addView(mGradPresetWrap);
-        refreshGradientPresets();
+        rebuildGradientPresetRows();
 
         // 渐变方向：水平 / 竖直 / 对角（vc281）。三个文字胶囊，选中的用 accent 底。
         LinearLayout dirRow = new LinearLayout(this);
@@ -1628,21 +1604,172 @@ public final class ModuleSettingsActivity extends Activity {
             {0xFFF2B635, 0xFF4B5D16},
     };
 
+    /** 自定义渐变预设存在应用私有 prefs（纯设置页 UI 用，不动 Secure）。 */
+    private android.content.SharedPreferences gradPresetPrefs() {
+        return getSharedPreferences("gradient_presets", MODE_PRIVATE);
+    }
+
+    private java.util.List<int[]> loadCustomGradPresets() {
+        java.util.List<int[]> out = new java.util.ArrayList<>();
+        try {
+            org.json.JSONArray arr = new org.json.JSONArray(
+                    gradPresetPrefs().getString("pairs", "[]"));
+            for (int i = 0; i < arr.length(); i++) {
+                org.json.JSONArray pair = arr.getJSONArray(i);
+                out.add(new int[]{pair.getInt(0), pair.getInt(1)});
+            }
+        } catch (Throwable t) {
+            // 存坏了就当没有，用户重存即可
+        }
+        return out;
+    }
+
+    private void storeCustomGradPresets(java.util.List<int[]> list) {
+        org.json.JSONArray arr = new org.json.JSONArray();
+        for (int[] pair : list) {
+            org.json.JSONArray pairJson = new org.json.JSONArray();
+            pairJson.put(pair[0]);
+            pairJson.put(pair[1]);
+            arr.put(pairJson);
+        }
+        gradPresetPrefs().edit().putString("pairs", arr.toString()).apply();
+    }
+
+    /** 自定义预设上限（超过时「+」提示先删）。 */
+    private static final int MAX_CUSTOM_GRAD_PRESETS = 9;
+
+    /** 重建预设胶囊行：内置 6 套 + 自定义（长按删）+「+」（存当前渐变），3 列排布。 */
+    private void rebuildGradientPresetRows() {
+        if (mGradPresetWrap == null) {
+            return;
+        }
+        mGradPresetWrap.removeAllViews();
+        mGradPresetPills.clear();
+        java.util.List<int[]> all = new java.util.ArrayList<>();
+        for (int[] p : GRADIENT_PRESETS) {
+            all.add(p);
+        }
+        all.addAll(loadCustomGradPresets());
+        int rows = (all.size() + 1 + 2) / 3;   // +1 是「+」胶囊
+        for (int r = 0; r < rows; r++) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            if (r > 0) {
+                LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                rlp.topMargin = dp(8);
+                row.setLayoutParams(rlp);
+            }
+            for (int c = 0; c < 3; c++) {
+                final int idx = r * 3 + c;
+                LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(0, dp(36), 1f);
+                plp.setMargins(dp(4), 0, dp(4), 0);
+                final View pill;
+                final boolean track;
+                if (idx < all.size()) {
+                    final int[] pair = all.get(idx);
+                    View p = new View(this);
+                    p.setLayoutParams(plp);
+                    p.setClickable(true);
+                    p.setTag(pair);
+                    p.setOnClickListener(v -> applyGradientPair(pair[0], pair[1]));
+                    if (idx >= GRADIENT_PRESETS.length) {
+                        p.setOnLongClickListener(v -> {
+                            deleteCustomGradPreset(pair);
+                            return true;
+                        });
+                    }
+                    pill = p;
+                    track = true;
+                } else if (idx == all.size()) {
+                    // 「+」只出现在第一空位：把当前起点/终点存成自定义预设
+                    TextView plus = new TextView(this);
+                    plus.setLayoutParams(plp);
+                    plus.setText("+");
+                    plus.setTextSize(16f);
+                    plus.setGravity(Gravity.CENTER);
+                    GradientDrawable pbg = new GradientDrawable();
+                    pbg.setCornerRadius(dp(999));
+                    pbg.setStroke(dp(1), 0x66888888);
+                    plus.setBackground(pbg);
+                    plus.setTextColor(text2());
+                    plus.setOnClickListener(v -> saveCustomGradPreset());
+                    pill = plus;
+                    track = true;
+                } else {
+                    // 其余空位放透明占位，保住三列等宽
+                    View spacer = new View(this);
+                    spacer.setLayoutParams(plp);
+                    spacer.setVisibility(View.INVISIBLE);
+                    pill = spacer;
+                    track = false;
+                }
+                row.addView(pill);
+                if (track) {
+                    mGradPresetPills.add(pill);
+                }
+            }
+            mGradPresetWrap.addView(row);
+        }
+        refreshGradientPresets();
+    }
+
+    /** 把当前起点/终点色存成自定义预设（同一套不重复存）。 */
+    private void saveCustomGradPreset() {
+        java.util.List<int[]> list = loadCustomGradPresets();
+        int s = gradientTargetColor(0);
+        int e = gradientTargetColor(1);
+        for (int[] pair : list) {
+            if (pair[0] == s && pair[1] == e) {
+                Toast.makeText(this, R.string.settings_gradient_saved, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        if (list.size() >= MAX_CUSTOM_GRAD_PRESETS) {
+            Toast.makeText(this, R.string.settings_gradient_full, Toast.LENGTH_LONG).show();
+            return;
+        }
+        list.add(new int[]{s, e});
+        storeCustomGradPresets(list);
+        Toast.makeText(this, R.string.settings_gradient_saved, Toast.LENGTH_SHORT).show();
+        rebuildGradientPresetRows();
+    }
+
+    /** 长按自定义胶囊删除（内置 6 套不可删）。 */
+    private void deleteCustomGradPreset(int[] pair) {
+        java.util.List<int[]> list = loadCustomGradPresets();
+        for (int i = list.size() - 1; i >= 0; i--) {
+            if (list.get(i)[0] == pair[0] && list.get(i)[1] == pair[1]) {
+                list.remove(i);
+            }
+        }
+        storeCustomGradPresets(list);
+        Toast.makeText(this, R.string.settings_gradient_deleted, Toast.LENGTH_SHORT).show();
+        rebuildGradientPresetRows();
+    }
+
     /** 重画渐变预设胶囊：填充即该套渐变的左右渐变，当前生效的那套加一圈描边。 */
     private void refreshGradientPresets() {
         if (mGradPresetPills == null || mGradPresetPills.isEmpty()) {
             return;
         }
         final boolean on = mCfgGradientOn;
-        for (int i = 0; i < mGradPresetPills.size() && i < GRADIENT_PRESETS.length; i++) {
-            View pill = mGradPresetPills.get(i);
+        for (View pill : mGradPresetPills) {
+            Object tag = pill.getTag();
+            if (!(tag instanceof int[])) {
+                // 「+」胶囊：只跟随开关置灰
+                pill.setAlpha(on ? 1f : 0.45f);
+                pill.setClickable(on);
+                continue;
+            }
+            int[] pair = (int[]) tag;
             GradientDrawable bg = new GradientDrawable(
                     GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{GRADIENT_PRESETS[i][0], GRADIENT_PRESETS[i][1]});
+                    new int[]{pair[0], pair[1]});
             bg.setCornerRadius(dp(999));
             final boolean match = on
-                    && gradientTargetColor(0) == GRADIENT_PRESETS[i][0]
-                    && gradientTargetColor(1) == GRADIENT_PRESETS[i][1];
+                    && gradientTargetColor(0) == pair[0]
+                    && gradientTargetColor(1) == pair[1];
             if (match) {
                 bg.setStroke(dp(3), accent());
             }
