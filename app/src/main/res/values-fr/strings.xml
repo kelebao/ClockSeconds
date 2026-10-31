@@ -130,6 +130,10 @@ Code source de ce module : MIT © kelebao</string>
     <string name="swatch_brown">Marron</string>
     <string name="settings_digit_sum_v2">Touchez l\'heure de l\'aperçu pour modifier les couleurs</string>
     <string name="settings_gradient_title">Dégradé</string>
+    <string name="settings_gradient_dir">Direction du dégradé</string>
+    <string name="settings_gradient_dir_h">Gauche à droite</string>
+    <string name="settings_gradient_dir_v">Haut en bas</string>
+    <string name="settings_gradient_dir_d">Diagonale</string>
     <string name="settings_digit_tab_digit">Uni</string>
     <string name="settings_gradient_start">Couleur de départ</string>
     <string name="settings_gradient_end">Couleur de fin</string>

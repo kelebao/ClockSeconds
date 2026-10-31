@@ -130,6 +130,10 @@
     <string name="swatch_brown">Καφέ</string>
     <string name="settings_digit_sum_v2">Πατήστε την ώρα στην προεπισκόπηση για αλλαγή χρωμάτων</string>
     <string name="settings_gradient_title">Διαβάθμιση</string>
+    <string name="settings_gradient_dir">Κατεύθυνση διαβάθμισης</string>
+    <string name="settings_gradient_dir_h">Αριστερά προς δεξιά</string>
+    <string name="settings_gradient_dir_v">Πάνω προς κάτω</string>
+    <string name="settings_gradient_dir_d">Διαγώνια</string>
     <string name="settings_digit_tab_digit">Μονόχρωμο</string>
     <string name="settings_gradient_start">Χρώμα έναρξης</string>
     <string name="settings_gradient_end">Χρώμα τέλους</string>

@@ -130,6 +130,10 @@ Source code of this module: MIT © kelebao</string>
     <string name="swatch_brown">Brown</string>
     <string name="settings_digit_sum_v2">Tap the preview time to edit colors</string>
     <string name="settings_gradient_title">Gradient</string>
+    <string name="settings_gradient_dir">Gradient direction</string>
+    <string name="settings_gradient_dir_h">Left to right</string>
+    <string name="settings_gradient_dir_v">Top to bottom</string>
+    <string name="settings_gradient_dir_d">Diagonal</string>
     <string name="settings_digit_tab_digit">Single</string>
     <string name="settings_gradient_start">Start color</string>
     <string name="settings_gradient_end">End color</string>

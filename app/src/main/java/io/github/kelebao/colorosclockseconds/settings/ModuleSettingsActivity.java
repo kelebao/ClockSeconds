@@ -184,6 +184,8 @@ public final class ModuleSettingsActivity extends Activity {
     private boolean mCfgSeconds;
     private boolean mCfgHourColorOn;
     private boolean mCfgGradientOn;
+    /** 渐变方向（0 水平 / 1 竖直 / 2 对角，vc281）。 */
+    private int mCfgGradientDir;
     /** 时间后缀（周几 / 时段）：总开关 + 模式（0 周几 / 1 时段）+ 7 档文案缓存。 */
     private boolean mCfgMarkOn;
     private int mCfgMarkMode = ClockSecondsConfig.MARK_MODE_PERIOD;
@@ -253,6 +255,8 @@ public final class ModuleSettingsActivity extends Activity {
     private View mGradEndDot;
     /** 渐变预设胶囊（每套 = 一对端点色，点一下整套换掉）。 */
     private LinearLayout mGradPresetWrap;
+    /** 渐变方向三个胶囊（水平 / 竖直 / 对角）。 */
+    private final java.util.List<TextView> mGradDirPills = new java.util.ArrayList<>();
     private final java.util.List<View> mGradPresetPills = new java.util.ArrayList<>();
     private boolean mObserverOk = false;
     private final android.database.ContentObserver mCfgObserver =
@@ -524,6 +528,7 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+        mCfgGradientDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
         mCfgMarkOn = ClockSecondsConfig.isMarkEnabled(getContentResolver());
         mCfgMarkMode = ClockSecondsConfig.getMarkMode(getContentResolver());
         mCfgMarkPeriods = ClockSecondsConfig.getMarkPeriodsCsv(getContentResolver());
@@ -1177,6 +1182,7 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+        mCfgGradientDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
 
         LinearLayout card = card();
 
@@ -1466,7 +1472,89 @@ public final class ModuleSettingsActivity extends Activity {
         box.addView(mGradPresetWrap);
         refreshGradientPresets();
 
+        // 渐变方向：水平 / 竖直 / 对角（vc281）。三个文字胶囊，选中的用 accent 底。
+        LinearLayout dirRow = new LinearLayout(this);
+        dirRow.setOrientation(LinearLayout.HORIZONTAL);
+        dirRow.setGravity(Gravity.CENTER_VERTICAL);
+        dirRow.setPadding(0, dp(10), 0, 0);
+        TextView dirLabel = new TextView(this);
+        dirLabel.setText(R.string.settings_gradient_dir);
+        dirLabel.setTextSize(12f);
+        dirLabel.setTextColor(text2());
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dlp.rightMargin = dp(10);
+        dirLabel.setLayoutParams(dlp);
+        dirRow.addView(dirLabel);
+        int[] dirs = {ClockSecondsConfig.GRADIENT_DIRECTION_HORIZONTAL,
+                ClockSecondsConfig.GRADIENT_DIRECTION_VERTICAL,
+                ClockSecondsConfig.GRADIENT_DIRECTION_DIAGONAL};
+        int[] labels = {R.string.settings_gradient_dir_h, R.string.settings_gradient_dir_v,
+                R.string.settings_gradient_dir_d};
+        mGradDirPills.clear();
+        for (int i = 0; i < dirs.length; i++) {
+            final int dir = dirs[i];
+            TextView pill = new TextView(this);
+            pill.setText(labels[i]);
+            pill.setTextSize(12f);
+            pill.setGravity(Gravity.CENTER);
+            pill.setPadding(dp(12), dp(5), dp(12), dp(5));
+            LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            plp.rightMargin = dp(8);
+            pill.setLayoutParams(plp);
+            pill.setClickable(true);
+            pill.setOnClickListener(v -> applyGradientDirection(dir));
+            dirRow.addView(pill);
+            mGradDirPills.add(pill);
+        }
+        box.addView(dirRow);
+        refreshGradientDirPills();
+
         syncGradientEnabledState();
+    }
+
+    /** 点方向胶囊：写配置 + 重读 + 预览跟随。 */
+    private void applyGradientDirection(int dir) {
+        if (mCfgGradientDir == dir) {
+            return;
+        }
+        mCfgGradientDir = dir;
+        refreshGradientDirPills();
+        applyConfig(ClockSecondsConfig.GRADIENT_DIRECTION_KEY, dir,
+                new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_DIRECTION)
+                        .putExtra(ClockSecondsConfig.EXTRA_DIRECTION, dir),
+                ok -> {
+                    if (!ok) {
+                        toastWriteFailed();
+                    }
+                });
+        updatePreview();
+    }
+
+    /** 重画方向胶囊：选中的 accent 底白字，未选中透明底次级字；渐变关时整排变淡不可点。 */
+    private void refreshGradientDirPills() {
+        if (mGradDirPills.isEmpty()) {
+            return;
+        }
+        final boolean on = mCfgGradientOn;
+        for (int i = 0; i < mGradDirPills.size(); i++) {
+            TextView pill = mGradDirPills.get(i);
+            boolean sel = on && mCfgGradientDir == i;
+            GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(dp(999));
+            if (sel) {
+                bg.setColor(accent());
+                pill.setTextColor(0xFFFFFFFF);
+            } else {
+                bg.setColor(0x00000000);
+                bg.setStroke(dp(1), text2());
+                pill.setTextColor(text2());
+            }
+            pill.setBackground(bg);
+            pill.setAlpha(on ? 1f : 0.45f);
+            pill.setClickable(on && mCfgGradientDir != i);
+        }
     }
 
     /** 渐变端点色胶囊：色点 + 文字，点一下把取色目标切到该端点。 */
@@ -4651,9 +4739,22 @@ public final class ModuleSettingsActivity extends Activity {
         private float mGradShift;
         private Shader mGradShader;
         private float mGradShaderBand = -1f;
+        /** 渐变方向：0 水平 / 1 竖直 / 2 对角。 */
+        private int mGradDir;
+        private int mGradShaderDir = -1;
 
         GradientTimeView(android.content.Context context) {
             super(context);
+        }
+
+        /** 设置渐变方向（0 水平 / 1 竖直 / 2 对角），变化时重建 shader。 */
+        void setGradientDirection(int dir) {
+            if (mGradDir == dir) {
+                return;
+            }
+            mGradDir = dir;
+            mGradShader = null;
+            invalidate();
         }
 
         /** 打开渐变绘制；c0/c1 已按背景适配过。 */
@@ -4703,13 +4804,6 @@ public final class ModuleSettingsActivity extends Activity {
             if (band <= 0f) {
                 return;
             }
-            if (mGradShader == null || Math.abs(mGradShaderBand - band) > 0.01f) {
-                final float sx0 = (getWidth() - band) / 2f + mGradShift;
-                mGradShader = new LinearGradient(sx0, 0f, sx0 + band, 0f,
-                        mGradC0, mGradC1, Shader.TileMode.CLAMP);
-                mGradShaderBand = band;
-            }
-            final float x0 = (getWidth() - band) / 2f + mGradShift;
             final Paint.FontMetricsInt fm = paint.getFontMetricsInt();
             float baseline = (getHeight() - (fm.descent - fm.ascent)) / 2f - fm.ascent;
             if (getLayout() != null) {
@@ -4718,6 +4812,25 @@ public final class ModuleSettingsActivity extends Activity {
                     baseline = lb;
                 }
             }
+            if (mGradShader == null || Math.abs(mGradShaderBand - band) > 0.01f
+                    || mGradShaderDir != mGradDir) {
+                final float sx0 = (getWidth() - band) / 2f + mGradShift;
+                // 竖直 / 对角：纵向跨整个字形盒（baseline+ascent .. baseline+descent）。
+                if (mGradDir == 1) {
+                    mGradShader = new LinearGradient(sx0, baseline + fm.ascent,
+                            sx0, baseline + fm.descent, mGradC0, mGradC1, Shader.TileMode.CLAMP);
+                } else if (mGradDir == 2) {
+                    mGradShader = new LinearGradient(sx0, baseline + fm.ascent,
+                            sx0 + band, baseline + fm.descent,
+                            mGradC0, mGradC1, Shader.TileMode.CLAMP);
+                } else {
+                    mGradShader = new LinearGradient(sx0, 0f, sx0 + band, 0f,
+                            mGradC0, mGradC1, Shader.TileMode.CLAMP);
+                }
+                mGradShaderBand = band;
+                mGradShaderDir = mGradDir;
+            }
+            final float x0 = (getWidth() - band) / 2f + mGradShift;
             final int saveColor = paint.getColor();
             final Shader saveShader = paint.getShader();
             // 画布原点不是视图原点：硬件画布的 clip 会带上视图在父容器里的绝对位置
@@ -4763,6 +4876,7 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+        mCfgGradientDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
         mNowDate.setTime(System.currentTimeMillis());
         final String text = (showSec ? mFmtSec : mFmtNoSec).format(mNowDate);
         // 时间后缀只在状态栏显示（用户 m26480：悬浮时间与预览卡都不要后缀）。
@@ -4791,6 +4905,8 @@ public final class ModuleSettingsActivity extends Activity {
                 }
             }
             // 自己画（见 GradientTimeView 注释）：色带起点 = 文字左边缘，不再依赖 shader 原点。
+
+            ((GradientTimeView) previewView).setGradientDirection(mCfgGradientDir);
             ((GradientTimeView) previewView).setGradientShift(gradXOffUse);
             ((GradientTimeView) previewView).setGradientColors(
                     adaptPreviewColor(gradientTargetColor(0)),

@@ -37,6 +37,8 @@ public class GradientTextSpan extends CharacterStyle {
     private final int mColorEnd;
     /** 文字左边缘在绘制坐标里的 x 偏移（居中的 TextView 不为 0）。 */
     private final float mXOffset;
+    /** 渐变方向：0 水平 / 1 竖直 / 2 对角（ClockSecondsConfig.GRADIENT_DIRECTION_*）。 */
+    private final int mDirection;
 
     /** 重入护栏：万一测量/绘制链路再回调进来，直接复用上一次的 shader，绝不递归。 */
     private static final ThreadLocal<Boolean> IN_DRAW = new ThreadLocal<>();
@@ -52,7 +54,7 @@ public class GradientTextSpan extends CharacterStyle {
     private int mBandTextLength = -1;
 
     public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd) {
-        this(view, text, colorStart, colorEnd, 0f);
+        this(view, text, colorStart, colorEnd, 0f, 0);
     }
 
     /**
@@ -61,11 +63,18 @@ public class GradientTextSpan extends CharacterStyle {
      */
     public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
                             float xOffset) {
+        this(view, text, colorStart, colorEnd, xOffset, 0);
+    }
+
+    /** @param direction 0 水平 / 1 竖直 / 2 对角。 */
+    public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
+                            float xOffset, int direction) {
         mView = new WeakReference<>(view);
         mText = text;
         mColorStart = colorStart;
         mColorEnd = colorEnd;
         mXOffset = xOffset;
+        mDirection = direction;
     }
 
     @Override
@@ -94,8 +103,22 @@ public class GradientTextSpan extends CharacterStyle {
                     || mShaderStart != mColorStart || mShaderEnd != mColorEnd) {
                 // 色带必须从「文字左边缘」起算，否则居中的 TextView 只画到色带的中后段
                 // （MIRROR 会把它翻成反向渐变，真机表现就是预览卡的颜色顺序和状态栏相反）。
-                mShader = new LinearGradient(mXOffset, 0f, mXOffset + mBand, 0f,
-                        new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                // 竖直 / 对角方向用字形盒（ascent..descent，相对基线的负/正值）做纵向跨度。
+                // 竖直 / 对角：纵向跨整个行盒。注意 shader 坐标原点是行顶（不是基线），
+                // 所以跨度是 0..行高（descent - ascent），而不是 tp.ascent()..tp.descent()——
+                // 后者把色带整体悬到文字上方，被 MIRROR 翻成反渐变（真机实测顶紫底青）。
+                if (mDirection == 1) {
+                    mShader = new LinearGradient(mXOffset, 0f, mXOffset,
+                            tp.descent() - tp.ascent(),
+                            new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                } else if (mDirection == 2) {
+                    mShader = new LinearGradient(mXOffset, 0f, mXOffset + mBand,
+                            tp.descent() - tp.ascent(),
+                            new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                } else {
+                    mShader = new LinearGradient(mXOffset, 0f, mXOffset + mBand, 0f,
+                            new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                }
                 mShaderBand = mBand;
                 mShaderStart = mColorStart;
                 mShaderEnd = mColorEnd;

@@ -130,6 +130,10 @@
     <string name="swatch_brown">น้ำตาล</string>
     <string name="settings_digit_sum_v2">แตะเวลในตัวอย่างเพื่อแก้ไขสี</string>
     <string name="settings_gradient_title">ไล่เฉดสี</string>
+    <string name="settings_gradient_dir">ทิศทางการไล่สี</string>
+    <string name="settings_gradient_dir_h">ซ้ายไปขวา</string>
+    <string name="settings_gradient_dir_v">บนลงล่าง</string>
+    <string name="settings_gradient_dir_d">เฉียง</string>
     <string name="settings_digit_tab_digit">สีเดียว</string>
     <string name="settings_gradient_start">สีเริ่มต้น</string>
     <string name="settings_gradient_end">สีสิ้นสุด</string>

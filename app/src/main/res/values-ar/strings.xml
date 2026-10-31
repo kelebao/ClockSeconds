@@ -130,6 +130,10 @@
     <string name="swatch_brown">بني</string>
     <string name="settings_digit_sum_v2">اضغط على الوقت في المعاينة لتعديل الألوان</string>
     <string name="settings_gradient_title">تدرّج</string>
+    <string name="settings_gradient_dir">اتجاه التدرج</string>
+    <string name="settings_gradient_dir_h">من اليسار إلى اليمين</string>
+    <string name="settings_gradient_dir_v">من الأعلى إلى الأسفل</string>
+    <string name="settings_gradient_dir_d">قطري</string>
     <string name="settings_digit_tab_digit">لون واحد</string>
     <string name="settings_gradient_start">لون البداية</string>
     <string name="settings_gradient_end">لون النهاية</string>

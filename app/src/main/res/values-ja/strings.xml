@@ -130,6 +130,10 @@
     <string name="swatch_brown">茶</string>
     <string name="settings_digit_sum_v2">プレビューの時刻をタップして色を編集</string>
     <string name="settings_gradient_title">グラデーション</string>
+    <string name="settings_gradient_dir">グラデーション方向</string>
+    <string name="settings_gradient_dir_h">左から右</string>
+    <string name="settings_gradient_dir_v">上から下</string>
+    <string name="settings_gradient_dir_d">斜め</string>
     <string name="settings_digit_tab_digit">単色</string>
     <string name="settings_gradient_start">開始色</string>
     <string name="settings_gradient_end">終了色</string>

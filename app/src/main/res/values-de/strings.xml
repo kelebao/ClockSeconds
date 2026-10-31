@@ -103,6 +103,10 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="swatch_brown">Braun</string>
     <string name="settings_digit_sum_v2">Tippe auf die Zeit in der Vorschau, um Farben zu bearbeiten</string>
     <string name="settings_gradient_title">Verlauf</string>
+    <string name="settings_gradient_dir">Verlaufsrichtung</string>
+    <string name="settings_gradient_dir_h">Links nach rechts</string>
+    <string name="settings_gradient_dir_v">Oben nach unten</string>
+    <string name="settings_gradient_dir_d">Diagonal</string>
     <string name="settings_digit_tab_digit">Einfarbig</string>
     <string name="settings_gradient_start">Startfarbe</string>
     <string name="settings_gradient_end">Endfarbe</string>

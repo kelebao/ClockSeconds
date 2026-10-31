@@ -130,6 +130,10 @@
     <string name="swatch_brown">갈색</string>
     <string name="settings_digit_sum_v2">미리보기 시간을 탭하여 색상 편집</string>
     <string name="settings_gradient_title">그라데이션</string>
+    <string name="settings_gradient_dir">그라데이션 방향</string>
+    <string name="settings_gradient_dir_h">왼쪽→오른쪽</string>
+    <string name="settings_gradient_dir_v">위→아래</string>
+    <string name="settings_gradient_dir_d">대각선</string>
     <string name="settings_digit_tab_digit">단색</string>
     <string name="settings_gradient_start">시작 색상</string>
     <string name="settings_gradient_end">끝 색상</string>

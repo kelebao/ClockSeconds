@@ -130,6 +130,10 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="swatch_brown">Brązowy</string>
     <string name="settings_digit_sum_v2">Dotknij czasu w podglądzie, aby edytować kolory</string>
     <string name="settings_gradient_title">Gradient</string>
+    <string name="settings_gradient_dir">Kierunek gradientu</string>
+    <string name="settings_gradient_dir_h">Z lewej na prawą</string>
+    <string name="settings_gradient_dir_v">Z góry na dół</string>
+    <string name="settings_gradient_dir_d">Po przekątnej</string>
     <string name="settings_digit_tab_digit">Jednokolorowy</string>
     <string name="settings_gradient_start">Kolor początkowy</string>
     <string name="settings_gradient_end">Kolor końcowy</string>

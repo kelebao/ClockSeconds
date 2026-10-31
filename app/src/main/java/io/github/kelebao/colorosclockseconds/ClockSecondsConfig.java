@@ -186,6 +186,13 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
     public static final String ACTION_SET_GRADIENT_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_COLOR";
 
+    /** 设置页 → SystemUI 写入渐变方向（{@link #EXTRA_DIRECTION} 0/1/2）。 */
+    public static final String ACTION_SET_GRADIENT_DIRECTION =
+            "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_DIRECTION";
+
+    /** int extra：渐变方向（0 水平 / 1 竖直 / 2 对角）。 */
+    public static final String EXTRA_DIRECTION = "direction";
+
     /** 设置页 → SystemUI 写入「通知栏（下拉面板）时间」开关（{@link #EXTRA_ENABLED}）。 */
     public static final String ACTION_SET_QS_CLOCK =
             "io.github.kelebao.colorosclockseconds.action.SET_QS_CLOCK";
@@ -382,6 +389,48 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
 
     /** 渐变端点色「未自定义」：取首位 / 末位数字的颜色。 */
     public static final int GRADIENT_COLOR_AUTO = -1;
+
+    /** 渐变方向：水平（左 → 右，默认）。 */
+    public static final int GRADIENT_DIRECTION_HORIZONTAL = 0;
+    /** 渐变方向：竖直（上 → 下）。 */
+    public static final int GRADIENT_DIRECTION_VERTICAL = 1;
+    /** 渐变方向：对角（左上 → 右下）。 */
+    public static final int GRADIENT_DIRECTION_DIAGONAL = 2;
+
+    /** 存「渐变方向」的 Secure 键（int 0/1/2，默认水平）。 */
+    public static final String GRADIENT_DIRECTION_KEY =
+            "coloros_clock_seconds_gradient_direction";
+
+    /** 读取渐变方向（越界/异常回落水平）。 */
+    public static int getGradientDirection(ContentResolver resolver) {
+        if (resolver == null) {
+            return GRADIENT_DIRECTION_HORIZONTAL;
+        }
+        try {
+            int d = Settings.Secure.getInt(resolver, GRADIENT_DIRECTION_KEY,
+                    GRADIENT_DIRECTION_HORIZONTAL);
+            if (d < GRADIENT_DIRECTION_HORIZONTAL || d > GRADIENT_DIRECTION_DIAGONAL) {
+                d = GRADIENT_DIRECTION_HORIZONTAL;
+            }
+            return d;
+        } catch (Throwable t) {
+            return GRADIENT_DIRECTION_HORIZONTAL;
+        }
+    }
+
+    /** 写入渐变方向（越界钳回水平）。 */
+    public static void setGradientDirection(ContentResolver resolver, int direction) {
+        if (resolver == null) {
+            return;
+        }
+        try {
+            int d = direction < GRADIENT_DIRECTION_HORIZONTAL
+                    || direction > GRADIENT_DIRECTION_DIAGONAL
+                    ? GRADIENT_DIRECTION_HORIZONTAL : direction;
+            Settings.Secure.putInt(resolver, GRADIENT_DIRECTION_KEY, d);
+        } catch (Throwable ignored) {
+        }
+    }
 
     /** 读取渐变起点色（{@link #GRADIENT_COLOR_AUTO} 表示跟随首位数字）。 */
     public static int getGradientStartColor(ContentResolver resolver) {

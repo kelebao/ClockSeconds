@@ -130,6 +130,10 @@
     <string name="swatch_brown">قهوه‌ای</string>
     <string name="settings_digit_sum_v2">برای ویرایش رنگ‌ها روی زمان پیش‌نمایش ضربه بزنید</string>
     <string name="settings_gradient_title">گرادیان</string>
+    <string name="settings_gradient_dir">جهت گرادیان</string>
+    <string name="settings_gradient_dir_h">از چپ به راست</string>
+    <string name="settings_gradient_dir_v">از بالا به پایین</string>
+    <string name="settings_gradient_dir_d">مورب</string>
     <string name="settings_digit_tab_digit">تک‌رنگ</string>
     <string name="settings_gradient_start">رنگ شروع</string>
     <string name="settings_gradient_end">رنگ پایان</string>

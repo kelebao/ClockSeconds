@@ -130,6 +130,10 @@
     <string name="swatch_brown">ყავისფერი</string>
     <string name="settings_digit_sum_v2">შეეხეთ დროს წინასწარ ხილვაში ფერების შესაცვლელად</string>
     <string name="settings_gradient_title">გრადიენტი</string>
+    <string name="settings_gradient_dir">გრადიენტის მიმართულება</string>
+    <string name="settings_gradient_dir_h">მარცხნიდან მარჯვნივ</string>
+    <string name="settings_gradient_dir_v">ზემოდან ქვემოთ</string>
+    <string name="settings_gradient_dir_d">დიაგონალური</string>
     <string name="settings_digit_tab_digit">ერთი ფერი</string>
     <string name="settings_gradient_start">საწყისი ფერი</string>
     <string name="settings_gradient_end">დასასრული ფერი</string>

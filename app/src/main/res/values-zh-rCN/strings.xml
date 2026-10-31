@@ -104,6 +104,10 @@
     <string name="settings_digit_summary">时 %1$s · 分 %2$s · 秒 %3$s</string>
     <string name="settings_cancel">取消</string>
     <string name="settings_gradient_title">渐变</string>
+    <string name="settings_gradient_dir">渐变方向</string>
+    <string name="settings_gradient_dir_h">左→右</string>
+    <string name="settings_gradient_dir_v">上→下</string>
+    <string name="settings_gradient_dir_d">对角</string>
     <string name="settings_digit_tab_digit">单色</string>
     <string name="settings_gradient_start">起点色</string>
     <string name="settings_gradient_end">终点色</string>

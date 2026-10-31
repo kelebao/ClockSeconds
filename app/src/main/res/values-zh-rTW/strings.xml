@@ -130,6 +130,10 @@
     <string name="swatch_brown">棕</string>
     <string name="settings_digit_sum_v2">點預覽時間，可編輯顏色</string>
     <string name="settings_gradient_title">漸層</string>
+    <string name="settings_gradient_dir">漸變方向</string>
+    <string name="settings_gradient_dir_h">左→右</string>
+    <string name="settings_gradient_dir_v">上→下</string>
+    <string name="settings_gradient_dir_d">對角</string>
     <string name="settings_digit_tab_digit">單色</string>
     <string name="settings_gradient_start">起點色</string>
     <string name="settings_gradient_end">終點色</string>

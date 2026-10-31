@@ -130,6 +130,10 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="swatch_brown">Cokelat</string>
     <string name="settings_digit_sum_v2">Ketuk waktu pratinjau untuk mengubah warna</string>
     <string name="settings_gradient_title">Gradien</string>
+    <string name="settings_gradient_dir">Arah gradasi</string>
+    <string name="settings_gradient_dir_h">Kiri ke kanan</string>
+    <string name="settings_gradient_dir_v">Atas ke bawah</string>
+    <string name="settings_gradient_dir_d">Diagonal</string>
     <string name="settings_digit_tab_digit">Warna tunggal</string>
     <string name="settings_gradient_start">Warna awal</string>
     <string name="settings_gradient_end">Warna akhir</string>

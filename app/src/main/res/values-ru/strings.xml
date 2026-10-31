@@ -130,6 +130,10 @@
     <string name="swatch_brown">Коричневый</string>
     <string name="settings_digit_sum_v2">Нажмите время в предпросмотре, чтобы изменить цвет</string>
     <string name="settings_gradient_title">Градиент</string>
+    <string name="settings_gradient_dir">Направление градиента</string>
+    <string name="settings_gradient_dir_h">Слева направо</string>
+    <string name="settings_gradient_dir_v">Сверху вниз</string>
+    <string name="settings_gradient_dir_d">По диагонали</string>
     <string name="settings_digit_tab_digit">Одноцветный</string>
     <string name="settings_gradient_start">Начальный цвет</string>
     <string name="settings_gradient_end">Конечный цвет</string>

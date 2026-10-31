@@ -130,6 +130,10 @@
     <string name="swatch_brown">Коричневий</string>
     <string name="settings_digit_sum_v2">Торкніться часу в передперегляді, щоб змінити колір</string>
     <string name="settings_gradient_title">Градієнт</string>
+    <string name="settings_gradient_dir">Напрямок градієнта</string>
+    <string name="settings_gradient_dir_h">Зліва направо</string>
+    <string name="settings_gradient_dir_v">Згори вниз</string>
+    <string name="settings_gradient_dir_d">По діагоналі</string>
     <string name="settings_digit_tab_digit">Однотонний</string>
     <string name="settings_gradient_start">Початковий колір</string>
     <string name="settings_gradient_end">Кінцевий колір</string>

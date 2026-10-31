@@ -130,6 +130,10 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="swatch_brown">Kahverengi</string>
     <string name="settings_digit_sum_v2">Renkleri düzenlemek için önizlemedeki saate dokunun</string>
     <string name="settings_gradient_title">Renk geçişi</string>
+    <string name="settings_gradient_dir">Geçiş yönü</string>
+    <string name="settings_gradient_dir_h">Soldan sağa</string>
+    <string name="settings_gradient_dir_v">Yukarıdan aşağı</string>
+    <string name="settings_gradient_dir_d">Çapraz</string>
     <string name="settings_digit_tab_digit">Tek renk</string>
     <string name="settings_gradient_start">Başlangıç rengi</string>
     <string name="settings_gradient_end">Bitiş rengi</string>

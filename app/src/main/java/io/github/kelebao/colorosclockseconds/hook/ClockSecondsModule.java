@@ -118,6 +118,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 渐变端点色缓存（{@code GRADIENT_COLOR_AUTO} = 跟随首位 / 末位数字）。 */
     private static volatile int sGradientStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     private static volatile int sGradientEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+    /** 渐变方向缓存（0 水平 / 1 竖直 / 2 对角，vc281）。 */
+    private static volatile int sGradientDir;
 
     /**
      * 「通知栏（下拉面板）时间跟随状态栏」开关缓存（默认关闭）。
@@ -2401,7 +2403,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 ? colors[colors.length - 1] : sGradientEnd;
         int c0 = gradientEdgeColor(rawStart, systemTextColor);
         int c1 = gradientEdgeColor(rawEnd, systemTextColor);
-        sb.setSpan(new GradientTextSpan(view, sb, c0, c1, xOffset), 0, len,
+        sb.setSpan(new GradientTextSpan(view, sb, c0, c1, xOffset, sGradientDir), 0, len,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         int[] starts = new int[len];
         int n = 0;
@@ -2451,6 +2453,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             sGradientOn = ClockSecondsConfig.isGradientEnabled(ctx.getContentResolver());
             sGradientStart = ClockSecondsConfig.getGradientStartColor(ctx.getContentResolver());
             sGradientEnd = ClockSecondsConfig.getGradientEndColor(ctx.getContentResolver());
+            sGradientDir = ClockSecondsConfig.getGradientDirection(ctx.getContentResolver());
             // 通知栏时钟开关同样缓存：面板每次 setText 都要判断，不能在那里打 binder。
             sQsClockOn = ClockSecondsConfig.isQsClockEnabled(ctx.getContentResolver());
         } catch (Throwable ignored) {
@@ -3560,6 +3563,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_DIRECTION);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_MARK);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_QS_CLOCK);
         filter.addAction(ClockSecondsConfig.ACTION_SET_TASKS);
@@ -3634,6 +3638,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 ClockSecondsConfig.setGradientEdgeColor(cr, isStart, intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR,
                                         ClockSecondsConfig.GRADIENT_COLOR_AUTO));
+                                reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_DIRECTION.equals(action)) {
+                                // 渐变方向（0 水平 / 1 竖直 / 2 对角）：切换即生效。
+                                ClockSecondsConfig.setGradientDirection(cr,
+                                        intent.getIntExtra(ClockSecondsConfig.EXTRA_DIRECTION, 0));
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_QS_CLOCK.equals(action)) {

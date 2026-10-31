@@ -130,6 +130,10 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="swatch_brown">Marrom</string>
     <string name="settings_digit_sum_v2">Toque no horário da prévia para editar as cores</string>
     <string name="settings_gradient_title">Gradiente</string>
+    <string name="settings_gradient_dir">Direção do gradiente</string>
+    <string name="settings_gradient_dir_h">Esquerda para direita</string>
+    <string name="settings_gradient_dir_v">De cima para baixo</string>
+    <string name="settings_gradient_dir_d">Diagonal</string>
     <string name="settings_digit_tab_digit">Cor única</string>
     <string name="settings_gradient_start">Cor inicial</string>
     <string name="settings_gradient_end">Cor final</string>

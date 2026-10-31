@@ -130,6 +130,10 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="swatch_brown">Nâu</string>
     <string name="settings_digit_sum_v2">Chạm vào thời gian trong bản xem trước để chỉnh màu</string>
     <string name="settings_gradient_title">Chuyển sắc</string>
+    <string name="settings_gradient_dir">Hướng chuyển màu</string>
+    <string name="settings_gradient_dir_h">Trái sang phải</string>
+    <string name="settings_gradient_dir_v">Trên xuống dưới</string>
+    <string name="settings_gradient_dir_d">Chéo</string>
     <string name="settings_digit_tab_digit">Một màu</string>
     <string name="settings_gradient_start">Màu bắt đầu</string>
     <string name="settings_gradient_end">Màu kết thúc</string>

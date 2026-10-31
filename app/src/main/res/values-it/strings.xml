@@ -130,6 +130,10 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="swatch_brown">Marrone</string>
     <string name="settings_digit_sum_v2">Tocca l\'ora nell\'anteprima per modificare i colori</string>
     <string name="settings_gradient_title">Sfumatura</string>
+    <string name="settings_gradient_dir">Direzione del gradiente</string>
+    <string name="settings_gradient_dir_h">Da sinistra a destra</string>
+    <string name="settings_gradient_dir_v">Dall\'alto in basso</string>
+    <string name="settings_gradient_dir_d">Diagonale</string>
     <string name="settings_digit_tab_digit">Tinta unita</string>
     <string name="settings_gradient_start">Colore iniziale</string>
     <string name="settings_gradient_end">Colore finale</string>
