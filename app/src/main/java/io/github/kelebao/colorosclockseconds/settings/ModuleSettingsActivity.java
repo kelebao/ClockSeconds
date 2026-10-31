@@ -193,6 +193,9 @@ public final class ModuleSettingsActivity extends Activity {
     /** 以代码回填开关状态时置位，避免触发 OnCheckedChangeListener 又写一次盘。 */
     private boolean mMarkSyncing;
     private Switch mMarkSwitch;
+    private TextView mMarkTabPeriod;
+    private TextView mMarkTabWeekday;
+    private LinearLayout mMarkTabsView;
     /** 「通知栏时间显秒」开关与其配置缓存（默认关闭）。 */
     private Switch mQsClockSwitch;
     private boolean mCfgQsClockOn;
@@ -1965,8 +1968,9 @@ public final class ModuleSettingsActivity extends Activity {
     // ==================================================================
 
     /**
-     * 「时间后缀」卡片：默认关闭。标题行右侧开关控制总开关；点卡片本体弹出二选一
-     * （周几 / 时段），选中即自动打开。后缀显示在时间后面（10:23:45 周六）。
+     * 「时间后缀」卡片：默认关闭。标题行右侧开关控制总开关；卡片上直接放
+     * 「时段 | 周几」两段式页签（与单色 / 渐变页签同款），点页签即选中并自动打开，
+     * 不用再进弹窗。后缀显示在时间后面（10:23:45 周六）。
      *
      * <p>周几名直接取系统按当前语言给的短名（模块侧 DateFormatSymbols），本应用不需要存；
      * 7 档时段是自定义措辞，本应用按当前语言把 CSV 推给模块 —— 模块跑在 SystemUI 进程里，
@@ -2025,37 +2029,52 @@ public final class ModuleSettingsActivity extends Activity {
         titleRow.addView(mMarkSwitch);
         card.addView(titleRow);
 
+        // 「时段 | 周几」页签行：与数字颜色卡的单色 / 渐变页签同款，直接在卡片上选。
+        LinearLayout markTrack = new LinearLayout(this);
+        markTrack.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams mtlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mtlp.topMargin = dp(10);
+        markTrack.setLayoutParams(mtlp);
+        GradientDrawable markTrackBg = new GradientDrawable();
+        markTrackBg.setCornerRadius(dp(999));
+        markTrackBg.setColor(night ? 0xFF2A2340 : 0xFFF1EDFB);
+        markTrack.setBackground(markTrackBg);
+        markTrack.setPadding(dp(3), dp(3), dp(3), dp(3));
+        mMarkTabPeriod = makeTab(getString(R.string.settings_mark_mode_period));
+        mMarkTabWeekday = makeTab(getString(R.string.settings_mark_mode_weekday));
+        mMarkTabPeriod.setLayoutParams(new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams mwlp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        mwlp.leftMargin = dp(3);
+        mMarkTabWeekday.setLayoutParams(mwlp);
+        markTrack.addView(mMarkTabPeriod);
+        markTrack.addView(mMarkTabWeekday);
+        mMarkTabPeriod.setOnClickListener(v -> selectMarkMode(ClockSecondsConfig.MARK_MODE_PERIOD));
+        mMarkTabWeekday.setOnClickListener(v -> selectMarkMode(ClockSecondsConfig.MARK_MODE_WEEKDAY));
+        mMarkTabsView = markTrack;
+        card.addView(markTrack);
+
         mMarkSummary = new TextView(this);
         mMarkSummary.setTextSize(11f);
         mMarkSummary.setTextColor(text2());
-        mMarkSummary.setPadding(0, dp(6), 0, 0);
+        mMarkSummary.setPadding(0, dp(8), 0, 0);
         card.addView(mMarkSummary);
-
-        // 点卡片本体 = 选「周几 / 时段」；开关留在右上角，避免误触总开关。
-        card.setOnClickListener(v -> showMarkModeDialog());
 
         syncMarkCard();
         root.addView(card);
     }
 
-    /** 二选一：时间后面显示「周几」还是「时段」。 */
-    private void showMarkModeDialog() {
-        final int checked = mCfgMarkMode == ClockSecondsConfig.MARK_MODE_WEEKDAY ? 0 : 1;
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.settings_mark_dialog_title)
-                .setSingleChoiceItems(new CharSequence[]{
-                        getString(R.string.settings_mark_mode_weekday),
-                        getString(R.string.settings_mark_mode_period)},
-                        checked,
-                        (dialog, which) -> {
-                            dialog.dismiss();
-                            mCfgMarkMode = which == 0
-                                    ? ClockSecondsConfig.MARK_MODE_WEEKDAY
-                                    : ClockSecondsConfig.MARK_MODE_PERIOD;
-                            mCfgMarkOn = true;   // 选了就等于要用，顺手打开总开关
-                            applyMarkConfig();
-                        })
-                .show();
+    /** 页签即开关：点「时段 / 周几」就等于要用后缀，选中并顺手打开总开关（重复点不重复写盘）。 */
+    private void selectMarkMode(int mode) {
+        if (mCfgMarkMode == mode && mCfgMarkOn) {
+            syncMarkCard();
+            return;
+        }
+        mCfgMarkMode = mode;
+        mCfgMarkOn = true;
+        applyMarkConfig();
     }
 
     /** 把后缀的开关 / 模式 / 7 档文案推给模块（模块拿不到本应用的资源）。 */
@@ -2093,6 +2112,12 @@ public final class ModuleSettingsActivity extends Activity {
             mMarkSyncing = true;
             mMarkSwitch.setChecked(mCfgMarkOn);
             mMarkSyncing = false;
+        }
+        if (mMarkTabsView != null) {
+            // 开关关着时整条页签压暗，但仍保留选中态供记忆；点页签即重新打开。
+            mMarkTabsView.setAlpha(mCfgMarkOn ? 1f : 0.45f);
+            styleTab(mMarkTabPeriod, mCfgMarkMode == ClockSecondsConfig.MARK_MODE_PERIOD);
+            styleTab(mMarkTabWeekday, mCfgMarkMode == ClockSecondsConfig.MARK_MODE_WEEKDAY);
         }
         if (mMarkSummary != null) {
             mMarkSummary.setText(!mCfgMarkOn

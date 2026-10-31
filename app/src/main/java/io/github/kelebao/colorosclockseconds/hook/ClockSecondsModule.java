@@ -456,13 +456,25 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             QS_CLOCKS.add(view);
                             installTicker(view);
                             refreshClock(view);
-                        } else if (isClockEnabled(view) && !secondsOn()
-                                && isLiveQsClock(view) && countColons(view.getText()) > 1) {
-                            // 显秒关掉时面板可能正收着（收着不会 setText），再展开就会残留上一帧
-                            // 我们写过的带秒文本。这里一次性改回 HH:mm（带颜色）；改完只有 1 个冒号，
-                            // 条件不再命中，不会每帧重写。
-                            QS_CLOCKS.add(view);
-                            writeMinuteOnly(view);
+                        } else if (isClockEnabled(view) && !secondsOn() && isLiveQsClock(view)) {
+                            if (countColons(view.getText()) > 1) {
+                                // 显秒关掉时面板可能正收着（收着不会 setText），再展开就会残留上一帧
+                                // 我们写过的带秒文本。这里一次性改回 HH:mm（带颜色）；改完只有 1 个冒号，
+                                // 条件不再命中，不会每帧重写。
+                                QS_CLOCKS.add(view);
+                                writeMinuteOnly(view);
+                            } else {
+                                // 面板收起期间系统每分钟的 setText 都在「面板未显示」门控处提前返回
+                                // （不补色），重新展开时文本已是 HH:mm、不再触发 setText → 颜色一直
+                                // 缺到下一分钟跳变（用户反馈「通知栏时钟颜色有时不生效」即此）。
+                                // 绘制时兜底补一次：颜色还在时 applyRedToBaseText 幂等短路（返回 0），
+                                // 成本微秒级；真被洗掉（返回 2）时装与状态栏同款的自适应守护 ticker。
+                                QS_CLOCKS.add(view);
+                                int wrote = applyRedToBaseText(view);
+                                if (wrote == 2) {
+                                    installTicker(view);
+                                }
+                            }
                         }
                     }
                 } catch (Throwable t) {
@@ -2694,6 +2706,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 && cur.toString().contentEquals(sb.toString())
                 && hasAllColorSpans((Spanned) cur, starts)) {
             LAST_WRITTEN.put(view, cur.toString().replace("\u200B", ""));
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "MINUTE steady text=[" + cur + "] viewW="
+                        + view.getWidth());
+            }
             return 0;
         }
         // 需要写入。区分「正常分钟跳变(1)」与「真掉色(2)」：看可见文本是否与我们上次写的一致。
@@ -2710,7 +2726,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         LAST_WRITTEN.put(view, curVisible);
         if (BuildConfig.DEBUG) {
-            XposedBridge.log(LOG_PREFIX + "PROBE color-applied text=[" + sb + "] strip=" + code);
+            XposedBridge.log(LOG_PREFIX + "PROBE color-applied text=[" + sb + "] strip=" + code
+                    + " viewW=" + view.getWidth());
             logSpans(view, "now");
             scheduleSpanDump(view);
         }
