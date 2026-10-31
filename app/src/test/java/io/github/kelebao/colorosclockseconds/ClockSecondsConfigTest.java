@@ -99,4 +99,34 @@ public class ClockSecondsConfigTest {
         // 只有两个字段时，不存在秒位。
         assertEquals(-1, ClockSecondsConfig.slotOfChar("23:41", 5));
     }
+
+    @Test
+    public void slotOfChar_fullClock_mapsAllSixDigits() {
+        String s = "17:39:45";
+        assertEquals(0, ClockSecondsConfig.slotOfChar(s, 0));
+        assertEquals(1, ClockSecondsConfig.slotOfChar(s, 1));
+        assertEquals(2, ClockSecondsConfig.slotOfChar(s, 3));
+        assertEquals(3, ClockSecondsConfig.slotOfChar(s, 4));
+        assertEquals(4, ClockSecondsConfig.slotOfChar(s, 6));
+        assertEquals(5, ClockSecondsConfig.slotOfChar(s, 7));
+    }
+
+    @Test
+    public void slotOfChar_singleDigitHour_isOnesSlot() {
+        // 9:41 无前导零：'9' 属「时个位」(1)，'4'→2，'1'→3。
+        String s = "9:41";
+        assertEquals(1, ClockSecondsConfig.slotOfChar(s, 0));
+        assertEquals(2, ClockSecondsConfig.slotOfChar(s, 2));
+        assertEquals(3, ClockSecondsConfig.slotOfChar(s, 3));
+    }
+
+    @Test
+    public void slotOfChar_nonDigitsAndRange_returnMinusOne() {
+        String s = "17:39:45\u200B";
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(s, 2));   // 冒号
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(s, 8));   // 结尾零宽空格
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(s, 99));  // 越界
+        assertEquals(-1, ClockSecondsConfig.slotOfChar(null, 0));
+        assertEquals(-1, ClockSecondsConfig.slotOfChar("12:00", -1));
+    }
 }
