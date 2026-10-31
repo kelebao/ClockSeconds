@@ -5554,17 +5554,30 @@ public final class ModuleSettingsActivity extends Activity {
         sv.addView(box, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // 返回（不保存）
+        // 名称行：标签在左，「返回」在最右（与保存同款胶囊）；不保存退出走这里
+        LinearLayout nameHead = new LinearLayout(this);
+        nameHead.setOrientation(LinearLayout.HORIZONTAL);
+        nameHead.setGravity(Gravity.CENTER_VERTICAL);
+        TextView nameLabel = new TextView(this);
+        nameLabel.setText(R.string.settings_task_name);
+        nameLabel.setTextSize(13f);
+        nameLabel.setTextColor(text2());
+        nameHead.addView(nameLabel, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         TextView back = new TextView(this);
-        back.setText("\u2039 " + getString(R.string.settings_task_back));
+        back.setText(R.string.settings_task_back);
         back.setTextSize(14f);
-        back.setTextColor(text2());
-        back.setPadding(0, dp(4), 0, dp(10));
+        back.setTextColor(0xFFFFFFFF);
+        back.setGravity(Gravity.CENTER);
+        back.setPadding(dp(16), dp(8), dp(16), dp(8));
+        GradientDrawable backBg = new GradientDrawable();
+        backBg.setCornerRadius(dp(999));
+        backBg.setColor(accent());
+        back.setBackground(backBg);
         back.setOnClickListener(v -> showTaskListPage());
-        box.addView(back);
-
-        // 名称
-        box.addView(editorLabel(R.string.settings_task_name));
+        nameHead.addView(back, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        box.addView(nameHead);
         final EditText nameInput = new EditText(this);
         nameInput.setText(taskText(draft.name));
         nameInput.setHint(R.string.settings_task_name_hint);
@@ -5573,29 +5586,30 @@ public final class ModuleSettingsActivity extends Activity {
         nameInput.setSingleLine(true);
         box.addView(nameInput);
 
-        // 触发方式
+        // 触发方式：一排「整点」，二排「时间(每天)、7 天」；手动互斥。
+        // 旧「一次性」入口已按需求移除，ClockTask.TRIGGER_ONCE 引擎保留兼容历史数据；
+        // 打开旧 once 任务按「时间」显示，保存时归为每天。
         box.addView(editorLabel(R.string.settings_task_trigger));
-        final RadioGroup triggerGroup = new RadioGroup(this);
-        triggerGroup.setOrientation(RadioGroup.HORIZONTAL);
         final RadioButton rbHourly = makeRadio(R.string.settings_task_trigger_hourly);
         final RadioButton rbDaily = makeRadio(R.string.settings_task_trigger_daily);
         final RadioButton rbWeekly = makeRadio(R.string.settings_task_trigger_weekly);
-        final RadioButton rbOnce = makeRadio(R.string.settings_task_trigger_once);
-        triggerGroup.addView(rbHourly);
-        triggerGroup.addView(rbDaily);
-        triggerGroup.addView(rbWeekly);
-        triggerGroup.addView(rbOnce);
-        if (draft.trigger == ClockTask.TRIGGER_DAILY) {
-            rbDaily.setChecked(true);
-        } else if (draft.trigger == ClockTask.TRIGGER_WEEKLY) {
-            rbWeekly.setChecked(true);
-        } else if (draft.trigger == ClockTask.TRIGGER_ONCE) {
-            rbOnce.setChecked(true);
-        } else {
-            rbHourly.setChecked(true);
-        }
-        box.addView(triggerGroup);
-
+        LinearLayout trigRow1 = new LinearLayout(this);
+        trigRow1.setOrientation(LinearLayout.HORIZONTAL);
+        trigRow1.addView(rbHourly, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        box.addView(trigRow1);
+        LinearLayout trigRow2 = new LinearLayout(this);
+        trigRow2.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams trigRow2Lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        trigRow2Lp.topMargin = dp(2);
+        trigRow2.addView(rbDaily, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        trigRow2.addView(rbWeekly, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        box.addView(trigRow2, trigRow2Lp);
+        final int[] mTriggerHolder = {draft.trigger == ClockTask.TRIGGER_ONCE
+                ? ClockTask.TRIGGER_DAILY : draft.trigger};
         // 自定义时间（只有「自定义时间」时才显示）
         final LinearLayout timeRow = new LinearLayout(this);
         timeRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -5655,40 +5669,20 @@ public final class ModuleSettingsActivity extends Activity {
                 ? View.VISIBLE : View.GONE);
         box.addView(weekdayRow);
 
-        // 自定义时间：月 / 日（到点一次性；年自动取不早于今天的最近一天）
-        Calendar seedC = Calendar.getInstance();
-        if (draft.trigger == ClockTask.TRIGGER_ONCE && draft.onceAt > 0L) {
-            seedC.setTimeInMillis(draft.onceAt);
-        }
-        final LinearLayout dateRow = new LinearLayout(this);
-        dateRow.setOrientation(LinearLayout.HORIZONTAL);
-        dateRow.setGravity(Gravity.CENTER_VERTICAL);
-        final EditText monthInput = makeNumberInput(seedC.get(Calendar.MONTH) + 1);
-        final EditText dayInput = makeNumberInput(seedC.get(Calendar.DAY_OF_MONTH));
-        TextView dateLabel = new TextView(this);
-        dateLabel.setText(R.string.settings_task_date);
-        dateLabel.setTextSize(13f);
-        dateLabel.setTextColor(text2());
-        dateLabel.setPadding(0, dp(10), 0, dp(2));
-        dateRow.addView(monthInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
-        TextView slash = new TextView(this);
-        slash.setText("/");
-        slash.setTextSize(18f);
-        slash.setTextColor(text2());
-        slash.setPadding(dp(6), 0, dp(6), 0);
-        dateRow.addView(slash);
-        dateRow.addView(dayInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
-        dateRow.setVisibility(draft.trigger == ClockTask.TRIGGER_ONCE
-                ? View.VISIBLE : View.GONE);
-        box.addView(dateLabel);
-        box.addView(dateRow);
-        // 触发方式显隐：每小时只隐藏时刻行；每周/自定义都要时刻行，各自另有星期/日期行
-        triggerGroup.setOnCheckedChangeListener((g, id) -> {
-            timeRow.setVisibility(id == rbDaily.getId() || id == rbWeekly.getId()
-                    || id == rbOnce.getId() ? View.VISIBLE : View.GONE);
-            weekdayRow.setVisibility(id == rbWeekly.getId() ? View.VISIBLE : View.GONE);
-            dateRow.setVisibility(id == rbOnce.getId() ? View.VISIBLE : View.GONE);
-        });
+        // 触发方式切换：互斥选中 + 时刻/星期行显隐
+        final java.util.function.IntConsumer pickTrigger = t -> {
+            mTriggerHolder[0] = t;
+            rbHourly.setChecked(t == ClockTask.TRIGGER_HOURLY);
+            rbDaily.setChecked(t == ClockTask.TRIGGER_DAILY);
+            rbWeekly.setChecked(t == ClockTask.TRIGGER_WEEKLY);
+            timeRow.setVisibility(t == ClockTask.TRIGGER_HOURLY ? View.GONE : View.VISIBLE);
+            weekdayRow.setVisibility(t == ClockTask.TRIGGER_WEEKLY ? View.VISIBLE : View.GONE);
+        };
+        rbHourly.setOnClickListener(v -> pickTrigger.accept(ClockTask.TRIGGER_HOURLY));
+        rbDaily.setOnClickListener(v -> pickTrigger.accept(ClockTask.TRIGGER_DAILY));
+        rbWeekly.setOnClickListener(v -> pickTrigger.accept(ClockTask.TRIGGER_WEEKLY));
+        pickTrigger.accept(mTriggerHolder[0]);
+
 
 
         // 提前开始
@@ -5761,26 +5755,21 @@ public final class ModuleSettingsActivity extends Activity {
                 : ClockSecondsConfig.getGradientEndColor(getContentResolver())};
         final LinearLayout colorArea = new LinearLayout(this);
         colorArea.setOrientation(LinearLayout.VERTICAL);
-        TextView capture = new TextView(this);
-        capture.setText(R.string.settings_schedule_capture);
-        capture.setTextSize(14f);
-        capture.setTextColor(accent());
-        capture.setGravity(Gravity.CENTER);
-        capture.setPadding(dp(18), dp(10), dp(18), dp(10));
-        GradientDrawable capBg = new GradientDrawable();
-        capBg.setCornerRadius(dp(999));
-        capBg.setColor(night ? 0x22FFFFFF : 0x11000000);
-        capture.setBackground(capBg);
-        LinearLayout.LayoutParams capLp = new LinearLayout.LayoutParams(
+        // 选择配色：进入配色选择页（渐变自存 + 内置预设 + 小预览 + 右下角勾选 + 保存）
+        TextView pickBtn = new TextView(this);
+        pickBtn.setText(R.string.settings_task_pick);
+        pickBtn.setTextSize(14f);
+        pickBtn.setTextColor(accent());
+        pickBtn.setGravity(Gravity.CENTER);
+        pickBtn.setPadding(dp(18), dp(10), dp(18), dp(10));
+        GradientDrawable pickBg = new GradientDrawable();
+        pickBg.setCornerRadius(dp(999));
+        pickBg.setColor(night ? 0x22FFFFFF : 0x11000000);
+        pickBtn.setBackground(pickBg);
+        LinearLayout.LayoutParams pickLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        capLp.topMargin = dp(12);
-        colorArea.addView(capture, capLp);
-        TextView capHint = new TextView(this);
-        capHint.setText(R.string.settings_schedule_capture_hint);
-        capHint.setTextSize(12f);
-        capHint.setTextColor(text2());
-        capHint.setPadding(0, dp(4), 0, 0);
-        colorArea.addView(capHint);
+        pickLp.topMargin = dp(10);
+        colorArea.addView(pickBtn, pickLp);
         final LinearLayout swatchRow = new LinearLayout(this);
         swatchRow.setOrientation(LinearLayout.HORIZONTAL);
         swatchRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -5792,12 +5781,156 @@ public final class ModuleSettingsActivity extends Activity {
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         };
         renderSwatch.run();
-        capture.setOnClickListener(v -> {
-            colorsHolder[0] = ClockSecondsConfig.getDigitColors(getContentResolver());
-            edgeHolder[0] = ClockSecondsConfig.getGradientStartColor(getContentResolver());
-            edgeHolder[1] = ClockSecondsConfig.getGradientEndColor(getContentResolver());
-            renderSwatch.run();
-        });
+        final Runnable openPicker = () -> {
+            LinearLayout pick = new LinearLayout(this);
+            pick.setOrientation(LinearLayout.VERTICAL);
+            pick.setPadding(0, dp(4), 0, dp(12));
+            LinearLayout pickHead = new LinearLayout(this);
+            pickHead.setOrientation(LinearLayout.HORIZONTAL);
+            pickHead.setGravity(Gravity.CENTER_VERTICAL);
+            TextView pickTitle = new TextView(this);
+            pickTitle.setText(R.string.settings_task_pick);
+            pickTitle.setTextSize(13f);
+            pickTitle.setTextColor(text2());
+            pickHead.addView(pickTitle, new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            TextView pickBack = new TextView(this);
+            pickBack.setText(R.string.settings_task_back);
+            pickBack.setTextSize(14f);
+            pickBack.setTextColor(0xFFFFFFFF);
+            pickBack.setGravity(Gravity.CENTER);
+            pickBack.setPadding(dp(16), dp(8), dp(16), dp(8));
+            GradientDrawable pbbg = new GradientDrawable();
+            pbbg.setCornerRadius(dp(999));
+            pbbg.setColor(accent());
+            pickBack.setBackground(pbbg);
+            pickHead.addView(pickBack, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            pick.addView(pickHead);
+            // 小预览时间：跟随选中套装实时着色（GradientTextSpan，与状态栏同款渐变）
+            final TextView prev = new TextView(this);
+            prev.setText("12:34");
+            prev.setTextSize(20f);
+            prev.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            prev.setGravity(Gravity.CENTER);
+            prev.setFontFeatureSettings("tnum");
+            prev.setPadding(0, dp(10), 0, dp(6));
+            pick.addView(prev, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            final java.util.List<int[]> presets = new ArrayList<>();
+            for (int[] p0 : GRADIENT_PRESETS) {
+                presets.add(p0);
+            }
+            presets.addAll(loadCustomGradPresets());
+            final int[] selIdx = {-1};
+            for (int i = 0; i < presets.size(); i++) {
+                if (presets.get(i)[0] == edgeHolder[0] && presets.get(i)[1] == edgeHolder[1]) {
+                    selIdx[0] = i;
+                    break;
+                }
+            }
+            LinearLayout grid = new LinearLayout(this);
+            grid.setOrientation(LinearLayout.VERTICAL);
+            pick.addView(grid);
+            final java.util.List<TextView> badges = new ArrayList<>();
+            final Runnable[] renderPrevHolder = new Runnable[1];
+            LinearLayout curRow = null;
+            for (int i = 0; i < presets.size(); i++) {
+                final int idx = i;
+                final int[] pr = presets.get(i);
+                if (i % 2 == 0) {
+                    final LinearLayout rowF = new LinearLayout(this);
+                    rowF.setOrientation(LinearLayout.HORIZONTAL);
+                    LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    rlp.topMargin = dp(8);
+                    grid.addView(rowF, rlp);
+                    curRow = rowF;
+                }
+                final LinearLayout rowRef = curRow;
+                FrameLayout cell = new FrameLayout(this);
+                View capsule = new View(this);
+                GradientDrawable cg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                        new int[]{pr[0], pr[1]});
+                cg.setCornerRadius(dp(12));
+                capsule.setBackground(cg);
+                cell.addView(capsule, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
+                final TextView badge = new TextView(this);
+                badge.setText("\u2713");
+                badge.setTextSize(11f);
+                badge.setTextColor(0xFFFFFFFF);
+                badge.setGravity(Gravity.CENTER);
+                GradientDrawable bdg = new GradientDrawable();
+                bdg.setShape(GradientDrawable.OVAL);
+                bdg.setColor(accent());
+                badge.setBackground(bdg);
+                FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(18), dp(18));
+                blp.gravity = Gravity.BOTTOM | Gravity.END;
+                blp.setMargins(0, 0, dp(6), dp(4));
+                badge.setVisibility(selIdx[0] == idx ? View.VISIBLE : View.GONE);
+                cell.addView(badge, blp);
+                badges.add(badge);
+                LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                clp.rightMargin = (i % 2 == 0) ? dp(6) : 0;
+                cell.setOnClickListener(v -> {
+                    selIdx[0] = idx;
+                    for (int j = 0; j < badges.size(); j++) {
+                        badges.get(j).setVisibility(j == idx ? View.VISIBLE : View.GONE);
+                    }
+                    renderPrevHolder[0].run();
+                });
+                rowRef.addView(cell, clp);
+            }
+            renderPrevHolder[0] = () -> {
+                SpannableStringBuilder psb = new SpannableStringBuilder("12:34");
+                if (selIdx[0] >= 0) {
+                    int[] pr = presets.get(selIdx[0]);
+                    float w = prev.getPaint().measureText(psb, 0, psb.length());
+                    psb.setSpan(new GradientTextSpan(prev, psb,
+                                    adaptPreviewColor(pr[0]), adaptPreviewColor(pr[1]), w),
+                            0, psb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                prev.setText(psb);
+            };
+            renderPrevHolder[0].run();
+            // 保存：六位数字色 = 沿渐变等距插值；渐变端点 = 套装两端；回编辑页
+            TextView pickSave = new TextView(this);
+            pickSave.setText(R.string.settings_task_save);
+            pickSave.setTextSize(15f);
+            pickSave.setTextColor(0xFFFFFFFF);
+            pickSave.setGravity(Gravity.CENTER);
+            pickSave.setPadding(dp(18), dp(12), dp(18), dp(12));
+            GradientDrawable psg = new GradientDrawable();
+            psg.setCornerRadius(dp(999));
+            psg.setColor(accent());
+            pickSave.setBackground(psg);
+            LinearLayout.LayoutParams pslp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            pslp.topMargin = dp(14);
+            pickSave.setOnClickListener(v -> {
+                if (selIdx[0] >= 0) {
+                    int[] pr = presets.get(selIdx[0]);
+                    int[] six = new int[6];
+                    for (int i = 0; i < 6; i++) {
+                        six[i] = lerpColor(pr[0], pr[1], i / 5f);
+                    }
+                    colorsHolder[0] = six;
+                    edgeHolder[0] = pr[0];
+                    edgeHolder[1] = pr[1];
+                    renderSwatch.run();
+                }
+                sv.removeAllViews();
+                sv.addView(box, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            });
+            pick.addView(pickSave, pslp);
+            sv.removeAllViews();
+            sv.addView(pick, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        };
+        pickBtn.setOnClickListener(v -> openPicker.run());
         box.addView(colorArea);
         final boolean colorInit = draft.action == ClockTask.ACTION_COLOR;
         advRow.setVisibility(colorInit ? View.GONE : View.VISIBLE);
@@ -5819,7 +5952,7 @@ public final class ModuleSettingsActivity extends Activity {
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         buttons.setGravity(Gravity.CENTER_VERTICAL);
-        buttons.setPadding(0, dp(16), 0, 0);
+        buttons.setPadding(0, dp(10), 0, 0);
         if (!isNew) {
             TextView del = new TextView(this);
             del.setText(R.string.settings_task_delete);
@@ -5851,24 +5984,10 @@ public final class ModuleSettingsActivity extends Activity {
         save.setBackground(saveBg);
         save.setOnClickListener(v -> {
             draft.name = nameInput.getText().toString().trim();
-            draft.trigger = rbOnce.isChecked() ? ClockTask.TRIGGER_ONCE
-                    : rbWeekly.isChecked() ? ClockTask.TRIGGER_WEEKLY
-                    : rbDaily.isChecked() ? ClockTask.TRIGGER_DAILY : ClockTask.TRIGGER_HOURLY;
+            draft.trigger = mTriggerHolder[0] == ClockTask.TRIGGER_ONCE ? ClockTask.TRIGGER_DAILY : mTriggerHolder[0];
             draft.weekDay = wdHolder[0];
             draft.hour = parseIntOr(hourInput.getText().toString(), draft.hour);
             draft.minute = parseIntOr(minuteInput.getText().toString(), draft.minute);
-            if (rbOnce.isChecked()) {
-                Calendar c2 = Calendar.getInstance();
-                int yr = c2.get(Calendar.YEAR);
-                int mo = parseIntOr(monthInput.getText().toString(), c2.get(Calendar.MONTH) + 1);
-                int dy = parseIntOr(dayInput.getText().toString(), c2.get(Calendar.DAY_OF_MONTH));
-                c2.clear();
-                c2.set(yr, mo - 1, dy, draft.hour, draft.minute, 0);
-                if (c2.getTimeInMillis() <= System.currentTimeMillis()) {
-                    c2.set(Calendar.YEAR, yr + 1);
-                }
-                draft.onceAt = c2.getTimeInMillis();
-            }
             draft.advanceMin = advBar.getProgress();
             draft.durationMin = durBar.getProgress() + ClockTask.DURATION_MIN;
             draft.action = rbColor.isChecked() ? ClockTask.ACTION_COLOR : ClockTask.ACTION_SHOW;
@@ -5913,6 +6032,16 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
 
+
+    /** 沿渐变取插值色（t∈[0,1]）；任务「选择配色」用套装端点生成六位数字色。 */
+    private static int lerpColor(int a, int b, float t) {
+        int ar = (a >> 16) & 0xFF, ag = (a >> 8) & 0xFF, ab = a & 0xFF;
+        int br = (b >> 16) & 0xFF, bg2 = (b >> 8) & 0xFF, bb = b & 0xFF;
+        int r = Math.round(ar + (br - ar) * t);
+        int g = Math.round(ag + (bg2 - ag) * t);
+        int bl = Math.round(ab + (bb - ab) * t);
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
+    }
     /** 星期几的本地短名（「周一」/「Mon」），编辑器星期胶囊用。 */
     private String weekDayShort(int weekDay) {
         Calendar c = Calendar.getInstance();
@@ -5925,7 +6054,7 @@ public final class ModuleSettingsActivity extends Activity {
         label.setText(textRes);
         label.setTextSize(13f);
         label.setTextColor(text2());
-        label.setPadding(0, dp(14), 0, dp(2));
+        label.setPadding(0, dp(10), 0, dp(2));
         return label;
     }
 
@@ -5933,7 +6062,7 @@ public final class ModuleSettingsActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(14), 0, dp(2));
+        row.setPadding(0, dp(10), 0, dp(2));
         TextView label = new TextView(this);
         label.setText(textRes);
         label.setTextSize(13f);

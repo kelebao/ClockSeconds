@@ -158,6 +158,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static volatile Context sAppContext;
     /** 换配色任务当前窗口内已应用过的任务 id；离开窗口移除标记。SystemUI 重启后窗口内会重应用一次（值相同，无害）。 */
     private static final java.util.HashSet<Long> sColorApplied = new java.util.HashSet<>();
+    /** 分钟翻页动画：每个时钟上一次写入的 HH:mm，用来检测分钟变化。 */
+    private static final java.util.WeakHashMap<TextView, String> sLastFlipHhmm = new java.util.WeakHashMap<>();
+    /** 进行中的分钟翻页动画（新动画开始前 cancel 旧动画）。 */
+    private static final java.util.WeakHashMap<TextView, android.animation.ValueAnimator> sFlipAnimators = new java.util.WeakHashMap<>();
     /** 「任务进行中」提示文案，由设置页按当前系统语言推送（模块自己的资源在 SystemUI 进程里取不到）。 */
     private static volatile String sToastTaskText;
     private static android.os.Handler sTaskHandler;
@@ -2239,9 +2243,39 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             view.setText(sb);
             sForceRewrite = false;
+            // 分钟切换「上下翻」：只有分钟真的变了才翻（首次写入 / 同一分钟的幂等重写不翻）。
+            // render-only：rotationX 不影响布局与测量，220ms 短动画即停，不做常驻动画。
+            String prevHhmm = sLastFlipHhmm.get(view);
+            if (prevHhmm != null && !prevHhmm.equals(hhmm)
+                    && !isQsClock(view) && view.isAttachedToWindow() && view.isShown()) {
+                startMinuteFlip(view);
+            }
+            sLastFlipHhmm.put(view, hhmm);
         } finally {
             WRITING_CLOCK.set(false);
         }
+    }
+
+    /** 分钟切换的「上下翻」落定动画：新分钟从 -70° 翻正，render-only，220ms 即停。 */
+    private static void startMinuteFlip(TextView view) {
+        android.animation.ValueAnimator old = sFlipAnimators.get(view);
+        if (old != null) {
+            old.cancel();
+        }
+        view.setRotationX(-70f);
+        android.animation.ValueAnimator anim = android.animation.ValueAnimator.ofFloat(-70f, 0f);
+        anim.setDuration(220L);
+        anim.setInterpolator(new android.view.animation.DecelerateInterpolator(1.8f));
+        anim.addUpdateListener(a -> view.setRotationX((float) a.getAnimatedValue()));
+        anim.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator a) {
+                view.setRotationX(0f);
+                sFlipAnimators.remove(view);
+            }
+        });
+        sFlipAnimators.put(view, anim);
+        anim.start();
     }
 
     /**

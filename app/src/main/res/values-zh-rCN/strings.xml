@@ -119,8 +119,8 @@
     <string name="settings_task_name">任务名称</string>
     <string name="settings_task_name_hint">可选，例如「开会」</string>
     <string name="settings_task_trigger">触发方式</string>
-    <string name="settings_task_trigger_hourly">每整点</string>
-    <string name="settings_task_trigger_daily">自定义时间</string>
+    <string name="settings_task_trigger_hourly">整点</string>
+    <string name="settings_task_trigger_daily">时间</string>
     <string name="settings_task_action">动作</string>
     <string name="settings_task_action_show">开启显秒</string>
     <string name="settings_task_advance">提前开始</string>
@@ -152,13 +152,10 @@
     <string name="settings_gradient_deleted">已删除自定义渐变</string>
     <string name="settings_gradient_full">自定义预设已满，长按胶囊可删除</string>
     <string name="settings_schedule_time">时间</string>
-    <string name="settings_schedule_capture">记录当前配色</string>
-    <string name="settings_schedule_capture_hint">保存时把此刻的数字颜色与渐变端点存入该时段</string>
     <string name="task_when_weekly">每周%1$s %2$s</string>
     <string name="task_when_once">%1$s %2$s</string>
     <string name="task_fmt_color">%1$s，换成记录的配色</string>
-    <string name="settings_task_trigger_weekly">每 7 天</string>
-    <string name="settings_task_trigger_once">自定义时间</string>
+    <string name="settings_task_trigger_weekly">7 天</string>
     <string name="settings_task_action_color">换配色</string>
-    <string name="settings_task_date">日期 (月/日)</string>
+    <string name="settings_task_pick">选择配色</string>
 </resources>
