@@ -985,14 +985,21 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     // 测试卡片（诊断）：候选时钟清单与逐项启用
     // ==================================================================
 
-    /** 候选时钟的稳定 key：类名|资源名|父容器类名（能区分状态栏/通知栏同名时钟）。 */
+    /**
+     * 候选时钟的稳定 key：类名|资源名（无资源名时才追加父容器类名区分）。
+     * vc280：父容器类名在个别视图上重启后会变（bug 档案⑩「测试卡勾选回弹」），
+     * 所以只有资源名缺失时才把它作为兜底成分。
+     */
     private static String clockKey(TextView view) {
         try {
             String cn = view.getClass().getName();
             String rn = resourceName(view);
+            if (rn != null && !rn.isEmpty()) {
+                return cn + "|" + rn;
+            }
             ViewParent p = view.getParent();
             String pn = p != null ? p.getClass().getName() : "?";
-            return cn + "|" + rn + "|" + pn;
+            return cn + "|?|" + pn;
         } catch (Throwable t) {
             return view.getClass().getName() + "|?|?";
         }
@@ -1051,6 +1058,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 while (it.hasNext()) {
                     String k = it.next();
                     map.put(k, obj.getBoolean(k));
+                    // 旧格式 key 是「类名|资源名|父容器」：补一个去掉父容器段的前缀别名，
+                    // 让老勾选在 vc280 的新 key（类名|资源名）下仍然命中。
+                    int first = k.indexOf('|');
+                    int second = first >= 0 ? k.indexOf('|', first + 1) : -1;
+                    if (second > first) {
+                        String alias = k.substring(0, second);
+                        if (!map.containsKey(alias)) {
+                            map.put(alias, obj.getBoolean(k));
+                        }
+                    }
                 }
             }
         } catch (Throwable ignored) {
