@@ -143,6 +143,4 @@
     <string name="settings_mark_periods">Ночь,Раннее утро,Утро,Полдень,День,Вечер,Поздняя ночь</string>
     <string name="settings_qs_clock_title">Секунды в панели уведомлений</string>
     <string name="settings_qs_clock_desc">Как часы в строке состояния</string>
-    <string name="settings_keyguard_clock_title">Секунды на экране блокировки</string>
-    <string name="settings_keyguard_clock_desc">Как часы в строке состояния</string>
 </resources>

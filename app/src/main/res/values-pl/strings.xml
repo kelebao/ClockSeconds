@@ -143,6 +143,4 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_mark_periods">Noc,Wczesny ranek,Rano,Południe,Popołudnie,Wieczór,Późna noc</string>
     <string name="settings_qs_clock_title">Sekundy w panelu powiadomień</string>
     <string name="settings_qs_clock_desc">Jak zegar na pasku stanu</string>
-    <string name="settings_keyguard_clock_title">Sekundy na ekranie blokady</string>
-    <string name="settings_keyguard_clock_desc">Jak zegar na pasku stanu</string>
 </resources>

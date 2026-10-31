@@ -143,6 +143,4 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_mark_periods">Night,Early morning,Morning,Noon,Afternoon,Evening,Late night</string>
     <string name="settings_qs_clock_title">Shade clock seconds</string>
     <string name="settings_qs_clock_desc">Follows the status bar clock exactly</string>
-    <string name="settings_keyguard_clock_title">Lock screen seconds</string>
-    <string name="settings_keyguard_clock_desc">Follows the status bar clock exactly (color follows wallpaper: system restriction)</string>
 </resources>

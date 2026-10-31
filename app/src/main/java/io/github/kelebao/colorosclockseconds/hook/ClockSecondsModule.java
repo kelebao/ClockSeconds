@@ -132,7 +132,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * <p>ColorOS 的锁屏大时钟不是单个 TextView，而是「时十 / 时个 / 冒号 / 分」四个 TextView，
      * 所以这里接管的是这四个视图：给「分」追加秒，四个视图统一上色。</p>
      */
-    private static volatile boolean sKeyguardClockOn;
 
     /** 时间后缀缓存（周几 / 时段）：与颜色同批重读，每秒渲染路径零 binder。 */
     private static volatile boolean sMarkLoaded;
@@ -361,9 +360,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // 缓存系统原始文本（追加的秒继承系统时钟文字色），供 writeTime 在其后追加秒。
                     final boolean barClock = isStatusBarClock(view);
                     final boolean qsClock = !barClock && sQsClockOn && isQsClock(view);
-                    // 锁屏大时钟（ColorOS 是「时十 / 时个 / 冒号 / 分」四个 TextView）。
-                    final boolean kgClock = !barClock && !qsClock && sKeyguardClockOn && isKeyguardClock(view);
-                    if ((barClock || qsClock || kgClock) && param.args != null && param.args.length > 0
+                    if ((barClock || qsClock) && param.args != null && param.args.length > 0
                             && param.args[0] instanceof CharSequence) {
                         BASE_TEXT.put(view, (CharSequence) param.args[0]);
                     }
@@ -379,7 +376,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     // （同时登记到测试卡片清单，供设置页逐项勾选定位状态栏时钟）。
                     recordCandidate(view);
                     // 非状态栏时钟，或用户在测试卡片里停用了该时钟 → 不接管（不显秒、不标红）。
-                    if ((!barClock && !qsClock && !kgClock) || !isClockEnabled(view)) {
+                    if ((!barClock && !qsClock) || !isClockEnabled(view)) {
                         return;
                     }
                     // 面板时钟：面板收起时不可见（detach / 0 尺寸），此时不接管、不装 ticker；
@@ -387,11 +384,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     if (qsClock && !isLiveQsClock(view)) {
                         return;
                     }
-                    // 锁屏时钟：解锁后 / AOD 时不可见，不接管（AOD 上每秒刷新毫无意义还有烧屏风险）。
-                    if (kgClock && !isLiveKeyguardClock(view)) {
-                        return;
-                    }
-
                     // 诊断探针：在系统 setText 之后、我们补色之前 dump Span 状态。
                     // ColorOS 17 的 StatClock 疑似在 setText 层把 CharSequence 洗成非 Spanned
                     // （实测：我们的 setText(sb) 后 getText() 立刻 not Spanned，而 ColorOS 15 正常）。
@@ -406,19 +398,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         configureClockView(view);
                     } else if (qsClock) {
                         QS_CLOCKS.add(view);
-                    } else {
-                        KEYGUARD_CLOCKS.add(view);
-                    }
-                    if (kgClock) {
-                        // 锁屏跟随状态栏：显秒开 = 「分」视图追加小号秒（时 / 冒号由系统自己更新）。
-                        // 显秒关 = 完全不接管 —— vc277 半透明矩形实验证实该控件的填充色被 ColorOS
-                        // 「跟随壁纸」渲染接管（span / setTextColor / canvas 覆盖全部无效），
-                        // 关秒后没有任何可做的事，保留系统原样即可。
-                        if (isKeyguardMinutes(view) && secondsOn()) {
-                            restartTicker(view);
-                            writeKeyguardClock(view);
-                        }
-                        return;
                     }
                     if (secondsOn()) {
                         installTicker(view);
@@ -466,15 +445,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         // 绘制前再校准一次，覆盖「锁屏退出动画中系统已准备好但仍是分钟值」的那一帧。
                         if (secondsOn()) {
                             refreshClock(view);
-                        }
-                    } else if (sKeyguardClockOn && isKeyguardClock(view)) {
-                        // 锁屏时钟：锁屏是「进入时系统才建视图」，第一帧往往不再 setText，
-                        // 所以在绘制时兜一次接管（仅显秒路径；颜色改不了，见 vc277 实验）。
-                        if (isClockEnabled(view) && isLiveKeyguardClock(view) && secondsOn()
-                                && isKeyguardMinutes(view) && !ACTIVE.containsKey(view)) {
-                            KEYGUARD_CLOCKS.add(view);
-                            installTicker(view);
-                            writeKeyguardClock(view);
                         }
                     } else if (sQsClockOn && isQsClock(view)) {
                         // 下拉面板时钟：面板展开时系统不一定会再 setText（文本没变），
@@ -947,230 +917,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     }
 
-    // ==================================================================
-    // 锁屏大时钟（时十 / 时个 / 冒号 / 分 四个 TextView）
-    // ==================================================================
-
-    /** 接管过的锁屏时钟视图（弱引用）。 */
-    private static final java.util.Set<TextView> KEYGUARD_CLOCKS =
-            Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
-
-    /** 锁屏秒数相对主数字的字号比例（0.62：整排略缩一圈后，秒仍然清楚可读）。 */
-    private static final float KEYGUARD_SECONDS_RATIO = 0.62f;
-
-    /** 锁屏时钟各视图「系统原始字号」（首次接管时记下，用于整排等比缩小时还原 / 计算）。 */
-    private static final Map<TextView, Float> KEYGUARD_BASE_TS =
-            Collections.synchronizedMap(new WeakHashMap<TextView, Float>());
-
-    /** 是否是锁屏大时钟的四个视图之一（ColorOS：com.oplus.keyguard.clock.base:id/…）。 */
-    private static boolean isKeyguardClock(TextView view) {
-        String name = resourceName(view);
-        return "clock_time_minutes_txt".equals(name)
-                || "clock_time_hour_first_txt".equals(name)
-                || "clock_time_hour_second_txt".equals(name)
-                || "clock_time_symbol_text".equals(name);
-    }
-
-    /** 锁屏「分」视图：秒要追加在它后面。 */
-    private static boolean isKeyguardMinutes(TextView view) {
-        return view != null && "clock_time_minutes_txt".equals(resourceName(view));
-    }
-
-    /**
-     * 锁屏时钟是否真的在显示：解锁后 / 熄屏 AOD 时都不接管。
-     *
-     * <p>AOD（息屏显示）用的是同一套资源名的另一份布局 —— 在 AOD 上每秒刷新既有烧屏风险、
-     * 也没意义，所以用 {@link #isInteractive} 直接排除。</p>
-     */
-    private static boolean isLiveKeyguardClock(TextView view) {
-        try {
-            return view != null && view.isShown() && view.isAttachedToWindow()
-                    && view.getWidth() > 0 && view.getHeight() > 0
-                    && isInteractive(view.getContext());
-        } catch (Throwable t) {
-            return false;
-        }
-    }
-
-    /** 存活且已接管的锁屏时钟视图。 */
-    private static List<TextView> liveKeyguardClocks() {
-        List<TextView> out = new ArrayList<>();
-        synchronized (KEYGUARD_CLOCKS) {
-            for (TextView v : new ArrayList<>(KEYGUARD_CLOCKS)) {
-                try {
-                    if (isClockEnabled(v) && isLiveKeyguardClock(v)) {
-                        out.add(v);
-                    }
-                } catch (Throwable ignored) {
-                    // 单个实例异常不影响其它
-                }
-            }
-        }
-        return out;
-    }
-
-    /**
-     * 锁屏整排时钟放不下 {@code HH:mm:ss} 时，把四个视图一起等比缩小。
-     *
-     * <p>ColorOS 的锁屏大时钟是「时十 / 时个 / 冒号 / 分」四个 TextView 拼一行，整行宽度已经被
-     * 系统算满（实测 876px，字号 289px）：只追加秒而不缩字号 → 要么换行、要么把秒压到 0.2 倍
-     * （实测秒只有 44px 高，看不清）。所以这里按「HH:mm:ss 需要多宽」反算一个整排缩放系数，
-     * 四个视图一起缩，秒再按 0.5 倍——整体略小一圈，但秒清楚可读。</p>
-     */
-    private static void fitKeyguardRow(TextView minutes) {
-        if (!(minutes.getParent() instanceof android.view.ViewGroup)) {
-            return;
-        }
-        android.view.ViewGroup row = (android.view.ViewGroup) minutes.getParent();
-        int avail = row.getWidth() - row.getPaddingLeft() - row.getPaddingRight();
-        if (avail <= 0) {
-            return;
-        }
-        Float cached = KEYGUARD_BASE_TS.get(minutes);
-        float base = cached != null ? cached : minutes.getTextSize();
-        if (base <= 0f) {
-            return;
-        }
-        KEYGUARD_BASE_TS.put(minutes, base);
-        android.text.TextPaint tp = new android.text.TextPaint(minutes.getPaint());
-        tp.setTextSize(base);
-        // 整排 = 时十 + 时个 + 冒号 + 「分 + 0.5 倍秒」
-        float digits = tp.measureText("88");
-        float colon = tp.measureText(":");
-        float need = digits + colon + digits + KEYGUARD_SECONDS_RATIO * (colon + digits);
-        float factor = need > avail ? Math.max(0.55f, avail / need) : 1f;
-        float target = Math.max(1f, Math.round(base * factor));
-        for (int i = 0; i < row.getChildCount(); i++) {
-            android.view.View child = row.getChildAt(i);
-            if (!(child instanceof TextView) || !isKeyguardClock((TextView) child)) {
-                continue;
-            }
-            TextView tv = (TextView) child;
-            Float b = KEYGUARD_BASE_TS.get(tv);
-            if (b == null) {
-                b = tv.getTextSize();
-                KEYGUARD_BASE_TS.put(tv, b);
-            }
-            float want = Math.max(1f, Math.round(b * factor));
-            if (Math.abs(tv.getTextSize() - want) > 1f) {
-                tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, want);
-            }
-        }
-        if (BuildConfig.DEBUG) {
-            XposedBridge.log(LOG_PREFIX + "KG fit avail=" + avail + " base=" + Math.round(base)
-                    + " need=" + Math.round(need) + " factor=" + factor
-                    + " target=" + Math.round(target));
-        }
-    }
-
-    /**
-     * 给锁屏「分」视图追加 {@code :ss}。
-     *
-     * <p>秒用 0.5 倍字号：锁屏大时钟字号接近 330px，同尺寸的秒会把整排撑爆；缩小后既跟状态栏
-     * 逐位配色一致，也不会把「星期六 / 日期」挤走。</p>
-     */
-    private static void writeKeyguardClock(TextView view) {
-        CharSequence base = BASE_TEXT.get(view);
-        if (base == null) {
-            base = view.getText();
-        }
-        String digits = digitsOf(base);
-        // 只取「分」两位：系统给的是 "41"；若被别的模块写成 "41:37" 也只取前两位。
-        if (digits.length() > 2) {
-            digits = digits.substring(0, 2);
-        }
-        String mm = digits.length() == 1 ? "0" + digits : digits;
-        int second = (int) ((System.currentTimeMillis() / 1000) % 60);
-        String text = mm + String.format(Locale.US, ":%02d", second);
-        // 整排宽度已被系统占满：先按「HH:mm:ss 需要多宽」把四个视图一起等比缩小，
-        // 再让秒按 0.5 倍追加（否则秒会被压到不可读的 0.2 倍）。
-        fitKeyguardRow(view);
-        // 等宽数字：秒每秒变化，若数字字宽不等（"1" 比 "8" 窄），整排 wrap_content 会每秒
-        // 重新量宽 → 锁屏时钟左右抖动（vc269 实测两帧差分覆盖整排 889x199）。tnum 后秒区稳定。
-        if (!"tnum".equals(view.getFontFeatureSettings())) {
-            view.setFontFeatureSettings("tnum");
-        }
-        // 秒的缩放比例按「整排还剩多少横向空间」反算（不能用「分」视图自身宽度：
-        // 它是 wrap_content，宽度会随我们写的文本一起变，用它会算出错误的预算 —— vc268 实测
-        // 就会一路缩到 0.2 倍、秒只有 44px 高）。
-        float scale = 0.5f;
-        try {
-            if (view.getParent() instanceof android.view.ViewGroup) {
-                android.view.ViewGroup row = (android.view.ViewGroup) view.getParent();
-                float rowAvail = row.getWidth() - row.getPaddingLeft() - row.getPaddingRight();
-                android.text.TextPaint tp = new android.text.TextPaint(view.getPaint());
-                tp.setTextSize(view.getTextSize());
-                float hours = tp.measureText("88") + tp.measureText(":");
-                float mmPart = tp.measureText(mm + ":");
-                float room = rowAvail - hours - mmPart;
-                float wSec = tp.measureText("00");
-                if (rowAvail > 0f && wSec > 0f) {
-                    scale = Math.max(0.36f, Math.min(KEYGUARD_SECONDS_RATIO, room / wSec));
-                }
-            }
-        } catch (Throwable ignored) {
-            // 取不到父容器就按 0.5 倍写
-        }
-        SpannableStringBuilder sb = new SpannableStringBuilder(text);
-        sb.setSpan(new android.text.style.RelativeSizeSpan(scale),
-                mm.length(), text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (!sForceRewrite && TextUtils.equals(view.getText(), sb)) {
-            return;
-        }
-        WRITING_CLOCK.set(true);
-        try {
-            view.setText(sb);
-        } finally {
-            WRITING_CLOCK.set(false);
-        }
-    }
-
-    /** 取字符串里的全部数字（"41:37" → "4137"）。 */
-    private static String digitsOf(CharSequence cs) {
-        StringBuilder b = new StringBuilder();
-        if (cs != null) {
-            for (int i = 0; i < cs.length(); i++) {
-                char c = cs.charAt(i);
-                if (Character.isDigit(c)) {
-                    b.append(c);
-                }
-            }
-        }
-        return b.toString();
-    }
-
-    /** 关闭「锁屏时间跟随状态栏」：停 ticker 并把四个视图恢复成系统原样。 */
-    private static void disableKeyguardClocks() {
-        List<TextView> targets;
-        synchronized (KEYGUARD_CLOCKS) {
-            targets = new ArrayList<>(KEYGUARD_CLOCKS);
-        }
-        for (TextView v : targets) {
-            try {
-                stopTicker(v);
-                // 还原整排字号（我们把四个视图一起缩过）。
-                Float ts = KEYGUARD_BASE_TS.get(v);
-                if (ts != null && Math.abs(v.getTextSize() - ts) > 1f) {
-                    v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, ts);
-                }
-                CharSequence base = BASE_TEXT.get(v);
-                if (base != null && !TextUtils.equals(v.getText(), base)) {
-                    WRITING_CLOCK.set(true);
-                    try {
-                        v.setText(base);
-                    } finally {
-                        WRITING_CLOCK.set(false);
-                    }
-                }
-            } catch (Throwable t) {
-                noteHookError(t);
-            }
-        }
-        synchronized (KEYGUARD_CLOCKS) {
-            KEYGUARD_CLOCKS.clear();
-        }
-    }
-
     /** 递增序号：保证「延迟补写」只对最后一次切换生效（用户快速连点时不会把旧状态写回去）。 */
     private static volatile int sApplySeq;
 
@@ -1202,32 +948,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         List<TextView> clocks = new ArrayList<>(liveStatusBarClocks());
         clocks.addAll(liveQsClocks());
         boolean on = secondsOn();
-        // 锁屏时钟：显秒切换后立刻跟随 —— 开 → 「分」视图重挂 ticker 写 mm:ss；
-        // 关 → 停 ticker 并把文本还原成系统原样（颜色改不了、也没有可保留的东西），
-        // 否则要等系统下一次 setText（最长一分钟）秒数才消失。
-        for (TextView kv : liveKeyguardClocks()) {
-            try {
-                if (isKeyguardMinutes(kv)) {
-                    if (on) {
-                        restartTicker(kv);
-                        writeKeyguardClock(kv);
-                    } else {
-                        stopTicker(kv);
-                        CharSequence base = BASE_TEXT.get(kv);
-                        if (base != null && !TextUtils.equals(kv.getText(), base)) {
-                            WRITING_CLOCK.set(true);
-                            try {
-                                kv.setText(base);
-                            } finally {
-                                WRITING_CLOCK.set(false);
-                            }
-                        }
-                    }
-                }
-            } catch (Throwable t) {
-                noteHookError(t);
-            }
-        }
         if (!clocks.isEmpty()) {
             for (TextView v : clocks) {
                 try {
@@ -2361,7 +2081,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 通知栏时钟开关也在这里读一次：面板时钟的 setText 分支早于 configureClockView，
             // 必须在第一帧之前就知道开关状态（否则要等用户动一次颜色才生效）。
             sQsClockOn = ClockSecondsConfig.isQsClockEnabled(context.getContentResolver());
-            sKeyguardClockOn = ClockSecondsConfig.isKeyguardClockEnabled(context.getContentResolver());
             // ColorOS 17：让系统原生显秒开关跟随本模块状态（非 ColorOS 17 时内部直接返回）。
             mirrorNativeSeconds(context.getContentResolver(), sSecondsEnabled);
             // 任务窗口决定「此刻到底显不显秒」，状态加载时一并算出来。
@@ -2717,7 +2436,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             sGradientEnd = ClockSecondsConfig.getGradientEndColor(ctx.getContentResolver());
             // 通知栏时钟开关同样缓存：面板每次 setText 都要判断，不能在那里打 binder。
             sQsClockOn = ClockSecondsConfig.isQsClockEnabled(ctx.getContentResolver());
-            sKeyguardClockOn = ClockSecondsConfig.isKeyguardClockEnabled(ctx.getContentResolver());
         } catch (Throwable ignored) {
             // 读取失败保持上一次值，不影响上色。
         }
@@ -3219,13 +2937,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 下拉面板时钟（qs_footer_clock / oplus_qs_clock）也走这里：
         // isStatusBarClock 对它们是 false（当年为防抢 sClockView 而排除），只放行状态栏会让
         // 面板时钟「装了 ticker 却永远不写秒」——vc257/vc258 实测就是这个原因没生效。
-        if (isKeyguardMinutes(view)) {
-            // 锁屏大时钟的「分」视图：文本是 mm:ss，不能走 writeTime（它按 HH:mm 期望 base）。
-            if (sKeyguardClockOn && isClockEnabled(view) && secondsOn()) {
-                writeKeyguardClock(view);
-            }
-            return;
-        }
         if ((isStatusBarClock(view) || isQsClock(view)) && isClockEnabled(view) && secondsOn()) {
             writeTime(view);
         }
@@ -3437,13 +3148,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // 下拉面板时钟：面板一收起就停掉本 ticker（否则会在不可见的视图上永久每秒 setText）。
             // 下次展开时由 setText / onDraw 钩子重新接管。
             if (isQsClock(view) && !isLiveQsClock(view)) {
-                synchronized (ACTIVE) {
-                    ACTIVE.remove(view);
-                }
-                return;
-            }
-            // 锁屏时钟：解锁后 / AOD 时停掉（下次锁屏由 setText / onDraw 重新接管）。
-            if (isKeyguardClock(view) && !isLiveKeyguardClock(view)) {
                 synchronized (ACTIVE) {
                     ACTIVE.remove(view);
                 }
@@ -3841,7 +3545,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_MARK);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_QS_CLOCK);
-        filter.addAction(ClockSecondsConfig.ACTION_SET_KEYGUARD_CLOCK);
         filter.addAction(ClockSecondsConfig.ACTION_SET_TASKS);
         filter.addAction(ClockSecondsConfig.ACTION_SET_TOAST_TEXT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GESTURE);
@@ -3916,19 +3619,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.GRADIENT_COLOR_AUTO));
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
-                            } else if (ClockSecondsConfig.ACTION_SET_KEYGUARD_CLOCK.equals(action)) {
-                                // 锁屏时间开关：开启后锁屏大时钟与状态栏完全一致
-                                // （秒追加在「分」后面 + 同款颜色 / 渐变）；关闭时恢复系统原样。
-                                boolean kgOn = intent.getIntExtra(
-                                        ClockSecondsConfig.EXTRA_ENABLED, 0) == 1;
-                                ClockSecondsConfig.setKeyguardClockEnabled(cr, kgOn);
-                                sKeyguardClockOn = kgOn;
-                                if (!kgOn) {
-                                    disableKeyguardClocks();
-                                } else {
-                                    reloadDigitColors(ctx);
-                                    refreshClockNow();
-                                }
                             } else if (ClockSecondsConfig.ACTION_SET_QS_CLOCK.equals(action)) {
                                 // 通知栏（下拉面板）时间开关：开启后面板时间与状态栏完全一致
                                 // （显秒 + 同款颜色 / 渐变）；关闭时把手里面板时钟恢复成系统原样。

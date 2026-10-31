@@ -143,6 +143,4 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_mark_periods">Madrugada,Mañana temprano,Mañana,Mediodía,Tarde,Noche,Medianoche</string>
     <string name="settings_qs_clock_title">Segundos en el panel</string>
     <string name="settings_qs_clock_desc">Igual que el reloj de la barra de estado</string>
-    <string name="settings_keyguard_clock_title">Segundos en la pantalla de bloqueo</string>
-    <string name="settings_keyguard_clock_desc">Igual que el reloj de la barra de estado</string>
 </resources>

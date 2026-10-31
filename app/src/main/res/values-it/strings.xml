@@ -143,6 +143,4 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_mark_periods">Notte,Prima mattina,Mattina,Mezzogiorno,Pomeriggio,Sera,Notte fonda</string>
     <string name="settings_qs_clock_title">Secondi nel pannello notifiche</string>
     <string name="settings_qs_clock_desc">Come l’orologio della barra di stato</string>
-    <string name="settings_keyguard_clock_title">Secondi nella schermata di blocco</string>
-    <string name="settings_keyguard_clock_desc">Come l’orologio della barra di stato</string>
 </resources>

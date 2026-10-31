@@ -143,6 +143,4 @@
     <string name="settings_mark_periods">شب,سپیده‌دم,صبح,ظهر,بعدازظهر,عصر,نیمه‌شب</string>
     <string name="settings_qs_clock_title">ثانیه‌های پنل اعلان‌ها</string>
     <string name="settings_qs_clock_desc">مانند ساعت نوار وضعیت</string>
-    <string name="settings_keyguard_clock_title">ثانیه‌های صفحه قفل</string>
-    <string name="settings_keyguard_clock_desc">مانند ساعت نوار وضعیت</string>
 </resources>

@@ -194,8 +194,6 @@ public final class ModuleSettingsActivity extends Activity {
     /** 「通知栏时间显秒」开关与其配置缓存（默认关闭）。 */
     private Switch mQsClockSwitch;
     private boolean mCfgQsClockOn;
-    private Switch mKeyguardClockSwitch;
-    private boolean mCfgKeyguardClockOn;
     private TextView mMarkSummary;
     private LinearLayout mMarkCard;
     // 调试开关（仅 DEBUG 包）：切换预览文字的渲染路径，用于定位「ColorOS 15 预览渐变按字形跳变」。
@@ -742,7 +740,6 @@ public final class ModuleSettingsActivity extends Activity {
         buildStatsRow(root);
         buildColorCard(root);
         buildQsClockCard(root);
-        buildKeyguardClockCard(root);
         buildMarkCard(root);
         // 时钟探测（测试）与诊断与工具两张卡片仅用于排查问题，留 debug/probe 版；发布版不需要。
         if (BuildConfig.DEBUG) {
@@ -1742,68 +1739,6 @@ public final class ModuleSettingsActivity extends Activity {
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_QS_CLOCK)
                 .putExtra(ClockSecondsConfig.EXTRA_ENABLED, on ? 1 : 0);
         applyConfig(ClockSecondsConfig.QS_CLOCK_ENABLED_KEY, on ? 1 : 0, intent, ok -> {
-            if (!ok) {
-                toastWriteFailed();
-            }
-        });
-    }
-
-    /**
-     * 「锁屏时间显秒」卡片：默认关闭，紧跟在通知栏卡片下面。
-     *
-     * <p>ColorOS 的锁屏大时钟是「时十 / 时个 / 冒号 / 分」四个 TextView，模块接管的是这四个视图；
-     * 这里只提供开关，识别与上色全在 SystemUI 侧完成。</p>
-     */
-    private void buildKeyguardClockCard(LinearLayout root) {
-        mCfgKeyguardClockOn = ClockSecondsConfig.isKeyguardClockEnabled(getContentResolver());
-
-        LinearLayout card = card();
-        card.setPadding(dp(18), dp(16), dp(18), dp(16));
-
-        LinearLayout titleRow = new LinearLayout(this);
-        titleRow.setOrientation(LinearLayout.HORIZONTAL);
-        titleRow.setGravity(Gravity.CENTER_VERTICAL);
-
-        TextView title = new TextView(this);
-        title.setText(R.string.settings_keyguard_clock_title);
-        title.setTextSize(15f);
-        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        title.setTextColor(text());
-        titleRow.addView(title);
-
-        View spacer = new View(this);
-        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
-        titleRow.addView(spacer);
-
-        mKeyguardClockSwitch = new Switch(this);
-        mKeyguardClockSwitch.setChecked(mCfgKeyguardClockOn);
-        styleSwitch(mKeyguardClockSwitch);
-        mKeyguardClockSwitch.setOnCheckedChangeListener((button, checked) -> {
-            mCfgKeyguardClockOn = checked;
-            applyKeyguardClockConfig();
-        });
-        titleRow.addView(mKeyguardClockSwitch);
-        card.addView(titleRow);
-
-        TextView desc = new TextView(this);
-        desc.setText(R.string.settings_keyguard_clock_desc);
-        desc.setTextSize(11f);
-        desc.setTextColor(text2());
-        desc.setPadding(0, dp(6), 0, 0);
-        card.addView(desc);
-
-        // 卡片本体没有别的可点区域：点一下卡片就切开关（与右侧开关等价）。
-        card.setOnClickListener(v -> mKeyguardClockSwitch.setChecked(!mKeyguardClockSwitch.isChecked()));
-
-        root.addView(card);
-    }
-
-    /** 写入「锁屏时间跟随状态栏」开关（同样走广播由 SystemUI 代写 Secure）。 */
-    private void applyKeyguardClockConfig() {
-        final boolean on = mCfgKeyguardClockOn;
-        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_KEYGUARD_CLOCK)
-                .putExtra(ClockSecondsConfig.EXTRA_ENABLED, on ? 1 : 0);
-        applyConfig(ClockSecondsConfig.KEYGUARD_CLOCK_ENABLED_KEY, on ? 1 : 0, intent, ok -> {
             if (!ok) {
                 toastWriteFailed();
             }

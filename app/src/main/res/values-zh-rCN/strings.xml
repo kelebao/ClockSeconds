@@ -144,6 +144,4 @@
     <string name="settings_mark_periods">凌晨,早上,上午,中午,下午,晚上,深夜</string>
     <string name="settings_qs_clock_title">通知栏时间显秒</string>
     <string name="settings_qs_clock_desc">功能跟随状态栏时间状态一样</string>
-    <string name="settings_keyguard_clock_title">锁屏时间显秒</string>
-    <string name="settings_keyguard_clock_desc">功能跟随状态栏时间状态一样（颜色跟随壁纸，系统限制改不了）</string>
 </resources>
