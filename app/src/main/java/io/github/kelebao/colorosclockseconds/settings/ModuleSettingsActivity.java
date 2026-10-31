@@ -5279,41 +5279,42 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     /** 任务行/编辑器共用的配色预览：六位数字色小圆点（跟随系统画空心圈）+ 渐变端点小胶囊。 */
-    private View buildScheduleSwatchRow(int[] colors, int gradStart, int gradEnd) {
+    private View buildScheduleSwatchRow(int[][] schemes, int gradStart, int gradEnd) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, dp(8), 0, 0);
-        if (colors != null) {
-            for (int i = 0; i < colors.length; i++) {
-                View dot = new View(this);
-                GradientDrawable dg = new GradientDrawable();
-                dg.setShape(GradientDrawable.OVAL);
-                if (colors[i] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-                    dg.setColor(night ? 0x33FFFFFF : 0x22000000);
-                    dg.setStroke(dp(1), text2());
-                } else {
-                    dg.setColor(colors[i]);
+        boolean any = false;
+        if (schemes != null && schemes.length > 0) {
+            for (int i = 0; i < schemes.length; i++) {
+                int[] one = schemes[i];
+                if (one == null || one.length < 2) {
+                    continue;
                 }
-                dot.setBackground(dg);
-                LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(14), dp(14));
-                dlp.rightMargin = dp(5);
-                row.addView(dot, dlp);
+                View grad = new View(this);
+                GradientDrawable gg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                        new int[]{one[0], one[one.length - 1]});
+                gg.setCornerRadius(dp(999));
+                grad.setBackground(gg);
+                LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(dp(40), dp(14));
+                if (i > 0) {
+                    glp.leftMargin = dp(6);
+                }
+                row.addView(grad, glp);
+                any = true;
             }
         }
-        if (gradStart != ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                || gradEnd != ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
+        if (!any && (gradStart != ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                || gradEnd != ClockSecondsConfig.GRADIENT_COLOR_AUTO)) {
             View grad = new View(this);
             GradientDrawable gg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
                     new int[]{gradStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
                             ? 0xFF888888 : gradStart,
                             gradEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                            ? 0xFF888888 : gradEnd});
+                                    ? 0xFF888888 : gradEnd});
             gg.setCornerRadius(dp(999));
             grad.setBackground(gg);
-            LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(dp(40), dp(14));
-            glp.leftMargin = dp(8);
-            row.addView(grad, glp);
+            row.addView(grad, new LinearLayout.LayoutParams(dp(40), dp(14)));
         }
         return row;
     }
@@ -5527,7 +5528,7 @@ public final class ModuleSettingsActivity extends Activity {
         sum.setPadding(0, dp(4), 0, 0);
         rowView.addView(sum);
         if (task.action == ClockTask.ACTION_COLOR) {
-            rowView.addView(buildScheduleSwatchRow(task.colors, task.gradStart, task.gradEnd));
+            rowView.addView(buildScheduleSwatchRow(task.schemes, task.gradStart, task.gradEnd));
         }
         rowView.setOnClickListener(v -> openTaskEditor(task));
         return rowView;
@@ -5817,15 +5818,39 @@ public final class ModuleSettingsActivity extends Activity {
         colorArea.addView(swatchRow);
         final Runnable renderSwatch = () -> {
             swatchRow.removeAllViews();
-            View bar = new View(this);
-            GradientDrawable sg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{edgeHolder[0], edgeHolder[1]});
-            sg.setCornerRadius(dp(10));
-            bar.setBackground(sg);
-            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
-            slp.topMargin = dp(8);
-            swatchRow.addView(bar, slp);
+            int[][] cur = schemesHolder[0];
+            boolean drew = false;
+            if (cur != null && cur.length > 0) {
+                for (int i = 0; i < cur.length; i++) {
+                    int[] one = cur[i];
+                    if (one == null || one.length < 2) {
+                        continue;
+                    }
+                    View bar = new View(this);
+                    GradientDrawable sg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                            new int[]{one[0], one[one.length - 1]});
+                    sg.setCornerRadius(dp(10));
+                    bar.setBackground(sg);
+                    LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, dp(36), 1f);
+                    if (i > 0) {
+                        slp.leftMargin = dp(6);
+                    }
+                    slp.topMargin = dp(8);
+                    swatchRow.addView(bar, slp);
+                    drew = true;
+                }
+            }
+            if (!drew) {
+                View bar = new View(this);
+                GradientDrawable sg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                        new int[]{edgeHolder[0], edgeHolder[1]});
+                sg.setCornerRadius(dp(10));
+                bar.setBackground(sg);
+                LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
+                slp.topMargin = dp(8);
+                swatchRow.addView(bar, slp);
+            }
         };
         renderSwatch.run();
         final Runnable openPicker = () -> {
@@ -5874,13 +5899,53 @@ public final class ModuleSettingsActivity extends Activity {
                 presets.add(p0);
             }
             presets.addAll(loadCustomGradPresets());
+            // 把任务里已存、但不在预设列表中的方案补进来，保证重开时全部可见可保留
+            int[][] existSc = schemesHolder[0];
+            if (existSc != null) {
+                for (int[] one : existSc) {
+                    if (one == null || one.length < 2) {
+                        continue;
+                    }
+                    boolean found = false;
+                    for (int[] pv : presets) {
+                        if (pv[0] == one[0] && pv[1] == one[one.length - 1]) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        presets.add(new int[]{one[0], one[one.length - 1]});
+                    }
+                }
+            }
             final java.util.Set<Integer> selSet = new java.util.LinkedHashSet<>();
             final int[] previewIdx = {-1};
-            for (int i = 0; i < presets.size(); i++) {
-                if (presets.get(i)[0] == edgeHolder[0] && presets.get(i)[1] == edgeHolder[1]) {
-                    selSet.add(i);
-                    previewIdx[0] = i;
-                    break;
+            int[][] initSchemes = schemesHolder[0];
+            boolean matchedAny = false;
+            if (initSchemes != null && initSchemes.length > 0) {
+                for (int[] one : initSchemes) {
+                    if (one == null || one.length < 2) {
+                        continue;
+                    }
+                    for (int i = 0; i < presets.size(); i++) {
+                        if (presets.get(i)[0] == one[0] && presets.get(i)[1] == one[one.length - 1]) {
+                            selSet.add(i);
+                            if (previewIdx[0] < 0) {
+                                previewIdx[0] = i;
+                            }
+                            matchedAny = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!matchedAny) {
+                for (int i = 0; i < presets.size(); i++) {
+                    if (presets.get(i)[0] == edgeHolder[0] && presets.get(i)[1] == edgeHolder[1]) {
+                        selSet.add(i);
+                        previewIdx[0] = i;
+                        break;
+                    }
                 }
             }
             LinearLayout grid = new LinearLayout(this);
