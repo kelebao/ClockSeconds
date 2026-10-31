@@ -379,6 +379,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 ? param.args[0] : null);
                         // 抓凶探针 B：hook 时钟真实运行类的 setText（每类一次）。
                         maybeHookClockViewClass(view);
+                        // 生产版：在时钟类 setText(after) 里补色（澎湃3 掉色重补）。
+                        installClockClassReapplyHook(view);
                     }
                     // 自动检测：把任何正在显示时间格式、且非排除类的 TextView 收入候选池
                     // （同时登记到测试卡片清单，供设置页逐项勾选定位状态栏时钟）。
@@ -402,6 +404,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         logSpans(view, "after-system");
                     }
                     if (barClock) {
+                        // 澎湃3 兜底：系统 setText 后立即再补一次颜色，对抗 setText 层重建。
+                        forceReapplyColors(view);
                         // 只有状态栏时钟能成为 sClockView（长按热区 / 触摸切换都靠它）
                         configureClockView(view);
                     } else if (qsClock) {
@@ -483,6 +487,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                             }
                         }
                     }
+                    forceReapplyColors(view);
                 } catch (Throwable t) {
                     noteHookError(t);
                 }
@@ -2244,6 +2249,21 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } finally {
             WRITING_CLOCK.set(false);
         }
+        if (BuildConfig.DEBUG) {
+            // 澎湃3 排查：确认 setText 之后颜色 span 是否真的留在 View 上
+            CharSequence cur = view.getText();
+            android.text.Spanned st = (cur instanceof android.text.Spanned)
+                    ? (android.text.Spanned) cur : null;
+            int fcs = st == null ? -1 : st.getSpans(0, st.length(), ForegroundColorSpan.class).length;
+            int grad = st == null ? -1 : st.getSpans(0, st.length(), GradientTextSpan.class).length;
+            boolean spannable = cur instanceof android.text.Spannable;
+            XposedBridge.log(LOG_PREFIX + "WRITE-CHECK: gradientOn=" + sGradientOn
+                    + " hourColorOn=" + hourColorEnabled(view) + " secondsOn=" + secondsOn()
+                    + " fcs=" + fcs + " grad=" + grad
+                    + " bg=" + Integer.toHexString(view.getCurrentTextColor())
+                    + " spannable=" + spannable + " cls=" + view.getClass().getSimpleName()
+                    + " stored=[" + view.getText() + "]");
+        }
     }
 
     /**
@@ -2818,6 +2838,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final Set<Class<?>> HOOKED_CLOCK_CLASSES =
             Collections.synchronizedSet(new HashSet<Class<?>>());
 
+    /** 已挂过「掉色重补」生产钩子的时钟视图类（每类只挂一次，含生产版）。 */
+    private static final Set<Class<?>> REAPPLY_HOOKED_CLASSES =
+            Collections.synchronizedSet(new HashSet<Class<?>>());
+
     /**
      * 仅 DEBUG：抓凶探针 B（运行时版）——遇到状态栏时钟视图时，hook 它的**真实运行类**的
      * setText（每类一次），before/after 各打一行，看这个覆写方法「吃进什么、吐出什么」。
@@ -2828,6 +2852,38 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 探针覆盖）。与 SETTEXT-STRIP 配合分层定位：before 带色、after 没有 → 剥色在该覆写层
      * （或其 super 内）；before/after 都带色 → 剥色在更上层（PROBE caller 链点名）。</p>
      */
+    /** 每个时钟视图运行时类只挂一次：在其 setText(after) 里做「澎湃3 掉色重补」（生产版）。 */
+    private static void installClockClassReapplyHook(TextView view) {
+        try {
+            Class<?> clazz = view.getClass();
+            if (clazz == TextView.class) {
+                return;
+            }
+            if (!REAPPLY_HOOKED_CLASSES.add(clazz)) {
+                return;
+            }
+            XposedBridge.hookAllMethods(clazz, "setText", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    try {
+                        if (!(param.thisObject instanceof TextView)) {
+                            return;
+                        }
+                        if (WRITING_CLOCK.get()) {
+                            return;
+                        }
+                        forceReapplyColors((TextView) param.thisObject);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            });
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "reapply hook installed: " + clazz.getName());
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     private static void maybeHookClockViewClass(TextView view) {
         if (!BuildConfig.DEBUG) {
             return;
@@ -2974,6 +3030,122 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 }
             }
         });
+    }
+
+    // ==================================================================
+    // 澎湃OS3 / 非 ColorOS ROM 兜底（vc297）：系统 setText 之后把 CharSequence 重建为纯文本，
+    // getText() 立刻 not Spanned（日志 SPAN after-system ... n=0 恒定），我们的 FCS/渐变全部丢失。
+    // 对策：在系统 setText 的 after 钩子里，直接把颜色 Span 打到 view.getText() 这个实例上。
+    // 若返回的仍是非 Spanned、且是 Editable（TextView 内部 mText 为 SpannedString 时恒可 setSpan），
+    // 就再补一次 view.setText(带色 sb)，让 View 持有的实例带上 span。
+    // 全程 try/catch 兜底——绘制期/寄生钩子抛异常会崩 SystemUI。
+    // ==================================================================
+    /** 每视图上次通过 forceReapplyColors 触发重写的时刻（ms），用于 200ms 节流防抖。 */
+    private static final java.util.WeakHashMap<TextView, Long> LAST_FORCE = new java.util.WeakHashMap<>();
+
+    private static void forceReapplyColors(TextView view) {
+        try {
+            if (view == null || !isStatusBarClock(view) || !isClockEnabled(view)) {
+                return;
+            }
+            // 快速短路：颜色本来就还在（ColorOS 等不洗 span 的 ROM）→ 什么都不做，零开销。
+            // 只有真的掉色（澎湃3 系统把 CharSequence 重建为纯文本）才进入下面的重贴流程。
+            CharSequence cur0 = view.getText();
+            boolean colorsAlive = cur0 instanceof Spanned
+                    && ((Spanned) cur0).getSpans(0, cur0.length(), ForegroundColorSpan.class).length > 0;
+            if (sGradientOn && cur0 instanceof Spanned) {
+                colorsAlive = ((Spanned) cur0).getSpans(0, cur0.length(), GradientTextSpan.class).length > 0;
+            }
+            if (colorsAlive) {
+                return;
+            }
+            // 200ms 节流：onDraw 每帧都调，避免每帧重排/重写导致卡顿。8Hz 足够视觉保活。
+            Long last = LAST_FORCE.get(view);
+            long now = System.currentTimeMillis();
+            if (last != null && now - last < 200L) {
+                return;
+            }
+            LAST_FORCE.put(view, now);
+            if (!secondsOn()) {
+                applyRedToBaseText(view);
+                return;
+            }
+            CharSequence base = BASE_TEXT.get(view);
+            if (base == null) {
+                base = view.getText();
+            }
+            String hhmm = toHourMinute(base);
+            int second = (int) ((System.currentTimeMillis() / 1000) % 60);
+            String text = hhmm + String.format(Locale.US, ":%02d", second);
+            final int timeEnd = text.length();
+            if (!isQsClock(view)) {
+                text = appendMark(text, view.getContext());
+            }
+            if (!text.endsWith("\u200B")) {
+                text = text + "\u200B";
+            }
+            SpannableStringBuilder sb = new SpannableStringBuilder(text);
+            applyDigitColors(sb, view, timeEnd);
+            styleMark(sb, view, timeEnd);
+            // 首选：直接在 View 当前持有的文本实例上补 span（不触发任何监听/重排）。
+            boolean placed = trySpanExisting(view, sb);
+            if (!placed) {
+                // 兜底：当前文本实例不可写 → 重设一次带色文本（WRITING_CLOCK 防递归）。
+                WRITING_CLOCK.set(true);
+                try {
+                    view.setText(sb);
+                } finally {
+                    WRITING_CLOCK.set(false);
+                }
+            }
+
+        } catch (Throwable ignored) {
+            // 兜底绝不崩宿主
+        }
+    }
+
+    /** 尝试把 sb 上的颜色 span 复制到 view 当前文本实例（若是 Spannable/Editable）。 */
+    private static boolean trySpanExisting(TextView view, SpannableStringBuilder sb) {
+        try {
+            CharSequence cur = view.getText();
+            if (!(cur instanceof SpannableStringBuilder)
+                    && !(cur instanceof android.text.Spannable)) {
+                return false;
+            }
+            if (cur.length() != sb.length()) {
+                return false;
+            }
+            android.text.Spannable target = (android.text.Spannable) cur;
+            // 先清掉旧颜色 span，再按 sb 逐段复制，保证幂等。
+            ForegroundColorSpan[] old = target.getSpans(0, target.length(), ForegroundColorSpan.class);
+            for (ForegroundColorSpan fs : old) {
+                target.removeSpan(fs);
+            }
+            GradientTextSpan[] oldG = target.getSpans(0, target.length(), GradientTextSpan.class);
+            for (GradientTextSpan gs : oldG) {
+                target.removeSpan(gs);
+            }
+            ForegroundColorSpan[] src = sb.getSpans(0, sb.length(), ForegroundColorSpan.class);
+            for (ForegroundColorSpan fs : src) {
+                int st = sb.getSpanStart(fs);
+                int en = sb.getSpanEnd(fs);
+                if (st >= 0 && en <= target.length() && st < en) {
+                    target.setSpan(new ForegroundColorSpan(fs.getForegroundColor()), st, en,
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+            GradientTextSpan[] srcG = sb.getSpans(0, sb.length(), GradientTextSpan.class);
+            for (GradientTextSpan gs : srcG) {
+                int st = sb.getSpanStart(gs);
+                int en = sb.getSpanEnd(gs);
+                if (st >= 0 && en <= target.length() && st < en) {
+                    target.setSpan(gs, st, en, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+            return src.length > 0 || srcG.length > 0;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     private static void refreshClock(TextView view) {

@@ -6,6 +6,13 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc297 / vc298 / vc299 / vc300（澎湃OS3 掉色适配 + CPU 优化）
+
+- **澎湃OS3（HyperOS 3.0 / Android 16）掉色修复**：小米 ROM 在 `TextView.setText` 层把带色 `Spanned` 重建成纯文本（日志 `SPAN after-system ... (not Spanned)` / `n=0` 恒定），导致逐位取色与渐变全部丢失。新增 `forceReapplyColors()`：系统写完文本后，优先把颜色 Span 直接打到 `view.getText()` 的 `Spannable` 实例上（`trySpanExisting`，不触发重排），不可写时再 `setText(带色 sb)` 回落；并在应用 `setText` after 钩子与 `onDraw` before 钩子里调用。
+- **vc300 CPU 优化**：`forceReapplyColors` 开头加「颜色还在就立即短路」（`colorsAlive` 检查当前文本上是否已有 FCS/渐变 Span），健康 ROM（ColorOS）零额外开销，只有真被洗色的澎湃OS3 才进入重补流程。
+- **ColorOS16（Android 16 / SDK36）真机验证通过**：状态栏秒数跳动、绿→灰渐变、时段后缀（凌晨）随午夜切换正常；设置页预览/12 色预设/单色渐变切换/起止色选择齐全；`fcs=1 grad=1` 颜色稳定、`FATAL=0`、CPU ~0.15 核。
+- ⚠️ 澎湃OS3 真机尚未验证（需用户安装本版 APK 并回传新日志确认 span 是否存活）。
+
 ### vc294 / vc295（配色多方案显示修复）
 
 - **任务列表行预览**：「换配色」任务不再画六位单色小圆点（用户要求删除单色显示），改为按任务已存方案逐条渲染渐变胶囊——有几套画几套；旧任务无方案时回落为单条渐变。
