@@ -2,9 +2,19 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 271）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 278）— 时分秒逐位取色、预览卡展开取色
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
+
+### vc272 ~ vc278（锁屏时间：显秒保留，上色确认不可行后撤下）
+
+- **锁屏时间颜色实测上不了色（vc273 ~ vc277 逐层排除 + 最终判定）**：ColorOS 锁屏大时钟（四个 `CustomizedTextView`）的填充色被系统的「跟随壁纸」渲染接管，模块侧所有改色手段全部无效，均已实证——
+  - `ForegroundColorSpan` / `GradientTextSpan`（span 存进去了，像素不变）；
+  - `view.setTextColor()`（vc274，原色已记录、可还原，同样无效）；
+  - 在 `onDraw` 之后、乃至 hook 具体类 `CustomizedTextView.draw()` 之后，用同一 Layout 的位置与字体把文字按模块颜色**整段重描一遍**（vc275/vc276）；
+  - **终判实验（vc277）**：调试开关下在整个视图 bounds 上画一层 40% 透明红色矩形 —— 锁屏上**完全不可见**（red=0）。连半透明色块都被吞掉，说明该控件的绘制结果会被按壁纸取色重新着色，外部画上去的任何颜色都会被压平。
+- **结论与处理（vc278）**：锁屏时钟只保留「显秒」（分视图追加小号秒、整排等比缩小、等宽数字、AOD/解锁自动停，全部照旧工作）；颜色部分整体撤下——移除 `colorKeyguardOnly` / `colorKeyguardText` / `applyKeyguardViewColor` / `keyguardGradientSlice` / 画布重描与全部相关缓存、探针。显秒关闭时立即把「分」视图文本还原为系统原样（不再残留 `:ss`）。
+- 设置页「锁屏时间显秒」卡片描述补充说明：「颜色跟随壁纸，系统限制改不了」。
 
 ### vc263 ~ vc271（通知栏时间 / 锁屏时间各加一个开关）
 

@@ -410,27 +410,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         KEYGUARD_CLOCKS.add(view);
                     }
                     if (kgClock) {
-                        if (BuildConfig.DEBUG && !KEYGUARD_DUMPED.contains(view)) {
-                            KEYGUARD_DUMPED.add(view);
-                            try {
-                                android.view.View p = (android.view.View) view.getParent();
-                                XposedBridge.log(LOG_PREFIX + "KG view id=" + resourceName(view)
-                                        + " w=" + view.getWidth() + " h=" + view.getHeight()
-                                        + " ts=" + Math.round(view.getTextSize())
-                                        + " left=" + view.getLeft() + " pw=" + p.getWidth()
-                                        + " text=[" + view.getText() + "] cls=" + view.getClass().getName());
-                            } catch (Throwable ignored) {
-                                // 探针绝不影响主流程
-                            }
-                        }
-                        // 锁屏：只给「分」视图追加秒（时 / 冒号由系统每分钟自己更新，我们只上色）。
-                        if (isKeyguardMinutes(view)) {
-                            if (secondsOn()) {
-                                restartTicker(view);
-                                writeKeyguardClock(view);
-                            }
-                        } else if (secondsOn()) {
-                            colorKeyguardOnly(view);
+                        // 锁屏跟随状态栏：显秒开 = 「分」视图追加小号秒（时 / 冒号由系统自己更新）。
+                        // 显秒关 = 完全不接管 —— vc277 半透明矩形实验证实该控件的填充色被 ColorOS
+                        // 「跟随壁纸」渲染接管（span / setTextColor / canvas 覆盖全部无效），
+                        // 关秒后没有任何可做的事，保留系统原样即可。
+                        if (isKeyguardMinutes(view) && secondsOn()) {
+                            restartTicker(view);
+                            writeKeyguardClock(view);
                         }
                         return;
                     }
@@ -483,17 +469,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         }
                     } else if (sKeyguardClockOn && isKeyguardClock(view)) {
                         // 锁屏时钟：锁屏是「进入时系统才建视图」，第一帧往往不再 setText，
-                        // 所以在绘制时兜一次接管；ticker 已在跑时只做（节流过的）上色。
-                        if (isClockEnabled(view) && secondsOn() && isLiveKeyguardClock(view)) {
+                        // 所以在绘制时兜一次接管（仅显秒路径；颜色改不了，见 vc277 实验）。
+                        if (isClockEnabled(view) && isLiveKeyguardClock(view) && secondsOn()
+                                && isKeyguardMinutes(view) && !ACTIVE.containsKey(view)) {
                             KEYGUARD_CLOCKS.add(view);
-                            if (isKeyguardMinutes(view)) {
-                                if (!ACTIVE.containsKey(view)) {
-                                    installTicker(view);
-                                    writeKeyguardClock(view);
-                                }
-                            } else {
-                                colorKeyguardOnly(view);
-                            }
+                            installTicker(view);
+                            writeKeyguardClock(view);
                         }
                     } else if (sQsClockOn && isQsClock(view)) {
                         // 下拉面板时钟：面板展开时系统不一定会再 setText（文本没变），
@@ -981,14 +962,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static final Map<TextView, Float> KEYGUARD_BASE_TS =
             Collections.synchronizedMap(new WeakHashMap<TextView, Float>());
 
-    /** DEBUG 用：已 dump 过几何的锁屏视图（每个实例只打一次）。 */
-    private static final java.util.Set<TextView> KEYGUARD_DUMPED =
-            Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
-
-    /** 锁屏「时 / 冒号」视图的上色节流（这些视图系统每分钟才更新一次，不必每帧重建 span）。 */
-    private static final Map<TextView, Long> KEYGUARD_COLORED_AT =
-            Collections.synchronizedMap(new WeakHashMap<TextView, Long>());
-
     /** 是否是锁屏大时钟的四个视图之一（ColorOS：com.oplus.keyguard.clock.base:id/…）。 */
     private static boolean isKeyguardClock(TextView view) {
         String name = resourceName(view);
@@ -1141,7 +1114,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
         sb.setSpan(new android.text.style.RelativeSizeSpan(scale),
                 mm.length(), text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        colorKeyguardText(sb, view, new int[]{2, 3, 4, 5});
         if (!sForceRewrite && TextUtils.equals(view.getText(), sb)) {
             return;
         }
@@ -1151,162 +1123,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } finally {
             WRITING_CLOCK.set(false);
         }
-        if (BuildConfig.DEBUG) {
-            final String dbgText = text;
-            final float dbgScale = scale;
-            view.post(() -> {
-                try {
-                    android.text.Layout lay = view.getLayout();
-                    XposedBridge.log(LOG_PREFIX + "KG write=" + dbgText
-                            + " scale=" + dbgScale
-                            + " lines=" + (lay == null ? -1 : lay.getLineCount())
-                            + " vw=" + view.getWidth() + " grad=" + sGradientOn
-                            + " tw=" + Math.round(view.getPaint().measureText(dbgText)));
-                } catch (Throwable ignored) {
-                    // 探针绝不影响主流程
-                }
-            });
-        }
-    }
-
-    /** 用与 TextView 同参数的 StaticLayout 试排一次，判断这串文本能否排成单行。 */
-    private static boolean fitsOneLine(CharSequence cs, TextView view, float avail) {
-        try {
-            android.text.TextPaint tp = new android.text.TextPaint(view.getPaint());
-            android.text.StaticLayout sl = android.text.StaticLayout.Builder
-                    .obtain(cs, 0, cs.length(), tp, Math.max(1, (int) avail))
-                    .setIncludePad(false)
-                    .build();
-            return sl.getLineCount() <= 1;
-        } catch (Throwable t) {
-            return true;
-        }
-    }
-
-    /** 只上色、不改文本（锁屏的时 / 冒号视图由系统每分钟自己更新）。 */
-    private static void colorKeyguardOnly(TextView view) {
-        CharSequence cur = view.getText();
-        if (cur == null || cur.length() == 0) {
-            return;
-        }
-        long now = SystemClock.uptimeMillis();
-        Long last = KEYGUARD_COLORED_AT.get(view);
-        if (last != null && now - last < 900L) {
-            return;   // 刚上过色，节流（onDraw 每帧都会调到这里）
-        }
-        String name = resourceName(view);
-        int[] slots = "clock_time_hour_first_txt".equals(name) ? new int[]{0}
-                : "clock_time_hour_second_txt".equals(name) ? new int[]{1}
-                : new int[]{};
-        if (slots.length == 0 && !sGradientOn) {
-            return;   // 冒号视图：逐位模式下没有颜色可取；渐变模式仍然给它按位置取一段。
-        }
-        if (!"tnum".equals(view.getFontFeatureSettings())) {
-            view.setFontFeatureSettings("tnum");
-        }
-        SpannableStringBuilder sb = new SpannableStringBuilder(cur.toString());
-        colorKeyguardText(sb, view, slots);
-        KEYGUARD_COLORED_AT.put(view, now);
-        if (!sForceRewrite && keyguardColored(view, sb)) {
-            return;
-        }
-        WRITING_CLOCK.set(true);
-        try {
-            view.setText(sb);
-        } finally {
-            WRITING_CLOCK.set(false);
-        }
-    }
-
-    /**
-     * 「时 / 冒号」视图的文本内容每分钟才变一次，字符常常和我们刚写的完全一样 ——
-     * 所以这里不能只用 {@link TextUtils#equals}（它不比较 span），必须确认颜色 span 还在，
-     * 否则首次上色后再也进不来（vc265 实测「0」一直是系统灰）。
-     */
-    private static boolean keyguardColored(TextView view, SpannableStringBuilder target) {
-        CharSequence cur = view.getText();
-        if (!(cur instanceof Spanned) || !TextUtils.equals(cur, target)) {
-            return false;
-        }
-        Spanned sp = (Spanned) cur;
-        if (sGradientOn) {
-            return sp.getSpans(0, sp.length(), GradientTextSpan.class).length > 0;
-        }
-        int digits = 0;
-        for (int i = 0; i < sp.length(); i++) {
-            if (Character.isDigit(sp.charAt(i))) {
-                digits++;
-            }
-        }
-        if (digits == 0) {
-            return true;
-        }
-        return sp.getSpans(0, sp.length(), ForegroundColorSpan.class).length >= digits;
-    }
-
-    /**
-     * 锁屏视图上色：渐变模式下按「该视图在整排时钟里的横向位置」取渐变上的一小段
-     * （四个视图拼起来才是一条完整渐变）；逐位模式按 slot 取各自颜色。
-     */
-    private static void colorKeyguardText(SpannableStringBuilder sb, TextView view, int[] slots) {
-        int[] colors = digitColors(view);
-        if (sGradientOn) {
-            int[] slice = keyguardGradientSlice(view, sb, colors);
-            sb.setSpan(new GradientTextSpan(view, sb, slice[0], slice[1], 0f),
-                    0, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            return;
-        }
-        int k = 0;
-        for (int i = 0; i < sb.length(); i++) {
-            if (!Character.isDigit(sb.charAt(i))) {
-                continue;
-            }
-            int slot = k < slots.length ? slots[k] : -1;
-            k++;
-            if (slot < 0 || slot >= colors.length) {
-                continue;
-            }
-            int c = colors[slot];
-            if (c == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-                continue;
-            }
-            sb.setSpan(new ForegroundColorSpan(adaptColorForBackground(c, view.getCurrentTextColor())),
-                    i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-    }
-
-    /** 计算某个锁屏视图对应的一小段渐变（起止色按它在整排时钟里的左右位置插值）。 */
-    private static int[] keyguardGradientSlice(TextView view, CharSequence text, int[] colors) {
-        int cStart = sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                ? colors[0] : sGradientStart;
-        int cEnd = sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                ? colors[colors.length - 1] : sGradientEnd;
-        float t0 = 0f, t1 = 1f;
-        try {
-            android.view.ViewGroup parent = (android.view.ViewGroup) view.getParent();
-            int pw = parent.getWidth();
-            if (pw > 0) {
-                float tw = view.getPaint().measureText(text, 0, text.length());
-                t0 = Math.max(0f, Math.min(1f, view.getLeft() / (float) pw));
-                t1 = Math.max(t0, Math.min(1f, (view.getLeft() + tw) / (float) pw));
-            }
-        } catch (Throwable ignored) {
-            // 取不到父容器就退化成整条渐变（t0=0, t1=1）
-        }
-        return new int[]{
-                adaptColorForBackground(mixColor(cStart, cEnd, t0), view.getCurrentTextColor()),
-                adaptColorForBackground(mixColor(cStart, cEnd, t1), view.getCurrentTextColor())};
-    }
-
-    /** 两色线性插值（t=0 取 a，t=1 取 b）。 */
-    private static int mixColor(int a, int b, float t) {
-        float k = Math.max(0f, Math.min(1f, t));
-        int ar = (a >> 16) & 0xFF, ag = (a >> 8) & 0xFF, ab = a & 0xFF;
-        int br = (b >> 16) & 0xFF, bg = (b >> 8) & 0xFF, bb = b & 0xFF;
-        int r = Math.round(ar + (br - ar) * k);
-        int g = Math.round(ag + (bg - ag) * k);
-        int bl = Math.round(ab + (bb - ab) * k);
-        return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
     /** 取字符串里的全部数字（"41:37" → "4137"）。 */
@@ -1353,9 +1169,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         synchronized (KEYGUARD_CLOCKS) {
             KEYGUARD_CLOCKS.clear();
         }
-        synchronized (KEYGUARD_COLORED_AT) {
-            KEYGUARD_COLORED_AT.clear();
-        }
     }
 
     /** 递增序号：保证「延迟补写」只对最后一次切换生效（用户快速连点时不会把旧状态写回去）。 */
@@ -1389,6 +1202,32 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         List<TextView> clocks = new ArrayList<>(liveStatusBarClocks());
         clocks.addAll(liveQsClocks());
         boolean on = secondsOn();
+        // 锁屏时钟：显秒切换后立刻跟随 —— 开 → 「分」视图重挂 ticker 写 mm:ss；
+        // 关 → 停 ticker 并把文本还原成系统原样（颜色改不了、也没有可保留的东西），
+        // 否则要等系统下一次 setText（最长一分钟）秒数才消失。
+        for (TextView kv : liveKeyguardClocks()) {
+            try {
+                if (isKeyguardMinutes(kv)) {
+                    if (on) {
+                        restartTicker(kv);
+                        writeKeyguardClock(kv);
+                    } else {
+                        stopTicker(kv);
+                        CharSequence base = BASE_TEXT.get(kv);
+                        if (base != null && !TextUtils.equals(kv.getText(), base)) {
+                            WRITING_CLOCK.set(true);
+                            try {
+                                kv.setText(base);
+                            } finally {
+                                WRITING_CLOCK.set(false);
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                noteHookError(t);
+            }
+        }
         if (!clocks.isEmpty()) {
             for (TextView v : clocks) {
                 try {
