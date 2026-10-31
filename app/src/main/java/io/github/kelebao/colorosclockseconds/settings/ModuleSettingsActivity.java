@@ -748,15 +748,12 @@ public final class ModuleSettingsActivity extends Activity {
         buildPreviewCard(root);
         buildStatsRow(root);
         buildColorCard(root);
-        buildQsClockCard(root);
-        buildMarkCard(root);
+        buildDisplayCard(root);
         // 时钟探测（测试）与诊断与工具两张卡片仅用于排查问题，留 debug/probe 版；发布版不需要。
         if (BuildConfig.DEBUG) {
             buildClockTestCard(root);
             buildDiagnosticCard(root);
         }
-        buildAdvancedCard(root);
-        buildLauncherCard(root);
         buildUpdateCard(root);
         buildAboutCard(root);
         buildPrimaryButton(root);
@@ -1901,6 +1898,43 @@ public final class ModuleSettingsActivity extends Activity {
     // 通知栏（下拉面板）时间
     // ==================================================================
 
+    /** 「时间显示」合并卡：通知栏显秒 / 时间后缀 / 识别名 / 桌面图标 四个条目一张卡，虚线分隔。 */
+    private void buildDisplayCard(LinearLayout root) {
+        LinearLayout card = card();
+        card.setPadding(dp(18), dp(16), dp(18), dp(12));
+        buildQsClockSection(card);
+        card.addView(dashedDivider());
+        buildMarkSection(card);
+        card.addView(dashedDivider());
+        buildAdvancedSection(card);
+        card.addView(dashedDivider());
+        buildLauncherSection(card);
+        root.addView(card);
+    }
+
+    /** 条目之间的虚线分隔线（合并卡专用）：弱对比细虚线，上下自带留白。 */
+    private View dashedDivider() {
+        View line = new View(this) {
+            private final Paint mDivPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            @Override
+            protected void onDraw(Canvas canvas) {
+                mDivPaint.setStyle(Paint.Style.STROKE);
+                mDivPaint.setStrokeWidth(dp(1));
+                mDivPaint.setColor(night ? 0x2EFFFFFF : 0x14000000);
+                mDivPaint.setPathEffect(
+                        new android.graphics.DashPathEffect(new float[]{dp(4), dp(4)}, 0f));
+                float y = getHeight() / 2f;
+                canvas.drawLine(0f, y, getWidth(), y, mDivPaint);
+            }
+        };
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(2));
+        lp.topMargin = dp(13);
+        lp.bottomMargin = dp(13);
+        line.setLayoutParams(lp);
+        return line;
+    }
+
     /**
      * 「通知栏时间显秒」卡片：放在「数字颜色」卡下面，默认关闭。
      *
@@ -1908,11 +1942,8 @@ public final class ModuleSettingsActivity extends Activity {
      * 关闭时面板保持系统原样。面板时钟是另一个控件（ColorOS 上是 qs_footer_clock，控制中心是
      * oplus_qs_clock），所以必须单独给一个开关，不能跟状态栏开关绑死。</p>
      */
-    private void buildQsClockCard(LinearLayout root) {
+    private void buildQsClockSection(LinearLayout card) {
         mCfgQsClockOn = ClockSecondsConfig.isQsClockEnabled(getContentResolver());
-
-        LinearLayout card = card();
-        card.setPadding(dp(18), dp(16), dp(18), dp(16));
 
         LinearLayout titleRow = new LinearLayout(this);
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -1946,10 +1977,9 @@ public final class ModuleSettingsActivity extends Activity {
         desc.setPadding(0, dp(6), 0, 0);
         card.addView(desc);
 
-        // 卡片本体没有别的可点区域：点一下卡片就切开关（与右侧开关等价）。
-        card.setOnClickListener(v -> mQsClockSwitch.setChecked(!mQsClockSwitch.isChecked()));
-
-        root.addView(card);
+        // 合并卡里不能挂整卡点击（会误触其它条目）：点标题行 / 描述行切开关，与右侧开关等价。
+        titleRow.setOnClickListener(v -> mQsClockSwitch.setChecked(!mQsClockSwitch.isChecked()));
+        desc.setOnClickListener(v -> mQsClockSwitch.setChecked(!mQsClockSwitch.isChecked()));
     }
 
     /** 写入「通知栏时间跟随状态栏」开关（设置页无 WRITE_SECURE_SETTINGS，走广播由 SystemUI 代写）。 */
@@ -1977,14 +2007,10 @@ public final class ModuleSettingsActivity extends Activity {
      * 7 档时段是自定义措辞，本应用按当前语言把 CSV 推给模块 —— 模块跑在 SystemUI 进程里，
      * 读不到本应用的资源。</p>
      */
-    private void buildMarkCard(LinearLayout root) {
+    private void buildMarkSection(LinearLayout card) {
         mCfgMarkOn = ClockSecondsConfig.isMarkEnabled(getContentResolver());
         mCfgMarkMode = ClockSecondsConfig.getMarkMode(getContentResolver());
         mCfgMarkPeriods = ClockSecondsConfig.getMarkPeriodsCsv(getContentResolver());
-
-        LinearLayout card = card();
-        card.setPadding(dp(18), dp(16), dp(18), dp(16));
-        mMarkCard = card;
 
         LinearLayout titleRow = new LinearLayout(this);
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -2064,7 +2090,6 @@ public final class ModuleSettingsActivity extends Activity {
         card.addView(mMarkSummary);
 
         syncMarkCard();
-        root.addView(card);
     }
 
     /** 页签即开关：点「时段 / 周几」就等于要用后缀，选中并顺手打开总开关（重复点不重复写盘）。 */
@@ -4399,10 +4424,7 @@ public final class ModuleSettingsActivity extends Activity {
         }, 250L);
     }
 
-    private void buildAdvancedCard(LinearLayout root) {
-        LinearLayout card = card();
-        card.setPadding(dp(18), dp(16), dp(18), dp(16));
-
+    private void buildAdvancedSection(LinearLayout card) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -4446,7 +4468,6 @@ public final class ModuleSettingsActivity extends Activity {
         row.addView(btn);
 
         card.addView(row);
-        root.addView(card);
         refreshRuleSummary();
     }
 
@@ -4713,9 +4734,7 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     /** 卡片：桌面显示图标开关。 */
-    private void buildLauncherCard(LinearLayout root) {
-        LinearLayout card = card();
-
+    private void buildLauncherSection(LinearLayout card) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -4743,7 +4762,6 @@ public final class ModuleSettingsActivity extends Activity {
         styleSwitch(sw);
         row.addView(sw);
         card.addView(row);
-        root.addView(card);
 
         final boolean[] reverting = {false};
         sw.setOnCheckedChangeListener((v, checked) -> {
@@ -5587,7 +5605,7 @@ public final class ModuleSettingsActivity extends Activity {
         nameInput.setSingleLine(true);
         box.addView(nameInput);
 
-        // 触发方式：一排「整点」，二排「时间(每天)、7 天」；手动互斥。
+        // 触发方式：2×2 网格（整点|时间 / 每天|7 天）；手动互斥。
         // 旧「一次性」入口已按需求移除，ClockTask.TRIGGER_ONCE 引擎保留兼容历史数据；
         // 打开旧 once 任务按「时间」显示，保存时归为每天。
         box.addView(editorLabel(R.string.settings_task_trigger));
@@ -5598,6 +5616,8 @@ public final class ModuleSettingsActivity extends Activity {
         LinearLayout trigRow1 = new LinearLayout(this);
         trigRow1.setOrientation(LinearLayout.HORIZONTAL);
         trigRow1.addView(rbHourly, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        trigRow1.addView(rbOnce, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         box.addView(trigRow1);
         LinearLayout trigRow2 = new LinearLayout(this);
@@ -5610,14 +5630,6 @@ public final class ModuleSettingsActivity extends Activity {
         trigRow2.addView(rbWeekly, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         box.addView(trigRow2, trigRow2Lp);
-        LinearLayout trigRow3 = new LinearLayout(this);
-        trigRow3.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams trigRow3Lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        trigRow3Lp.topMargin = dp(2);
-        trigRow3.addView(rbOnce, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        box.addView(trigRow3, trigRow3Lp);
         final int[] mTriggerHolder = {draft.trigger};
         // 自定义时间（只有「自定义时间」时才显示）
         final LinearLayout timeRow = new LinearLayout(this);

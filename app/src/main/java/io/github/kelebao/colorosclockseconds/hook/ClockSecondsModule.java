@@ -2563,7 +2563,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 在时间文本后面追加后缀（关闭时原样返回）。 */
     private static String appendMark(CharSequence timeText, Context ctx) {
         String suffix = markSuffixText(ctx);
-        return suffix.isEmpty() ? timeText.toString() : timeText + suffix;
+        if (suffix.isEmpty()) {
+            return timeText.toString();
+        }
+        // 后缀与时间拉开一点距离（用户要求「单独放在时间旁边」）：空格会随 styleMark 的
+        // 0.62 缩小，三个空格 ≈ 一个半普通空格的视觉间隙。仍是同一段文字：零宽空格防护、
+        // 逐位颜色、渐变色带都以 timeEnd 为界，不受影响。
+        return timeText + "   " + suffix;
     }
 
     /**
