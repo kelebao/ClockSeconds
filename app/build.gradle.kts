@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.kelebao.colorosclockseconds"
         minSdk = 29
         targetSdk = 35
-        versionCode = 286
-        versionName = "1.2.0-test.20261031-1131"
+        versionCode = 290
+        versionName = "1.2.0-test.20261031-1400"
     }
 
     signingConfigs {
@@ -67,4 +67,5 @@ dependencies {
     compileOnly("de.robv.android.xposed:api:82")
     // 单元测试（纯函数测试，不依赖 Android 运行时）
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

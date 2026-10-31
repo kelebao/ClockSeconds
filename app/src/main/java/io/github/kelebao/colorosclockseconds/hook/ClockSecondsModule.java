@@ -154,6 +154,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             Collections.emptyList();
     /** 当前是否有任务窗口生效（vc250 起只剩「显秒」动作，「关闭显秒」已删除）。 */
     private static volatile boolean sTaskShow;
+    /** 应用任务配色需要 Context（reloadDigitColors/refreshClockNow），evaluateTasks 没有现成参数，自存一份。 */
+    private static volatile Context sAppContext;
+    /** 换配色任务当前窗口内已应用过的任务 id；离开窗口移除标记。SystemUI 重启后窗口内会重应用一次（值相同，无害）。 */
+    private static final java.util.HashSet<Long> sColorApplied = new java.util.HashSet<>();
     /** 「任务进行中」提示文案，由设置页按当前系统语言推送（模块自己的资源在 SystemUI 进程里取不到）。 */
     private static volatile String sToastTaskText;
     private static android.os.Handler sTaskHandler;
@@ -2994,6 +2998,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } catch (Throwable t) {
             sTasks = Collections.emptyList();
         }
+        sAppContext = context.getApplicationContext();
+        if (BuildConfig.DEBUG) {
+            XposedBridge.log(LOG_PREFIX + "tasks loaded=" + sTasks.size());
+        }
         evaluateTasks();
         publishEffectiveSeconds(context.getContentResolver());
     }
@@ -3023,8 +3031,36 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             long now = System.currentTimeMillis();
             boolean show = false;
             long next = Long.MAX_VALUE;
+            boolean scheduleDirty = false;
             for (io.github.kelebao.colorosclockseconds.ClockTask t : sTasks) {
                 if (t == null || !t.enabled) {
+                    continue;
+                }
+                if (t.action == io.github.kelebao.colorosclockseconds.ClockTask.ACTION_COLOR) {
+                    // 换配色任务：跨进窗口应用一次，出窗口摘标记；窗口内重启重应用一次（值相同，无害）。
+                    boolean inWin = t.windowContains(now);
+                    if (BuildConfig.DEBUG) {
+                        XposedBridge.log(LOG_PREFIX + "TASK eval id=" + t.id + " inWin=" + inWin);
+                    }
+                    boolean had = sColorApplied.contains(t.id);
+                    if (inWin && !had) {
+                        applyTaskColors(t);
+                        sColorApplied.add(t.id);
+                    } else if (!inWin && had) {
+                        sColorApplied.remove(t.id);
+                    }
+                    // 一次性任务：开始点一过就停用并回写，之后不再参与调度。
+                    if (t.trigger == io.github.kelebao.colorosclockseconds.ClockTask.TRIGGER_ONCE
+                            && now >= t.onceAt - t.advanceMin * 60_000L) {
+                        t.enabled = false;
+                        scheduleDirty = true;
+                    }
+                    // nextTransition 必须无条件并入 next：窗口外时它返回未来切换点；
+                    // 若只算窗口内，next 恒为 MAX → 不排 tick → 任务永远不被评估（实测踩坑）。
+                    long nt2 = t.nextTransition(now);
+                    if (nt2 < next) {
+                        next = nt2;
+                    }
                     continue;
                 }
                 if (t.windowContains(now)) {
@@ -3033,6 +3069,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 long nt = t.nextTransition(now);
                 if (nt < next) {
                     next = nt;
+                }
+            }
+            if (scheduleDirty) {
+                try {
+                    Context appCtx = sAppContext;
+                    if (appCtx != null) {
+                        ClockSecondsConfig.setTasksJson(appCtx.getContentResolver(),
+                                io.github.kelebao.colorosclockseconds.ClockTask.toJson(sTasks));
+                    }
+                } catch (Throwable t2) {
+                    noteHookError(t2);
                 }
             }
             boolean changed = show != sTaskShow;
@@ -3073,6 +3120,29 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             evaluateTasks();
         }
     };
+
+    /** 把换配色任务记录的配色写进 Secure 并刷新（六位数字色 + 渐变起止）。 */
+    private static void applyTaskColors(io.github.kelebao.colorosclockseconds.ClockTask t) {
+        Context ctx = sAppContext;
+        if (ctx == null || t == null || t.colors == null) {
+            return;
+        }
+        try {
+            ContentResolver cr = ctx.getContentResolver();
+            for (int i = 0; i < 6 && i < t.colors.length; i++) {
+                ClockSecondsConfig.setDigitColor(cr, i, t.colors[i]);
+            }
+            ClockSecondsConfig.setGradientEdgeColor(cr, true, t.gradStart);
+            ClockSecondsConfig.setGradientEdgeColor(cr, false, t.gradEnd);
+            reloadDigitColors(ctx);
+            refreshClockNow();
+            if (BuildConfig.DEBUG) {
+                XposedBridge.log(LOG_PREFIX + "TASK colors applied id=" + t.id);
+            }
+        } catch (Throwable tr) {
+            noteHookError(tr);
+        }
+    }
 
     /** 任务把显秒翻了个面：按新状态重写时钟文本并同步 ticker。 */
     private static void applyTaskState() {
@@ -3643,6 +3713,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_TASKS.equals(action)) {
+                                if (BuildConfig.DEBUG) {
+                                    XposedBridge.log(LOG_PREFIX + "SET_TASKS rcvd len="
+                                            + String.valueOf(intent.getStringExtra(ClockSecondsConfig.EXTRA_TASKS) == null
+                                            ? -1 : intent.getStringExtra(ClockSecondsConfig.EXTRA_TASKS).length()));
+                                }
                                 // 自定义任务整份覆盖写：设置页每次改动都发全量列表，这里直接落盘再重算窗口。
                                 ClockSecondsConfig.setTasksJson(cr, intent.getStringExtra(
                                         ClockSecondsConfig.EXTRA_TASKS));

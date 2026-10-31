@@ -150,4 +150,14 @@
     <string name="settings_gradient_saved">已儲存目前漸層</string>
     <string name="settings_gradient_deleted">已刪除自訂漸層</string>
     <string name="settings_gradient_full">自訂預設已滿，長按膠囊可刪除</string>
+    <string name="settings_schedule_time">Time</string>
+    <string name="settings_schedule_capture">Capture current colors</string>
+    <string name="settings_schedule_capture_hint">Saves the current digit and gradient colors into this entry</string>
+    <string name="task_when_weekly">Every week on %1$s at %2$s</string>
+    <string name="task_when_once">On %1$s at %2$s</string>
+    <string name="task_fmt_color">%1$s - switch to saved colors</string>
+    <string name="settings_task_trigger_weekly">Every 7 days</string>
+    <string name="settings_task_trigger_once">Custom date &amp; time</string>
+    <string name="settings_task_action_color">Switch colors</string>
+    <string name="settings_task_date">Date (MM/DD)</string>
 </resources>

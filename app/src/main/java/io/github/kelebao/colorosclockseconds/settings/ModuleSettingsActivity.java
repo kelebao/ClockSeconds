@@ -74,6 +74,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.Map;
 
@@ -5277,6 +5278,45 @@ public final class ModuleSettingsActivity extends Activity {
         return bar;
     }
 
+    /** 任务行/编辑器共用的配色预览：六位数字色小圆点（跟随系统画空心圈）+ 渐变端点小胶囊。 */
+    private View buildScheduleSwatchRow(int[] colors, int gradStart, int gradEnd) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(8), 0, 0);
+        if (colors != null) {
+            for (int i = 0; i < colors.length; i++) {
+                View dot = new View(this);
+                GradientDrawable dg = new GradientDrawable();
+                dg.setShape(GradientDrawable.OVAL);
+                if (colors[i] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                    dg.setColor(night ? 0x33FFFFFF : 0x22000000);
+                    dg.setStroke(dp(1), text2());
+                } else {
+                    dg.setColor(colors[i]);
+                }
+                dot.setBackground(dg);
+                LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(14), dp(14));
+                dlp.rightMargin = dp(5);
+                row.addView(dot, dlp);
+            }
+        }
+        if (gradStart != ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                || gradEnd != ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
+            View grad = new View(this);
+            GradientDrawable gg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                    new int[]{gradStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                            ? 0xFF888888 : gradStart,
+                            gradEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                            ? 0xFF888888 : gradEnd});
+            gg.setCornerRadius(dp(999));
+            grad.setBackground(gg);
+            LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(dp(40), dp(14));
+            glp.leftMargin = dp(8);
+            row.addView(grad, glp);
+        }
+        return row;
+    }
     /**
      * 「自定义任务」弹窗：从点卡片的那一点圆形展开，铺满一张卡片。
      *
@@ -5486,7 +5526,9 @@ public final class ModuleSettingsActivity extends Activity {
         sum.setTextColor(text2());
         sum.setPadding(0, dp(4), 0, 0);
         rowView.addView(sum);
-
+        if (task.action == ClockTask.ACTION_COLOR) {
+            rowView.addView(buildScheduleSwatchRow(task.colors, task.gradStart, task.gradEnd));
+        }
         rowView.setOnClickListener(v -> openTaskEditor(task));
         return rowView;
     }
@@ -5537,9 +5579,21 @@ public final class ModuleSettingsActivity extends Activity {
         triggerGroup.setOrientation(RadioGroup.HORIZONTAL);
         final RadioButton rbHourly = makeRadio(R.string.settings_task_trigger_hourly);
         final RadioButton rbDaily = makeRadio(R.string.settings_task_trigger_daily);
+        final RadioButton rbWeekly = makeRadio(R.string.settings_task_trigger_weekly);
+        final RadioButton rbOnce = makeRadio(R.string.settings_task_trigger_once);
         triggerGroup.addView(rbHourly);
         triggerGroup.addView(rbDaily);
-        (draft.trigger == ClockTask.TRIGGER_DAILY ? rbDaily : rbHourly).setChecked(true);
+        triggerGroup.addView(rbWeekly);
+        triggerGroup.addView(rbOnce);
+        if (draft.trigger == ClockTask.TRIGGER_DAILY) {
+            rbDaily.setChecked(true);
+        } else if (draft.trigger == ClockTask.TRIGGER_WEEKLY) {
+            rbWeekly.setChecked(true);
+        } else if (draft.trigger == ClockTask.TRIGGER_ONCE) {
+            rbOnce.setChecked(true);
+        } else {
+            rbHourly.setChecked(true);
+        }
         box.addView(triggerGroup);
 
         // 自定义时间（只有「自定义时间」时才显示）
@@ -5558,14 +5612,91 @@ public final class ModuleSettingsActivity extends Activity {
         timeRow.addView(minuteInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
         timeRow.setVisibility(draft.trigger == ClockTask.TRIGGER_DAILY ? View.VISIBLE : View.GONE);
         box.addView(timeRow);
-        triggerGroup.setOnCheckedChangeListener((g, id) -> timeRow.setVisibility(
-                id == rbDaily.getId() ? View.VISIBLE : View.GONE));
+        // 星期选择（每 7 天触发时显示）
+        final int[] wdHolder = {draft.weekDay};
+        final LinearLayout weekdayRow = new LinearLayout(this);
+        weekdayRow.setOrientation(LinearLayout.HORIZONTAL);
+        final TextView[] wdTabs = new TextView[7];
+        final int[] wdIds = {Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY,
+                Calendar.THURSDAY, Calendar.FRIDAY, Calendar.SATURDAY, Calendar.SUNDAY};
+        final Runnable renderWd = () -> {
+            for (int i = 0; i < wdTabs.length; i++) {
+                TextView tab = wdTabs[i];
+                if (tab == null) {
+                    continue;
+                }
+                boolean sel = wdIds[i] == wdHolder[0];
+                GradientDrawable bg2 = new GradientDrawable();
+                bg2.setCornerRadius(dp(999));
+                bg2.setColor(sel ? accent() : (night ? 0x22FFFFFF : 0x11000000));
+                tab.setBackground(bg2);
+                tab.setTextColor(sel ? 0xFFFFFFFF : text2());
+            }
+        };
+        for (int i = 0; i < wdIds.length; i++) {
+            final int idx = i;
+            TextView tab = new TextView(this);
+            tab.setText(weekDayShort(wdIds[i]));
+            tab.setTextSize(13f);
+            tab.setGravity(Gravity.CENTER);
+            tab.setPadding(dp(12), dp(6), dp(12), dp(6));
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            tlp.rightMargin = dp(6);
+            tab.setOnClickListener(v -> {
+                wdHolder[0] = wdIds[idx];
+                renderWd.run();
+            });
+            wdTabs[i] = tab;
+            weekdayRow.addView(tab, tlp);
+        }
+        renderWd.run();
+        weekdayRow.setVisibility(draft.trigger == ClockTask.TRIGGER_WEEKLY
+                ? View.VISIBLE : View.GONE);
+        box.addView(weekdayRow);
+
+        // 自定义时间：月 / 日（到点一次性；年自动取不早于今天的最近一天）
+        Calendar seedC = Calendar.getInstance();
+        if (draft.trigger == ClockTask.TRIGGER_ONCE && draft.onceAt > 0L) {
+            seedC.setTimeInMillis(draft.onceAt);
+        }
+        final LinearLayout dateRow = new LinearLayout(this);
+        dateRow.setOrientation(LinearLayout.HORIZONTAL);
+        dateRow.setGravity(Gravity.CENTER_VERTICAL);
+        final EditText monthInput = makeNumberInput(seedC.get(Calendar.MONTH) + 1);
+        final EditText dayInput = makeNumberInput(seedC.get(Calendar.DAY_OF_MONTH));
+        TextView dateLabel = new TextView(this);
+        dateLabel.setText(R.string.settings_task_date);
+        dateLabel.setTextSize(13f);
+        dateLabel.setTextColor(text2());
+        dateLabel.setPadding(0, dp(10), 0, dp(2));
+        dateRow.addView(monthInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        TextView slash = new TextView(this);
+        slash.setText("/");
+        slash.setTextSize(18f);
+        slash.setTextColor(text2());
+        slash.setPadding(dp(6), 0, dp(6), 0);
+        dateRow.addView(slash);
+        dateRow.addView(dayInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        dateRow.setVisibility(draft.trigger == ClockTask.TRIGGER_ONCE
+                ? View.VISIBLE : View.GONE);
+        box.addView(dateLabel);
+        box.addView(dateRow);
+        // 触发方式显隐：每小时只隐藏时刻行；每周/自定义都要时刻行，各自另有星期/日期行
+        triggerGroup.setOnCheckedChangeListener((g, id) -> {
+            timeRow.setVisibility(id == rbDaily.getId() || id == rbWeekly.getId()
+                    || id == rbOnce.getId() ? View.VISIBLE : View.GONE);
+            weekdayRow.setVisibility(id == rbWeekly.getId() ? View.VISIBLE : View.GONE);
+            dateRow.setVisibility(id == rbOnce.getId() ? View.VISIBLE : View.GONE);
+        });
+
 
         // 提前开始
         final TextView advValue = new TextView(this);
         advValue.setTextSize(13f);
         advValue.setTextColor(text2());
-        box.addView(editorLabelRow(R.string.settings_task_advance, advValue));
+        final LinearLayout advRow = editorLabelRow(R.string.settings_task_advance, advValue);
+        box.addView(advRow);
         final SeekBar advBar = makeTaskSlider(ClockTask.ADVANCE_MAX, draft.advanceMin);
         box.addView(advBar);
         updateAdvanceLabel(advValue, advBar.getProgress());
@@ -5588,7 +5719,8 @@ public final class ModuleSettingsActivity extends Activity {
         final TextView durValue = new TextView(this);
         durValue.setTextSize(13f);
         durValue.setTextColor(text2());
-        box.addView(editorLabelRow(R.string.settings_task_duration, durValue));
+        final LinearLayout durRow = editorLabelRow(R.string.settings_task_duration, durValue);
+        box.addView(durRow);
         final SeekBar durBar = makeTaskSlider(ClockTask.DURATION_MAX - ClockTask.DURATION_MIN,
                 Math.max(0, draft.durationMin - ClockTask.DURATION_MIN));
         box.addView(durBar);
@@ -5616,6 +5748,72 @@ public final class ModuleSettingsActivity extends Activity {
         rbShow.setChecked(true);
         actionGroup.addView(rbShow);
         box.addView(actionGroup);
+        final RadioButton rbColor = makeRadio(R.string.settings_task_action_color);
+        (draft.action == ClockTask.ACTION_COLOR ? rbColor : rbShow).setChecked(true);
+        actionGroup.addView(rbColor);
+        // 换配色：记录当前配色（六位数字色 + 渐变起止），到点整包写回
+        final boolean fromTask = draft.action == ClockTask.ACTION_COLOR && draft.colors != null;
+        final int[][] colorsHolder = {fromTask ? draft.colors.clone()
+                : ClockSecondsConfig.getDigitColors(getContentResolver())};
+        final int[] edgeHolder = {fromTask ? draft.gradStart
+                : ClockSecondsConfig.getGradientStartColor(getContentResolver()),
+                fromTask ? draft.gradEnd
+                : ClockSecondsConfig.getGradientEndColor(getContentResolver())};
+        final LinearLayout colorArea = new LinearLayout(this);
+        colorArea.setOrientation(LinearLayout.VERTICAL);
+        TextView capture = new TextView(this);
+        capture.setText(R.string.settings_schedule_capture);
+        capture.setTextSize(14f);
+        capture.setTextColor(accent());
+        capture.setGravity(Gravity.CENTER);
+        capture.setPadding(dp(18), dp(10), dp(18), dp(10));
+        GradientDrawable capBg = new GradientDrawable();
+        capBg.setCornerRadius(dp(999));
+        capBg.setColor(night ? 0x22FFFFFF : 0x11000000);
+        capture.setBackground(capBg);
+        LinearLayout.LayoutParams capLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        capLp.topMargin = dp(12);
+        colorArea.addView(capture, capLp);
+        TextView capHint = new TextView(this);
+        capHint.setText(R.string.settings_schedule_capture_hint);
+        capHint.setTextSize(12f);
+        capHint.setTextColor(text2());
+        capHint.setPadding(0, dp(4), 0, 0);
+        colorArea.addView(capHint);
+        final LinearLayout swatchRow = new LinearLayout(this);
+        swatchRow.setOrientation(LinearLayout.HORIZONTAL);
+        swatchRow.setGravity(Gravity.CENTER_VERTICAL);
+        colorArea.addView(swatchRow);
+        final Runnable renderSwatch = () -> {
+            swatchRow.removeAllViews();
+            swatchRow.addView(buildScheduleSwatchRow(colorsHolder[0], edgeHolder[0], edgeHolder[1]),
+                    new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        };
+        renderSwatch.run();
+        capture.setOnClickListener(v -> {
+            colorsHolder[0] = ClockSecondsConfig.getDigitColors(getContentResolver());
+            edgeHolder[0] = ClockSecondsConfig.getGradientStartColor(getContentResolver());
+            edgeHolder[1] = ClockSecondsConfig.getGradientEndColor(getContentResolver());
+            renderSwatch.run();
+        });
+        box.addView(colorArea);
+        final boolean colorInit = draft.action == ClockTask.ACTION_COLOR;
+        advRow.setVisibility(colorInit ? View.GONE : View.VISIBLE);
+        advBar.setVisibility(colorInit ? View.GONE : View.VISIBLE);
+        durRow.setVisibility(colorInit ? View.GONE : View.VISIBLE);
+        durBar.setVisibility(colorInit ? View.GONE : View.VISIBLE);
+        colorArea.setVisibility(colorInit ? View.VISIBLE : View.GONE);
+        actionGroup.setOnCheckedChangeListener((g, id) -> {
+            boolean color = id == rbColor.getId();
+            advRow.setVisibility(color ? View.GONE : View.VISIBLE);
+            advBar.setVisibility(color ? View.GONE : View.VISIBLE);
+            durRow.setVisibility(color ? View.GONE : View.VISIBLE);
+            durBar.setVisibility(color ? View.GONE : View.VISIBLE);
+            colorArea.setVisibility(color ? View.VISIBLE : View.GONE);
+        });
+
 
         // 底部：删除（仅编辑已有）/ 保存
         LinearLayout buttons = new LinearLayout(this);
@@ -5653,14 +5851,32 @@ public final class ModuleSettingsActivity extends Activity {
         save.setBackground(saveBg);
         save.setOnClickListener(v -> {
             draft.name = nameInput.getText().toString().trim();
-            draft.trigger = rbDaily.isChecked()
-                    ? ClockTask.TRIGGER_DAILY : ClockTask.TRIGGER_HOURLY;
+            draft.trigger = rbOnce.isChecked() ? ClockTask.TRIGGER_ONCE
+                    : rbWeekly.isChecked() ? ClockTask.TRIGGER_WEEKLY
+                    : rbDaily.isChecked() ? ClockTask.TRIGGER_DAILY : ClockTask.TRIGGER_HOURLY;
+            draft.weekDay = wdHolder[0];
             draft.hour = parseIntOr(hourInput.getText().toString(), draft.hour);
             draft.minute = parseIntOr(minuteInput.getText().toString(), draft.minute);
+            if (rbOnce.isChecked()) {
+                Calendar c2 = Calendar.getInstance();
+                int yr = c2.get(Calendar.YEAR);
+                int mo = parseIntOr(monthInput.getText().toString(), c2.get(Calendar.MONTH) + 1);
+                int dy = parseIntOr(dayInput.getText().toString(), c2.get(Calendar.DAY_OF_MONTH));
+                c2.clear();
+                c2.set(yr, mo - 1, dy, draft.hour, draft.minute, 0);
+                if (c2.getTimeInMillis() <= System.currentTimeMillis()) {
+                    c2.set(Calendar.YEAR, yr + 1);
+                }
+                draft.onceAt = c2.getTimeInMillis();
+            }
             draft.advanceMin = advBar.getProgress();
             draft.durationMin = durBar.getProgress() + ClockTask.DURATION_MIN;
-            // 动作单选目前只有「开启显秒」，界面固定选中；保留读取以便将来扩展
-            draft.action = rbShow.isChecked() ? ClockTask.ACTION_SHOW : ClockTask.ACTION_SHOW;
+            draft.action = rbColor.isChecked() ? ClockTask.ACTION_COLOR : ClockTask.ACTION_SHOW;
+            if (rbColor.isChecked()) {
+                draft.colors = colorsHolder[0];
+                draft.gradStart = edgeHolder[0];
+                draft.gradEnd = edgeHolder[1];
+            }
             draft.normalize();
             List<ClockTask> next = new ArrayList<>(mTasks);
             boolean replaced = false;
@@ -5696,6 +5912,14 @@ public final class ModuleSettingsActivity extends Activity {
         return value == null ? "" : value;
     }
 
+
+    /** 星期几的本地短名（「周一」/「Mon」），编辑器星期胶囊用。 */
+    private String weekDayShort(int weekDay) {
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.DAY_OF_WEEK, weekDay);
+        String n = c.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, java.util.Locale.getDefault());
+        return n == null ? String.valueOf(weekDay) : n;
+    }
     private TextView editorLabel(int textRes) {
         TextView label = new TextView(this);
         label.setText(textRes);
@@ -5812,7 +6036,7 @@ public final class ModuleSettingsActivity extends Activity {
             toastWriteFailed();
             return;
         }
-        verifyWriteString(json, 0, seq, ok -> {
+        verifyWriteString(ClockSecondsConfig.TASKS_KEY, json, 0, seq, ok -> {
             if (!ok && mWriteSeq.get() == seq) {
                 // 写盘真失败：回滚成 Secure 里的真实状态，别让界面显示假成功
                 mTasks = ClockTask.parse(ClockSecondsConfig.getTasksJson(getContentResolver()));
@@ -5825,7 +6049,7 @@ public final class ModuleSettingsActivity extends Activity {
         });
     }
 
-    private void verifyWriteString(final String expected, final int attempt, final int seq,
+    private void verifyWriteString(final String key, final String expected, final int attempt, final int seq,
                                    final java.util.function.Consumer<Boolean> onResult) {
         if (isFinishing() || isDestroyed()) {
             return;
@@ -5835,7 +6059,7 @@ public final class ModuleSettingsActivity extends Activity {
         }
         String actual = null;
         try {
-            actual = Settings.Secure.getString(getContentResolver(), ClockSecondsConfig.TASKS_KEY);
+            actual = Settings.Secure.getString(getContentResolver(), key);
         } catch (Throwable ignored) {
             // 读取失败按未生效处理
         }
@@ -5848,7 +6072,7 @@ public final class ModuleSettingsActivity extends Activity {
             return;
         }
         new Handler(Looper.getMainLooper()).postDelayed(
-                () -> verifyWriteString(expected, attempt + 1, seq, onResult), 250);
+                () -> verifyWriteString(key, expected, attempt + 1, seq, onResult), 250);
     }
 
     // ==================================================================

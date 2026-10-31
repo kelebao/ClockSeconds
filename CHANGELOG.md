@@ -2,10 +2,20 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 286）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 290）— 时分秒逐位取色、预览卡展开取色
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc287 ~ vc290（按时段换色并入自定义任务：换配色动作 + 每天 / 每 7 天 / 自定义时间）
+
+- **「换配色」成为自定义任务的一种动作**：按用户要求撤掉独立「按时段换色」卡片（vc287 短暂存在过独立入口，vc288 起并入），在「自定义任务」编辑页的动作里新增「换配色」——保存时把此刻的六位数字色与渐变起止一起记录进任务，到点整包写回 Secure 并立即刷新（与手动取色同一落盘路径）。任务列表行会显示该任务的配色预览（六位色小圆点，跟随系统画空心圈 + 渐变端点小胶囊）；编辑页有「记录当前配色」按钮可随时重抓。换配色是瞬时动作，提前量/持续时长自动隐藏（normalize 强制 1 分钟窗口，只用于跨点判定）。
+- **触发周期扩展**：在原有「每整点 / 自定义时间(每天)」基础上新增「每 7 天」（星期几胶囊单选，星期名走系统本地化）与「自定义时间到」（月/日 + 时:分，到点一次后模块自动停用并回写）。旧的每天式「自定义时间」文案与新的「自定义时间到」在中文里同为「自定义时间」，靠单选位置区分。
+- **关键修复（vc290）**：换配色任务在窗口外时，evaluateTasks 只把窗口内的 nextTransition 并入调度时刻 → next 恒为 MAX_VALUE → 兜底定时器不排 → 任务永远不被评估（实测任务到点无任何反应）。修复为换配色任务的 nextTransition 无条件并入 next（窗口外返回未来切换点、窗口内返回结束点、全过返回 MAX）。
+- **一次性任务自动停用**：TRIGGER_ONCE 的任务在开始点一过就置 enabled=false 并回写 Secure，之后不再参与调度。
+- **实现**：ClockTask 扩展 TRIGGER_WEEKLY=2 / TRIGGER_ONCE=3 / ACTION_COLOR=2 与 colors[6]/gradStart/gradEnd 字段（JSON 键 +wd/+once/+colors/+gs/+ge，向后兼容）；模块 evaluateTasks 按任务分流：换配色任务跨进窗口应用一次（sColorApplied 去重，出窗口摘标记，窗口内重启重应用一次无害）、显秒任务维持原窗口翻转；设置页删独立时段卡（含 Secure 键 COLOR_SCHEDULE_* 与广播/observer 全套），任务编辑器加触发单选/星期胶囊/日期输入/换配色 capture 区（「记录当前配色」按钮 + 色点预览），verifyWriteString 泛化出 key 参数；独立 ColorScheduleEntry 类与单测删除（能力并入 ClockTask）。
+- **真机验证（vc289 诊断日志 → vc290 修复后端到端）**：广播写入换配色任务（once=8 秒后、记录全红配色）→ 任务加载 `tasks loaded=1` → 评估 `TASK eval id=.. inWin=false` → 切换点 tick `inWin=true` → `TASK colors applied id=..` → digit_color_0 由 lime 变 -65536（任务应用成立）→ 任务 enabled 自动变 false（一次性停用回写成立）；crash FATAL = 0。
+- **i18n**：22 种语言删 settings_schedule_title/none/all_off/count/empty_hint 5 键、增 task_when_weekly/task_when_once/task_fmt_color/settings_task_trigger_weekly/settings_task_trigger_once/settings_task_action_color/settings_task_date 7 键，`tools/check_i18n.py` 一致。
+- 版本：vc287 `1.2.0-test.20261031-1245` → vc290 `1.2.0-test.20261031-1400`。
 ### vc283 ~ vc286（时间后缀页签直选 + 通知栏时钟防掉色兜底）
 
 - **时间后缀卡改版**：「时段 | 周几」两段式页签直接放在卡片上（与数字颜色卡的单色 / 渐变页签同款），点页签即选中并自动打开总开关，不再需要点进弹窗；开关关着时整条页签压暗但仍显示记忆中的选中项。原二选一弹窗删除。
