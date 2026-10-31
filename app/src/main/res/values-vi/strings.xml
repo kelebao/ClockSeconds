@@ -109,7 +109,9 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_task_name_hint">Tùy chọn, ví dụ: Họp</string>
     <string name="settings_task_trigger">Kích hoạt</string>
     <string name="settings_task_trigger_hourly">Hourly</string>
-    <string name="settings_task_trigger_daily">Daily</string>
+    <string name="settings_task_trigger_daily">Every day</string>
+    <string name="settings_task_trigger_once">Time</string>
+    <string name="settings_task_date">Date</string>
     <string name="settings_task_action">Hành động</string>
     <string name="settings_task_action_show">Bật giây</string>
     <string name="settings_task_advance">Bắt đầu sớm</string>
@@ -156,5 +158,5 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="task_fmt_color">%1$s - switch to saved colors</string>
     <string name="settings_task_trigger_weekly">7 days</string>
     <string name="settings_task_action_color">Switch colors</string>
-    <string name="settings_task_pick">Pick colors</string>
+    <string name="settings_task_pick">Add colors</string>
 </resources>

@@ -109,7 +109,9 @@
     <string name="settings_task_name_hint">可選，例如「開會」</string>
     <string name="settings_task_trigger">觸發方式</string>
     <string name="settings_task_trigger_hourly">整点</string>
-    <string name="settings_task_trigger_daily">时间</string>
+    <string name="settings_task_trigger_daily">每天</string>
+    <string name="settings_task_trigger_once">时间</string>
+    <string name="settings_task_date">日期</string>
     <string name="settings_task_action">動作</string>
     <string name="settings_task_action_show">開啟顯秒</string>
     <string name="settings_task_advance">提前開始</string>
@@ -156,5 +158,5 @@
     <string name="task_fmt_color">%1$s - switch to saved colors</string>
     <string name="settings_task_trigger_weekly">7 天</string>
     <string name="settings_task_action_color">Switch colors</string>
-    <string name="settings_task_pick">选择配色</string>
+    <string name="settings_task_pick">添加配色</string>
 </resources>

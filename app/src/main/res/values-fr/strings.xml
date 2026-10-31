@@ -109,7 +109,9 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_task_name_hint">Facultatif, ex. Réunion</string>
     <string name="settings_task_trigger">Déclencheur</string>
     <string name="settings_task_trigger_hourly">Hourly</string>
-    <string name="settings_task_trigger_daily">Daily</string>
+    <string name="settings_task_trigger_daily">Every day</string>
+    <string name="settings_task_trigger_once">Time</string>
+    <string name="settings_task_date">Date</string>
     <string name="settings_task_action">Action</string>
     <string name="settings_task_action_show">Activer les secondes</string>
     <string name="settings_task_advance">Démarrer plus tôt</string>
@@ -156,5 +158,5 @@ Code source de ce module : MIT © kelebao</string>
     <string name="task_fmt_color">%1$s - switch to saved colors</string>
     <string name="settings_task_trigger_weekly">7 days</string>
     <string name="settings_task_action_color">Switch colors</string>
-    <string name="settings_task_pick">Pick colors</string>
+    <string name="settings_task_pick">Add colors</string>
 </resources>

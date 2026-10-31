@@ -5593,6 +5593,7 @@ public final class ModuleSettingsActivity extends Activity {
         final RadioButton rbHourly = makeRadio(R.string.settings_task_trigger_hourly);
         final RadioButton rbDaily = makeRadio(R.string.settings_task_trigger_daily);
         final RadioButton rbWeekly = makeRadio(R.string.settings_task_trigger_weekly);
+        final RadioButton rbOnce = makeRadio(R.string.settings_task_trigger_once);
         LinearLayout trigRow1 = new LinearLayout(this);
         trigRow1.setOrientation(LinearLayout.HORIZONTAL);
         trigRow1.addView(rbHourly, new LinearLayout.LayoutParams(0,
@@ -5608,8 +5609,15 @@ public final class ModuleSettingsActivity extends Activity {
         trigRow2.addView(rbWeekly, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         box.addView(trigRow2, trigRow2Lp);
-        final int[] mTriggerHolder = {draft.trigger == ClockTask.TRIGGER_ONCE
-                ? ClockTask.TRIGGER_DAILY : draft.trigger};
+        LinearLayout trigRow3 = new LinearLayout(this);
+        trigRow3.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams trigRow3Lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        trigRow3Lp.topMargin = dp(2);
+        trigRow3.addView(rbOnce, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        box.addView(trigRow3, trigRow3Lp);
+        final int[] mTriggerHolder = {draft.trigger};
         // 自定义时间（只有「自定义时间」时才显示）
         final LinearLayout timeRow = new LinearLayout(this);
         timeRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -5624,7 +5632,7 @@ public final class ModuleSettingsActivity extends Activity {
         colon.setPadding(dp(6), 0, dp(6), 0);
         timeRow.addView(colon);
         timeRow.addView(minuteInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
-        timeRow.setVisibility(draft.trigger == ClockTask.TRIGGER_DAILY ? View.VISIBLE : View.GONE);
+        timeRow.setVisibility(draft.trigger == ClockTask.TRIGGER_HOURLY ? View.GONE : View.VISIBLE);
         box.addView(timeRow);
         // 星期选择（每 7 天触发时显示）
         final int[] wdHolder = {draft.weekDay};
@@ -5668,6 +5676,34 @@ public final class ModuleSettingsActivity extends Activity {
         weekdayRow.setVisibility(draft.trigger == ClockTask.TRIGGER_WEEKLY
                 ? View.VISIBLE : View.GONE);
         box.addView(weekdayRow);
+        // 指定日期（一次性任务）：月 / 日
+        Calendar seedC = Calendar.getInstance();
+        if (draft.trigger == ClockTask.TRIGGER_ONCE && draft.onceAt > 0L) {
+            seedC.setTimeInMillis(draft.onceAt);
+        }
+        final LinearLayout dateRow = new LinearLayout(this);
+        dateRow.setOrientation(LinearLayout.HORIZONTAL);
+        dateRow.setGravity(Gravity.CENTER_VERTICAL);
+        final EditText monthInput = makeNumberInput(seedC.get(Calendar.MONTH) + 1);
+        final EditText dayInput = makeNumberInput(seedC.get(Calendar.DAY_OF_MONTH));
+        TextView dateLabel = new TextView(this);
+        dateLabel.setText(R.string.settings_task_date);
+        dateLabel.setTextSize(13f);
+        dateLabel.setTextColor(text2());
+        dateLabel.setPadding(0, dp(10), 0, dp(2));
+        dateRow.addView(monthInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        TextView slash = new TextView(this);
+        slash.setText("/");
+        slash.setTextSize(18f);
+        slash.setTextColor(text2());
+        slash.setPadding(dp(6), 0, dp(6), 0);
+        dateRow.addView(slash);
+        dateRow.addView(dayInput, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        dateRow.setVisibility(draft.trigger == ClockTask.TRIGGER_ONCE
+                ? View.VISIBLE : View.GONE);
+        dateLabel.setVisibility(dateRow.getVisibility());
+        box.addView(dateLabel);
+        box.addView(dateRow);
 
         // 触发方式切换：互斥选中 + 时刻/星期行显隐
         final java.util.function.IntConsumer pickTrigger = t -> {
@@ -5675,12 +5711,16 @@ public final class ModuleSettingsActivity extends Activity {
             rbHourly.setChecked(t == ClockTask.TRIGGER_HOURLY);
             rbDaily.setChecked(t == ClockTask.TRIGGER_DAILY);
             rbWeekly.setChecked(t == ClockTask.TRIGGER_WEEKLY);
+            rbOnce.setChecked(t == ClockTask.TRIGGER_ONCE);
             timeRow.setVisibility(t == ClockTask.TRIGGER_HOURLY ? View.GONE : View.VISIBLE);
             weekdayRow.setVisibility(t == ClockTask.TRIGGER_WEEKLY ? View.VISIBLE : View.GONE);
+            dateRow.setVisibility(t == ClockTask.TRIGGER_ONCE ? View.VISIBLE : View.GONE);
+            dateLabel.setVisibility(dateRow.getVisibility());
         };
         rbHourly.setOnClickListener(v -> pickTrigger.accept(ClockTask.TRIGGER_HOURLY));
         rbDaily.setOnClickListener(v -> pickTrigger.accept(ClockTask.TRIGGER_DAILY));
         rbWeekly.setOnClickListener(v -> pickTrigger.accept(ClockTask.TRIGGER_WEEKLY));
+        rbOnce.setOnClickListener(v -> pickTrigger.accept(ClockTask.TRIGGER_ONCE));
         pickTrigger.accept(mTriggerHolder[0]);
 
 
@@ -5749,6 +5789,7 @@ public final class ModuleSettingsActivity extends Activity {
         final boolean fromTask = draft.action == ClockTask.ACTION_COLOR && draft.colors != null;
         final int[][] colorsHolder = {fromTask ? draft.colors.clone()
                 : ClockSecondsConfig.getDigitColors(getContentResolver())};
+        final int[][][] schemesHolder = {fromTask ? draft.schemes : null};
         final int[] edgeHolder = {fromTask ? draft.gradStart
                 : ClockSecondsConfig.getGradientStartColor(getContentResolver()),
                 fromTask ? draft.gradEnd
@@ -5776,9 +5817,15 @@ public final class ModuleSettingsActivity extends Activity {
         colorArea.addView(swatchRow);
         final Runnable renderSwatch = () -> {
             swatchRow.removeAllViews();
-            swatchRow.addView(buildScheduleSwatchRow(colorsHolder[0], edgeHolder[0], edgeHolder[1]),
-                    new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            View bar = new View(this);
+            GradientDrawable sg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                    new int[]{edgeHolder[0], edgeHolder[1]});
+            sg.setCornerRadius(dp(10));
+            bar.setBackground(sg);
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
+            slp.topMargin = dp(8);
+            swatchRow.addView(bar, slp);
         };
         renderSwatch.run();
         final Runnable openPicker = () -> {
@@ -5806,10 +5853,15 @@ public final class ModuleSettingsActivity extends Activity {
             pickBack.setBackground(pbbg);
             pickHead.addView(pickBack, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            pickBack.setOnClickListener(v -> {
+                sv.removeAllViews();
+                sv.addView(box, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            });
             pick.addView(pickHead);
             // 小预览时间：跟随选中套装实时着色（GradientTextSpan，与状态栏同款渐变）
             final TextView prev = new TextView(this);
-            prev.setText("12:34");
+            prev.setText("12:34:56");
             prev.setTextSize(20f);
             prev.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             prev.setGravity(Gravity.CENTER);
@@ -5822,10 +5874,12 @@ public final class ModuleSettingsActivity extends Activity {
                 presets.add(p0);
             }
             presets.addAll(loadCustomGradPresets());
-            final int[] selIdx = {-1};
+            final java.util.Set<Integer> selSet = new java.util.LinkedHashSet<>();
+            final int[] previewIdx = {-1};
             for (int i = 0; i < presets.size(); i++) {
                 if (presets.get(i)[0] == edgeHolder[0] && presets.get(i)[1] == edgeHolder[1]) {
-                    selIdx[0] = i;
+                    selSet.add(i);
+                    previewIdx[0] = i;
                     break;
                 }
             }
@@ -5868,25 +5922,32 @@ public final class ModuleSettingsActivity extends Activity {
                 FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(18), dp(18));
                 blp.gravity = Gravity.BOTTOM | Gravity.END;
                 blp.setMargins(0, 0, dp(6), dp(4));
-                badge.setVisibility(selIdx[0] == idx ? View.VISIBLE : View.GONE);
+                badge.setVisibility(selSet.contains(idx) ? View.VISIBLE : View.GONE);
                 cell.addView(badge, blp);
                 badges.add(badge);
                 LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0,
                         ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
                 clp.rightMargin = (i % 2 == 0) ? dp(6) : 0;
                 cell.setOnClickListener(v -> {
-                    selIdx[0] = idx;
+                    if (!selSet.remove(idx)) {
+                        selSet.add(idx);
+                    }
                     for (int j = 0; j < badges.size(); j++) {
-                        badges.get(j).setVisibility(j == idx ? View.VISIBLE : View.GONE);
+                        badges.get(j).setVisibility(selSet.contains(j) ? View.VISIBLE : View.GONE);
+                    }
+                    if (selSet.contains(idx)) {
+                        previewIdx[0] = idx;
+                    } else if (previewIdx[0] == idx) {
+                        previewIdx[0] = selSet.isEmpty() ? -1 : selSet.iterator().next();
                     }
                     renderPrevHolder[0].run();
                 });
                 rowRef.addView(cell, clp);
             }
             renderPrevHolder[0] = () -> {
-                SpannableStringBuilder psb = new SpannableStringBuilder("12:34");
-                if (selIdx[0] >= 0) {
-                    int[] pr = presets.get(selIdx[0]);
+                SpannableStringBuilder psb = new SpannableStringBuilder("12:34:56");
+                if (previewIdx[0] >= 0) {
+                    int[] pr = presets.get(previewIdx[0]);
                     float w = prev.getPaint().measureText(psb, 0, psb.length());
                     psb.setSpan(new GradientTextSpan(prev, psb,
                                     adaptPreviewColor(pr[0]), adaptPreviewColor(pr[1]), w),
@@ -5910,15 +5971,22 @@ public final class ModuleSettingsActivity extends Activity {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             pslp.topMargin = dp(14);
             pickSave.setOnClickListener(v -> {
-                if (selIdx[0] >= 0) {
-                    int[] pr = presets.get(selIdx[0]);
-                    int[] six = new int[6];
-                    for (int i = 0; i < 6; i++) {
-                        six[i] = lerpColor(pr[0], pr[1], i / 5f);
+                if (!selSet.isEmpty()) {
+                    java.util.List<int[]> picked = new ArrayList<>();
+                    for (int i = 0; i < presets.size(); i++) {
+                        if (selSet.contains(i)) {
+                            picked.add(presets.get(i));
+                        }
                     }
-                    colorsHolder[0] = six;
-                    edgeHolder[0] = pr[0];
-                    edgeHolder[1] = pr[1];
+                    int[][] schemes = new int[picked.size()][2];
+                    for (int k = 0; k < picked.size(); k++) {
+                        int[] pr = picked.get(k);
+                        schemes[k][0] = pr[0];
+                        schemes[k][1] = pr[1];
+                    }
+                    schemesHolder[0] = schemes;
+                    edgeHolder[0] = schemes[0][0];
+                    edgeHolder[1] = schemes[0][1];
                     renderSwatch.run();
                 }
                 sv.removeAllViews();
@@ -5984,7 +6052,21 @@ public final class ModuleSettingsActivity extends Activity {
         save.setBackground(saveBg);
         save.setOnClickListener(v -> {
             draft.name = nameInput.getText().toString().trim();
-            draft.trigger = mTriggerHolder[0] == ClockTask.TRIGGER_ONCE ? ClockTask.TRIGGER_DAILY : mTriggerHolder[0];
+            draft.trigger = mTriggerHolder[0];
+            draft.hour = parseIntOr(hourInput.getText().toString(), draft.hour);
+            draft.minute = parseIntOr(minuteInput.getText().toString(), draft.minute);
+            if (mTriggerHolder[0] == ClockTask.TRIGGER_ONCE) {
+                Calendar c2 = Calendar.getInstance();
+                int yr = c2.get(Calendar.YEAR);
+                int mo = parseIntOr(monthInput.getText().toString(), c2.get(Calendar.MONTH) + 1);
+                int dy = parseIntOr(dayInput.getText().toString(), c2.get(Calendar.DAY_OF_MONTH));
+                c2.clear();
+                c2.set(yr, mo - 1, dy, draft.hour, draft.minute, 0);
+                if (c2.getTimeInMillis() <= System.currentTimeMillis()) {
+                    c2.set(Calendar.YEAR, yr + 1);
+                }
+                draft.onceAt = c2.getTimeInMillis();
+            }
             draft.weekDay = wdHolder[0];
             draft.hour = parseIntOr(hourInput.getText().toString(), draft.hour);
             draft.minute = parseIntOr(minuteInput.getText().toString(), draft.minute);
@@ -5995,6 +6077,7 @@ public final class ModuleSettingsActivity extends Activity {
                 draft.colors = colorsHolder[0];
                 draft.gradStart = edgeHolder[0];
                 draft.gradEnd = edgeHolder[1];
+                draft.schemes = schemesHolder[0];
             }
             draft.normalize();
             List<ClockTask> next = new ArrayList<>(mTasks);

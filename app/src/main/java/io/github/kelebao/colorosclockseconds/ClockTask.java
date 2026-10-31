@@ -69,6 +69,8 @@ public final class ClockTask {
     /** {@link #ACTION_COLOR} 用：渐变起止（{@link ClockSecondsConfig#GRADIENT_COLOR_AUTO} 表示跟随数字色）。 */
     public int gradStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     public int gradEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+    /** 多套配色方案（「选择配色」支持多选）；每套 8 个 int = 6 位数字色 + 渐变起 + 渐变止，每次触发轮换应用一套。 */
+    public int[][] schemes;
     public boolean enabled = true;
 
     public ClockTask() {
@@ -89,6 +91,12 @@ public final class ClockTask {
         t.colors = colors == null ? null : colors.clone();
         t.gradStart = gradStart;
         t.gradEnd = gradEnd;
+        if (schemes != null) {
+            t.schemes = new int[schemes.length][];
+            for (int i = 0; i < schemes.length; i++) {
+                t.schemes[i] = schemes[i].clone();
+            }
+        }
         t.enabled = enabled;
         return t;
     }
@@ -126,6 +134,11 @@ public final class ClockTask {
             // 换配色是瞬时动作：窗口收成 1 分钟，只用于跨点判定
             durationMin = DURATION_MIN;
             advanceMin = 0;
+        }
+        if (schemes != null && schemes.length > 0 && schemes[0] != null && schemes[0].length >= 2) {
+            int[] first = schemes[0];
+            gradStart = first[0];
+            gradEnd = first[first.length - 1];
         }
         if (colors == null || colors.length != 6) {
             int[] c6 = new int[6];
@@ -276,6 +289,17 @@ public final class ClockTask {
                 o.put("colors", cs);
                 o.put("gs", gradStart);
                 o.put("ge", gradEnd);
+                if (schemes != null && schemes.length > 0) {
+                    JSONArray sc = new JSONArray();
+                    for (int[] one : schemes) {
+                        JSONArray row = new JSONArray();
+                        for (int v : one) {
+                            row.put(v);
+                        }
+                        sc.put(row);
+                    }
+                    o.put("sc", sc);
+                }
             }
             o.put("enabled", enabled);
         } catch (Throwable ignored) {
@@ -329,6 +353,20 @@ public final class ClockTask {
                 }
                 t.gradStart = (int) o.optLong("gs", ClockSecondsConfig.GRADIENT_COLOR_AUTO);
                 t.gradEnd = (int) o.optLong("ge", ClockSecondsConfig.GRADIENT_COLOR_AUTO);
+                JSONArray sc = o.optJSONArray("sc");
+                if (sc != null && sc.length() > 0) {
+                    int[][] scArr = new int[sc.length()][];
+                    for (int si = 0; si < sc.length(); si++) {
+                        JSONArray row = sc.optJSONArray(si);
+                        if (row == null || row.length() < 2) {
+                            scArr = null;
+                            break;
+                        }
+                        int[] one = new int[]{ (int) row.optLong(0, 0L), (int) row.optLong(1, 0L) };
+                        scArr[si] = one;
+                    }
+                    t.schemes = scArr;
+                }
                 t.enabled = o.optBoolean("enabled", true);
                 t.normalize();
                 if (t.id == 0L) {

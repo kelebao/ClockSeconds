@@ -109,7 +109,9 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_task_name_hint">Opsional, mis. Rapat</string>
     <string name="settings_task_trigger">Pemicu</string>
     <string name="settings_task_trigger_hourly">Hourly</string>
-    <string name="settings_task_trigger_daily">Daily</string>
+    <string name="settings_task_trigger_daily">Every day</string>
+    <string name="settings_task_trigger_once">Time</string>
+    <string name="settings_task_date">Date</string>
     <string name="settings_task_action">Aksi</string>
     <string name="settings_task_action_show">Aktifkan detik</string>
     <string name="settings_task_advance">Mulai lebih awal</string>
@@ -156,5 +158,5 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="task_fmt_color">%1$s - switch to saved colors</string>
     <string name="settings_task_trigger_weekly">7 days</string>
     <string name="settings_task_action_color">Switch colors</string>
-    <string name="settings_task_pick">Pick colors</string>
+    <string name="settings_task_pick">Add colors</string>
 </resources>
