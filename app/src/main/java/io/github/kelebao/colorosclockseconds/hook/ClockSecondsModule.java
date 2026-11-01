@@ -728,6 +728,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             } catch (Throwable ignored) {
                 // 测量失败不影响核心功能
             }
+        } else if (isXiaomiDevice()) {
+            // 小米 HyperOS（issue #10）：MiuiClock / statusbar.policy.Clock 是 wrap_content，
+            // 比例数字宽度随秒数变化 → 时钟每秒左右抖动、推挤旁边图标。
+            // 不锁宽度（issue #2 教训：锁宽会让 HyperOS 时钟整块消失），只切等宽数字（tnum）。
+            try {
+                view.setFontFeatureSettings("tnum");
+            } catch (Throwable ignored) {
+                // 字体特性不支持时保持原样
+            }
         }
     }
 
@@ -2563,13 +2572,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 在时间文本后面追加后缀（关闭时原样返回）。 */
     private static String appendMark(CharSequence timeText, Context ctx) {
         String suffix = markSuffixText(ctx);
-        if (suffix.isEmpty()) {
-            return timeText.toString();
-        }
-        // 后缀与时间拉开一点距离（用户要求「单独放在时间旁边」）：空格会随 styleMark 的
-        // 0.62 缩小，三个空格 ≈ 一个半普通空格的视觉间隙。仍是同一段文字：零宽空格防护、
-        // 逐位颜色、渐变色带都以 timeEnd 为界，不受影响。
-        return timeText + "   " + suffix;
+        return suffix.isEmpty() ? timeText.toString() : timeText + suffix;
     }
 
     /**
@@ -3748,6 +3751,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         String vendor = (Build.MANUFACTURER + " " + Build.BRAND).toLowerCase(Locale.ROOT);
         return vendor.contains("oneplus") || vendor.contains("oppo")
                 || vendor.contains("realme") || vendor.contains("oplus");
+    }
+
+    /** 小米 / 红米 / POCO（HyperOS）。用于等宽数字等小米专属适配。 */
+    private static boolean isXiaomiDevice() {
+        String vendor = (Build.MANUFACTURER + " " + Build.BRAND).toLowerCase(Locale.ROOT);
+        return vendor.contains("xiaomi") || vendor.contains("redmi")
+                || vendor.contains("poco");
     }
 
     /**

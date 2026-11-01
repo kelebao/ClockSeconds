@@ -6,6 +6,13 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc302（撤销后缀视觉间隔 + 小米 HyperOS 等宽数字修复 issue #10）
+
+- **撤销 vc301 的后缀视觉间隔**：`appendMark` 恢复为 `timeText + suffix`（后缀只保留 `markSuffixText` 自带的一个前置空格），删除三个空格的视觉分离实现。后置于时间旁仍由系统原样渲染。
+- **修复 issue #10（小米 HyperOS 显秒后每秒宽度抖动）**：`configureClockView` 原稳宽逻辑 `setMinWidth` 仅限 OPPO/一加/realme（`isOplusDevice()`），小米被跳过 → MiuiClock 比例数字宽度随秒数变化，时钟每秒左右伸缩并推挤旁边图标。新增 `else if (isXiaomiDevice())` 分支，仅对小米/红米/POCO 设 `view.setFontFeatureSettings("tnum")`（等宽数字），不改锁宽（规避 issue #2 锁宽导致时间消失的风险）。
+- 新增 `isXiaomiDevice()`（MANUFACTURER+BRAND 含 xiaomi/redmi/poco）。
+- 版本 **vc302** / versionName `1.2.0-test.20261101-1318`。ColorOS16 真机验证：后缀恢复原样、非小米机不回归（走 isOplus 分支不受影响）；小米 HyperOS 待用户实机确认宽度恒定。
+
 ### vc301（设置页合并卡 + 触发 2×2 网格 + 后缀视觉间隔）
 
 - **任务编辑页触发方式改 2×2 网格**：「时间」不再独占一行，改为 整点｜时间、每天｜7 天 两行四项，编辑页更紧凑。
