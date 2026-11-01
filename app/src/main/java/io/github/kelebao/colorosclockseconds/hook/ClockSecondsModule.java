@@ -728,6 +728,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             } catch (Throwable ignored) {
                 // 测量失败不影响核心功能
             }
+            // 等宽数字（tnum）：锁定 minWidth 只能稳住容器宽度；容器内的数字仍是比例字形
+            // （'1' 窄、'8' 宽），秒位每秒变化时文字墨迹宽度在 348~361px 间摆动，
+            // 渐变按文字实测宽度铺设，导致可见右缘每秒抖动（issue #10 同类现象）。
+            // 切 tnum 让 0-9 等宽，墨迹宽度恒定，消除抖动；不影响已锁定的容器宽度。
+            try {
+                view.setFontFeatureSettings("tnum");
+            } catch (Throwable ignored) {
+                // 字体特性不支持时保持原样
+            }
         } else if (isXiaomiDevice()) {
             // 小米 HyperOS（issue #10）：MiuiClock / statusbar.policy.Clock 是 wrap_content，
             // 比例数字宽度随秒数变化 → 时钟每秒左右抖动、推挤旁边图标。
