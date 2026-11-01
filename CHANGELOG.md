@@ -6,6 +6,17 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc304（澎湃OS3：状态栏小钟 + 通知栏大钟双修）
+
+- **状态栏小钟（HyperOS 3）**：新增 `installXiaomiClockReapplyHooks()`，对 `statusbar.policy.Clock#updateClock`、`statusbar.views.MiuiClock#updateTime` 等「系统本轮刷新结束」的方法挂 after 补色。之所以不再只靠 `setText` 的 after：HyperOS 3 的混淆类 `android.hardware.Pailrk` 会在 `TextView.setText` 之外再把 CharSequence 重建成纯 String，setText 结束那一刻颜色已被洗掉。
+- **通知栏大钟（HyperOS 3）**：新增 `isInsideShade()`（沿祖先链判断视图是否位于下拉面板/控制中心内）与 `isXiaomiShadeClock()`，把 HyperOS 的通知栏大钟纳入既有面板时钟通道 —— 与状态栏同样显秒、同样走逐位取色/渐变；并 hook `NotificationShadeFakeStatusBarClock#updateHeaderColor`（HyperCeiler 强制大钟着色的同款入口），在系统重新着色之后再补一次。
+- **补色范围放宽**：`forceReapplyColors()` 原先只服务状态栏时钟，现改为「状态栏时钟 或（通知栏跟随开关开启 且 是面板时钟）」都走同一条补色路径。
+- **识别规则**：`isStatusBarClockBuiltin()` 增加小米 `statusbar.views.MiuiClock` 分支（`isXiaomiDevice() && !isInsideShade()`）；`isQsClock()` 增加 `isXiaomiShadeClock()`。同一 MiuiClock 类在状态栏与通知面板都有实例，用祖先链区分。
+- **不影响其它 ROM**：所有新逻辑由 `isXiaomiDevice()` 门控。ColorOS16（一加 PHP110）实测：`hook installed in SystemUI` 正常、`WRITE-CHECK fcs=1 grad=1 cls=StatClock`、模块日志里没有任何 `XIAOMI reapply hook` 行、全量日志 FATAL EXCEPTION 计数为 0。
+- 新增诊断日志（DEBUG）：`XIAOMI reapply hook: 类名#方法名`、`XIAOMI class missing: 类名`、`XIAOMI shade clock: 资源名 | 类名`。
+- 版本 **vc304** / versionName `1.2.0-test.20261101-1936`。
+- ⚠️ 澎湃OS3 真机尚未验证：需要小米用户安装本版并回传 `/data/adb/lspd/log/modules_*.log`；若大钟仍不上色，日志里的 `XIAOMI class missing` / `XIAOMI shade clock` 会直接给出真实类名与资源名，下一版按日志补。
+
 ### vc303（ColorOS16 时钟数字等宽修复：消除每秒宽度抖动）
 
 - **修复 ColorOS16 时钟每秒宽度抖动**：`configureClockView` 的 `isOplusDevice()` 分支此前只用最大数字宽计算并 `setMinWidth`（锁定的是**容器**最小宽），容器内的数字仍是比例字形（`1` 窄、`8` 宽），秒位每秒变化时文字墨迹宽度在 **348~361px** 间摆动（实测约 13px），渐变按文字实测宽度铺设 → 可见右缘每秒抖动、推移旁边图标。在该分支内追加 `view.setFontFeatureSettings("tnum")`（等宽数字），不动已锁定的容器宽度。

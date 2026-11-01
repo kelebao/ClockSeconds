@@ -521,6 +521,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 每次更新/变色都会重设文本、冲掉我们的颜色；在它之后再把小时色盖回去。
         installOplusClockStyleHook(lpparam.classLoader);
 
+        // 澎湃OS3 适配：小米状态栏小钟与下拉通知栏大钟都会在我们上色之后，由
+        // updateClock / updateTime / updateHeaderColor 再重设一遍文本或重新着色，
+        // 把颜色 span 洗掉。挂在这些「系统本轮更新结束」的方法之后补色，比 setText 更晚、更稳。
+        installXiaomiClockReapplyHooks(lpparam.classLoader);
+
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "hook installed in SystemUI; device="
                     + Build.MANUFACTURER + "/" + Build.BRAND
@@ -880,9 +885,202 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // SimpleQsClock / OplusQSClock / 三星 QSClockIndicatorView 都落在这里。
             // 这类视图以前被 isClockNameExcluded 排除（怕抢走 sClockView），
             // 现在走独立通道、绝不写 sClockView，所以可以放心接管。
-            return cls.contains("qsclock");
+            return cls.contains("qsclock") || isXiaomiShadeClock(view);
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    // ==================================================================
+    // 小米 HyperOS 3 适配：状态栏小钟 + 下拉通知栏大钟
+    // ==================================================================
+
+    /**
+     * 视图是否位于下拉通知面板（含控制中心）内部。
+     *
+     * <p>HyperOS 的状态栏时钟（statusbar.views.MiuiClock）与通知面板大钟可能是同一个类，
+     * 单看类名分不出来，只能看祖先链：面板里的实例祖先一定含 controlcenter / shade /
+     * NotificationPanel 之类的容器。结果按视图缓存（父链在一个窗口生命周期内不变）。</p>
+     */
+    private static final java.util.WeakHashMap<View, Boolean> SHADE_MEMBERS =
+            new java.util.WeakHashMap<>();
+
+    private static boolean isInsideShade(View view) {
+        if (view == null) {
+            return false;
+        }
+        Boolean cached = SHADE_MEMBERS.get(view);
+        if (cached != null) {
+            return cached;
+        }
+        boolean inside = false;
+        try {
+            ViewParent parent = view.getParent();
+            for (int depth = 0; parent != null && depth < 16; depth++) {
+                if (parent instanceof View
+                        && isShadeHostClassName(((View) parent).getClass().getName())) {
+                    inside = true;
+                    break;
+                }
+                parent = parent.getParent();
+            }
+        } catch (Throwable ignored) {
+            // 取祖先链失败时按「不在面板里」处理，最坏退化成加补丁前的行为
+        }
+        SHADE_MEMBERS.put(view, inside);
+        return inside;
+    }
+
+    private static boolean isShadeHostClassName(String className) {
+        String cn = className.toLowerCase(Locale.ROOT);
+        return cn.contains("controlcenter") || cn.contains("notificationshade")
+                || cn.contains("notificationpanel") || cn.contains("notificationstack")
+                || cn.contains("shade");
+    }
+
+    /** 文本是否长得像时钟（HH:mm / HH:mm:ss，允许前后缀）。 */
+    private static boolean looksLikeClockText(CharSequence text) {
+        if (text == null) {
+            return false;
+        }
+        String s = text.toString();
+        int n = s.length();
+        if (n < 4 || n > 24) {
+            return false;
+        }
+        return s.matches(".*\\d{1,2}[:：]\\d{2}.*");
+    }
+
+    /**
+     * HyperOS 下拉通知面板里的大时钟。
+     *
+     * <p>已知容器：com.android.systemui.controlcenter.phone.widget.NotificationShadeFakeStatusBarClock
+     * （HyperCeiler 的 FixColor 就是 hook 它的 updateHeaderColor 来强制大钟着色）；
+     * 大钟本体通常是 statusbar.views.MiuiClock（miuiClockName=big_time）。</p>
+     */
+    private static boolean isXiaomiShadeClock(TextView view) {
+        if (view == null || !isXiaomiDevice()) {
+            return false;
+        }
+        try {
+            String cls = view.getClass().getName().toLowerCase(Locale.ROOT);
+            String name = resourceName(view);
+            boolean clockLike = cls.contains("miuiclock")
+                    || cls.contains("notificationshadefakestatusbarclock")
+                    || cls.contains("bigtime")
+                    || name.contains("big_time") || name.contains("bigtime")
+                    || name.contains("shade_clock") || name.contains("notification_clock")
+                    || ((cls.contains("clock") || name.contains("clock"))
+                            && looksLikeClockText(view.getText()));
+            if (!clockLike) {
+                return false;
+            }
+            boolean inside = isInsideShade(view);
+            if (inside && BuildConfig.DEBUG
+                    && LOGGED_CANDIDATES.add("XMSHADE|" + name + "|" + cls)) {
+                XposedBridge.log(LOG_PREFIX + "XIAOMI shade clock: " + name + " | " + cls);
+            }
+            return inside;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 已挂过的小米补色 hook（类名#方法名），避免重复挂载。 */
+    private static final Set<String> XIAOMI_REAPPLY_HOOKED = new HashSet<>();
+
+    /**
+     * 澎湃OS3 核心补丁：在小米时钟 / 通知面板大钟的「系统本轮更新方法」结束之后补一次颜色。
+     *
+     * <p>为什么不只靠 setText 钩子：HyperOS 3 的 android.hardware.Pailrk（混淆类）会在
+     * TextView.setText 之外再把 CharSequence 重建为纯 String，setText 的 after 仍然太早；
+     * updateClock / updateTime / updateHeaderColor 才是「这一轮刷新真正结束」的位置。</p>
+     */
+    private static void installXiaomiClockReapplyHooks(ClassLoader classLoader) {
+        if (!isXiaomiDevice()) {
+            return;
+        }
+        String[] classNames = {
+                "com.android.systemui.statusbar.policy.Clock",
+                "com.android.systemui.statusbar.views.MiuiClock",
+                "com.android.systemui.controlcenter.phone.widget.NotificationShadeFakeStatusBarClock",
+                "com.android.systemui.statusbar.phone.NotificationShadeWindowView",
+        };
+        String[] methodNames = {"updateClock", "updateTime", "updateHeaderColor", "onDarkChanged"};
+        for (String className : classNames) {
+            Class<?> clazz;
+            try {
+                clazz = Class.forName(className, false, classLoader);
+            } catch (Throwable t) {
+                // 类不存在（非 HyperOS 3 / 版本差异）：跳过，并把名字写进日志便于按用户日志补类名。
+                if (BuildConfig.DEBUG) {
+                    XposedBridge.log(LOG_PREFIX + "XIAOMI class missing: " + className);
+                }
+                continue;
+            }
+            for (String methodName : methodNames) {
+                String key = className + "#" + methodName;
+                if (!XIAOMI_REAPPLY_HOOKED.add(key)) {
+                    continue;
+                }
+                try {
+                    XposedBridge.hookAllMethods(clazz, methodName, new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            reapplyClockColorsAfterSystemUpdate(param.thisObject);
+                        }
+                    });
+                    if (BuildConfig.DEBUG) {
+                        XposedBridge.log(LOG_PREFIX + "XIAOMI reapply hook: " + key);
+                    }
+                } catch (Throwable ignored) {
+                    // 方法不存在或被内联：跳过，其它路径照常
+                }
+            }
+        }
+    }
+
+    /** 系统更新方法跑完后补色：thisObject 可能是时钟本体，也可能是包着大钟的容器。 */
+    private static void reapplyClockColorsAfterSystemUpdate(Object target) {
+        try {
+            if (sSelfDisabled || WRITING_CLOCK.get()) {
+                return;
+            }
+            if (target instanceof TextView) {
+                TextView tv = (TextView) target;
+                if (isStatusBarClock(tv) || (sQsClockOn && isQsClock(tv))) {
+                    forceReapplyColors(tv);
+                }
+                return;
+            }
+            if (target instanceof ViewGroup) {
+                reapplyInside((ViewGroup) target, 0);
+            }
+        } catch (Throwable ignored) {
+            // 补色失败绝不崩宿主
+        }
+    }
+
+    /** 递归找容器里的时钟视图并补色（面板大钟在 FakeStatusBarClock 的子树里）。 */
+    private static void reapplyInside(ViewGroup root, int depth) {
+        if (root == null || depth > 4) {
+            return;
+        }
+        try {
+            for (int i = 0; i < root.getChildCount(); i++) {
+                View child = root.getChildAt(i);
+                if (child instanceof TextView) {
+                    TextView tv = (TextView) child;
+                    if ((isStatusBarClock(tv) || (sQsClockOn && isQsClock(tv)))
+                            && looksLikeClockText(tv.getText())) {
+                        forceReapplyColors(tv);
+                    }
+                } else if (child instanceof ViewGroup) {
+                    reapplyInside((ViewGroup) child, depth + 1);
+                }
+            }
+        } catch (Throwable ignored) {
+            // 单个子树异常不影响其它
         }
     }
 
@@ -3063,7 +3261,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     private static void forceReapplyColors(TextView view) {
         try {
-            if (view == null || !isStatusBarClock(view) || !isClockEnabled(view)) {
+            if (view == null || !isClockEnabled(view)) {
+                return;
+            }
+            // 澎湃OS3：下拉通知栏大钟同样要补色（系统 updateHeaderColor 会重新着色/重设文本）。
+            if (!isStatusBarClock(view) && !(sQsClockOn && isQsClock(view))) {
                 return;
             }
             // 快速短路：颜色本来就还在（ColorOS 等不洗 span 的 ROM）→ 什么都不做，零开销。
@@ -3572,7 +3774,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 || name.contains("status_clock")
                 || name.contains("clock_text")
                 || className.contains("statusbar.policy.clock")
-                || className.contains("statclock");
+                || className.contains("statclock")
+                // 小米 HyperOS 3：statusbar.views.MiuiClock 同样是状态栏时钟；同一个类在通知面板
+                // 里还有实例（大钟），用祖先链排除面板内的实例，避免把大钟当成状态栏时钟。
+                || (isXiaomiDevice() && !isInsideShade(view)
+                        && (className.contains("miuiclock") || className.contains("statusbar.views.clock")));
     }
 
 
