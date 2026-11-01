@@ -24,8 +24,12 @@ public final class ClockSecondsConfig {
 
     public static final String SYSTEM_UI_PACKAGE = "com.android.systemui";
 
-    /** 模块自身（设置页）包名，用于 SystemUI → 设置页的回传广播定向发送。 */
-    public static final String MODULE_PACKAGE = "io.github.kelebao.colorosclockseconds";
+    /**
+     * 模块自身（设置页）包名，用于 SystemUI → 设置页的回传广播定向发送。
+     * 必须取构建期 APPLICATION_ID：modern flavor 带 ".modern" 后缀，硬编码会让 PONG 发给
+     * 不存在的旧包名，设置页永远显示「未激活」。
+     */
+    public static final String MODULE_PACKAGE = BuildConfig.APPLICATION_ID;
 
     /**
      * 配置广播的 signature 级自定义权限（安全加固 F1）。

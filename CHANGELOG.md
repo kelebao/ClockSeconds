@@ -6,6 +6,14 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc312（modern 版「模块未激活」修复：回传广播的模块包名）
+
+- **现象**：modern（API 102）版功能其实正常（状态栏与下拉面板都在跳秒、有颜色），但模块设置页顶部一直显示「未激活（请在 LSPosed 勾选系统界面后重启）」。
+- **根因**：`ClockSecondsConfig.MODULE_PACKAGE` 硬编码为 `io.github.kelebao.colorosclockseconds`，SystemUI 回传 PONG / 主动回包（`res.setPackage(...)`）都用它定向发送。modern flavor 的 applicationId 带 `.modern` 后缀，于是广播发给了不存在的旧包名，设置页永远收不到 PONG → 判定未激活。
+- **修复**：`MODULE_PACKAGE` 改为 `BuildConfig.APPLICATION_ID`（构建期真实包名，legacy / modern 各自正确）。5 处 `setPackage` 与权限自检同时受益。
+- **验证（ColorOS16，modern vc312）**：设置页顶部不再出现「未激活」卡片（已激活时整卡隐藏），预览卡与开关正常；状态栏实拍 `00:45:40 凌晨` 跳秒且渐变上色。
+- 版本 **vc312** / versionName `1.2.0-test.20261102-0042`（modern 为 `...-api102`）。
+
 ### vc311（双版本发布：legacy Xposed API 82 + modern libxposed API 102）
 
 - **新增 productFlavors**：`legacy`（老框架，入口 `assets/xposed_init`，`compileOnly de.robv.android.xposed:api:82`）与 `modern`（libxposed，入口 `META-INF/xposed/java_init.list` + `module.prop`（minApiVersion/targetApiVersion=102、staticScope=true）+ `scope.list`，`compileOnly io.github.libxposed:api:102.0.0`，`applicationIdSuffix ".modern"`、`versionNameSuffix "-api102"`，可与旧版并存）。
