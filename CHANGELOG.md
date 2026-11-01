@@ -6,6 +6,16 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc313（小米 HyperOS：小时补前导零 + 保留系统字形特性）
+
+- **用户反馈**（小米 24069RA21C / HyperOS 3.0.305，反馈包 LSPosed_20261102_005602）：①状态栏小时只显示一个 0（手机系统自己显示 00）；②冒号位置下移、数字不圆润，怀疑深色模式导致。
+- **根因 1（单 0）**：小米 statusbar.policy.Clock 交给我们的系统文本本身不带前导零（日志实测 text=[0:53]），我们直接拼秒就变成 stored=[0:55:00]，状态栏就只剩一个 0。系统自己显示 00:54 是它内部另做了补零，我们拼秒后没有补回。
+- **根因 2（不圆润 / 冒号变方）**：vc302 为修 issue #10 的宽度抖动，对小米时钟直接 setFontFeatureSettings("tnum")，这是覆盖式写入，把 MIUI 自己设置的字形特性（圆角数字、冒号字形等）整个抹掉了。
+- **修复**：新增 applyTnumKeepingExisting(TextView)——读取 getFontFeatureSettings()，已含 tnum 则跳过，否则在原有特性后追加 ,tnum；configureQsClockView() 与 configureClockView() 的小米分支改用该方法（ColorOS 分支同样受益）。新增 padHourIfNeeded(String)——第一个冒号在下标 1 时前面补 0，用于 writeTime()、writeMinuteOnly()、applyRedToBaseText() 与 forceReapplyColors() 四处所有拼时间文本的位置，保证显秒/不显秒/掉色重补三条路径一致。
+- **ColorOS16 回归**：状态栏 WRITE-CHECK: fcs=1 grad=1 cls=StatClock stored=[02:02:04 凌晨]，渐变与秒跳动正常，两处 tnum 调用改为追加式后无异常。
+- 版本 **vc313** / versionName 1.2.0-test.20261102-0159（modern 版带 -api102 后缀）。
+- ⚠️ 小米 HyperOS 3 待真机复验：重点看小时是否恢复两位 00、数字圆润度与冒号位置是否回到系统原生。
+
 ### vc312（modern 版「模块未激活」修复：回传广播的模块包名）
 
 - **现象**：modern（API 102）版功能其实正常（状态栏与下拉面板都在跳秒、有颜色），但模块设置页顶部一直显示「未激活（请在 LSPosed 勾选系统界面后重启）」。

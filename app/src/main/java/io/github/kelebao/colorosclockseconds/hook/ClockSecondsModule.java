@@ -739,20 +739,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             // （'1' 窄、'8' 宽），秒位每秒变化时文字墨迹宽度在 348~361px 间摆动，
             // 渐变按文字实测宽度铺设，导致可见右缘每秒抖动（issue #10 同类现象）。
             // 切 tnum 让 0-9 等宽，墨迹宽度恒定，消除抖动；不影响已锁定的容器宽度。
-            try {
-                view.setFontFeatureSettings("tnum");
-            } catch (Throwable ignored) {
-                // 字体特性不支持时保持原样
-            }
+            applyTnumKeepingExisting(view);
         } else if (isXiaomiDevice()) {
             // 小米 HyperOS（issue #10）：MiuiClock / statusbar.policy.Clock 是 wrap_content，
             // 比例数字宽度随秒数变化 → 时钟每秒左右抖动、推挤旁边图标。
             // 不锁宽度（issue #2 教训：锁宽会让 HyperOS 时钟整块消失），只切等宽数字（tnum）。
-            try {
-                view.setFontFeatureSettings("tnum");
-            } catch (Throwable ignored) {
-                // 字体特性不支持时保持原样
-            }
+            // 注意必须「追加」而不是覆盖：MIUI 自己设置了圆角字形等特性，直接覆盖会让数字不圆润、冒号变方。
+            applyTnumKeepingExisting(view);
         }
     }
 
@@ -1140,11 +1133,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (view == null || !QS_CONFIGURED.add(view)) {
             return;
         }
-        try {
-            view.setFontFeatureSettings("tnum");
-        } catch (Throwable ignored) {
-            // 字体特性不支持时保持原样
-        }
+        applyTnumKeepingExisting(view);
     }
 
     /** 面板时钟最近一次的宽度与采样时刻，用于识别「正在做缩放动画」。 */
@@ -2524,7 +2513,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         // 统一裁剪到「时:分」，再追加一个 :ss —— 无论系统/其它模块给的是 HH:mm、
         // HH:mm:ss，甚至已经出现双秒（19:53:00:02），最终都只会有一个秒。
-        String hhmm = toHourMinute(base);
+        String hhmm = padHourIfNeeded(toHourMinute(base));
         int second = (int) ((System.currentTimeMillis() / 1000) % 60);
         String ss = String.format(Locale.US, ":%02d", second);
         String text = hhmm + ss;
@@ -2602,6 +2591,42 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 只保留「时:分」部分：遇到第二个冒号就截断，去掉可能已存在的秒。
      * 这样后面再追加一个 :ss，就永远不会出现「双秒」（19:53:00:02）。
      */
+    /**
+     * 只追加 tnum，保留视图原有的 fontFeatureSettings。
+     * 直接 setFontFeatureSettings("tnum") 会覆盖 MIUI 自己设置的字形特性（圆角数字等），
+     * 用户实测表现为数字「不圆润」、冒号字形变方。
+     */
+    private static void applyTnumKeepingExisting(TextView view) {
+        try {
+            String existing = view.getFontFeatureSettings();
+            if (existing != null && existing.toLowerCase(Locale.ROOT).contains("tnum")) {
+                return;
+            }
+            view.setFontFeatureSettings(existing == null || existing.trim().isEmpty()
+                    ? "tnum" : existing + ",tnum");
+        } catch (Throwable ignored) {
+            // 字体特性不支持时保持原样
+        }
+    }
+
+    /**
+     * 小时补前导零：小米 policy.Clock 给的是 "0:54"（无前导零），而 MIUI 自己显示 "00:54"。
+     * 拼秒后不补回就会变成单 0（用户反馈「小时变成一个 0」）。
+     */
+    private static String padHourIfNeeded(String hhmm) {
+        if (hhmm == null || hhmm.isEmpty()) {
+            return hhmm;
+        }
+        int c = hhmm.indexOf(':');
+        if (c < 0) {
+            c = hhmm.indexOf('：');
+        }
+        if (c == 1) {
+            return "0" + hhmm;
+        }
+        return hhmm;
+    }
+
     private static String toHourMinute(CharSequence base) {
         if (base == null) {
             return "";
@@ -3104,7 +3129,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 同 applyRedToBaseText：零宽空格破坏 HH:mm 模式匹配，防 setText 链重建剥 span。
         // 顺带把系统可能自带的秒截掉（HyperOS 的 AOSP Clock 会按 HH:mm:ss 写入）：不截的话
         // 「关闭显秒」写回去的还是带秒文本，秒数看起来根本没关。
-        String text = toHourMinute(base);
+        String text = padHourIfNeeded(toHourMinute(base));
         final int timeEnd = text.length();
         // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前（零宽空格必须留在最末尾）。
         // 下拉面板时钟旁边本来就有日期（ColorOS 显示「10月31日 星期六」），
@@ -3152,7 +3177,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // Span 自然存活。零宽字符不占布局宽度、不可见；系统下次分钟更新给新纯文本，
         // 由本方法再次追加，自洽。若真凶不是模式匹配，此字符无害，循环兜底。
         // 同上：base 可能自带秒（HyperOS 的 AOSP Clock 按 HH:mm:ss 写），显秒关时必须截掉。
-        String text = toHourMinute(base);
+        String text = padHourIfNeeded(toHourMinute(base));
         final int timeEnd = text.length();
         // 时间后缀（周几 / 时段）拼在时间之后、零宽空格之前（零宽空格必须留在最末尾）。
         // 下拉面板时钟旁边本来就有日期（ColorOS 显示「10月31日 星期六」），
@@ -3530,7 +3555,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             if (base == null) {
                 base = view.getText();
             }
-            String hhmm = toHourMinute(base);
+            String hhmm = padHourIfNeeded(toHourMinute(base));
             int second = (int) ((System.currentTimeMillis() / 1000) % 60);
             String text = hhmm + String.format(Locale.US, ":%02d", second);
             final int timeEnd = text.length();
