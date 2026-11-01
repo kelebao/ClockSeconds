@@ -6,6 +6,17 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc305 / vc306 / vc307（按用户反馈日志修正澎湃OS3：大钟识别 + 渐变被吞自愈）
+
+- **确认用户日志来自 vc303**：反馈包 `LSPosed_20261101_201050` 里 `XIAOMI` 关键字计数为 0（vc304 在小米上必然打印 `XIAOMI class missing` / `XIAOMI reapply hook`），设备为 Xiaomi/Redmi、HyperOS `OS3.0.305.0.WNPCNXM`(Android 16)。
+- **大钟的真实身份（日志实证）**：`TIMETV: big_time | com.android.systemui.statusbar.views.MiuiNotificationHeaderClock` 与 `TIMETV: big_time | com.android.systemui.statusbar.views.MiuiClock`。vc303 的识别规则里 `big_time` 一条都不匹配 → 大钟既不显秒也不上色，这正是用户说的「通知栏时间不变色不显秒」。vc304 猜的 `NotificationShadeFakeStatusBarClock` 在该机型上不存在，已删除；改为按**资源名 `big_time`** 认定（不依赖各版本不同的容器类名），并新增 `MiuiNotificationHeaderClock`、`MiuiStatusBarClockController` 两个真实类到补色列表。
+- **渐变被吞（日志实证）**：`gradientOn=true` 的 69 次写入里 43 次 `grad=0`，而且是「先好后永久失败」——MiuiClock 连续 29 次丢失、policy.Clock 连续 13 次丢失；同一次写入里 `ForegroundColorSpan` 始终存活（`fcs=1`）。洗 span 的混淆类这一版叫 `android.util.FleirkClaFlurlr`（上一版是 `android.hardware.Pailrk`，逐版本随机），故不硬编码，只挂稳定的 `updateTime` / `updateClock` 入口。
+- **两级自愈**：①每次写入后若渐变 span 没留住，先**原地重写一次**（日志显示同一秒重写往往能留住）；②连续 5 次仍丢失才把该视图标记为「渐变不可靠」，改走 `applyGradientAsForeground()` —— 用 `ForegroundColorSpan` 按字符插值做分段渐变，FCS 在所有 ROM 上都能存活，保证颜色一定出现。
+- **vc306 修的回归**：vc305 首次实现是「一次丢失就永久降级」，导致 ColorOS16 也被误判（`fcs=7 grad=0`，真渐变变成 7 段 FCS）。vc306 改为连续 5 次 + 重写重试 + 未布局/不可见时不计数。
+- **ColorOS16 真机实测**：vc305 复现了上述回归；vc306/vc307 恢复 `WRITE-CHECK: gradientOn=true fcs=1 grad=1 cls=StatClock`、无 `GRADIENT-MISS` 日志、写入频率仍为每秒 1 次（无额外开销）。
+- 版本：vc305 `1.2.0-test.20261101-2037`、vc306 `20261101-2041`、vc307 `20261101-2043`。
+- ⚠️ 澎湃OS3 仍待真机验证：需要用户装 vc307、打开「通知栏时间跟随状态栏」，再回传日志；关键看 `XIAOMI shade clock`（大钟是否被识别）、`GRADIENT-MISS`（渐变是否降级）。
+
 ### vc304（澎湃OS3：状态栏小钟 + 通知栏大钟双修）
 
 - **状态栏小钟（HyperOS 3）**：新增 `installXiaomiClockReapplyHooks()`，对 `statusbar.policy.Clock#updateClock`、`statusbar.views.MiuiClock#updateTime` 等「系统本轮刷新结束」的方法挂 after 补色。之所以不再只靠 `setText` 的 after：HyperOS 3 的混淆类 `android.hardware.Pailrk` 会在 `TextView.setText` 之外再把 CharSequence 重建成纯 String，setText 结束那一刻颜色已被洗掉。

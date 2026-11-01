@@ -965,10 +965,22 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         try {
             String cls = view.getClass().getName().toLowerCase(Locale.ROOT);
             String name = resourceName(view);
+            // 名字已经是状态栏时钟形态的，一律不当大钟（HyperOS 的 MiuiClock 在状态栏和面板里
+            // 是两个实例，靠名字区分最稳，不依赖各版本不同的容器类名）。
+            if ("clock".equals(name) || "status_bar_clock".equals(name)) {
+                return false;
+            }
+            // 用户日志（2026-11-01，HyperOS 3.0.305.0.WNPCNXM）实测：大钟资源名就是 big_time，
+            // 本体类是 com.android.systemui.statusbar.views.MiuiNotificationHeaderClock，
+            // 另有一个同名的 MiuiClock 实例。名字足够唯一，直接认定，不再依赖祖先链。
+            if ("big_time".equals(name) || cls.contains("notificationheaderclock")) {
+                if (BuildConfig.DEBUG && LOGGED_CANDIDATES.add("XMSHADE|" + name + "|" + cls)) {
+                    XposedBridge.log(LOG_PREFIX + "XIAOMI shade clock: " + name + " | " + cls);
+                }
+                return true;
+            }
             boolean clockLike = cls.contains("miuiclock")
-                    || cls.contains("notificationshadefakestatusbarclock")
-                    || cls.contains("bigtime")
-                    || name.contains("big_time") || name.contains("bigtime")
+                    || name.contains("bigtime")
                     || name.contains("shade_clock") || name.contains("notification_clock")
                     || ((cls.contains("clock") || name.contains("clock"))
                             && looksLikeClockText(view.getText()));
@@ -985,7 +997,6 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             return false;
         }
     }
-
     /** 已挂过的小米补色 hook（类名#方法名），避免重复挂载。 */
     private static final Set<String> XIAOMI_REAPPLY_HOOKED = new HashSet<>();
 
@@ -2465,6 +2476,19 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         } finally {
             WRITING_CLOCK.set(false);
         }
+        // 渐变自愈（一）：HyperOS 3 实测同一秒内第一次写入的渐变 span 可能被吞、再写一次就能留住，
+        // 所以先原地重写一次；只有在重写之后仍然丢失，才计入「不可靠」次数。
+        if (sGradientOn && !isGradientSpanAlive(view)) {
+            WRITING_CLOCK.set(true);
+            try {
+                view.setText(sb);
+            } finally {
+                WRITING_CLOCK.set(false);
+            }
+        }
+        // 渐变自愈（二）：连续多次确认自定义 span 被 ROM 的 setText 吞掉后才降级（单次失败可能只是
+        // 该视图尚未布局/未 attach，不能据此永久降级，否则正常 ROM 会被误判成「渐变不可靠」）。
+        noteGradientResult(view);
         if (BuildConfig.DEBUG) {
             // 澎湃3 排查：确认 setText 之后颜色 span 是否真的留在 View 上
             CharSequence cur = view.getText();
@@ -2550,6 +2574,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         if (sGradientOn) {
             // 渐变模式：整串一个 CharacterStyle，颜色由 shader 生成，不再逐字符上色。
+            // 小米 HyperOS 3 会把这个自定义 span 吞掉（用户日志实测 43/69 次），
+            // 被判定为「渐变不可靠」的视图改走 FCS 逐字符插值：视觉是分段渐变，至少颜色一定在。
+            if (GRADIENT_UNRELIABLE.contains(view)) {
+                return applyGradientAsForeground(sb, view, timeEnd);
+            }
             return applyGradient(sb, view, digitColors(view), 0f, timeEnd);
         }
         int[] colors = digitColors(view);
@@ -2672,6 +2701,103 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         int[] result = new int[n];
         System.arraycopy(starts, 0, result, 0, n);
         return result;
+    }
+
+    /** 渐变 span 在部分 ROM 上会被视图自己的 setText 吞掉（小米 HyperOS 3 实测），这类视图改走 FCS 插值。 */
+    private static final Set<TextView> GRADIENT_UNRELIABLE =
+            Collections.newSetFromMap(new java.util.WeakHashMap<TextView, Boolean>());
+
+    /** 连续失败计数：达到阈值才把视图标记为「渐变不可靠」，避免一次未布局就永久降级。 */
+    private static final java.util.Map<TextView, Integer> GRADIENT_MISSES = new java.util.WeakHashMap<>();
+
+    private static void noteGradientResult(TextView view) {
+        if (!sGradientOn || view == null) {
+            return;
+        }
+        if (isGradientSpanAlive(view)) {
+            GRADIENT_MISSES.remove(view);
+            GRADIENT_UNRELIABLE.remove(view);
+            return;
+        }
+        // 未布局 / 不可见时纹理宽度为 0，判定不成立（此时也不可能有可见的渐变效果）。
+        if (view.getWidth() <= 0 || !view.isShown()) {
+            return;
+        }
+        Integer prev = GRADIENT_MISSES.get(view);
+        int misses = (prev == null ? 0 : prev) + 1;
+        GRADIENT_MISSES.put(view, misses);
+        if (misses >= 5) {
+            GRADIENT_UNRELIABLE.add(view);
+            if (BuildConfig.DEBUG && LOGGED_CANDIDATES.add("GRADMISS|" + view.getClass().getName())) {
+                XposedBridge.log(LOG_PREFIX + "GRADIENT-MISS: degrade to FCS, cls=" + view.getClass().getName());
+            }
+        }
+    }
+
+    /** 当前文本上是否还挂着渐变 span（setText 之后判定，用来发现 span 被吞）。 */
+    private static boolean isGradientSpanAlive(TextView view) {
+        CharSequence cur = view.getText();
+        return cur instanceof Spanned
+                && ((Spanned) cur).getSpans(0, cur.length(), GradientTextSpan.class).length > 0;
+    }
+
+    /**
+     * 逐字符 FCS 插值：自定义 CharacterStyle 被 ROM 吞掉时的退化渐变。
+     *
+     * <p>HyperOS 3 实测（用户日志 2026-11-01）：gradientOn=true 时 69 次写入里有 43 次
+     * grad=0，即自定义 GradientTextSpan 在视图自己的 setText 重建文本时丢掉；
+     * 而同一次写入里的 ForegroundColorSpan 100% 存活（fcs=1）。
+     * 因此退化方案用 FCS 按字符插值：视觉上是分段渐变，但颜色一定出现。</p>
+     */
+    private static int[] applyGradientAsForeground(SpannableStringBuilder sb, TextView view,
+                                                  int colorEnd) {
+        int[] colors = digitColors(view);
+        int len = sb.length();
+        while (len > 0 && sb.charAt(len - 1) == (char) 0x200B) {
+            len--;
+        }
+        if (colorEnd > 0 && colorEnd < len) {
+            len = colorEnd;
+        }
+        if (len <= 0) {
+            return NO_STARTS;
+        }
+        int systemTextColor = view.getCurrentTextColor();
+        int rawStart = sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? colors[0] : sGradientStart;
+        int rawEnd = sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? colors[colors.length - 1] : sGradientEnd;
+        int c0 = gradientEdgeColor(rawStart, systemTextColor);
+        int c1 = gradientEdgeColor(rawEnd, systemTextColor);
+        int[] starts = new int[len];
+        int n = 0;
+        for (int i = 0; i < len; i++) {
+            if (ClockSecondsConfig.slotOfChar(sb, i) < 0) {
+                continue;   // 冒号等非数字位不参与，保持与渐变的取色范围一致
+            }
+            float t = len <= 1 ? 0f : ((float) i / (float) (len - 1));
+            int col = lerpColor(c0, c1, t);
+            ForegroundColorSpan[] old = sb.getSpans(i, i + 1, ForegroundColorSpan.class);
+            for (ForegroundColorSpan s : old) {
+                sb.removeSpan(s);
+            }
+            sb.setSpan(new ForegroundColorSpan(col), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            starts[n++] = i;
+        }
+        if (n == 0) {
+            return NO_STARTS;
+        }
+        int[] result = new int[n];
+        System.arraycopy(starts, 0, result, 0, n);
+        return result;
+    }
+
+    private static int lerpColor(int from, int to, float t) {
+        int a = (int) (Color.alpha(from) + (Color.alpha(to) - Color.alpha(from)) * t);
+        int r = (int) (Color.red(from) + (Color.red(to) - Color.red(from)) * t);
+        int g = (int) (Color.green(from) + (Color.green(to) - Color.green(from)) * t);
+        int b = (int) (Color.blue(from) + (Color.blue(to) - Color.blue(from)) * t);
+        return Color.argb(a, r, g, b);
     }
 
     /** 渐变端点颜色：「跟随系统」的端点用系统文字色，并按底色压暗（与逐位上色同规则）。 */
@@ -3318,6 +3444,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     WRITING_CLOCK.set(false);
                 }
             }
+            noteGradientResult(view);
 
         } catch (Throwable ignored) {
             // 兜底绝不崩宿主
@@ -3775,9 +3902,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 || name.contains("clock_text")
                 || className.contains("statusbar.policy.clock")
                 || className.contains("statclock")
-                // 小米 HyperOS 3：statusbar.views.MiuiClock 同样是状态栏时钟；同一个类在通知面板
-                // 里还有实例（大钟），用祖先链排除面板内的实例，避免把大钟当成状态栏时钟。
-                || (isXiaomiDevice() && !isInsideShade(view)
+                // 小米 HyperOS 3：statusbar.views.MiuiClock 同样是状态栏时钟；同名实例在通知面板里
+                // 还有一个（resource=big_time），按资源名排除，不依赖各版本不同的容器类名。
+                || (isXiaomiDevice() && !"big_time".equals(name)
                         && (className.contains("miuiclock") || className.contains("statusbar.views.clock")));
     }
 
