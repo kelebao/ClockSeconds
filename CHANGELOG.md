@@ -6,6 +6,15 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc310（锁屏时钟误接管修复 + 收起动画判定改为看屏幕位置）
+
+- **锁屏时间被改（vc304 起就存在）**：HyperOS 的锁屏 / AOD 玻璃时钟 `com.miui.clock.MiuiTextGlassView`（资源名 `time_view` / `colon_view`）的祖先链同样经过面板容器，`isInsideShade()` 判定为真，于是被 vc304 的 `isXiaomiShadeClock()` 当成面板大钟接管了。用户日志 `LSPosed_20261101_215726` 里 `cls=MiuiTextGlassView` 有 142 次 `WRITE-CHECK`，另有 `XIAOMI shade clock: time_view|com.miui.clock.miuitextglassview` 记录，即为证据。
+- **修复**：`isXiaomiShadeClock()` 增加两道排除——类名含 `miuitextglassview`，或新增的 `isInsideKeyguard(view)` 为真（祖先链类名含 `keyguard` / `bouncer` / `lockscreen`）。锁屏时钟从此不再被接管。
+- **收起动画仍抖动**：vc309 只按「宽度变化」判动画，但 MIUI 收起是把大钟**整体平移 + 缩放**飞回状态栏，缩放不改变 `getWidth()`，所以判不出来、动画期间仍在每秒写入。`isQsClockAnimating()` 改为同时追踪屏幕位置 `{w, x, y, time}`：`dw > max(8, prevW/10) || dx > 2 || dy > 2` 且距今 <1.5s 即判定动画中，`writeTime()` 对面板时钟直接跳过。
+- **ColorOS16 实测**：状态栏 `fcs=1 grad=1 cls=StatClock` 不变；下拉/收起操作后无异常；无新增崩溃。
+- 版本 **vc310** / versionName `1.2.0-test.20261101-2215`。
+- ⚠️ HyperOS 3 待真机复验：重点看新日志里 `cls=MiuiTextGlassView` 的 `WRITE-CHECK` 是否归零、收起动画是否还平移抖动。
+
 ### vc309（面板大钟：等宽数字 + 收起动画期间跳过写入）
 
 - **现象**：用户反馈（HyperOS 3）下拉面板上拉收起、大钟缩小飞回状态栏位置的过程中，时间「向右抖、变长」。

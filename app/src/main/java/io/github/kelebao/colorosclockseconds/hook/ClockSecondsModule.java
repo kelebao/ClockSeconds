@@ -972,6 +972,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             if ("clock".equals(name) || "status_bar_clock".equals(name)) {
                 return false;
             }
+            // 锁屏 / AOD 的玻璃时钟（com.miui.clock.MiuiTextGlassView，资源名 time_view / colon_view）
+            // 也会被判定成「在面板里」——它的祖先链确实经过面板容器，但它其实是锁屏时钟。
+            // 用户反馈「锁屏时间被动了」，这里按类名 + 祖先链双重排除，绝不接管。
+            if (cls.contains("miuitextglassview") || isInsideKeyguard(view)) {
+                return false;
+            }
             // 用户日志（2026-11-01，HyperOS 3.0.305.0.WNPCNXM）实测：大钟资源名就是 big_time，
             // 本体类是 com.android.systemui.statusbar.views.MiuiNotificationHeaderClock，
             // 另有一个同名的 MiuiClock 实例。名字足够唯一，直接认定，不再依赖祖先链。
@@ -1150,18 +1156,46 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      */
     private static boolean isQsClockAnimating(TextView view) {
         try {
+            int[] loc = new int[2];
+            view.getLocationOnScreen(loc);
             int w = view.getWidth();
             long now = System.currentTimeMillis();
-            int[] prev = QS_LAST_WIDTH.get(view);
-            QS_LAST_WIDTH.put(view, new int[]{w, (int) now});
-            if (prev == null || prev[0] <= 0) {
+            int[] prev = QS_LAST_WIDTH.get(view);   // {w, x, y, time}
+            QS_LAST_WIDTH.put(view, new int[]{w, loc[0], loc[1], (int) now});
+            if (prev == null || prev.length < 4 || prev[0] <= 0) {
                 return false;
             }
-            int delta = Math.abs(w - prev[0]);
-            return delta > Math.max(8, prev[0] / 10) && now - prev[1] < 1500L;
+            if (now - prev[3] >= 1500L) {
+                return false;
+            }
+            int dw = Math.abs(w - prev[0]);
+            int dx = Math.abs(loc[0] - prev[1]);
+            int dy = Math.abs(loc[1] - prev[2]);
+            // 展开 / 收起时 MIUI 会把大钟整体平移（并缩放）飞回状态栏位置：缩放不改变 getWidth()，
+            // 所以必须连屏幕位置一起看，光看宽度抓不到这种形变动画。
+            return dw > Math.max(8, prev[0] / 10) || dx > 2 || dy > 2;
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    /** 视图是否在锁屏 / AOD / 密码界面内（祖先链类名含 keyguard、bouncer、lockscreen）。 */
+    private static boolean isInsideKeyguard(View view) {
+        try {
+            ViewParent parent = view.getParent();
+            for (int depth = 0; parent != null && depth < 20; depth++) {
+                if (parent instanceof View) {
+                    String cn = ((View) parent).getClass().getName().toLowerCase(Locale.ROOT);
+                    if (cn.contains("keyguard") || cn.contains("bouncer") || cn.contains("lockscreen")) {
+                        return true;
+                    }
+                }
+                parent = parent.getParent();
+            }
+        } catch (Throwable ignored) {
+            // 取祖先链失败时按「不在锁屏」处理，最坏退化成加补丁前的行为
+        }
+        return false;
     }
 
     /** 存活的面板时钟实例（与 liveStatusBarClocks 分开：面板时钟的 y 远超状态栏区域）。 */
