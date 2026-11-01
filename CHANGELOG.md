@@ -6,6 +6,15 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc309（面板大钟：等宽数字 + 收起动画期间跳过写入）
+
+- **现象**：用户反馈（HyperOS 3）下拉面板上拉收起、大钟缩小飞回状态栏位置的过程中，时间「向右抖、变长」。
+- **根因**：①面板大钟此前没有切等宽数字（`configureClockView` 只处理状态栏时钟），比例字形下秒位每秒变化会让文本总宽每秒变化，动画每帧都要重新测量 → 抖动 + 位移（与 issue #10 同源）；②收起动画期间我们的每秒写入会让动画不断重新测量布局。
+- **修复**：新增 `configureQsClockView()` 给面板时钟（含 HyperOS `big_time`）一次性设置 `setFontFeatureSettings("tnum")`；新增 `isQsClockAnimating()`（宽度变化 >10% 且距上次采样 <1.5s 判定为动画中），`writeTime()` 对面板时钟在动画期间直接跳过写入。
+- **ColorOS16 实测**：状态栏 `fcs=1 grad=1` 不变；下拉面板 `cls=OplusQSClock stored=[21:35:33] grad=1 spannable=true`（tnum 生效、渐变正常）；全量日志 `FATAL` 计数 0。
+- 版本 **vc309** / versionName `1.2.0-test.20261101-2134`。
+- ⚠️ HyperOS 3 收起动画待真机复验。
+
 ### vc308（澎湃OS3 大钟排版修复：系统文本尾随空格）
 
 - **现象**：用户装 vc307 后澎湃OS3 的通知栏大钟已经显秒、也有颜色了，但「排版没挨着」——数字、冒号之间断开。

@@ -410,6 +410,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         configureClockView(view);
                     } else if (qsClock) {
                         QS_CLOCKS.add(view);
+                        configureQsClockView(view);
                     }
                     if (secondsOn()) {
                         installTicker(view);
@@ -464,6 +465,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                         if (isClockEnabled(view) && secondsOn()
                                 && isLiveQsClock(view) && !ACTIVE.containsKey(view)) {
                             QS_CLOCKS.add(view);
+                            configureQsClockView(view);
                             installTicker(view);
                             refreshClock(view);
                         } else if (isClockEnabled(view) && !secondsOn() && isLiveQsClock(view)) {
@@ -1110,6 +1112,57 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 见过并接管的全部面板时钟实例（弱引用，面板回收后自动消失）。 */
     private static final java.util.Set<TextView> QS_CLOCKS =
             Collections.newSetFromMap(new WeakHashMap<TextView, Boolean>());
+
+
+    // ==================================================================
+    // 面板大钟（含 HyperOS big_time）的排版稳定处理
+    // ==================================================================
+
+    /** 已完成等宽数字设置的时钟视图（每视图一次）。 */
+    private static final Set<TextView> QS_CONFIGURED =
+            Collections.newSetFromMap(new java.util.WeakHashMap<TextView, Boolean>());
+
+    /**
+     * 给下拉面板大钟也切等宽数字（tnum）。
+     *
+     * <p>用户反馈（2026-11-01，HyperOS 3）：下拉面板收起时大钟缩小飞回状态栏位置的过程中，
+     * 时间会「向右抖、变长」。根因与 issue #10 同源：比例字形下一个数字宽度不同（1 窄 8 宽），
+     * 秒位每秒变化 → 文本总宽每秒变化 → 动画每一帧都要重新测量布局 → 抖动 + 位移。
+     * 状态栏时钟早在 vc302/vc303 已切 tnum，面板大钟此前没有，这里补上。</p>
+     */
+    private static void configureQsClockView(TextView view) {
+        if (view == null || !QS_CONFIGURED.add(view)) {
+            return;
+        }
+        try {
+            view.setFontFeatureSettings("tnum");
+        } catch (Throwable ignored) {
+            // 字体特性不支持时保持原样
+        }
+    }
+
+    /** 面板时钟最近一次的宽度与采样时刻，用于识别「正在做缩放动画」。 */
+    private static final java.util.Map<TextView, int[]> QS_LAST_WIDTH = new java.util.WeakHashMap<>();
+
+    /**
+     * 面板时钟是否正在做尺寸动画（展开/收起时宽度会剧烈变化）。
+     * 宽度变化超过 10%（且至少 8px）且距上次采样不足 1.5 秒，判定为动画中。
+     */
+    private static boolean isQsClockAnimating(TextView view) {
+        try {
+            int w = view.getWidth();
+            long now = System.currentTimeMillis();
+            int[] prev = QS_LAST_WIDTH.get(view);
+            QS_LAST_WIDTH.put(view, new int[]{w, (int) now});
+            if (prev == null || prev[0] <= 0) {
+                return false;
+            }
+            int delta = Math.abs(w - prev[0]);
+            return delta > Math.max(8, prev[0] / 10) && now - prev[1] < 1500L;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
 
     /** 存活的面板时钟实例（与 liveStatusBarClocks 分开：面板时钟的 y 远超状态栏区域）。 */
     private static List<TextView> liveQsClocks() {
@@ -2425,6 +2478,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /** 用「系统原文本 + :ss」覆写时钟（追加的秒继承系统时钟文字色，自动跟随 12/24 制）。 */
     private static void writeTime(TextView view) {
+        // 面板/大钟在展开收起动画里会被缩放，动画期间每次 setText 都会让动画重新测量 → 视觉抖动。
+        // 检测到尺寸正在剧烈变化就跳过这一帧写入（动画结束尺寸稳定后自然恢复）。
+        if (isQsClock(view) && isQsClockAnimating(view)) {
+            return;
+        }
         publishSystemTextColor(view);
         CharSequence base = BASE_TEXT.get(view);
         if (base == null) {
