@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- libxposed (API 102) 专属声明：不再使用 xposed* meta-data，改用 META-INF/xposed/*。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:description="@string/module_description" />
+</manifest>

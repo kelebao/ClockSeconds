@@ -6,6 +6,15 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc311（双版本发布：legacy Xposed API 82 + modern libxposed API 102）
+
+- **新增 productFlavors**：`legacy`（老框架，入口 `assets/xposed_init`，`compileOnly de.robv.android.xposed:api:82`）与 `modern`（libxposed，入口 `META-INF/xposed/java_init.list` + `module.prop`（minApiVersion/targetApiVersion=102、staticScope=true）+ `scope.list`，`compileOnly io.github.libxposed:api:102.0.0`，`applicationIdSuffix ".modern"`、`versionNameSuffix "-api102"`，可与旧版并存）。
+- **业务代码零改动**：modern flavor 内置 `de.robv.android.xposed.*` 兼容 shim（`XposedBridge` / `XC_MethodHook` / `IXposedHookLoadPackage` / `XC_LoadPackage`），把 `hookAllMethods` 与 `before/after` 语义翻译成 libxposed 的 `Hooker` / `Chain`；`ModernEntry extends XposedModule`，在 `onPackageLoaded` 里构造 legacy 形状的 `LoadPackageParam` 调用 `ClockSecondsModule.handleLoadPackage`，因此 4300 行业务代码两个 flavor 共用一份。
+- **ColorOS16 真机验证**：modern 包在 LSPosed 管理器显示 **「API 102」** 徽章（版本 `1.2.0-test.20261101-2351-api102 (311)`）；状态栏 `WRITE-CHECK: gradientOn=true fcs=1 grad=1 cls=StatClock`、下拉面板 `cls=OplusQSClock grad=1`，日志标签为 `io.github.kelebao.colorosclockseconds.modern`；legacy 包同样 `fcs=1 grad=1`。
+- **产物**：`app/build/outputs/apk/legacy/debug/app-legacy-debug.apk`、`app/build/outputs/apk/modern/debug/app-modern-debug.apk`。两版包名不同可同时安装，但**只应启用其中一个**，否则会双份 hook。
+- **注意**：modern 版要求框架支持 Xposed API 102（LSPosed 1.9.x 之后的新版）；老框架用户请装 legacy 版。构建脚本的 `testDebugUnitTest` 因 flavor 歧义改为 `testLegacyDebugUnitTest`。
+- 版本 **vc311** / versionName `1.2.0-test.20261101-2351`（modern 版带 `-api102` 后缀）。
+
 ### vc310（锁屏时钟误接管修复 + 收起动画判定改为看屏幕位置）
 
 - **锁屏时间被改（vc304 起就存在）**：HyperOS 的锁屏 / AOD 玻璃时钟 `com.miui.clock.MiuiTextGlassView`（资源名 `time_view` / `colon_view`）的祖先链同样经过面板容器，`isInsideShade()` 判定为真，于是被 vc304 的 `isXiaomiShadeClock()` 当成面板大钟接管了。用户日志 `LSPosed_20261101_215726` 里 `cls=MiuiTextGlassView` 有 142 次 `WRITE-CHECK`，另有 `XIAOMI shade clock: time_view|com.miui.clock.miuitextglassview` 记录，即为证据。

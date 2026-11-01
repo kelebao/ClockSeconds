@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.kelebao.colorosclockseconds"
         minSdk = 29
         targetSdk = 35
-        versionCode = 310
-        versionName = "1.2.0-test.20261101-2215"
+        versionCode = 311
+        versionName = "1.2.0-test.20261101-2351"
     }
 
     signingConfigs {
@@ -52,6 +52,20 @@ android {
     }
 
     // 启用 BuildConfig 生成（AGP 8.x 默认关闭），�?release 构建�?BuildConfig.DEBUG 门控排查日志�?
+
+    flavorDimensions += "xposedapi"
+    productFlavors {
+        // legacy: old framework, entry = assets/xposed_init
+        create("legacy") {
+            dimension = "xposedapi"
+        }
+        // modern: libxposed API 102, entry = META-INF/xposed/java_init.list, separate appId
+        create("modern") {
+            dimension = "xposedapi"
+            applicationIdSuffix = ".modern"
+            versionNameSuffix = "-api102"
+        }
+    }
     buildFeatures {
         buildConfig = true
     }
@@ -64,7 +78,8 @@ android {
 
 dependencies {
     // 改用 legacy Xposed API（与 betterclock 一致，已在 ColorOS 15 真机验证不崩溃）
-    compileOnly("de.robv.android.xposed:api:82")
+    add("legacyCompileOnly", "de.robv.android.xposed:api:82")
+    add("modernCompileOnly", "io.github.libxposed:api:102.0.0")
     // 单元测试（纯函数测试，不依赖 Android 运行时）
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
