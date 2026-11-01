@@ -6,6 +6,13 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc314（HyperOS 渐变降级路径补冒号光学抬升）
+
+- **用户反馈续**：vc313 修了单 0 与字形特性后，仍需处理「冒号下移」。根因是 HyperOS 上 GradientTextSpan 会被系统吞掉（用户日志实测该视图 fcs=0 grad=0），我们降级到 FCS 逐字符插值：数字各成一个 run，冒号被单独切出来画在基线上，比整串一个 run 低约 0.11em。
+- **修复**：applyGradientAsForeground() 里遇到冒号也补一个 ColonLiftSpan（与逐位上色路径一致的光学抬升），不再只对数字上色。
+- **ColorOS16 回归**：状态栏 WRITE-CHECK: fcs=1 grad=1 cls=StatClock stored=[02:05:37 凌晨]，设置页版本 314 正常显示，渐变与秒跳动无异常。
+- 版本 **vc314** / versionName 1.2.0-test.20261102-0204（modern 版带 -api102 后缀）。
+
 ### vc313（小米 HyperOS：小时补前导零 + 保留系统字形特性）
 
 - **用户反馈**（小米 24069RA21C / HyperOS 3.0.305，反馈包 LSPosed_20261102_005602）：①状态栏小时只显示一个 0（手机系统自己显示 00）；②冒号位置下移、数字不圆润，怀疑深色模式导致。

@@ -2908,6 +2908,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         int n = 0;
         for (int i = 0; i < len; i++) {
             if (ClockSecondsConfig.slotOfChar(sb, i) < 0) {
+                char ch = sb.charAt(i);
+                if (ch == ':' || ch == '：') {
+                    // FCS 逐字符插值会把冒号切成独立 run，冒号被画在基线上（比整串低约 0.11em）。
+                    // 补与逐位上色一致的冒号光学抬升，避免小米 HyperOS 上「冒号下移」。
+                    sb.setSpan(new ColonLiftSpan(), i, i + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
                 continue;   // 冒号等非数字位不参与，保持与渐变的取色范围一致
             }
             float t = len <= 1 ? 0f : ((float) i / (float) (len - 1));
