@@ -2515,6 +2515,18 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             return "";
         }
         String s = base.toString();
+        // 去掉首尾空白与零宽字符：HyperOS 的通知栏大钟系统文本带尾随空格
+        // （用户日志实测 stored=[20:50 :35]，系统给的是 "20:50 "，直接拼秒会变成「20:50 :35」、
+        //  排版断开、冒号离开数字）。状态栏时钟与其它 ROM 不受影响（它们本来就没有填充字符）。
+        int start = 0;
+        int end = s.length();
+        while (start < end && isClockPadding(s.charAt(start))) {
+            start++;
+        }
+        while (end > start && isClockPadding(s.charAt(end - 1))) {
+            end--;
+        }
+        s = s.substring(start, end);
         int seen = 0;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
@@ -2526,6 +2538,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
         }
         return s;
+    }
+
+    /** 首尾填充字符判定：空白、不换行空格、零宽空格 / ZWNJ / ZWJ / BOM 都算。 */
+    private static boolean isClockPadding(char c) {
+        return Character.isWhitespace(c) || Character.isSpaceChar(c)
+                || c == 0x00A0 || c == 0x200B || c == 0x200C || c == 0x200D || c == 0xFEFF;
     }
 
     /**

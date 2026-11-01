@@ -6,6 +6,14 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc308（澎湃OS3 大钟排版修复：系统文本尾随空格）
+
+- **现象**：用户装 vc307 后澎湃OS3 的通知栏大钟已经显秒、也有颜色了，但「排版没挨着」——数字、冒号之间断开。
+- **根因（日志实证）**：HyperOS 的大钟（`MiuiNotificationHeaderClock`，资源名 `big_time`）系统给的文本自带**尾随空格**，日志里 `stored=[20:50 :35]`。`toHourMinute()` 只截「第二个冒号之前」，没有清理首尾填充字符，于是 `"20:50 " + ":35"` 拼成了 `20:50 :35`，冒号被空格顶开。状态栏时钟（`MiuiClock` / `policy.Clock`）的文本没有这个问题，日志里是干净的 `20:51:19`。
+- **修复**：`toHourMinute()` 先去掉首尾填充字符（空白、不换行空格 U+00A0、零宽空格 U+200B、ZWNJ/ZWJ、BOM），新增 `isClockPadding(char)`；再做原有的「截到第二个冒号之前」逻辑。其它 ROM 无填充字符，行为不变。
+- 版本 **vc308** / versionName `1.2.0-test.20261101-2104`。ColorOS16 实测状态栏仍为 `fcs=1 grad=1`，文本不变。
+- ⚠️ 澎湃OS3 大钟排版待真机复验。
+
 ### vc305 / vc306 / vc307（按用户反馈日志修正澎湃OS3：大钟识别 + 渐变被吞自愈）
 
 - **确认用户日志来自 vc303**：反馈包 `LSPosed_20261101_201050` 里 `XIAOMI` 关键字计数为 0（vc304 在小米上必然打印 `XIAOMI class missing` / `XIAOMI reapply hook`），设备为 Xiaomi/Redmi、HyperOS `OS3.0.305.0.WNPCNXM`(Android 16)。
