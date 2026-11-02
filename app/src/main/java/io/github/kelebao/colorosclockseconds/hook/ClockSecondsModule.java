@@ -705,7 +705,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
         if (BuildConfig.DEBUG) {
             XposedBridge.log(LOG_PREFIX + "CONFIG CLOCK: " + resourceName(view)
-                    + " | " + view.getClass().getName());
+                    + " | " + view.getClass().getName()
+                    + " | parent=" + (view.getParent() == null ? "null" : view.getParent().getClass().getName())
+                    + " lpw=" + (view.getLayoutParams() == null ? -1 : view.getLayoutParams().width));
         }
         synchronized (CONFIGURED) {
             if (!CONFIGURED.add(view)) {
@@ -721,25 +723,26 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // 小米 HyperOS 的 MiuiClock 是 wrap_content 且没有重写 onMeasure，锁定宽度会让
         // TextView 在固定宽度内无法完整绘制文本，状态栏时间整块消失（issue #2）。
         //
-        // 且只设 minWidth、不设 maxWidth：时钟最宽就是 HH:mm:ss，minWidth 已足够防止
-        // 显秒开关引起的横向移位；maxWidth 在字体测量有偏差时会裁切文本，弊大于利。
+        // vc316 起改为「只锁容器宽度」：minWidth 与 maxWidth 都钉到最宽字符串 88:88:88 的实测宽度，
+        // 容器宽度恒定 → 旁边图标不被推动；文字本身用系统比例数字，保持紧凑。
         if (isOplusDevice()) {
+            // vc316：容器宽度钉死到「能出现的最宽字符串」88:88:88 的实测宽度，
+            // 这样 Clock 视图宽度恒定，秒数变化不会推挤旁边的图标；
+            // 同时不再切 tnum（等宽数字会把每个 1 撑满整格、显得松散），
+            // 保留系统比例数字，恢复紧凑观感。
             try {
-                float widestDigit = 0f;
-                for (char digit = '0'; digit <= '9'; digit++) {
-                    widestDigit = Math.max(widestDigit, view.getPaint().measureText(String.valueOf(digit)));
-                }
-                int width = (int) Math.ceil(widestDigit * 6f + view.getPaint().measureText("::"))
+                // 只设 minWidth：给短字符串一个下限，长字符串不会被裁剪
+                // （实测 StatClock 会覆写 getMaxWidth/onMeasure，setMaxWidth 既无效还可能裁剪文本）。
+                int width = (int) Math.ceil(view.getPaint().measureText("88:88:88"))
                         + view.getCompoundPaddingLeft() + view.getCompoundPaddingRight();
                 view.setMinWidth(width);
+                // vc321：等宽数字（tnum）让每个数字格宽度一致 → 文本宽度恒定、图标不再随秒跳；
+                // 再把整体横向压缩 8%，把 tnum 比比例数字多出来的宽度收回去，观感接近紧凑版。
+                applyTnumKeepingExisting(view);
+                view.setTextScaleX(0.92f);
             } catch (Throwable ignored) {
                 // 测量失败不影响核心功能
             }
-            // 等宽数字（tnum）：锁定 minWidth 只能稳住容器宽度；容器内的数字仍是比例字形
-            // （'1' 窄、'8' 宽），秒位每秒变化时文字墨迹宽度在 348~361px 间摆动，
-            // 渐变按文字实测宽度铺设，导致可见右缘每秒抖动（issue #10 同类现象）。
-            // 切 tnum 让 0-9 等宽，墨迹宽度恒定，消除抖动；不影响已锁定的容器宽度。
-            applyTnumKeepingExisting(view);
         } else if (isXiaomiDevice()) {
             // 小米 HyperOS（issue #10）：MiuiClock / statusbar.policy.Clock 是 wrap_content，
             // 比例数字宽度随秒数变化 → 时钟每秒左右抖动、推挤旁边图标。
@@ -1823,7 +1826,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     box.setBackground(bg);
 
                     // 时间：填满容器，点击它显示/隐藏按钮。
-                    final TextView tv = new TextView(context);
+                    final FloatTimeView tv = new FloatTimeView(context);
                     tv.setTextSize(20f);
                     tv.setSingleLine(true);
                     tv.setEllipsize(null);
@@ -2065,6 +2068,106 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
      * 可拖动的浮窗容器：按下不拦截（让按钮/时间正常收到点击），位移超阈值才拦截并拖动。
      * 默认靠右上角（END 锚点），首次拖动时换算成 START 左上角坐标。
      */
+    /**
+     * 悬浮时间专用 TextView：渐变模式下自己画一遍文字。
+     *
+     * <p>浮窗以前用 GradientTextSpan 上渐变，但那个 span 的 shader 在「居中排版」的视图里
+     * 色带原点会整体漂移一个文字宽（ColorOS 15 实测偏一个文字宽、ColorOS 16 又不同），
+     * 画出来是几段纯色块、与设置页预览不一致。这里照抄设置页 GradientTimeView 的做法：
+     * canvas.drawText 一次，色带起点 = 文字左边缘，跨版本一致。</p>
+     */
+    private static final class FloatTimeView extends TextView {
+        private int mC0;
+        private int mC1;
+        private boolean mOn;
+        private int mDir;
+        private android.graphics.Shader mShader;
+        private float mBand = -1f;
+        private int mShaderDir = -1;
+
+        FloatTimeView(Context context) {
+            super(context);
+        }
+
+        void setGradient(int c0, int c1, int dir) {
+            if (mOn && mC0 == c0 && mC1 == c1 && mDir == dir) {
+                return;
+            }
+            mOn = true;
+            mC0 = c0;
+            mC1 = c1;
+            mDir = dir;
+            mShader = null;
+            invalidate();
+        }
+
+        void clearGradient() {
+            if (!mOn) {
+                return;
+            }
+            mOn = false;
+            mShader = null;
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(android.graphics.Canvas canvas) {
+            if (!mOn) {
+                super.onDraw(canvas);
+                return;
+            }
+            final CharSequence cs = getText();
+            if (cs == null || cs.length() == 0) {
+                return;
+            }
+            final android.graphics.Paint paint = getPaint();
+            final int len = cs.length();
+            final float band = paint.measureText(cs, 0, len);
+            if (band <= 0f) {
+                return;
+            }
+            final android.graphics.Paint.FontMetricsInt fm = paint.getFontMetricsInt();
+            float baseline = (getHeight() - (fm.descent - fm.ascent)) / 2f - fm.ascent;
+            if (getLayout() != null) {
+                final int lb = getLayout().getLineBaseline(0);
+                if (lb > 0) {
+                    baseline = lb;
+                }
+            }
+            if (mShader == null || Math.abs(mBand - band) > 0.01f || mShaderDir != mDir) {
+                final float sx0 = (getWidth() - band) / 2f;
+                if (mDir == 1) {
+                    mShader = new android.graphics.LinearGradient(sx0, baseline + fm.ascent,
+                            sx0, baseline + fm.descent, mC0, mC1,
+                            android.graphics.Shader.TileMode.CLAMP);
+                } else if (mDir == 2) {
+                    mShader = new android.graphics.LinearGradient(sx0, baseline + fm.ascent,
+                            sx0 + band, baseline + fm.descent, mC0, mC1,
+                            android.graphics.Shader.TileMode.CLAMP);
+                } else {
+                    mShader = new android.graphics.LinearGradient(sx0, 0f, sx0 + band, 0f,
+                            mC0, mC1, android.graphics.Shader.TileMode.CLAMP);
+                }
+                mBand = band;
+                mShaderDir = mDir;
+            }
+            final float x0 = (getWidth() - band) / 2f;
+            final int saveColor = paint.getColor();
+            final android.graphics.Shader saveShader = paint.getShader();
+            final android.graphics.Rect cb = new android.graphics.Rect();
+            canvas.getClipBounds(cb);
+            final float ox = cb.width() >= getWidth() - 1 ? cb.left : 0f;
+            final float oy = cb.height() >= getHeight() - 1 ? cb.top : 0f;
+            canvas.save();
+            canvas.translate(ox, oy);
+            paint.setShader(mShader);
+            canvas.drawText(cs, 0, len, x0, baseline, paint);
+            canvas.restore();
+            paint.setShader(saveShader);
+            paint.setColor(saveColor);
+        }
+    }
+
     private static final class FloatBox extends FrameLayout {
         private WindowManager windowManager;
         private WindowManager.LayoutParams params;
@@ -2301,7 +2404,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
             if (sFloatHourColorEnabled) {
                 int[] colors = digitColors(tv);
-                if (sGradientOn) {
+                if (sGradientOn && tv instanceof FloatTimeView) {
+                    // 自绘路径：把起止色交给视图，onDraw 里 canvas.drawText 一次画完整条色带。
+                    int sysFloatColor = tv.getCurrentTextColor();
+                    int rawStartF = sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                            ? colors[0] : sGradientStart;
+                    int rawEndF = sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                            ? colors[colors.length - 1] : sGradientEnd;
+                    ((FloatTimeView) tv).setGradient(gradientEdgeColor(rawStartF, sysFloatColor),
+                            gradientEdgeColor(rawEndF, sysFloatColor), sGradientDir);
+                } else if (sGradientOn) {
                     // 色带起点必须落在「文字左边缘」。浮窗是居中的 TextView：若从视图原点（0）起算，
                     // 文字只看到色带的中后段，MIRROR 折叠后在文字中间出现「蓝顶」、两端回退 ——
                     // 就是用户看到的「悬浮时间的渐变和预览不一样」。
@@ -2324,6 +2436,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     }
                     applyGradient(sb, tv, colors, xoff);
                 } else {
+                    if (tv instanceof FloatTimeView) {
+                        ((FloatTimeView) tv).clearGradient();
+                    }
                     int systemTextColor = tv.getCurrentTextColor();
                     for (int i = 0; i < sb.length(); i++) {
                         int slot = ClockSecondsConfig.slotOfChar(sb, i);
@@ -2335,6 +2450,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     }
                 }
+            } else if (tv instanceof FloatTimeView) {
+                ((FloatTimeView) tv).clearGradient();
             }
             tv.setText(sb);
             if (BuildConfig.DEBUG) {
@@ -2347,7 +2464,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 float band = tv.getPaint().measureText(sb, 0, sb.length());
                 XposedBridge.log(LOG_PREFIX + "FLOAT text=" + text
                         + " size=" + Math.round(tv.getTextSize())
-                        + " grad=" + sGradientOn + " gspans=" + gspans
+                        + " grad=" + sGradientOn + " gspans=" + gspans + " self=" + (tv instanceof FloatTimeView)
                         + " band=" + Math.round(band)
                         + " tvW=" + tv.getWidth() + " tvH=" + tv.getHeight()
                         + " winW=" + (lp == null ? -1 : lp.width)
@@ -2499,6 +2616,94 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     // 文本覆写（保留系统原文本，追加的秒继承时钟文字色，仅追加秒）
     // ==================================================================
 
+    /**
+     * vc319：把整串时钟文本的渲染宽度补齐到定值（ColorOS 专供）。
+     *
+     * <p>ColorOS 16 状态栏的通知图标跟的是时钟文本实际宽度；比例数字下秒数宽度每秒变化 8~13px，
+     * 图标就跟着左右跳。这里在末尾（零宽空格之前）补 1px 级细空格，使 measureText 宽度恒等于
+     * 「所有数字都换成 8」的最宽宽度。字体仍保持系统比例数字，观感依旧紧凑。
+     */
+    private static String equalizeClockWidth(TextView view, String text) {
+        try {
+            if (text.isEmpty() || view == null) {
+                return text;
+            }
+            String tail = "";
+            String body = text;
+            if (body.endsWith("\u200B")) {
+                tail = "\u200B";
+                body = body.substring(0, body.length() - 1);
+            }
+            String widest = body.replaceAll("[0-9]", "8");
+            android.text.TextPaint p = view.getPaint();
+            if (p == null) {
+                return text;
+            }
+            float target = p.measureText(widest);
+            float shortage = target - p.measureText(body);
+            if (shortage <= 0.6f) {
+                return text;
+            }
+            // 候选空白：宽度各不相同（em/2、em/3、em/4、em/5、em/6、em/10），
+            // 组合搜索把残差压到 ≤0.6px —— 单个空白最细 3.6px，只靠贪心会有 ±3px 抖动。
+            int[] cps = {0x2002, 0x2004, 0x2005, 0x2006, 0x2009, 0x200A};
+            String[] chars = new String[cps.length];
+            float[] widths = new float[cps.length];
+            for (int i = 0; i < cps.length; i++) {
+                chars[i] = new String(Character.toChars(cps[i]));
+                widths[i] = p.measureText(chars[i]);
+            }
+            int[] maxCount = {6, 8, 10, 12, 14, 4};
+            int[] best = new int[cps.length];
+            float bestDiff = shortage;
+            int[] cur = new int[cps.length];
+            // 递归枚举全部计数组合（规模很小，最多约 4 万次，1Hz 无压力）。
+            java.util.List<int[]> stack = new java.util.ArrayList<>();
+            stack.add(new int[]{0, 0, 0, 0, 0, 0});
+            // 迭代式深搜
+            int idx = 0;
+            while (idx >= 0) {
+                if (idx == cps.length) {
+                    float sum = 0f;
+                    for (int i = 0; i < cps.length; i++) {
+                        sum += cur[i] * widths[i];
+                    }
+                    float diff = Math.abs(shortage - sum);
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        System.arraycopy(cur, 0, best, 0, cur.length);
+                    }
+                    idx--;
+                    continue;
+                }
+                if (cur[idx] < 0) {
+                    cur[idx] = 0;
+                    idx--;
+                    continue;
+                }
+                if (cur[idx] < maxCount[idx]) {
+                    cur[idx]++;
+                    idx++;
+                    if (idx < cps.length) {
+                        cur[idx] = -1;
+                    }
+                } else {
+                    cur[idx] = 0;
+                    idx--;
+                }
+            }
+            StringBuilder sb2 = new StringBuilder(body);
+            for (int i = 0; i < cps.length; i++) {
+                for (int k = 0; k < best[i]; k++) {
+                    sb2.append(chars[i]);
+                }
+            }
+            return sb2.append(tail).toString();
+        } catch (Throwable ignored) {
+            return text;
+        }
+    }
+
     /** 用「系统原文本 + :ss」覆写时钟（追加的秒继承系统时钟文字色，自动跟随 12/24 制）。 */
     private static void writeTime(TextView view) {
         // 面板/大钟在展开收起动画里会被缩放，动画期间每次 setText 都会让动画重新测量 → 视觉抖动。
@@ -2583,7 +2788,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                     + " fcs=" + fcs + " grad=" + grad
                     + " bg=" + Integer.toHexString(view.getCurrentTextColor())
                     + " spannable=" + spannable + " cls=" + view.getClass().getSimpleName()
-                    + " stored=[" + view.getText() + "]");
+                    + " stored=[" + view.getText() + "]"
+                    + " pin=[" + view.getMinWidth() + "," + view.getMaxWidth() + "]"
+                    + " w=" + view.getWidth() + "/mw=" + view.getMeasuredWidth()
+                    + " lp=" + (view.getLayoutParams() == null ? -1 : view.getLayoutParams().width)
+                    + " tw=" + (int) view.getPaint().measureText(String.valueOf(view.getText()))
+                    + " pcls=" + (view.getParent() == null ? "null" : view.getParent().getClass().getSimpleName()));
         }
     }
 
@@ -3783,6 +3993,28 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         }
     };
 
+    private static final String SECURE_SCHEME_STATE = "coloros_clock_seconds_scheme_state";
+
+    /** 读多套配色的轮换状态：{ "<taskId>": [下一套下标, 上次应用的分钟桶] }。 */
+    private static org.json.JSONObject readSchemeState(Context ctx) {
+        try {
+            String raw = Settings.Secure.getString(ctx.getContentResolver(), SECURE_SCHEME_STATE);
+            if (raw != null && raw.length() > 0) {
+                return new org.json.JSONObject(raw);
+            }
+        } catch (Throwable ignored) {
+        }
+        return new org.json.JSONObject();
+    }
+
+    private static void writeSchemeState(Context ctx, org.json.JSONObject st) {
+        try {
+            Settings.Secure.putString(ctx.getContentResolver(), SECURE_SCHEME_STATE,
+                    st.toString());
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** 把换配色任务记录的配色写进 Secure 并刷新（只支持渐变：起止两色）。 */
     private static void applyTaskColors(io.github.kelebao.colorosclockseconds.ClockTask t) {
         Context ctx = sAppContext;
@@ -3792,14 +4024,30 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         int gs = t.gradStart;
         int ge = t.gradEnd;
         // 多选配色：每次触发按顺序换下一套（只有一套时永远同一套）。
+        // 轮换进度必须持久化：sSchemeTick 只在内存里，SystemUI 一重启就归零，用户看到
+        // 「永远第一套」。改用 Secure 记 [下一套下标, 上次应用分钟桶]，重启后继续轮换。
         if (t.schemes != null && t.schemes.length > 0) {
             int n = t.schemes.length;
-            Long prev = sSchemeTick.get(t.id);
-            int cur = prev == null ? 0 : (int) (prev % n);
-            sSchemeTick.put(t.id, prev == null ? 1L : prev + 1L);
-            int[] one = t.schemes[cur];
+            long bucket = System.currentTimeMillis() / 60_000L;
+            org.json.JSONObject st = readSchemeState(ctx);
+            org.json.JSONArray arr = st.optJSONArray(String.valueOf(t.id));
+            int idx = arr == null ? 0 : arr.optInt(0, 0);
+            long lastBucket = arr == null ? -1L : arr.optLong(1, -1L);
+            if (lastBucket == bucket) {
+                // 同一个「分钟窗口」内重复触发（如 SystemUI 在窗口里重启后重新评估）：
+                // 沿用已写入的颜色，不跳下一套。
+                return;
+            }
+            idx = ((idx % n) + n) % n;
+            int[] one = t.schemes[idx];
             gs = one[0];
             ge = one[one.length - 1];
+            try {
+                st.put(String.valueOf(t.id),
+                        new org.json.JSONArray().put((idx + 1) % n).put(bucket));
+                writeSchemeState(ctx, st);
+            } catch (Throwable ignored) {
+            }
         }
         try {
             ContentResolver cr = ctx.getContentResolver();

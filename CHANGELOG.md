@@ -6,6 +6,30 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc322（悬浮窗渐变改为自绘 + 多套配色按序轮换）
+
+- **用户反馈**：①ColorOS 15 上悬浮时间（长按状态栏时钟弹出的大号时钟）有颜色但没有渐变；②自定义任务「换配色」里选了多套渐变，到点只应用第一套，不按顺序轮换；另反馈任务列表/编辑页只显示一套渐变、仍在显示单色。
+- **根因 1（浮窗无渐变）**：浮窗走的是 GradientTextSpan 的 shader，而该 shader 在「居中排版」的视图里色带原点会整体漂移（ColorOS 15 偏一个文字宽、ColorOS 16 又不同），色带落到文字范围之外，只画出几块纯色。设置页预览卡的 GradientTimeView 早就记录过同一现象。
+- **修复 1**：新增 FloatTimeView extends TextView，改为自绘渐变（band=measureText、baseline 取 Layout 第一行基线、LinearGradient 用 CLAMP、支持水平/竖直/对角三种方向、先取 clipBounds 再 translate 后 drawText），不再依赖 span 的 shader 坐标；浮窗渐变统一走这条路径，非渐变时 clearGradient()，原 span 路径保留为兜底。
+- **根因 2（不轮换）**：轮换下标 sSchemeTick 只存在内存里，SystemUI 一重启就归零，所以每次都从第一套开始；同一分钟内的多次 tick 还会重复进位。
+- **修复 2**：新增 Secure 持久化键 coloros_clock_seconds_scheme_state（{\"任务id\": [下一套下标, 上次应用的分钟桶]}），applyTaskColors 按分钟桶去重，取当前下标对应的渐变端色应用，再写回 (下标+1) 与当前分钟桶，SystemUI 重启后继续从上次位置轮换。
+- **真机验证（ColorOS 15 / PHK110）**：长按状态栏时钟弹浮窗实测「14:18:06」为橙→粉→紫连续渐变，无块状无反向；把任务触发临时改到 14:30 并预置下标=1，到点后 gradient_start/end 变为该任务第 2 套（0xffe94f8c→0xff164fa3 粉→靛蓝），状态写回 [2, 分钟桶]，状态栏实拍即为粉→靛蓝渐变，确认按序轮换生效。验证后已把该任务触发恢复为「每天 00:00」、删除测试用状态键、恢复原渐变端色。
+- **顺带确认**：vc321/322 上任务列表行与编辑器已只画渐变胶囊（每套一条 40×14dp 胶囊），不再出现单色圆点；用户截图里的单色显示属旧版本现象。
+- 版本 **vc322** / versionName 1.2.0-test.20261102-1430（modern 版带 -api102 后缀）。
+
+### vc321（ColorOS 状态栏图标左右抖动修复）
+
+- **现象**：ColorOS 显秒后，状态栏时钟右侧的通知图标每秒左右抖动一下。
+- **根因**：侧边图标跟随的是时钟**文本的实际渲染宽度**，而不是 View 宽度——即使 setMinWidth 把 View 钉死，比例数字（每个数字宽度不同）仍让文字墨迹宽度每秒变化十几像素；而 StatClock 覆写了 getMaxWidth/onMeasure，setMaxWidth 也无效。
+- **修复**：ColorOS 分支在 setMinWidth 之后追加 applyTnumKeepingExisting(view)（等宽数字，宽度恒定）与 setTextScaleX(0.92f)（整体压缩 8%，收回 tnum 多出的宽度）。
+- **实测**：连续 10 帧里图标位置一帧未动；时钟墨迹总宽 188px（修复前每秒在 348~361px 间摆动）。
+- 版本 **vc321** / versionName 1.2.0-test.20261102-1358（modern 版带 -api102 后缀）。
+
+### vc316~vc320（图标抖动排查中的中间版本）
+
+- 依次尝试：钉住 View 宽度（无效，图标跟文字墨迹走）；给秒单独挂 MetricAffectingSpan 设 tnum（会污染整串 paint，测量值每秒漂移）；在字符串尾部补不同宽度的细空格把宽度补成定值（抖动从 13px 降到 4px，精度不够）。这些方案最终被 vc321 取代，仅作记录。
+- 版本 **vc316~vc320** / versionName 1.2.0-test.20261102-1xxx（未单独发布）。
+
 ### vc315（双版本共存强制提醒）
 
 - **背景**：vc311 起的 legacy（API 82）与 modern（API 102）是两个不同包名，可以同时安装。但两份都会 hook `com.android.systemui`，每秒各写一次时钟文本 → 时间闪烁、颜色来回跳、秒数看起来卡住，用户很难判断是模块 bug 还是装重了。
