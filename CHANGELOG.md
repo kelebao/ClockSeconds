@@ -6,6 +6,14 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc315（双版本共存强制提醒）
+
+- **背景**：vc311 起的 legacy（API 82）与 modern（API 102）是两个不同包名，可以同时安装。但两份都会 hook `com.android.systemui`，每秒各写一次时钟文本 → 时间闪烁、颜色来回跳、秒数看起来卡住，用户很难判断是模块 bug 还是装重了。
+- **实现**（`ModuleSettingsActivity`）：新增 `buildDualInstallCard()`，在设置页最顶部（激活状态卡之前）渲染一张常驻红色提醒卡：标题「⚠ 同时安装了两个版本」、正文给出另一个版本的包名与后果说明，并提供「卸载另一个版本」（`Intent.ACTION_DELETE` 调系统卸载页）与「已卸载，重新检测」两个按钮；打开设置页时另弹一次 `Toast` 长提示。卡片不可关闭，只有对方包真的卸载后才会消失。
+- **包可见性**：Android 11+ 查不到未声明的包，`app/src/main/AndroidManifest.xml` 增加 `<queries>` 声明 legacy 与 modern 两个包名（`aapt2 dump xmltree` 已确认合并进 APK）。兄弟包名由 `siblingPackage()` 按 `BuildConfig.APPLICATION_ID` 是否以 `.modern` 结尾推导。
+- **验证**：两个 flavor 均 `BUILD SUCCESSFUL`、`javac` 0 error，APK 内 versionCode 315 且 `<queries>` 已合并。⚠️ 真机验证未做（2026-11-02 11:13 本机测试设备掉线，`adb devices` 为空），需在同时装两个版本时确认红色卡片与 Toast 是否出现、「卸载另一个版本」能否调起系统卸载页。
+- 版本 **vc315** / versionName 1.2.0-test.20261102-1113（modern 版带 -api102 后缀）。
+
 ### vc314（HyperOS 渐变降级路径补冒号光学抬升）
 
 - **用户反馈续**：vc313 修了单 0 与字形特性后，仍需处理「冒号下移」。根因是 HyperOS 上 GradientTextSpan 会被系统吞掉（用户日志实测该视图 fcs=0 grad=0），我们降级到 FCS 逐字符插值：数字各成一个 run，冒号被单独切出来画在基线上，比整串一个 run 低约 0.11em。

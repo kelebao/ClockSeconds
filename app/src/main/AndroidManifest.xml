@@ -20,6 +20,13 @@
         android:protectionLevel="signature" />
     <uses-permission android:name="io.github.kelebao.colorosclockseconds.permission.CONFIG" />
 
+    <!-- 包可见性（Android 11+）：设置页需要能检测「同一模块的另一个 flavor 是否也装了」，
+         以便在同时安装 legacy + API 102 时给出强制提醒（两份同时 hook 会让状态栏时间闪烁）。 -->
+    <queries>
+        <package android:name="io.github.kelebao.colorosclockseconds" />
+        <package android:name="io.github.kelebao.colorosclockseconds.modern" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

@@ -744,6 +744,8 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         buildHeader(root);
+        // 双版本共存提醒放在最顶部：两份同时 hook 时任何设置都不可信。
+        buildDualInstallCard(root);
         buildActivationCard(root);
         buildPreviewCard(root);
         buildStatsRow(root);
@@ -4130,6 +4132,101 @@ public final class ModuleSettingsActivity extends Activity {
         // 默认隐藏：已激活时不占位置；只有真检测出未激活，setActiveState 才把它放出来。
         card.setVisibility(View.GONE);
         setActiveState(ACTIVE_CHECKING, null, false);
+    }
+
+    // ==================================================================
+    // 双版本共存强制提醒：legacy 与 API 102 同时安装时，两份模块都会 hook SystemUI，
+    // 每秒各自写一次时钟文本 → 时间闪烁、颜色来回跳、秒数看起来卡住，现象很像「模块坏了」。
+    // 因此设置页顶部常驻红色提醒卡（不可关闭），另在打开设置页时弹一次 Toast。
+    // ==================================================================
+
+    /** 另一个 flavor 的包名：legacy 与 modern 互为兄弟（modern 带 .modern 后缀）。 */
+    private String siblingPackage() {
+        String self = BuildConfig.APPLICATION_ID;
+        return self.endsWith(".modern")
+                ? "io.github.kelebao.colorosclockseconds"
+                : "io.github.kelebao.colorosclockseconds.modern";
+    }
+
+    /** 兄弟版本是否已安装（Android 11+ 需要 AndroidManifest 的 <queries> 才看得见对方）。 */
+    private boolean isSiblingInstalled() {
+        try {
+            getPackageManager().getPackageInfo(siblingPackage(), 0);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private void buildDualInstallCard(LinearLayout root) {
+        if (!isSiblingInstalled()) {
+            return;
+        }
+        final String other = siblingPackage();
+        LinearLayout card = card();
+        card.setPadding(dp(16), dp(14), dp(16), dp(14));
+
+        TextView title = new TextView(this);
+        title.setText("⚠ 同时安装了两个版本");
+        title.setTextSize(14f);
+        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        title.setTextColor(0xFFE53935);
+        card.addView(title);
+
+        TextView body = new TextView(this);
+        body.setText("检测到另一个版本也已安装：" + other
+                + "\n两个版本都会 hook 系统界面，同一秒各写一次时钟文本，会出现时间闪烁、颜色来回跳、秒数卡住等问题。请只保留一个版本。");
+        body.setTextSize(12.5f);
+        body.setTextColor(text2());
+        body.setLineSpacing(dp(3), 1f);
+        LinearLayout.LayoutParams bodyLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        bodyLp.topMargin = dp(6);
+        body.setLayoutParams(bodyLp);
+        card.addView(body);
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowLp.topMargin = dp(10);
+        row.setLayoutParams(rowLp);
+
+        TextView uninstall = pillButton("卸载另一个版本");
+        uninstall.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + other)));
+            } catch (Throwable t) {
+                Toast.makeText(this, "无法调起卸载：" + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        row.addView(uninstall);
+
+        TextView recheck = new TextView(this);
+        recheck.setText("已卸载，重新检测");
+        recheck.setTextSize(12f);
+        recheck.setTextColor(text3());
+        recheck.setPadding(dp(12), dp(8), dp(12), dp(8));
+        recheck.setOnClickListener(v -> {
+            if (!isSiblingInstalled()) {
+                card.setVisibility(View.GONE);
+                Toast.makeText(this, "已只剩一个版本 ✓", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "另一个版本仍在：请先在系统里卸载", Toast.LENGTH_LONG).show();
+            }
+        });
+        LinearLayout.LayoutParams reLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        reLp.leftMargin = dp(10);
+        recheck.setLayoutParams(reLp);
+        row.addView(recheck);
+
+        card.addView(row);
+        root.addView(card);
+        card.post(() -> Toast.makeText(this,
+                "检测到同时安装了 legacy 与 API 102 两个版本，请卸载其中一个（两份会同时 hook 系统界面）",
+                Toast.LENGTH_LONG).show());
     }
 
     /** 向 SystemUI 发 PING；2.5s 内未收到 PONG 即判未激活。 */
