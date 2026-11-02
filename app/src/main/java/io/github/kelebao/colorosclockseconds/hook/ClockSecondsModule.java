@@ -2127,15 +2127,12 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 return;
             }
             final android.graphics.Paint.FontMetricsInt fm = paint.getFontMetricsInt();
+            // 垂直居中必须自己算：getLayout().getLineBaseline(0) 只是「行内」基线，
+            // 不含 TextView 按 Gravity.CENTER 做的竖直偏移，用它会把文字顶到视图上沿。
             float baseline = (getHeight() - (fm.descent - fm.ascent)) / 2f - fm.ascent;
-            if (getLayout() != null) {
-                final int lb = getLayout().getLineBaseline(0);
-                if (lb > 0) {
-                    baseline = lb;
-                }
-            }
             if (mShader == null || Math.abs(mBand - band) > 0.01f || mShaderDir != mDir) {
-                final float sx0 = (getWidth() - band) / 2f;
+                final float cx = (getPaddingLeft() + getWidth() - getPaddingRight()) / 2f;
+                final float sx0 = cx - band / 2f;
                 if (mDir == 1) {
                     mShader = new android.graphics.LinearGradient(sx0, baseline + fm.ascent,
                             sx0, baseline + fm.descent, mC0, mC1,
@@ -2151,7 +2148,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 mBand = band;
                 mShaderDir = mDir;
             }
-            final float x0 = (getWidth() - band) / 2f;
+            final float cx2 = (getPaddingLeft() + getWidth() - getPaddingRight()) / 2f;
+            final float x0 = cx2 - band / 2f;
             final int saveColor = paint.getColor();
             final android.graphics.Shader saveShader = paint.getShader();
             final android.graphics.Rect cb = new android.graphics.Rect();

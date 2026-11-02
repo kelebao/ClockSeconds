@@ -6,6 +6,14 @@
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
 
+### vc323（悬浮窗时间垂直居中 + 随窗口缩放）
+
+- **用户反馈**：「悬浮时间还有问题，时间没有随悬浮时间窗口大小而变化，一直在上面」（ColorOS 15 悬浮窗）。
+- **根因**：vc322 新增的自绘 FloatTimeView 在 onDraw 里用 `getLayout().getLineBaseline(0)` 当基线，那是「行内基线」，不含 TextView 按 Gravity.CENTER 施加的竖直偏移（TextView.onDraw 内部的 extendedPaddingTop + voffset），所以渐变文字被画到视图上沿。
+- **修复**：基线改为按视图高度算垂直居中 `(getHeight() - (descent - ascent)) / 2 - ascent`；水平也改为在 padding 内容盒内居中（`cx = (paddingLeft + width - paddingRight) / 2`，色带 sx0 = cx - band/2）。
+- **ColorOS16 真机验证**：默认 560×224 窗口下 FLOAT `size=95 band=428`，文字水平居中、垂直居中；拖动左下 ◣ 放大到 762×545 后 `size=145 band=650`，字号随窗口变大（27sp→41sp）、文字仍居中且横向填满，无截断、无块状。
+- 版本 **vc323** / versionName 1.2.0-test.20261102-1500（modern 版带 -api102 后缀）。
+
 ### vc322（悬浮窗渐变改为自绘 + 多套配色按序轮换）
 
 - **用户反馈**：①ColorOS 15 上悬浮时间（长按状态栏时钟弹出的大号时钟）有颜色但没有渐变；②自定义任务「换配色」里选了多套渐变，到点只应用第一套，不按顺序轮换；另反馈任务列表/编辑页只显示一套渐变、仍在显示单色。
