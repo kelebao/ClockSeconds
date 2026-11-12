@@ -126,8 +126,8 @@ public final class ModuleSettingsActivity extends Activity {
      * 或者同时调高 adaptColorForBackground 的阈值（两边必须一起改，否则又会对不上）。</p>
      */
     private static final int[] HOUR_COLORS = {
-            0xFFF44336, 0xFFFF9800, 0xFFD4A017, 0xFF4CAF50, 0xFF00BCD4,
-            0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFF9E9E9E,
+            0xFF2196F3, 0xFFFF9800, 0xFFD4A017, 0xFF4CAF50, 0xFF00BCD4,
+            0xFFF44336, 0xFF9C27B0, 0xFFE91E63, 0xFF9E9E9E,
     };
 
     // 浅色配色

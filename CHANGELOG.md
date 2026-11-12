@@ -2,9 +2,15 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 291）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 323）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc262，下面按版本记录。
+> **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc323，下面按版本记录。
+
+### vc324（默认小时色改回蓝色 + 关闭首批 issue）
+
+- **用户决策**：默认小时色不再是红色 #F44336，改回 Material Blue 500 #2196F3（对应 issue #3 的「标红观感」反馈）。已手动改过色的用户不受影响（Secure 键优先于默认值）。
+- **改动**：`ClockSecondsConfig.HOUR_COLOR_DEFAULT` 与设置页色板首位 `HOUR_COLORS[0]` 同步替换；红色仍保留在色板中可手动选择。取色兜底链（`HOUR_COLOR_FALLBACK`/`sFloatHourColor`/`ACTION_SET_HOUR_COLOR` 默认值）全部引用同一常量，无需另改。
+- 版本 **vc324** / versionName 1.2.0-test.20261112-2320（modern 版带 -api102 后缀）。
 
 ### vc323（悬浮窗时间垂直居中 + 随窗口缩放）
 

@@ -58,9 +58,9 @@ public final class ClockSecondsConfig {
     public static final int GESTURE_LONG_PRESS_LEGACY = 1;
     public static final int GESTURE_DOUBLE_TAP = 2;
 
-    /** 小时十位数字颜色（ARGB）。默认 Material Red 500。 */
+    /** 小时十位数字颜色（ARGB）。默认 Material Blue 500（vc324 起，旧默认红 #F44336 因 issue #3 标红观感弃用）。 */
     public static final String HOUR_COLOR_KEY = "coloros_clock_seconds_hour_color";
-    public static final int HOUR_COLOR_DEFAULT = 0xFFF44336;
+    public static final int HOUR_COLOR_DEFAULT = 0xFF2196F3;
 
     /** 自定义任务列表（JSON 数组，元素见 {@link ClockTask}）。设置页经广播写入，SystemUI 侧读取。 */
     public static final String TASKS_KEY = "coloros_clock_seconds_tasks";
