@@ -121,6 +121,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 渐变方向缓存（0 水平 / 1 竖直 / 2 对角，vc281）。 */
     private static volatile int sGradientDir;
 
+    /** 明暗自适应开关缓存：开启后浅色背景改用 _light 副键的颜色（issue #11）。 */
+    private static volatile boolean sAdaptiveColor;
+
+    /** 六位「浅色背景用」颜色缓存；null = 该位未设浅色（回落常规键）。 */
+    private static volatile Integer[] sDigitLightColors;
+
+    /** 渐变端点「浅色背景用」颜色缓存；null = 未设（回落常规键 / AUTO 语义）。 */
+    private static volatile Integer sGradStartLight;
+    private static volatile Integer sGradEndLight;
+
     /**
      * 「通知栏（下拉面板）时间跟随状态栏」开关缓存（默认关闭）。
      *
@@ -2904,6 +2914,50 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         return applyDigitColors(sb, view, -1);
     }
 
+    /** 浅色背景判定：系统时钟文字偏暗（luminance < 0.5）即认为底色偏亮，与压暗阈值同源。 */
+    private static boolean isLightBackground(int systemTextColor) {
+        return android.graphics.Color.luminance(systemTextColor) < 0.5f;
+    }
+
+    /**
+     * 某一位的生效颜色：明暗自适应开且当前浅色背景时优先用浅色副键，
+     * 未设副键回落常规键；「跟随系统」位永远跟随（issue #11 的兼容要求）。
+     */
+    private static int effectiveSlotColor(int slot, int normalColor, int systemTextColor) {
+        if (sAdaptiveColor && normalColor != ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                && isLightBackground(systemTextColor)) {
+            Integer[] light = sDigitLightColors;
+            Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
+            if (c != null) {
+                return c;
+            }
+        }
+        return normalColor;
+    }
+
+    /**
+     * 渐变端点解析（两条渐变路径共用）：浅色背景时端点优先用浅色副键；
+     * AUTO 端点回落到「浅色生效后」的首位 / 末位数字色。
+     */
+    private static int gradientRawStart(int[] colors, int systemTextColor) {
+        if (sAdaptiveColor && isLightBackground(systemTextColor)
+                && sGradStartLight != null) {
+            return sGradStartLight;
+        }
+        return sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? effectiveSlotColor(0, colors[0], systemTextColor) : sGradientStart;
+    }
+
+    private static int gradientRawEnd(int[] colors, int systemTextColor) {
+        if (sAdaptiveColor && isLightBackground(systemTextColor)
+                && sGradEndLight != null) {
+            return sGradEndLight;
+        }
+        return sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? effectiveSlotColor(colors.length - 1, colors[colors.length - 1], systemTextColor)
+                : sGradientEnd;
+    }
+
     /**
      * 同上，额外限定「时间文本」终点：{@code timeEnd} 之后是后缀（周几 / 时段），
      * 既不参与逐位上色也不参与渐变（否则会被当成第 7、8 个字符算进色带）。
@@ -2942,7 +2996,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             if (slot < 0 || slot >= colors.length) {
                 continue;
             }
-            int color = colors[slot];
+            int color = effectiveSlotColor(slot, colors[slot], systemTextColor);
             // 先移除这一位上的外来前景色 Span（OplusClockExImpl 的 RedOne / 本体色、主题模块塞进来的色、
             // 以及上一轮自己加的），否则两个 ForegroundColorSpan 重叠时会互相压制，我们的颜色不生效。
             // 注意：这一步必须在「跟随系统」判断之前做 —— 别的模块会给某些位加一个**透明色 (#0)**
@@ -3023,10 +3077,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         // （「第一个数字的颜色」渐变到「最后一个数字的颜色」）。
         // 端点色：用户自定义优先；未自定义（GRADIENT_COLOR_AUTO）时沿用首位 / 末位数字的颜色，
         // 这样「不配置也能看到渐变」，配置了就完全按用户的颜色来。
-        int rawStart = sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                ? colors[0] : sGradientStart;
-        int rawEnd = sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                ? colors[colors.length - 1] : sGradientEnd;
+        int rawStart = gradientRawStart(colors, systemTextColor);
+        int rawEnd = gradientRawEnd(colors, systemTextColor);
         int c0 = gradientEdgeColor(rawStart, systemTextColor);
         int c1 = gradientEdgeColor(rawEnd, systemTextColor);
         sb.setSpan(new GradientTextSpan(view, sb, c0, c1, xOffset, sGradientDir), 0, len,
@@ -3185,6 +3237,15 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             sGradientDir = ClockSecondsConfig.getGradientDirection(ctx.getContentResolver());
             // 通知栏时钟开关同样缓存：面板每次 setText 都要判断，不能在那里打 binder。
             sQsClockOn = ClockSecondsConfig.isQsClockEnabled(ctx.getContentResolver());
+            // 明暗自适应（issue #11）：开关与浅色副键同批读取，渲染路径零 binder。
+            sAdaptiveColor = ClockSecondsConfig.isAdaptiveColorEnabled(ctx.getContentResolver());
+            Integer[] light = new Integer[ClockSecondsConfig.DIGIT_COUNT];
+            for (int i = 0; i < light.length; i++) {
+                light[i] = ClockSecondsConfig.getDigitLightColor(ctx.getContentResolver(), i);
+            }
+            sDigitLightColors = light;
+            sGradStartLight = ClockSecondsConfig.getGradientLightColor(ctx.getContentResolver(), true);
+            sGradEndLight = ClockSecondsConfig.getGradientLightColor(ctx.getContentResolver(), false);
         } catch (Throwable ignored) {
             // 读取失败保持上一次值，不影响上色。
         }
@@ -4578,6 +4639,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_HOUR_COLOR_ENABLED);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_ADAPTIVE_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_DIRECTION);
@@ -4635,6 +4699,33 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.DIGIT_COLOR_FOLLOW));
                                 reloadDigitColors(ctx);
                                 sFloatHourColor = sDigitColors[0];
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_ADAPTIVE_COLOR.equals(action)) {
+                                // 明暗自适应总开关（issue #11）：重读缓存后立即刷新。
+                                ClockSecondsConfig.setAdaptiveColorEnabled(cr, intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_ENABLED, 1) == 1);
+                                reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR.equals(action)) {
+                                // 浅色背景副键（issue #11）：FOLLOW = 清除（回落常规键）。
+                                int slot = intent.getIntExtra(ClockSecondsConfig.EXTRA_SLOT, 0);
+                                int color = intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_COLOR,
+                                        ClockSecondsConfig.DIGIT_COLOR_FOLLOW);
+                                ClockSecondsConfig.setDigitLightColor(cr, slot,
+                                        color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW ? null : color);
+                                reloadDigitColors(ctx);
+                                refreshClockNow();
+                            } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR.equals(action)) {
+                                // 渐变端点浅色副键（issue #11）：AUTO = 清除（回落常规键 / AUTO）。
+                                boolean isStart = intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_SLOT, 0) == 0;
+                                int color = intent.getIntExtra(
+                                        ClockSecondsConfig.EXTRA_COLOR,
+                                        ClockSecondsConfig.GRADIENT_COLOR_AUTO);
+                                ClockSecondsConfig.setGradientLightColor(cr, isStart,
+                                        color == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? null : color);
+                                reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT.equals(action)) {
                                 // 渐变总开关：只改配置，重读缓存后立刻刷新一次时钟。

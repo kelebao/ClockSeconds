@@ -94,6 +94,10 @@
     <string name="settings_digit_sum">Цвет каждой цифры часов, минут и секунд отдельно — нажмите цифру в предпросмотре</string>
     <string name="settings_digit_preset">Пресеты</string>
     <string name="settings_digit_palette">Палитра</string>
+    <string name="settings_adaptive_color">Светлый/тёмный фон</string>
+    <string name="settings_adaptive_color_sum">Отдельные цвета для светлого и тёмного фона; без светлого цвета используется тёмный</string>
+    <string name="settings_tab_dark">Тёмный</string>
+    <string name="settings_tab_light">Светлый</string>
     <string name="settings_digit_follow">Как в системе</string>
     <string name="settings_digit_done">Готово</string>
     <string name="settings_digit_slots">Часы-десятки,Часы-единицы,Минуты-десятки,Минуты-единицы,Секунды-десятки,Секунды-единицы</string>

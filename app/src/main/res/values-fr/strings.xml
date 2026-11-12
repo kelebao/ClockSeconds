@@ -94,6 +94,10 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_digit_sum">Colorer chaque chiffre des heures, minutes et secondes : touchez un chiffre dans l’aperçu</string>
     <string name="settings_digit_preset">Préréglages</string>
     <string name="settings_digit_palette">Nuancier</string>
+    <string name="settings_adaptive_color">Couleurs clair/sombre</string>
+    <string name="settings_adaptive_color_sum">Choisir des couleurs distinctes pour fond clair et fond sombre ; sans couleur claire, la sombre s’applique</string>
+    <string name="settings_tab_dark">Sombre</string>
+    <string name="settings_tab_light">Clair</string>
     <string name="settings_digit_follow">Suivre le système</string>
     <string name="settings_digit_done">Terminé</string>
     <string name="settings_digit_slots">Dizaine h,Unité h,Dizaine min,Unité min,Dizaine s,Unité s</string>

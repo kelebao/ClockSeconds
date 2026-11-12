@@ -94,6 +94,10 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_digit_sum">Colorea cada dígito de hora, minuto y segundo por separado: toca un dígito en la vista previa</string>
     <string name="settings_digit_preset">Preajustes</string>
     <string name="settings_digit_palette">Paleta</string>
+    <string name="settings_adaptive_color">Colores claro/oscuro</string>
+    <string name="settings_adaptive_color_sum">Elige colores distintos para fondos claros y oscuros; sin color claro se usa el oscuro</string>
+    <string name="settings_tab_dark">Oscuro</string>
+    <string name="settings_tab_light">Claro</string>
     <string name="settings_digit_follow">Seguir el sistema</string>
     <string name="settings_digit_done">Listo</string>
     <string name="settings_digit_slots">Decenas de hora,Unidades de hora,Decenas de minuto,Unidades de minuto,Decenas de segundo,Unidades de segundo</string>

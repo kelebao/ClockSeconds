@@ -94,6 +94,10 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_digit_sum">Color each digit of hours, minutes and seconds separately — tap a digit in the preview to pick it</string>
     <string name="settings_digit_preset">Presets</string>
     <string name="settings_digit_palette">Palette</string>
+    <string name="settings_adaptive_color">Adaptive light &amp; dark</string>
+    <string name="settings_adaptive_color_sum">Pick separate colors for light and dark backgrounds; unset light colors fall back to the dark ones</string>
+    <string name="settings_tab_dark">Dark</string>
+    <string name="settings_tab_light">Light</string>
     <string name="settings_digit_follow">Follow system</string>
     <string name="settings_digit_done">Done</string>
     <string name="settings_digit_slots">H tens,H ones,M tens,M ones,S tens,S ones</string>

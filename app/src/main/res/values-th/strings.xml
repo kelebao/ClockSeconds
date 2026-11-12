@@ -94,6 +94,10 @@
     <string name="settings_digit_sum">กำหนดสีแยกทีละหลักของชั่วโมง นาที วินาที — แตะตัวเลขในตัวอย่าง</string>
     <string name="settings_digit_preset">สีสำเร็จรูป</string>
     <string name="settings_digit_palette">จานสี</string>
+    <string name="settings_adaptive_color">สีสว่าง/มืด</string>
+    <string name="settings_adaptive_color_sum">เลือกสีแยกสำหรับพื้นหลังสว่างและมืด; ถ้าไม่ได้ตั้งสีสว่างจะใช้สีมืด</string>
+    <string name="settings_tab_dark">มืด</string>
+    <string name="settings_tab_light">สว่าง</string>
     <string name="settings_digit_follow">ตามระบบ</string>
     <string name="settings_digit_done">เสร็จสิ้น</string>
     <string name="settings_digit_slots">หลักสิบชั่วโมง,หลักหน่วยชั่วโมง,หลักสิบนาที,หลักหน่วยนาที,หลักสิบวินาที,หลักหน่วยวินาที</string>

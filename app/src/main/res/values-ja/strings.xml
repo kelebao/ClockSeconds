@@ -94,6 +94,10 @@
     <string name="settings_digit_sum">時・分・秒の各数字ごとに色を設定。プレビュー内の数字をタップして選択します</string>
     <string name="settings_digit_preset">プリセット</string>
     <string name="settings_digit_palette">カラーパレット</string>
+    <string name="settings_adaptive_color">明暗自動切り替え</string>
+    <string name="settings_adaptive_color_sum">明るい背景と暗い背景にそれぞれ色を設定。未設定の明色は暗色側の色を使用</string>
+    <string name="settings_tab_dark">暗色</string>
+    <string name="settings_tab_light">明色</string>
     <string name="settings_digit_follow">システムに従う</string>
     <string name="settings_digit_done">完了</string>
     <string name="settings_digit_slots">時十,時一,分十,分一,秒十,秒一</string>

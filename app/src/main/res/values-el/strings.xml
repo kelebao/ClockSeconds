@@ -94,6 +94,10 @@
     <string name="settings_digit_sum">Χρωματίστε κάθε ψηφίο ώρας, λεπτού και δευτερολέπτου ξεχωριστά — πατήστε ένα ψηφίο στην προεπισκόπηση</string>
     <string name="settings_digit_preset">Έτοιμα χρώματα</string>
     <string name="settings_digit_palette">Παλέτα</string>
+    <string name="settings_adaptive_color">Χρώματα φωτεινό/σκοτεινό</string>
+    <string name="settings_adaptive_color_sum">Ξεχωριστά χρώματα για φωτεινό και σκοτεινό φόντο· χωρίς φωτεινό χρώμα ισχύει το σκοτεινό</string>
+    <string name="settings_tab_dark">Σκοτεινό</string>
+    <string name="settings_tab_light">Φωτεινό</string>
     <string name="settings_digit_follow">Ακολούθηση συστήματος</string>
     <string name="settings_digit_done">Τέλος</string>
     <string name="settings_digit_slots">Δεκάδες ώρας,Μονάδες ώρας,Δεκάδες λεπτού,Μονάδες λεπτού,Δεκάδες δευτ.,Μονάδες δευτ.</string>

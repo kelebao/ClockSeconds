@@ -94,6 +94,10 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_digit_sum">Pinte cada dígito de hora, minuto e segundo separadamente — toque em um dígito na prévia</string>
     <string name="settings_digit_preset">Predefinições</string>
     <string name="settings_digit_palette">Paleta</string>
+    <string name="settings_adaptive_color">Cores claro/escuro</string>
+    <string name="settings_adaptive_color_sum">Escolha cores separadas para fundos claros e escuros; sem cor clara, usa-se a escura</string>
+    <string name="settings_tab_dark">Escuro</string>
+    <string name="settings_tab_light">Claro</string>
     <string name="settings_digit_follow">Seguir o sistema</string>
     <string name="settings_digit_done">Concluir</string>
     <string name="settings_digit_slots">Dezena hora,Unidade hora,Dezena minuto,Unidade minuto,Dezena segundo,Unidade segundo</string>

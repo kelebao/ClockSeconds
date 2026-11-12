@@ -94,6 +94,10 @@
     <string name="settings_digit_sum">لوّن كل رقم من الساعة والدقيقة والثانية على حدة — اضغط على الرقم في المعاينة</string>
     <string name="settings_digit_preset">ألوان جاهزة</string>
     <string name="settings_digit_palette">لوحة الألوان</string>
+    <string name="settings_adaptive_color">ألوان فاتح/داكن</string>
+    <string name="settings_adaptive_color_sum">اختر ألواناً منفصلة للخلفيات الفاتحة والداكنة؛ إن لم يُحدد اللون الفاتح يُستخدم الداكن</string>
+    <string name="settings_tab_dark">داكن</string>
+    <string name="settings_tab_light">فاتح</string>
     <string name="settings_digit_follow">اتّباع النظام</string>
     <string name="settings_digit_done">تم</string>
     <string name="settings_digit_slots">عشرات الساعة,آحاد الساعة,عشرات الدقيقة,آحاد الدقيقة,عشرات الثانية,آحاد الثانية</string>

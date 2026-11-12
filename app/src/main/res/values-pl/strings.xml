@@ -94,6 +94,10 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_digit_sum">Koloruj każdą cyfrę godzin, minut i sekund osobno — dotknij cyfry w podglądzie</string>
     <string name="settings_digit_preset">Gotowe zestawy</string>
     <string name="settings_digit_palette">Paleta</string>
+    <string name="settings_adaptive_color">Kolory jasne/ciemne</string>
+    <string name="settings_adaptive_color_sum">Osobne kolory dla jasnego i ciemnego tła; bez jasnego koloru użyty zostanie ciemny</string>
+    <string name="settings_tab_dark">Ciemny</string>
+    <string name="settings_tab_light">Jasny</string>
     <string name="settings_digit_follow">Jak w systemie</string>
     <string name="settings_digit_done">Gotowe</string>
     <string name="settings_digit_slots">Dziesiątki godz,Jednostki godz,Dziesiątki min,Jednostki min,Dziesiątki sek,Jednostki sek</string>

@@ -2,9 +2,25 @@
 
 本项目遵循语义化版本。版本号格式 `versionCode-versionName`，与 LSPosed 模块仓库的 Release tag 对应。
 
-## v1.2.0（测试线 versionCode 37 ~ 323）— 时分秒逐位取色、预览卡展开取色
+## v1.2.0（测试线 versionCode 37 ~ 326）— 时分秒逐位取色、预览卡展开取色
 
-> **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc323，下面按版本记录。
+> **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc326，下面按版本记录。
+
+### vc326（明暗自适应稳定性修复：设置页写副键崩溃 + 开关初态）
+
+- **真机崩溃修复（PHK110 / ColorOS15）**：本机模块 App 未被授予 WRITE_SECURE_SETTINGS，设置页浅色页取色直写 `_light` 副键（`Settings.Secure.putString`）抛 SecurityException 连崩三次。三处浅色写入（逐位副键 / 渐变副键 / 渐变预设对）全部改为与常规键同款「直写 try/catch → 广播 SystemUI 代写 → 轮询读键确认」链路（新增 `applyLightConfig`/`verifyLightWrite`），写失败只 toast 不崩页。
+- **开关初态修复**：数字颜色卡在 `setContentView` 阶段构建，早于 `onResume` 的 `refreshConfigCache`，`mAdaptiveColor` 在构建时尚未加载 → 已开启自适应的用户重启设置页看到开关关闭、页签消失。构建卡片前的直读块补读自适应开关与 `_light` 缓存。
+- 版本 **vc326** / versionName 1.2.0-test.20261113-0115（modern 版带 -api102 后缀）。
+
+### vc325（明暗自适应取色：浅色/暗色背景分别设色，issue #11）
+
+- **需求（issue #11，用户拍板方案 A）**：状态栏时钟在浅色壁纸上用深色数字、深色壁纸上用浅色数字是系统行为；逐位上色后固定色只有一套，浅色背景看不清。给六位数字色各加一套「浅色背景用」颜色，系统按背景明暗自动切换。
+- **配置模型**：新增 Secure 键 `coloros_clock_seconds_adaptive_color`（总开关，默认关）；六位各加 `digit_color_N_light` 副键、渐变两端加 `gradient_start/_end_light` 副键。**完全兼容**：副键未设置时回落常规键，「跟随系统」位与自适应开关完全解耦；开关关闭时行为与 vc324 逐字节一致。
+- **运行时（ClockSecondsModule）**：渲染时按 `view.getCurrentTextColor()` 的亮度判断底色明暗（系统文字偏暗 = 浅色背景），自适应开启且浅底时改用浅色副键；逐位上色与两条渐变路径（span shader / HyperOS3 退化 FCS 插值）共用同一判定；AUTO 渐变端点在浅底时解析「浅色生效后」的数字色。缓存同批重读，渲染路径零新增 binder。
+- **设置页**：逐位颜色卡新增「明暗自适应」开关；开启后出现「暗色 / 浅色」双页签，预设色板、HSV 滑杆、跟随系统圆点在两个页签下分别写常规键 / 副键（浅色页点「跟随系统」= 清除副键回落常规键）；预览即所写。
+- **默认色回退**：vc324 曾把默认小时色改为蓝色（#2196F3），用户裁定「本来就有这功能，不用改」，本版回退为红色 #F44336（与 vc323 一致）。
+- **i18n**：新增 4 条文案（adaptive_color / adaptive_color_sum / tab_dark / tab_light），22 语言全同步。
+- 版本 **vc325** / versionName 1.2.0-test.20261113-0025（modern 版带 -api102 后缀）。
 
 ### vc324（默认小时色改回蓝色 + 关闭首批 issue）
 

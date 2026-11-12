@@ -58,9 +58,9 @@ public final class ClockSecondsConfig {
     public static final int GESTURE_LONG_PRESS_LEGACY = 1;
     public static final int GESTURE_DOUBLE_TAP = 2;
 
-    /** 小时十位数字颜色（ARGB）。默认 Material Blue 500（vc324 起，旧默认红 #F44336 因 issue #3 标红观感弃用）。 */
+    /** 小时十位数字颜色（ARGB）。默认 Material Red 500。 */
     public static final String HOUR_COLOR_KEY = "coloros_clock_seconds_hour_color";
-    public static final int HOUR_COLOR_DEFAULT = 0xFF2196F3;
+    public static final int HOUR_COLOR_DEFAULT = 0xFFF44336;
 
     /** 自定义任务列表（JSON 数组，元素见 {@link ClockTask}）。设置页经广播写入，SystemUI 侧读取。 */
     public static final String TASKS_KEY = "coloros_clock_seconds_tasks";
@@ -179,6 +179,15 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
     /** 设置页 → SystemUI 写入某一位数字颜色（含 {@link #EXTRA_COLOR} 与 {@link #EXTRA_SLOT}）。 */
     public static final String ACTION_SET_DIGIT_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_COLOR";
+    /** 设置页 → SystemUI 写入明暗自适应开关（{@link #EXTRA_ENABLED}）。 */
+    public static final String ACTION_SET_ADAPTIVE_COLOR =
+            "io.github.kelebao.colorosclockseconds.action.SET_ADAPTIVE_COLOR";
+   /** 设置页 → SystemUI 写入某一位「浅色背景用」颜色（{@link #EXTRA_SLOT} + {@link #EXTRA_COLOR}；FOLLOW = 清除副键）。 */
+    public static final String ACTION_SET_DIGIT_LIGHT_COLOR =
+            "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_LIGHT_COLOR";
+    /** 设置页 → SystemUI 写入渐变端点「浅色背景用」颜色（{@link #EXTRA_SLOT} 0/1 + {@link #EXTRA_COLOR}；AUTO = 清除副键）。 */
+    public static final String ACTION_SET_GRADIENT_LIGHT_COLOR =
+            "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_LIGHT_COLOR";
     /** int extra：数字位 slot（0..5，见 {@link #slotOfChar}）。 */
     public static final String EXTRA_SLOT = "slot";
 
@@ -454,6 +463,40 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
             return;
         }
         Settings.Secure.putInt(resolver, start ? GRADIENT_START_KEY : GRADIENT_END_KEY, color);
+    }
+
+    // ------------------------------------------------------------------
+    // 明暗自适应取色（issue #11）：浅色/暗色背景分别取色
+    // ------------------------------------------------------------------
+
+    /** 明暗自适应总开关键（1 = 开启，0 = 关闭）。默认关闭 = 现有固定色行为不变。 */
+    public static final String ADAPTIVE_COLOR_KEY =
+            "coloros_clock_seconds_adaptive_color";
+
+    /** 浅色背景副键后缀：浅色背景（系统文字偏暗）时改用 digit_color_x_light。 */
+    public static final String LIGHT_KEY_SUFFIX = "_light";
+
+    /** 读取明暗自适应总开关。 */
+    public static boolean isAdaptiveColorEnabled(ContentResolver resolver) {
+        return resolver != null
+                && Settings.Secure.getInt(resolver, ADAPTIVE_COLOR_KEY, 0) == 1;
+    }
+
+    /** 写入明暗自适应总开关。 */
+    public static void setAdaptiveColorEnabled(ContentResolver resolver, boolean on) {
+        if (resolver != null) {
+            Settings.Secure.putInt(resolver, ADAPTIVE_COLOR_KEY, on ? 1 : 0);
+        }
+    }
+
+    /** 浅色背景副键：digit_color_x_light。 */
+    public static String digitLightKey(int slot) {
+        return DIGIT_COLOR_KEYS[slot] + LIGHT_KEY_SUFFIX;
+    }
+
+    /** 渐变端点浅色副键（true = 起点）。 */
+    public static String gradientLightKey(boolean start) {
+        return (start ? GRADIENT_START_KEY : GRADIENT_END_KEY) + LIGHT_KEY_SUFFIX;
     }
     // ==================================================================
     // 状态栏当前文字色（由 SystemUI 侧模块采样写入）
@@ -760,6 +803,59 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
             colors[i] = getDigitColor(resolver, i);
         }
         return colors;
+    }
+
+    /**
+     * 读取某一位「浅色背景用」的颜色。未设置（null）返回 {@code null}，调用方回落常规键
+     * —— 老版本没有副键，回落即完全兼容。
+     */
+    public static Integer getDigitLightColor(ContentResolver resolver, int slot) {
+        if (resolver == null || slot < 0 || slot >= DIGIT_COUNT) {
+            return null;
+        }
+        String v = Settings.Secure.getString(resolver, digitLightKey(slot));
+        if (v == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(v);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 写入某一位「浅色背景用」的颜色；传 {@code null} 清除该位副键（回落常规键）。 */
+    public static void setDigitLightColor(ContentResolver resolver, int slot, Integer color) {
+        if (resolver == null || slot < 0 || slot >= DIGIT_COUNT) {
+            return;
+        }
+        Settings.Secure.putString(resolver, digitLightKey(slot),
+                color == null ? null : String.valueOf(color));
+    }
+
+    /** 读取渐变端点「浅色背景用」颜色；未设置返回 {@code null}（回落常规键 / AUTO 语义）。 */
+    public static Integer getGradientLightColor(ContentResolver resolver, boolean start) {
+        if (resolver == null) {
+            return null;
+        }
+        String v = Settings.Secure.getString(resolver, gradientLightKey(start));
+        if (v == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(v);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 写入渐变端点「浅色背景用」颜色；传 {@code null} 清除。 */
+    public static void setGradientLightColor(ContentResolver resolver, boolean start, Integer color) {
+        if (resolver == null) {
+            return;
+        }
+        Settings.Secure.putString(resolver, gradientLightKey(start),
+                color == null ? null : String.valueOf(color));
     }
 
     /** 是否有任意一位配置了颜色（用于设置页摘要与诊断）。 */

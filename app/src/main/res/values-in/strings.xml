@@ -94,6 +94,10 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_digit_sum">Warnai setiap angka jam, menit, dan detik secara terpisah — ketuk angka di pratinjau</string>
     <string name="settings_digit_preset">Prasetel</string>
     <string name="settings_digit_palette">Palet</string>
+    <string name="settings_adaptive_color">Warna terang/gelap</string>
+    <string name="settings_adaptive_color_sum">Pilih warna terpisah untuk latar terang dan gelap; jika warna terang belum diatur, pakai warna gelap</string>
+    <string name="settings_tab_dark">Gelap</string>
+    <string name="settings_tab_light">Terang</string>
     <string name="settings_digit_follow">Ikuti sistem</string>
     <string name="settings_digit_done">Selesai</string>
     <string name="settings_digit_slots">Puluhan jam,Satuan jam,Puluhan menit,Satuan menit,Puluhan detik,Satuan detik</string>

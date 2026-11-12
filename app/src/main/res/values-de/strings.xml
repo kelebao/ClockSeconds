@@ -94,6 +94,10 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_digit_sum">Jede Ziffer von Stunde, Minute und Sekunde einzeln färben – im Vorschaufenster auf eine Ziffer tippen</string>
     <string name="settings_digit_preset">Vorlagen</string>
     <string name="settings_digit_palette">Farbpalette</string>
+    <string name="settings_adaptive_color">Hell/Dunkel-Farben</string>
+    <string name="settings_adaptive_color_sum">Farben für helle und dunkle Hintergründe separat wählen; ohne helle Farbe gilt die dunkle</string>
+    <string name="settings_tab_dark">Dunkel</string>
+    <string name="settings_tab_light">Hell</string>
     <string name="settings_digit_follow">Systemeinstellung folgen</string>
     <string name="settings_digit_done">Fertig</string>
     <string name="settings_digit_slots">Std-Zehner,Std-Einer,Min-Zehner,Min-Einer,Sek-Zehner,Sek-Einer</string>

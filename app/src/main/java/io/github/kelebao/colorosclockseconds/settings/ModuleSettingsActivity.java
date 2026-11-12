@@ -126,8 +126,8 @@ public final class ModuleSettingsActivity extends Activity {
      * 或者同时调高 adaptColorForBackground 的阈值（两边必须一起改，否则又会对不上）。</p>
      */
     private static final int[] HOUR_COLORS = {
-            0xFF2196F3, 0xFFFF9800, 0xFFD4A017, 0xFF4CAF50, 0xFF00BCD4,
-            0xFFF44336, 0xFF9C27B0, 0xFFE91E63, 0xFF9E9E9E,
+            0xFFF44336, 0xFFFF9800, 0xFFD4A017, 0xFF4CAF50, 0xFF00BCD4,
+            0xFF2196F3, 0xFF9C27B0, 0xFFE91E63, 0xFF9E9E9E,
     };
 
     // 浅色配色
@@ -261,6 +261,21 @@ public final class ModuleSettingsActivity extends Activity {
     private LinearLayout mGradPresetWrap;
     /** 渐变方向三个胶囊（水平 / 竖直 / 对角）。 */
     private final java.util.List<TextView> mGradDirPills = new java.util.ArrayList<>();
+
+    /** 明暗自适应（issue #11）：开启后浅色 / 暗色背景分别取色。 */
+    private boolean mAdaptiveColor;
+    /** true = 当前正在编辑「浅色背景用」颜色（自适应开时才允许切到 true）。 */
+    private boolean mLightMode;
+    /** 六位「浅色背景用」颜色缓存；null = 该位未设浅色（回落常规键）。 */
+    private Integer[] mCfgDigitLightColors;
+    /** 明暗自适应开关与浅色 / 暗色页签的控件引用。 */
+    private Switch mAdaptiveSwitch;
+    private LinearLayout mLightTabs;
+    private TextView mTabDark;
+    private TextView mTabLight;
+    /** 渐变端点「浅色背景用」颜色缓存；null = 未设（回落常规键 / AUTO 语义）。 */
+    private Integer mCfgGradStartLight;
+    private Integer mCfgGradEndLight;
     private final java.util.List<View> mGradPresetPills = new java.util.ArrayList<>();
     private boolean mObserverOk = false;
     private final android.database.ContentObserver mCfgObserver =
@@ -529,6 +544,8 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
         mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+        mAdaptiveColor = ClockSecondsConfig.isAdaptiveColorEnabled(getContentResolver());
+        reloadLightCaches();
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
@@ -1182,6 +1199,10 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
         mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
+        // 明暗自适应开关与 _light 副键缓存也要在构建卡片前读好：buildAdaptiveRows 依赖
+        // mAdaptiveColor 决定开关初值与页签显隐，晚读会让「已开启」显示成关闭态。
+        mAdaptiveColor = ClockSecondsConfig.isAdaptiveColorEnabled(getContentResolver());
+        reloadLightCaches();
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
         mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
         mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
@@ -1251,6 +1272,9 @@ public final class ModuleSettingsActivity extends Activity {
         sub.setTextColor(text2());
         sub.setPadding(0, dp(4), 0, 0);
         mPageDigit.addView(sub);
+
+        // 明暗自适应（issue #11）：开关 + 浅色/暗色双页签。关闭时整个取色面板行为与旧版完全一致。
+        buildAdaptiveRows(mPageDigit);
 
         // 预设两排、每排 5 颗，铺满卡片宽度（无背景板、无角标）。
         LinearLayout presetWrap = new LinearLayout(this);
@@ -1805,6 +1829,17 @@ public final class ModuleSettingsActivity extends Activity {
 
     private void writeGradientEndpoint(final int which, final int color,
                                        final java.util.function.Consumer<Boolean> after) {
+        // 明暗自适应浅色页：整对预设也写「_light 副键」（issue #11）。
+        if (mAdaptiveColor && mLightMode) {
+            final boolean auto = color == ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+            Integer light = auto ? null : color;
+            Intent li = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
+                    .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                    .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
+            applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), light, li,
+                    after::accept);
+            return;
+        }
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -1823,8 +1858,15 @@ public final class ModuleSettingsActivity extends Activity {
         return target >= 6 ? gradientTargetColor(target - 6) : slotColor(mSelSlot);
     }
 
-    /** 渐变端点色：用户自定义优先，未自定义时回落到首位 / 末位数字的颜色。 */
+    /** 渐变端点色：用户自定义优先，未自定义时回落到首位 / 末位数字的颜色。
+     *  （自适应浅色页：端点浅色副键优先，未设副键再走常规解析。） */
     private int gradientTargetColor(int which) {
+        if (mAdaptiveColor && mLightMode) {
+            Integer light = which == 0 ? mCfgGradStartLight : mCfgGradEndLight;
+            if (light != null) {
+                return light;
+            }
+        }
         int stored = which == 0 ? mCfgGradStart : mCfgGradEnd;
         if (stored != ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
             return stored;
@@ -1833,6 +1875,101 @@ public final class ModuleSettingsActivity extends Activity {
             mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
         }
         return mCfgDigitColors[which == 0 ? 0 : mCfgDigitColors.length - 1];
+    }
+
+    // ==================================================================
+    // 明暗自适应取色（issue #11）：开关 + 浅色/暗色双页签
+    // ==================================================================
+
+    /** 六位浅色副键一次读齐（缓存给取色面板用）。 */
+    private Integer[] loadDigitLightColors() {
+        Integer[] light = new Integer[ClockSecondsConfig.DIGIT_COUNT];
+        for (int i = 0; i < light.length; i++) {
+            light[i] = ClockSecondsConfig.getDigitLightColor(getContentResolver(), i);
+        }
+        return light;
+    }
+
+    /** 重读浅色缓存（六位 + 渐变两端）。 */
+    private void reloadLightCaches() {
+        mCfgDigitLightColors = loadDigitLightColors();
+        mCfgGradStartLight = ClockSecondsConfig.getGradientLightColor(getContentResolver(), true);
+        mCfgGradEndLight = ClockSecondsConfig.getGradientLightColor(getContentResolver(), false);
+    }
+
+    /** 明暗自适应开关行 + 浅色/暗色页签（仅自适应开启时可见）。 */
+    private void buildAdaptiveRows(LinearLayout page) {
+        mAdaptiveSwitch = new Switch(this);
+        mAdaptiveSwitch.setChecked(mAdaptiveColor);
+        styleSwitch(mAdaptiveSwitch);
+        mAdaptiveSwitch.setOnCheckedChangeListener((v, checked) -> {
+            if (mAdaptiveColor == checked) {
+                return;
+            }
+            mAdaptiveColor = checked;   // 乐观更新，失败由 toast 提示
+            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_ADAPTIVE_COLOR)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
+            applyConfig(ClockSecondsConfig.ADAPTIVE_COLOR_KEY, checked ? 1 : 0, intent, ok -> {
+                if (!ok) {
+                    toastWriteFailed();
+                }
+            });
+            if (!checked) {
+                mLightMode = false;   // 关自适应：回到暗色（常规键）编辑，行为与旧版一致
+            }
+            refreshAdaptiveUi();
+        });
+        Switch sw = mAdaptiveSwitch;
+        page.addView(makeSwitchRow(getString(R.string.settings_adaptive_color), sw, dp(10)));
+
+        LinearLayout tabs = new LinearLayout(this);
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        tabs.setPadding(0, dp(8), 0, 0);
+        mTabDark = makeTab(getString(R.string.settings_tab_dark));
+        mTabLight = makeTab(getString(R.string.settings_tab_light));
+        mTabDark.setLayoutParams(new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        llp.leftMargin = dp(3);
+        mTabLight.setLayoutParams(llp);
+        mTabDark.setOnClickListener(v -> setLightMode(false));
+        mTabLight.setOnClickListener(v -> setLightMode(true));
+        tabs.addView(mTabDark);
+        tabs.addView(mTabLight);
+        // 页签底色与逐位/渐变大页签同款胶囊轨道。
+        GradientDrawable trackBg = new GradientDrawable();
+        trackBg.setCornerRadius(dp(999));
+        trackBg.setColor(night ? 0xFF2A2340 : 0xFFF1EDFB);
+        trackBg.invalidateSelf();
+        tabs.setBackground(trackBg);
+        tabs.setPadding(dp(3), dp(3), dp(3), dp(3));
+        mLightTabs = tabs;
+        page.addView(tabs);
+        refreshAdaptiveUi();
+    }
+
+    /** 切换浅色 / 暗色编辑页签：同步色块选中环、滑杆种子与预览。 */
+    private void setLightMode(boolean light) {
+        if (mLightMode == light) {
+            return;
+        }
+        mLightMode = light;
+        refreshAdaptiveUi();
+    }
+
+    /** 明暗自适应 UI 状态：页签显隐与选中态、色块、滑杆、预览整体刷新。 */
+    private void refreshAdaptiveUi() {
+        if (mLightTabs != null) {
+            mLightTabs.setVisibility(mAdaptiveColor ? View.VISIBLE : View.GONE);
+        }
+        if (mTabDark != null && mTabLight != null) {
+            styleTab(mTabDark, !mLightMode);
+            styleTab(mTabLight, mLightMode);
+        }
+        refreshDigitSwatches();
+        syncSlidersToColor();
+        updatePreview();
     }
 
     /** 统一取色入口：数字位走原逻辑，渐变端点走自己的键。 */
@@ -1844,8 +1981,25 @@ public final class ModuleSettingsActivity extends Activity {
         applyDigitColor(target, color);
     }
 
-    /** 写渐变端点色（0 = 起点，1 = 终点）。 */
+    /** 写渐变端点色（0 = 起点，1 = 终点）。自适应浅色页写「_light 副键」。 */
     private void applyGradientColor(final int which, final int color) {
+        if (mAdaptiveColor && mLightMode) {
+            final boolean auto = color == ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+            Integer light = auto ? null : color;
+            Intent li = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
+                    .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                    .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
+            applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), light, li, ok -> {
+                if (!ok) {
+                    toastWriteFailed();
+                    return;
+                }
+                reloadLightCaches();
+                refreshDigitSwatches();
+                updatePreview();
+            });
+            return;
+        }
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -3435,6 +3589,24 @@ public final class ModuleSettingsActivity extends Activity {
         if (!mDigitsExpanded) {
             expandDigits();
         }
+        // 明暗自适应浅色页：写「_light 副键」，不动常规键（issue #11）。跟随系统 = 清除副键回落常规键。
+        if (mAdaptiveColor && mLightMode) {
+            final boolean follow = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+            Integer light = follow ? null : color;
+            Intent li = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR)
+                    .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
+                    .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
+            applyLightConfig(ClockSecondsConfig.digitLightKey(slot), light, li, ok -> {
+                if (!ok) {
+                    toastWriteFailed();
+                    return;
+                }
+                mCfgDigitLightColors = loadDigitLightColors();
+                updatePreview();
+                syncSlidersToColor();
+            });
+            return;
+        }
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -3674,8 +3846,15 @@ public final class ModuleSettingsActivity extends Activity {
         }
     }
 
-    /** 某一位当前的颜色（-1 = 跟随系统）。 */
+    /** 某一位当前的颜色（-1 = 跟随系统）。自适应浅色页优先读浅色副键，未设回落常规键。 */
     private int slotColor(int slot) {
+        if (mAdaptiveColor && mLightMode) {
+            Integer[] light = mCfgDigitLightColors;
+            Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
+            if (c != null) {
+                return c;
+            }
+        }
         if (mCfgDigitColors == null || slot < 0 || slot >= mCfgDigitColors.length) {
             return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
         }
@@ -4987,9 +5166,9 @@ public final class ModuleSettingsActivity extends Activity {
     // 预览与状态
     // ==================================================================
 
-    /** 预览渐变色带的绘制原点缓存：{宽, 字号, 字距, 字符数, 原点}。 */
-    private float[] mGradOriginCache;
-
+    /** 预览渐变色带的绘制原点缓存：{宽, 字号, 字距, 字符数, 原点}。 */
+    private float[] mGradOriginCache;
+
 
     /**
      * 预览时间专用 TextView：渐变模式下自己画一遍文字。
@@ -5198,7 +5377,8 @@ public final class ModuleSettingsActivity extends Activity {
                     continue;
                 }
                 final boolean dim = mDigitsExpanded && slot != mSelSlot;
-                final int color = mCfgDigitColors[slot];
+                // 自适应开时按当前页签（浅色/暗色）取对应副键，预览即所写（issue #11）。
+                final int color = mAdaptiveColor ? slotColor(slot) : mCfgDigitColors[slot];
                 final boolean follow = !hourOn || color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
                 // 「抬高」是几何变换，跟有没有颜色无关，必须先挂：vc83 之前它写在「跟随系统且不淡就
                 // continue」后面，于是选中跟随系统的那一位永远抬不起来（真机反馈「3 也没抬高」）。
@@ -6999,6 +7179,75 @@ public final class ModuleSettingsActivity extends Activity {
         }
         new Handler(Looper.getMainLooper()).postDelayed(
                 () -> verifyWrite(key, value, attempt + 1, onResult), 250);
+    }
+
+    /**
+     * 「_light 副键」写入：与 {@link #applyConfig} 同一套「直写优先 + 广播回落 + 轮询确认」，
+     * 但副键是 String 键（null = 清除，回落常规键），直写用 putString/getString。
+     * 直写失败（App 无 WRITE_SECURE_SETTINGS 时 putString 抛 SecurityException）不能让页面崩溃。
+     */
+    private void applyLightConfig(final String key, final Integer value, final Intent broadcast,
+                                  final java.util.function.Consumer<Boolean> onResult) {
+        final int seq = mWriteSeq.incrementAndGet();
+        final java.util.function.Consumer<Boolean> guarded = ok -> {
+            if (mWriteSeq.get() == seq) {
+                onResult.accept(ok);
+            }
+        };
+        try {
+            if (value == null) {
+                Settings.Secure.putString(getContentResolver(), key, null);
+            } else {
+                Settings.Secure.putString(getContentResolver(), key, String.valueOf(value));
+            }
+            guarded.accept(true);
+            // 双保险：直写成功也广播一次，让 SystemUI 立即重读缓存生效。
+            try {
+                broadcast.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+                sendBroadcast(broadcast);
+            } catch (Throwable ignored2) {
+                // 广播失败不影响直写结果
+            }
+            return;
+        } catch (SecurityException ignored) {
+            // 无 WRITE_SECURE_SETTINGS：走广播路径（SystemUI 代写）
+        } catch (Throwable ignored) {
+            // 其他写失败同样回落广播
+        }
+        try {
+            broadcast.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
+            sendBroadcast(broadcast);
+        } catch (Throwable t) {
+            guarded.accept(false);
+            return;
+        }
+        verifyLightWrite(key, value, 0, guarded);
+    }
+
+    /** 轮询确认「_light 副键」是否已被 SystemUI 代写成功（null = 期望键不存在）。 */
+    private void verifyLightWrite(final String key, final Integer value, final int attempt,
+                                  final java.util.function.Consumer<Boolean> onResult) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        String actual = null;
+        try {
+            actual = Settings.Secure.getString(getContentResolver(), key);
+        } catch (Throwable ignored) {
+            // 读取失败按未生效处理
+        }
+        boolean match = value == null ? actual == null
+                : actual != null && actual.equals(String.valueOf(value));
+        if (match) {
+            onResult.accept(true);
+            return;
+        }
+        if (attempt >= 8) {
+            onResult.accept(false);
+            return;
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(
+                () -> verifyLightWrite(key, value, attempt + 1, onResult), 250);
     }
 
     private void toastWriteFailed() {

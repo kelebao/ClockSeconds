@@ -94,6 +94,10 @@
     <string name="settings_digit_sum">رنگ هر رقم ساعت، دقیقه و ثانیه را جداگانه تنظیم کنید — روی رقم در پیش‌نمایش بزنید</string>
     <string name="settings_digit_preset">رنگ‌های آماده</string>
     <string name="settings_digit_palette">پالت رنگ</string>
+    <string name="settings_adaptive_color">رنگ روشن/تاریک</string>
+    <string name="settings_adaptive_color_sum">برای پس‌زمینه روشن و تاریک رنگ جدا انتخاب کنید؛ بدون رنگ روشن، رنگ تاریک به کار می‌رود</string>
+    <string name="settings_tab_dark">تاریک</string>
+    <string name="settings_tab_light">روشن</string>
     <string name="settings_digit_follow">پیروی از سیستم</string>
     <string name="settings_digit_done">پایان</string>
     <string name="settings_digit_slots">دهگان ساعت,یکان ساعت,دهگان دقیقه,یکان دقیقه,دهگان ثانیه,یکان ثانیه</string>

@@ -94,6 +94,10 @@
     <string name="settings_digit_sum">時分秒分別取色，點預覽裡的數字即可選中</string>
     <string name="settings_digit_preset">預設</string>
     <string name="settings_digit_palette">調色盤</string>
+    <string name="settings_adaptive_color">明暗自適應</string>
+    <string name="settings_adaptive_color_sum">為淺色和暗色背景分別取色；未設定淺色時沿用暗色</string>
+    <string name="settings_tab_dark">暗色</string>
+    <string name="settings_tab_light">淺色</string>
     <string name="settings_digit_follow">跟隨系統</string>
     <string name="settings_digit_done">完成</string>
     <string name="settings_digit_slots">時十,時個,分十,分個,秒十,秒個</string>

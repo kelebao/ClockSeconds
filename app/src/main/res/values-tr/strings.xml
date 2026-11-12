@@ -94,6 +94,10 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_digit_sum">Saat, dakika ve saniye rakamlarını ayrı ayrı renklendirin — önizlemede bir rakama dokunun</string>
     <string name="settings_digit_preset">Hazır renkler</string>
     <string name="settings_digit_palette">Palet</string>
+    <string name="settings_adaptive_color">Açık/koyu renk</string>
+    <string name="settings_adaptive_color_sum">Açık ve koyu arka planlar için ayrı renk seçin; açık renk yoksa koyu kullanılır</string>
+    <string name="settings_tab_dark">Koyu</string>
+    <string name="settings_tab_light">Açık</string>
     <string name="settings_digit_follow">Sistemi izle</string>
     <string name="settings_digit_done">Bitti</string>
     <string name="settings_digit_slots">Saat onlar,Saat birler,Dakika onlar,Dakika birler,Saniye onlar,Saniye birler</string>
