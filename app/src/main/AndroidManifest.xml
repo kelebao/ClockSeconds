@@ -46,6 +46,12 @@
             </intent-filter>
         </activity>
 
+        <!-- 高级设置（vc327）：系统模式自适应 / 调色盘 / 我的预设 / 渐变浅色适配 -->
+        <activity
+            android:name=".settings.AdvancedSettingsActivity"
+            android:exported="false"
+            android:label="@string/settings_advanced_title" />
+
         <!-- 下拉通知栏磁贴：一键切换状态栏显秒。图标/文案来自应用资源。 -->
         <service
             android:name=".tile.SecondsTileService"

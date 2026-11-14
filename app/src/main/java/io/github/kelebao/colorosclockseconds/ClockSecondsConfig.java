@@ -179,6 +179,12 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
     /** 设置页 → SystemUI 写入某一位数字颜色（含 {@link #EXTRA_COLOR} 与 {@link #EXTRA_SLOT}）。 */
     public static final String ACTION_SET_DIGIT_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_COLOR";
+    /** 设置页 → SystemUI 整套写入六位数字颜色（{@link #EXTRA_COLORS}，逗号分隔 ARGB；-1 = 跟随系统）。
+     *  高级设置页「我的预设」整组应用时用：避免六次单写广播带来的中途闪烁。 */
+    public static final String ACTION_SET_DIGIT_COLORS_BATCH =
+            "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_COLORS_BATCH";
+    /** String extra：六位颜色 CSV（"RRGGBB 形式的 int,…"，用 {@link Integer#parseInt} 解析）。 */
+    public static final String EXTRA_COLORS = "colors";
     /** 设置页 → SystemUI 写入明暗自适应开关（{@link #EXTRA_ENABLED}）。 */
     public static final String ACTION_SET_ADAPTIVE_COLOR =
             "io.github.kelebao.colorosclockseconds.action.SET_ADAPTIVE_COLOR";
@@ -190,6 +196,12 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
             "io.github.kelebao.colorosclockseconds.action.SET_GRADIENT_LIGHT_COLOR";
     /** int extra：数字位 slot（0..5，见 {@link #slotOfChar}）。 */
     public static final String EXTRA_SLOT = "slot";
+
+    /** 设置页 → SystemUI 切换手机系统深色/浅色主题（t28；{@link #EXTRA_NIGHT}）。 */
+    public static final String ACTION_SWITCH_THEME =
+            "io.github.kelebao.colorosclockseconds.action.SWITCH_THEME";
+    /** boolean extra：true = 切到深色（MODE_NIGHT_YES），false = 浅色（MODE_NIGHT_NO）。 */
+    public static final String EXTRA_NIGHT = "night_mode";
 
     /** 设置页 → SystemUI 写入渐变开关（{@link #EXTRA_ENABLED}）。 */
     public static final String ACTION_SET_GRADIENT =
@@ -400,6 +412,81 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     /** 渐变终点色（ARGB）。{@link #GRADIENT_COLOR_AUTO} = 跟随末位数字的颜色。 */
     public static final String GRADIENT_END_KEY = "coloros_clock_seconds_gradient_end";
 
+    /**
+     * 存「渐变中间色 2」的 Secure 键（ARGB，t6 四色渐变）。
+     * 命名刻意避开旧试做版（vc217）的 {@code gradient_mid1/mid2}：Secure 里若残留旧键，读取一律忽略。
+     * {@link #GRADIENT_COLOR_AUTO} = 未设置，渲染时回落起点 → 终点的线性插值。
+     */
+    public static final String GRADIENT_STOP_2_KEY = "coloros_clock_seconds_gradient_stop2";
+    /** 存「渐变中间色 3」的 Secure 键（ARGB，t6 四色渐变）。语义同 {@link #GRADIENT_STOP_2_KEY}。 */
+    public static final String GRADIENT_STOP_3_KEY = "coloros_clock_seconds_gradient_stop3";
+
+    /** 四色渐变的色标数：起点、中间 2、中间 3、终点。 */
+    public static final int GRADIENT_STOP_COUNT = 4;
+
+    /**
+     * 渐变色标下标 → Secure 键：0=起点、1=中间 2、2=中间 3、3=终点（t6 统一寻址）。
+     * 旧广播 EXTRA_SLOT 0=起点 / 1=终点 语义不变，2/3 新增。
+     */
+    public static String gradientStopKey(int index) {
+        switch (index) {
+            case 1:
+                return GRADIENT_STOP_2_KEY;
+            case 2:
+                return GRADIENT_STOP_3_KEY;
+            case 3:
+                return GRADIENT_END_KEY;
+            default:
+                return GRADIENT_START_KEY;
+        }
+    }
+
+    /** 渐变色标「浅色背景用」副键：0=起点、1=中间 2、2=中间 3、3=终点。 */
+    public static String gradientStopLightKey(int index) {
+        return gradientStopKey(index) + LIGHT_KEY_SUFFIX;
+    }
+
+    /** 读取渐变色标（0..3；{@link #GRADIENT_COLOR_AUTO} = 未设置 / 跟随数字）。 */
+    public static int getGradientStopColor(ContentResolver resolver, int index) {
+        if (resolver == null) {
+            return GRADIENT_COLOR_AUTO;
+        }
+        return Settings.Secure.getInt(resolver, gradientStopKey(index), GRADIENT_COLOR_AUTO);
+    }
+
+    /** 写入渐变色标（0..3）。 */
+    public static void setGradientStopColor(ContentResolver resolver, int index, int color) {
+        if (resolver == null) {
+            return;
+        }
+        Settings.Secure.putInt(resolver, gradientStopKey(index), color);
+    }
+
+    /** 读取渐变色标「浅色背景用」颜色；未设置返回 {@code null}（回落常规键 / AUTO 语义）。 */
+    public static Integer getGradientStopLightColor(ContentResolver resolver, int index) {
+        if (resolver == null) {
+            return null;
+        }
+        String v = Settings.Secure.getString(resolver, gradientStopLightKey(index));
+        if (v == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(v);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 写入渐变色标「浅色背景用」颜色；传 {@code null} 清除。 */
+    public static void setGradientStopLightColor(ContentResolver resolver, int index, Integer color) {
+        if (resolver == null) {
+            return;
+        }
+        Settings.Secure.putString(resolver, gradientStopLightKey(index),
+                color == null ? null : String.valueOf(color));
+    }
+
     /** 渐变端点色「未自定义」：取首位 / 末位数字的颜色。 */
     public static final int GRADIENT_COLOR_AUTO = -1;
 
@@ -409,8 +496,25 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     public static final int GRADIENT_DIRECTION_VERTICAL = 1;
     /** 渐变方向：对角（左上 → 右下）。 */
     public static final int GRADIENT_DIRECTION_DIAGONAL = 2;
+    /** 渐变方向：右 → 左（t6 十方向扩展；0..2 语义与旧版一致，3..9 为新增）。 */
+    public static final int GRADIENT_DIRECTION_RTL = 3;
+    /** 渐变方向：下 → 上。 */
+    public static final int GRADIENT_DIRECTION_BTT = 4;
+    /** 渐变方向：右下 → 左上。 */
+    public static final int GRADIENT_DIRECTION_BRTL = 5;
+    /** 渐变方向：右上 → 左下。 */
+    public static final int GRADIENT_DIRECTION_TRBL = 6;
+    /** 渐变方向：左下 → 右上。 */
+    public static final int GRADIENT_DIRECTION_BLTR = 7;
+    /** 渐变方向：径向（自文字中心向外，{@code RadialGradient}）。 */
+    public static final int GRADIENT_DIRECTION_RADIAL = 8;
+    /** 渐变方向：扫掠（围绕文字中心旋转一圈，{@code SweepGradient}）。 */
+    public static final int GRADIENT_DIRECTION_SWEEP = 9;
 
-    /** 存「渐变方向」的 Secure 键（int 0/1/2，默认水平）。 */
+    /** 渐变方向总数（t6 十方向）。 */
+    public static final int GRADIENT_DIRECTION_COUNT = 10;
+
+    /** 存「渐变方向」的 Secure 键（int 0..9，默认水平）。 */
     public static final String GRADIENT_DIRECTION_KEY =
             "coloros_clock_seconds_gradient_direction";
 
@@ -422,7 +526,7 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
         try {
             int d = Settings.Secure.getInt(resolver, GRADIENT_DIRECTION_KEY,
                     GRADIENT_DIRECTION_HORIZONTAL);
-            if (d < GRADIENT_DIRECTION_HORIZONTAL || d > GRADIENT_DIRECTION_DIAGONAL) {
+            if (d < GRADIENT_DIRECTION_HORIZONTAL || d >= GRADIENT_DIRECTION_COUNT) {
                 d = GRADIENT_DIRECTION_HORIZONTAL;
             }
             return d;
@@ -438,7 +542,7 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
         }
         try {
             int d = direction < GRADIENT_DIRECTION_HORIZONTAL
-                    || direction > GRADIENT_DIRECTION_DIAGONAL
+                    || direction >= GRADIENT_DIRECTION_COUNT
                     ? GRADIENT_DIRECTION_HORIZONTAL : direction;
             Settings.Secure.putInt(resolver, GRADIENT_DIRECTION_KEY, d);
         } catch (Throwable ignored) {
@@ -469,17 +573,21 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     // 明暗自适应取色（issue #11）：浅色/暗色背景分别取色
     // ------------------------------------------------------------------
 
-    /** 明暗自适应总开关键（1 = 开启，0 = 关闭）。默认关闭 = 现有固定色行为不变。 */
+    /** 明暗自适应总开关键（1 = 开启，0 = 关闭）。t4 起默认开启且开关已移除，键值仅作兼容保留。 */
     public static final String ADAPTIVE_COLOR_KEY =
             "coloros_clock_seconds_adaptive_color";
 
     /** 浅色背景副键后缀：浅色背景（系统文字偏暗）时改用 digit_color_x_light。 */
     public static final String LIGHT_KEY_SUFFIX = "_light";
 
-    /** 读取明暗自适应总开关。 */
+    /**
+     * 系统模式自适应（t4）：默认开启；开关已移除，故常驻开启。
+     * 兼容旧数据：旧版显式写入的 0（关闭）不再生效，统一按开启处理，
+     * 否则会出现「高级页暗/浅页签恒可见、模块却仍按关闭渲染」的两套状态。
+     * 键值与 setAdaptiveColorEnabled 仅保留给旧广播 ACTION_SET_ADAPTIVE_COLOR 写入兼容。
+     */
     public static boolean isAdaptiveColorEnabled(ContentResolver resolver) {
-        return resolver != null
-                && Settings.Secure.getInt(resolver, ADAPTIVE_COLOR_KEY, 0) == 1;
+        return true;
     }
 
     /** 写入明暗自适应总开关。 */
@@ -793,6 +901,16 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
         Settings.Secure.putInt(resolver, DIGIT_COLOR_KEYS[slot], color);
         if (slot == 0) {
             setHourColor(resolver, color);
+        }
+    }
+
+    /** 整套写入六位颜色（高级设置「我的预设」整组应用）。0 号位同步旧键，逐位规则同 {@link #setDigitColor}。 */
+    public static void setDigitColorsBatch(ContentResolver resolver, int[] colors) {
+        if (resolver == null || colors == null) {
+            return;
+        }
+        for (int i = 0; i < DIGIT_COUNT && i < colors.length; i++) {
+            setDigitColor(resolver, i, colors[i]);
         }
     }
 

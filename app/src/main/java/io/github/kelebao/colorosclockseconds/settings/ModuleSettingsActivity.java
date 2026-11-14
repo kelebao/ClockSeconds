@@ -17,9 +17,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Shader;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -235,9 +233,6 @@ public final class ModuleSettingsActivity extends Activity {
     /** 数字颜色卡内的部件：色块网格、正在编辑行、摘要行、开关、完成胶囊。 */
     private DigitPaletteRow mDigitGrid;
     private LinearLayout mPresetWrap;
-    private android.widget.SeekBar mHueSlider;
-    private android.widget.SeekBar mSatSlider;
-    private android.widget.SeekBar mValSlider;
     private TextView mDigitEditingView;
     private TextView mDigitSummaryView;
     private View mDigitDoneView;
@@ -259,20 +254,14 @@ public final class ModuleSettingsActivity extends Activity {
     private View mGradEndDot;
     /** 渐变预设胶囊（每套 = 一对端点色，点一下整套换掉）。 */
     private LinearLayout mGradPresetWrap;
-    /** 渐变方向三个胶囊（水平 / 竖直 / 对角）。 */
-    private final java.util.List<TextView> mGradDirPills = new java.util.ArrayList<>();
 
     /** 明暗自适应（issue #11）：开启后浅色 / 暗色背景分别取色。 */
     private boolean mAdaptiveColor;
-    /** true = 当前正在编辑「浅色背景用」颜色（自适应开时才允许切到 true）。 */
+    /** true = 当前正在编辑「浅色背景用」颜色。t7：首页浅 / 暗页签已迁高级页，首页恒为 false；
+     *  字段保留，供浅色副键写入与回落判定使用。 */
     private boolean mLightMode;
     /** 六位「浅色背景用」颜色缓存；null = 该位未设浅色（回落常规键）。 */
     private Integer[] mCfgDigitLightColors;
-    /** 明暗自适应开关与浅色 / 暗色页签的控件引用。 */
-    private Switch mAdaptiveSwitch;
-    private LinearLayout mLightTabs;
-    private TextView mTabDark;
-    private TextView mTabLight;
     /** 渐变端点「浅色背景用」颜色缓存；null = 未设（回落常规键 / AUTO 语义）。 */
     private Integer mCfgGradStartLight;
     private Integer mCfgGradEndLight;
@@ -909,7 +898,7 @@ public final class ModuleSettingsActivity extends Activity {
         mMarkView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         previewPlate.addView(mMarkView);
 
-        previewView = new GradientTimeView(this);
+        previewView = new SettingsPreviewClock(this);
         previewView.setTextSize(44f);
         // 数字用「中粗 + 假粗」两层叠出更敦实的笔画：sans-serif-medium 在展开成 6 位大字时
         // 笔画偏细、跟状态栏那组粗数字对不上（用户要求「散开的 6 个数字变粗点」）。
@@ -1199,8 +1188,8 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgHourColorOn = ClockSecondsConfig.isHourColorEnabled(getContentResolver());
         mCfgHourColor = ClockSecondsConfig.getHourColor(getContentResolver());
         mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
-        // 明暗自适应开关与 _light 副键缓存也要在构建卡片前读好：buildAdaptiveRows 依赖
-        // mAdaptiveColor 决定开关初值与页签显隐，晚读会让「已开启」显示成关闭态。
+        // 明暗自适应（t4 起常驻开启、开关已移除）：_light 副键缓存要在构建卡片前读好，
+        // 晚读会让色块与摘要停在常规键（暗色）的值上。
         mAdaptiveColor = ClockSecondsConfig.isAdaptiveColorEnabled(getContentResolver());
         reloadLightCaches();
         mCfgGradientOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
@@ -1273,9 +1262,6 @@ public final class ModuleSettingsActivity extends Activity {
         sub.setPadding(0, dp(4), 0, 0);
         mPageDigit.addView(sub);
 
-        // 明暗自适应（issue #11）：开关 + 浅色/暗色双页签。关闭时整个取色面板行为与旧版完全一致。
-        buildAdaptiveRows(mPageDigit);
-
         // 预设两排、每排 5 颗，铺满卡片宽度（无背景板、无角标）。
         LinearLayout presetWrap = new LinearLayout(this);
         presetWrap.setOrientation(LinearLayout.VERTICAL);
@@ -1306,11 +1292,15 @@ public final class ModuleSettingsActivity extends Activity {
         mPresetWrap = presetWrap;
         card.addView(presetWrap);
 
-        // 三条 HSV 滑杆：色相 / 饱和度 / 明度，拖动即生效，并同步更新当前选中位的颜色。
-        buildHsvSliders(card);
-
         // 渐变页：启用开关 + 起点色 / 终点色（下面的预设与滑杆改为编辑该端点色）。
         buildGradientRows(mPageGradient);
+
+        // 高级设置入口（t3）：拆成单色/渐变两行，分别进入对应高级页；
+        // HSV 滑杆、明暗预设、渐变浅色端点都收进二级页，首页只留预设圆点。
+        card.addView(dashedDivider());
+        // t26⑥：首页合并为单个「高级设置」入口；单色/渐变在高级页内切换（appbar 页签）。
+        card.addView(linkRow(R.string.settings_advanced_title, R.string.settings_advanced_sum,
+                v -> startActivity(new Intent(this, AdvancedSettingsActivity.class))));
 
         root.addView(card);
 
@@ -1475,90 +1465,10 @@ public final class ModuleSettingsActivity extends Activity {
         box.addView(mGradPresetWrap);
         rebuildGradientPresetRows();
 
-        // 渐变方向：水平 / 竖直 / 对角（vc281）。三个文字胶囊，选中的用 accent 底。
-        LinearLayout dirRow = new LinearLayout(this);
-        dirRow.setOrientation(LinearLayout.HORIZONTAL);
-        dirRow.setGravity(Gravity.CENTER_VERTICAL);
-        dirRow.setPadding(0, dp(10), 0, 0);
-        TextView dirLabel = new TextView(this);
-        dirLabel.setText(R.string.settings_gradient_dir);
-        dirLabel.setTextSize(12f);
-        dirLabel.setTextColor(text2());
-        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dlp.rightMargin = dp(10);
-        dirLabel.setLayoutParams(dlp);
-        dirRow.addView(dirLabel);
-        int[] dirs = {ClockSecondsConfig.GRADIENT_DIRECTION_HORIZONTAL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_VERTICAL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_DIAGONAL};
-        int[] labels = {R.string.settings_gradient_dir_h, R.string.settings_gradient_dir_v,
-                R.string.settings_gradient_dir_d};
-        mGradDirPills.clear();
-        for (int i = 0; i < dirs.length; i++) {
-            final int dir = dirs[i];
-            TextView pill = new TextView(this);
-            pill.setText(labels[i]);
-            pill.setTextSize(12f);
-            pill.setGravity(Gravity.CENTER);
-            pill.setPadding(dp(12), dp(5), dp(12), dp(5));
-            LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            plp.rightMargin = dp(8);
-            pill.setLayoutParams(plp);
-            pill.setClickable(true);
-            pill.setOnClickListener(v -> applyGradientDirection(dir));
-            dirRow.addView(pill);
-            mGradDirPills.add(pill);
-        }
-        box.addView(dirRow);
-        refreshGradientDirPills();
 
         syncGradientEnabledState();
     }
 
-    /** 点方向胶囊：写配置 + 重读 + 预览跟随。 */
-    private void applyGradientDirection(int dir) {
-        if (mCfgGradientDir == dir) {
-            return;
-        }
-        mCfgGradientDir = dir;
-        refreshGradientDirPills();
-        applyConfig(ClockSecondsConfig.GRADIENT_DIRECTION_KEY, dir,
-                new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_DIRECTION)
-                        .putExtra(ClockSecondsConfig.EXTRA_DIRECTION, dir),
-                ok -> {
-                    if (!ok) {
-                        toastWriteFailed();
-                    }
-                });
-        updatePreview();
-    }
-
-    /** 重画方向胶囊：选中的 accent 底白字，未选中透明底次级字；渐变关时整排变淡不可点。 */
-    private void refreshGradientDirPills() {
-        if (mGradDirPills.isEmpty()) {
-            return;
-        }
-        final boolean on = mCfgGradientOn;
-        for (int i = 0; i < mGradDirPills.size(); i++) {
-            TextView pill = mGradDirPills.get(i);
-            boolean sel = on && mCfgGradientDir == i;
-            GradientDrawable bg = new GradientDrawable();
-            bg.setCornerRadius(dp(999));
-            if (sel) {
-                bg.setColor(accent());
-                pill.setTextColor(0xFFFFFFFF);
-            } else {
-                bg.setColor(0x00000000);
-                bg.setStroke(dp(1), text2());
-                pill.setTextColor(text2());
-            }
-            pill.setBackground(bg);
-            pill.setAlpha(on ? 1f : 0.45f);
-            pill.setClickable(on && mCfgGradientDir != i);
-        }
-    }
 
     /** 渐变端点色胶囊：色点 + 文字，点一下把取色目标切到该端点。 */
     /** 端点色点：实心圆 28dp 放在 48dp 容器里，比例 = 14/24。 */
@@ -1662,10 +1572,7 @@ public final class ModuleSettingsActivity extends Activity {
         gradPresetPrefs().edit().putString("pairs", arr.toString()).apply();
     }
 
-    /** 自定义预设上限（超过时「+」提示先删）。 */
-    private static final int MAX_CUSTOM_GRAD_PRESETS = 9;
-
-    /** 重建预设胶囊行：内置 6 套 + 自定义（长按删）+「+」（存当前渐变），3 列排布。 */
+    /** 重建预设胶囊行：内置 6 套 + 自定义（长按删），3 列排布。 */
     private void rebuildGradientPresetRows() {
         if (mGradPresetWrap == null) {
             return;
@@ -1677,7 +1584,7 @@ public final class ModuleSettingsActivity extends Activity {
             all.add(p);
         }
         all.addAll(loadCustomGradPresets());
-        int rows = (all.size() + 1 + 2) / 3;   // +1 是「+」胶囊
+        int rows = (all.size() + 2) / 3;
         for (int r = 0; r < rows; r++) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
@@ -1708,21 +1615,6 @@ public final class ModuleSettingsActivity extends Activity {
                     }
                     pill = p;
                     track = true;
-                } else if (idx == all.size()) {
-                    // 「+」只出现在第一空位：把当前起点/终点存成自定义预设
-                    TextView plus = new TextView(this);
-                    plus.setLayoutParams(plp);
-                    plus.setText("+");
-                    plus.setTextSize(16f);
-                    plus.setGravity(Gravity.CENTER);
-                    GradientDrawable pbg = new GradientDrawable();
-                    pbg.setCornerRadius(dp(999));
-                    pbg.setStroke(dp(1), 0x66888888);
-                    plus.setBackground(pbg);
-                    plus.setTextColor(text2());
-                    plus.setOnClickListener(v -> saveCustomGradPreset());
-                    pill = plus;
-                    track = true;
                 } else {
                     // 其余空位放透明占位，保住三列等宽
                     View spacer = new View(this);
@@ -1739,27 +1631,6 @@ public final class ModuleSettingsActivity extends Activity {
             mGradPresetWrap.addView(row);
         }
         refreshGradientPresets();
-    }
-
-    /** 把当前起点/终点色存成自定义预设（同一套不重复存）。 */
-    private void saveCustomGradPreset() {
-        java.util.List<int[]> list = loadCustomGradPresets();
-        int s = gradientTargetColor(0);
-        int e = gradientTargetColor(1);
-        for (int[] pair : list) {
-            if (pair[0] == s && pair[1] == e) {
-                Toast.makeText(this, R.string.settings_gradient_saved, Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
-        if (list.size() >= MAX_CUSTOM_GRAD_PRESETS) {
-            Toast.makeText(this, R.string.settings_gradient_full, Toast.LENGTH_LONG).show();
-            return;
-        }
-        list.add(new int[]{s, e});
-        storeCustomGradPresets(list);
-        Toast.makeText(this, R.string.settings_gradient_saved, Toast.LENGTH_SHORT).show();
-        rebuildGradientPresetRows();
     }
 
     /** 长按自定义胶囊删除（内置 6 套不可删）。 */
@@ -1840,11 +1711,12 @@ public final class ModuleSettingsActivity extends Activity {
                     after::accept);
             return;
         }
+        // t36②：渐变回 2 色——UI which 1（终点）必须映射到 Config 键序 3（END），1/2 是四色时代的中间键。
+        int keyIndex = which == 0 ? 0 : 3;
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
-                .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
-        applyConfig(which == 0 ? ClockSecondsConfig.GRADIENT_START_KEY
-                : ClockSecondsConfig.GRADIENT_END_KEY, color, intent, after);
+        applyConfig(ClockSecondsConfig.gradientStopKey(keyIndex), color, intent, after);
     }
 
     /** 当前取色目标：0..5 = 数字位；6 = 渐变起点；7 = 渐变终点。 */
@@ -1878,7 +1750,8 @@ public final class ModuleSettingsActivity extends Activity {
     }
 
     // ==================================================================
-    // 明暗自适应取色（issue #11）：开关 + 浅色/暗色双页签
+    // 明暗自适应取色（issue #11）：_light 副键缓存
+    // （开关与浅/暗页签已迁高级页，t7 从首页移除）
     // ==================================================================
 
     /** 六位浅色副键一次读齐（缓存给取色面板用）。 */
@@ -1895,81 +1768,6 @@ public final class ModuleSettingsActivity extends Activity {
         mCfgDigitLightColors = loadDigitLightColors();
         mCfgGradStartLight = ClockSecondsConfig.getGradientLightColor(getContentResolver(), true);
         mCfgGradEndLight = ClockSecondsConfig.getGradientLightColor(getContentResolver(), false);
-    }
-
-    /** 明暗自适应开关行 + 浅色/暗色页签（仅自适应开启时可见）。 */
-    private void buildAdaptiveRows(LinearLayout page) {
-        mAdaptiveSwitch = new Switch(this);
-        mAdaptiveSwitch.setChecked(mAdaptiveColor);
-        styleSwitch(mAdaptiveSwitch);
-        mAdaptiveSwitch.setOnCheckedChangeListener((v, checked) -> {
-            if (mAdaptiveColor == checked) {
-                return;
-            }
-            mAdaptiveColor = checked;   // 乐观更新，失败由 toast 提示
-            Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_ADAPTIVE_COLOR)
-                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, checked ? 1 : 0);
-            applyConfig(ClockSecondsConfig.ADAPTIVE_COLOR_KEY, checked ? 1 : 0, intent, ok -> {
-                if (!ok) {
-                    toastWriteFailed();
-                }
-            });
-            if (!checked) {
-                mLightMode = false;   // 关自适应：回到暗色（常规键）编辑，行为与旧版一致
-            }
-            refreshAdaptiveUi();
-        });
-        Switch sw = mAdaptiveSwitch;
-        page.addView(makeSwitchRow(getString(R.string.settings_adaptive_color), sw, dp(10)));
-
-        LinearLayout tabs = new LinearLayout(this);
-        tabs.setOrientation(LinearLayout.HORIZONTAL);
-        tabs.setPadding(0, dp(8), 0, 0);
-        mTabDark = makeTab(getString(R.string.settings_tab_dark));
-        mTabLight = makeTab(getString(R.string.settings_tab_light));
-        mTabDark.setLayoutParams(new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        llp.leftMargin = dp(3);
-        mTabLight.setLayoutParams(llp);
-        mTabDark.setOnClickListener(v -> setLightMode(false));
-        mTabLight.setOnClickListener(v -> setLightMode(true));
-        tabs.addView(mTabDark);
-        tabs.addView(mTabLight);
-        // 页签底色与逐位/渐变大页签同款胶囊轨道。
-        GradientDrawable trackBg = new GradientDrawable();
-        trackBg.setCornerRadius(dp(999));
-        trackBg.setColor(night ? 0xFF2A2340 : 0xFFF1EDFB);
-        trackBg.invalidateSelf();
-        tabs.setBackground(trackBg);
-        tabs.setPadding(dp(3), dp(3), dp(3), dp(3));
-        mLightTabs = tabs;
-        page.addView(tabs);
-        refreshAdaptiveUi();
-    }
-
-    /** 切换浅色 / 暗色编辑页签：同步色块选中环、滑杆种子与预览。 */
-    private void setLightMode(boolean light) {
-        if (mLightMode == light) {
-            return;
-        }
-        mLightMode = light;
-        refreshAdaptiveUi();
-    }
-
-    /** 明暗自适应 UI 状态：页签显隐与选中态、色块、滑杆、预览整体刷新。 */
-    private void refreshAdaptiveUi() {
-        if (mLightTabs != null) {
-            mLightTabs.setVisibility(mAdaptiveColor ? View.VISIBLE : View.GONE);
-        }
-        if (mTabDark != null && mTabLight != null) {
-            styleTab(mTabDark, !mLightMode);
-            styleTab(mTabLight, mLightMode);
-        }
-        refreshDigitSwatches();
-        syncSlidersToColor();
-        updatePreview();
     }
 
     /** 统一取色入口：数字位走原逻辑，渐变端点走自己的键。 */
@@ -2000,11 +1798,12 @@ public final class ModuleSettingsActivity extends Activity {
             });
             return;
         }
+        // t36②：渐变回 2 色——UI which 1（终点）必须映射到 Config 键序 3（END）。
+        int keyIndex = which == 0 ? 0 : 3;
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
-                .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
-        applyConfig(which == 0 ? ClockSecondsConfig.GRADIENT_START_KEY
-                : ClockSecondsConfig.GRADIENT_END_KEY, color, intent, ok -> {
+        applyConfig(ClockSecondsConfig.gradientStopKey(keyIndex), color, intent, ok -> {
             if (!ok) {
                 toastWriteFailed();
                 return;
@@ -2021,27 +1820,6 @@ public final class ModuleSettingsActivity extends Activity {
                 previewView.post(this::positionMark);
             }
         });
-    }
-
-    /** 一行「标题 + 弹性空隙 + 开关」。 */
-    private LinearLayout makeSwitchRow(String label, Switch sw, int topPad) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, topPad, 0, 0);
-
-        TextView title = new TextView(this);
-        title.setText(label);
-        title.setTextSize(13f);
-        title.setTextColor(text());
-        row.addView(title);
-
-        View spacer = new View(this);
-        spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
-        row.addView(spacer);
-
-        row.addView(sw);
-        return row;
     }
 
     /** 渐变开关变化后刷新端点色胶囊的可用状态。 */
@@ -3603,7 +3381,6 @@ public final class ModuleSettingsActivity extends Activity {
                 }
                 mCfgDigitLightColors = loadDigitLightColors();
                 updatePreview();
-                syncSlidersToColor();
             });
             return;
         }
@@ -3624,21 +3401,7 @@ public final class ModuleSettingsActivity extends Activity {
             if (previewView != null) {
                 previewView.post(this::positionMark);
             }
-            syncSlidersToColor();
         });
-    }
-
-    /** 把三条 HSV 滑杆跳到某一位当前的颜色（点预设点后同步显示）。 */
-    private void syncSlidersToColor() {
-        if (mHueSlider == null) return;
-        int c = selColor();
-        if (c == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) c = HOUR_COLORS[0];
-        float[] hsv = new float[3];
-        android.graphics.Color.colorToHSV(c, hsv);
-        mHueSlider.setProgress(Math.round(hsv[0] / 360f * 255f));
-        mSatSlider.setProgress(Math.round(hsv[1] * 255f));
-        mValSlider.setProgress(Math.round(hsv[2] * 255f));
-        updateSliderGradients(hsv[0], hsv[1], hsv[2]);
     }
 
     /** 刷新预设色块的选中环 + 「正在编辑」行 + 底部摘要。 */
@@ -3669,135 +3432,12 @@ public final class ModuleSettingsActivity extends Activity {
                     fieldLabel(0, 1), fieldLabel(2, 3), fieldLabel(4, 5)));
         }
         refreshGradientDots();
-        syncSlidersToColor();
         if (mFollowDot != null) {
             final boolean followSel = current == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
             mFollowDot.setClickable(enabled);
             mFollowDot.setBackground(new FollowSwatchDrawable(enabled, followSel));
             mFollowDot.setSelected(followSel);
         }
-    }
-
-    /** 自绘进度条：一条渐变圆角条 + 一个圆形滑块（白描边），用于色相/饱和/明度三条滑杆。 */
-    private class HsvBarDrawable extends android.graphics.drawable.Drawable {
-        private final int kind;              // 0=色相 1=饱和度 2=明度
-        private float hue = 0f, sat = 1f, val = 1f;
-        private final android.graphics.Paint bar = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-        private final android.graphics.Paint knobP = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-        private final android.graphics.Paint ring = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-        private final android.graphics.RectF rf = new android.graphics.RectF();
-        private android.widget.SeekBar host;
-
-        HsvBarDrawable(int kind) {
-            this.kind = kind;
-            bar.setStyle(android.graphics.Paint.Style.FILL);
-            ring.setStyle(android.graphics.Paint.Style.STROKE);
-            ring.setStrokeWidth(dp(3));
-            ring.setColor(0xFFFFFFFF);
-            knobP.setStyle(android.graphics.Paint.Style.FILL);
-        }
-
-        void setContext(float h, float s, float v) { hue = h; sat = s; val = v; }
-        void notifyGradientChanged() { invalidateSelf(); }
-        void bind(android.widget.SeekBar sb) { host = sb; }
-
-        @Override public void draw(android.graphics.Canvas canvas) {
-            int w = getBounds().width(), h = getBounds().height();
-            int bh = dp(10);
-            int cy = h / 2;
-            rf.set(0, cy - bh / 2f, w, cy + bh / 2f);
-            int[] colors = new int[13];
-            for (int i = 0; i <= 12; i++) {
-                float t = i / 12f;
-                if (kind == 0) colors[i] = android.graphics.Color.HSVToColor(new float[]{t * 360f, 0.85f, 1f});
-                else if (kind == 1) colors[i] = android.graphics.Color.HSVToColor(new float[]{hue, t, Math.max(0.45f, val)});
-                else colors[i] = android.graphics.Color.HSVToColor(new float[]{hue, sat, 0.12f + 0.88f * t});
-            }
-            bar.setShader(new android.graphics.LinearGradient(0, 0, w, 0, colors, null,
-                    android.graphics.Shader.TileMode.CLAMP));
-            canvas.drawRoundRect(rf, bh / 2f, bh / 2f, bar);
-            bar.setShader(null);
-            // 滑块
-            if (host != null) {
-                float t = host.getProgress() / 255f;
-                float kx = Math.max(dp(11), Math.min(w - dp(11), t * w));
-                float r = dp(11);
-                int kc;
-                if (kind == 0) kc = android.graphics.Color.HSVToColor(new float[]{t * 360f, 0.85f, 1f});
-                else if (kind == 1) kc = android.graphics.Color.HSVToColor(new float[]{hue, t, Math.max(0.45f, val)});
-                else kc = android.graphics.Color.HSVToColor(new float[]{hue, sat, 0.12f + 0.88f * t});
-                knobP.setColor(kc);
-                canvas.drawCircle(kx, cy, r, knobP);
-                canvas.drawCircle(kx, cy, r, ring);
-            }
-        }
-        @Override public void setAlpha(int a) { }
-        @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
-        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
-    }
-
-    /** 三条 HSV 滑杆：色相 / 饱和度 / 明度。拖动即把当前选中位的颜色改成对应值。 */
-    private void buildHsvSliders(LinearLayout card) {
-        final int[] seed = {selColor()};
-        if (seed[0] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-            seed[0] = HOUR_COLORS[0];
-        }
-        final float[] hsv = new float[3];
-        android.graphics.Color.colorToHSV(seed[0], hsv);
-
-        mHueSlider = addHsvSlider(card, 0, (int) (hsv[0] / 360f * 255f));
-        mSatSlider = addHsvSlider(card, 1, (int) (hsv[1] * 255f));
-        mValSlider = addHsvSlider(card, 2, (int) (hsv[2] * 255f));
-        updateSliderGradients(hsv[0], hsv[1], hsv[2]);
-
-        final android.widget.SeekBar.OnSeekBarChangeListener l =
-                new android.widget.SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(android.widget.SeekBar sb, int progress, boolean fromUser) {
-                if (!fromUser) return;
-                float[] c = new float[3];
-                c[0] = mHueSlider.getProgress() / 255f * 360f;
-                c[1] = mSatSlider.getProgress() / 255f;
-                c[2] = Math.max(0.08f, mValSlider.getProgress() / 255f);
-                updateSliderGradients(c[0], c[1], c[2]);
-            applyColor(selTarget(), android.graphics.Color.HSVToColor(c));
-            }
-            @Override public void onStartTrackingTouch(android.widget.SeekBar sb) { }
-            @Override public void onStopTrackingTouch(android.widget.SeekBar sb) { }
-        };
-        mHueSlider.setOnSeekBarChangeListener(l);
-        mSatSlider.setOnSeekBarChangeListener(l);
-        mValSlider.setOnSeekBarChangeListener(l);
-    }
-
-    private android.widget.SeekBar addHsvSlider(LinearLayout card, int kind, int progress) {
-        android.widget.SeekBar sb = new android.widget.SeekBar(this);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(28));
-        lp.topMargin = (kind == 0) ? dp(14) : dp(6);
-        sb.setLayoutParams(lp);
-        sb.setMax(255);
-        sb.setProgress(progress);
-        sb.setPadding(0, 0, 0, 0);
-        // 去掉系统轨道/滑块样式，仅用自绘背景（渐变条 + 圆点）。
-        sb.setBackground(null);
-        sb.setSplitTrack(false);
-        sb.setThumb(new android.graphics.drawable.ColorDrawable(0x00000000) {
-            @Override public void draw(android.graphics.Canvas c) { }
-        });
-        HsvBarDrawable bar = new HsvBarDrawable(kind);
-        bar.bind(sb);
-        sb.setProgressDrawable(bar);
-        card.addView(sb);
-        return sb;
-    }
-
-    private void updateSliderGradients(float hue, float sat, float val) {
-        if (mHueSlider != null) ((HsvBarDrawable) mHueSlider.getProgressDrawable()).notifyGradientChanged();
-        if (mSatSlider != null) ((HsvBarDrawable) mSatSlider.getProgressDrawable()).setContext(hue, sat, val);
-        if (mValSlider != null) ((HsvBarDrawable) mValSlider.getProgressDrawable()).setContext(hue, sat, val);
-        if (mSatSlider != null) mSatSlider.invalidate();
-        if (mValSlider != null) mValSlider.invalidate();
-        if (mHueSlider != null) mHueSlider.invalidate();
     }
 
     /**
@@ -5166,138 +4806,6 @@ public final class ModuleSettingsActivity extends Activity {
     // 预览与状态
     // ==================================================================
 
-    /** 预览渐变色带的绘制原点缓存：{宽, 字号, 字距, 字符数, 原点}。 */
-    private float[] mGradOriginCache;
-
-
-    /**
-     * 预览时间专用 TextView：渐变模式下自己画一遍文字。
-     *
-     * <p>为什么不用 GradientTextSpan：那是给状态栏/悬浮窗用的（那段文本我们只能挂 span）。
-     * 预览卡是我们自己的 View，交给 TextView 画时 shader 会按「run」被量化——
-     * ColorOS 15 上实测同一个 shader 被拆成 3 段纯色（数字一跳就换色块，看着像随机渐变），
-     * 且色带原点随系统版本漂移（Android 15 偏左、Android 16 偏右一个文字宽）。
-     * 自己 canvas.drawText 一次：色带起点 = 文字左边缘、宽度 = 文字宽度，跨版本一致。</p>
-     */
-    private static class GradientTimeView extends TextView {
-        private int mGradC0 = 0;
-        private int mGradC1 = 0;
-        private boolean mGradOn;
-        private float mGradShift;
-        private Shader mGradShader;
-        private float mGradShaderBand = -1f;
-        /** 渐变方向：0 水平 / 1 竖直 / 2 对角。 */
-        private int mGradDir;
-        private int mGradShaderDir = -1;
-
-        GradientTimeView(android.content.Context context) {
-            super(context);
-        }
-
-        /** 设置渐变方向（0 水平 / 1 竖直 / 2 对角），变化时重建 shader。 */
-        void setGradientDirection(int dir) {
-            if (mGradDir == dir) {
-                return;
-            }
-            mGradDir = dir;
-            mGradShader = null;
-            invalidate();
-        }
-
-        /** 打开渐变绘制；c0/c1 已按背景适配过。 */
-        void setGradientColors(int c0, int c1) {
-            if (mGradOn && mGradC0 == c0 && mGradC1 == c1) {
-                return;
-            }
-            mGradOn = true;
-            mGradC0 = c0;
-            mGradC1 = c1;
-            mGradShader = null;
-            invalidate();
-        }
-
-        void clearGradient() {
-            if (!mGradOn) {
-                return;
-            }
-            mGradOn = false;
-            mGradShader = null;
-            invalidate();
-        }
-
-
-        /** 调试用色带平移（像素），仅 DEBUG 包由 Secure 键控制。 */
-        void setGradientShift(float shift) {
-            if (mGradShift == shift) {
-                return;
-            }
-            mGradShift = shift;
-            invalidate();
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            if (!mGradOn) {
-                super.onDraw(canvas);
-                return;
-            }
-            final CharSequence cs = getText();
-            if (cs == null || cs.length() == 0) {
-                return;
-            }
-            final Paint paint = getPaint();
-            final int len = cs.length();
-            final float band = paint.measureText(cs, 0, len);
-            if (band <= 0f) {
-                return;
-            }
-            final Paint.FontMetricsInt fm = paint.getFontMetricsInt();
-            float baseline = (getHeight() - (fm.descent - fm.ascent)) / 2f - fm.ascent;
-            if (getLayout() != null) {
-                final int lb = getLayout().getLineBaseline(0);
-                if (lb > 0) {
-                    baseline = lb;
-                }
-            }
-            if (mGradShader == null || Math.abs(mGradShaderBand - band) > 0.01f
-                    || mGradShaderDir != mGradDir) {
-                final float sx0 = (getWidth() - band) / 2f + mGradShift;
-                // 竖直 / 对角：纵向跨整个字形盒（baseline+ascent .. baseline+descent）。
-                if (mGradDir == 1) {
-                    mGradShader = new LinearGradient(sx0, baseline + fm.ascent,
-                            sx0, baseline + fm.descent, mGradC0, mGradC1, Shader.TileMode.CLAMP);
-                } else if (mGradDir == 2) {
-                    mGradShader = new LinearGradient(sx0, baseline + fm.ascent,
-                            sx0 + band, baseline + fm.descent,
-                            mGradC0, mGradC1, Shader.TileMode.CLAMP);
-                } else {
-                    mGradShader = new LinearGradient(sx0, 0f, sx0 + band, 0f,
-                            mGradC0, mGradC1, Shader.TileMode.CLAMP);
-                }
-                mGradShaderBand = band;
-                mGradShaderDir = mGradDir;
-            }
-            final float x0 = (getWidth() - band) / 2f + mGradShift;
-            final int saveColor = paint.getColor();
-            final Shader saveShader = paint.getShader();
-            // 画布原点不是视图原点：硬件画布的 clip 会带上视图在父容器里的绝对位置
-            // （本机实测 clip.left=523801），直接按 (0,0) 画会整条落到视图外、什么都不显示。
-            // 视图完整可见时 clip 与视图矩形等大，用 clip 左上角做原点；一旦被父容器裁掉一部分，
-            // clip 左上角就不再等于视图左上角，此时退回 (0,0)——那块本来在可视区外，看不到错位。
-            final android.graphics.Rect cb = new android.graphics.Rect();
-            canvas.getClipBounds(cb);
-            final float ox = cb.width() >= getWidth() - 1 ? cb.left : 0f;
-            final float oy = cb.height() >= getHeight() - 1 ? cb.top : 0f;
-            canvas.save();
-            canvas.translate(ox, oy);
-            paint.setShader(mGradShader);
-            canvas.drawText(cs, 0, len, x0, baseline, paint);
-            canvas.restore();
-            paint.setShader(saveShader);
-            paint.setColor(saveColor);
-        }
-    }
-
     /** 每秒刷新预览：显秒开时 HH:mm:ss，关时 HH:mm；小时十位用所选颜色；同时刷新状态胶囊。 */
     private void updatePreview() {
         if (previewView == null) {
@@ -5338,7 +4846,7 @@ public final class ModuleSettingsActivity extends Activity {
             // 所以要传「文字实测宽度」而不是「文字左偏移 (view 宽 - 文字宽) / 2」。
             // 传左偏移或传 0（vc194 之前）时，文字都落在 MIRROR 色带的后半段，渐变整个反向
             // （真机表现：预览卡绿→红，状态栏红→绿）。改布局方式后必须重新扫参确认。
-            final float gradXOff = 0f;   // 色带由 GradientTimeView 按文字边界自己铺，不需要偏移
+            final float gradXOff = 0f;   // 色带由 SettingsPreviewClock 按文字边界自己铺，不需要偏移
             float gradXOffUse = gradXOff;
             if (BuildConfig.DEBUG) {
                 // 调试钩子：settings put secure coloros_clock_seconds_debug_xoff <float> 可强制覆盖色带偏移。
@@ -5351,16 +4859,16 @@ public final class ModuleSettingsActivity extends Activity {
                 } catch (Throwable ignored) {
                 }
             }
-            // 自己画（见 GradientTimeView 注释）：色带起点 = 文字左边缘，不再依赖 shader 原点。
+            // 自己画（见 SettingsPreviewClock 注释）：色带起点 = 文字左边缘，不再依赖 shader 原点。
 
-            ((GradientTimeView) previewView).setGradientDirection(mCfgGradientDir);
-            ((GradientTimeView) previewView).setGradientShift(gradXOffUse);
-            ((GradientTimeView) previewView).setGradientColors(
+            ((SettingsPreviewClock) previewView).setGradientDirection(mCfgGradientDir);
+            ((SettingsPreviewClock) previewView).setGradientShift(gradXOffUse);
+            ((SettingsPreviewClock) previewView).setGradientColors(
                     adaptPreviewColor(gradientTargetColor(0)),
                     adaptPreviewColor(gradientTargetColor(1)));
 
         } else {
-            ((GradientTimeView) previewView).clearGradient();
+            ((SettingsPreviewClock) previewView).clearGradient();
             // 六位逐位上色：与状态栏里的 applyDigitColors 同一套 slot 映射，预览即所写。
             // 展开取色时，没被选中的位一律变淡（不放大），一眼看出正在改哪一位。
             for (int i = 0; i < sb.length(); i++) {

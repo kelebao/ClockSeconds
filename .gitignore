@@ -26,3 +26,7 @@ __pycache__/
 
 # CodeGraph local index (regenerable, do not commit)
 .codegraph/
+
+# 本地设计稿/真机验证产物（证据在 _verification/，勿入库）
+.oil-ui/
+_verification/

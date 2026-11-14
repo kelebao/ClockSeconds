@@ -33,11 +33,11 @@ public class GradientTextSpan extends CharacterStyle {
 
     private final WeakReference<TextView> mView;
     private final CharSequence mText;
-    private final int mColorStart;
-    private final int mColorEnd;
+    /** 色标颜色数组（t6）：2 色标（旧两色渐变）或 4 色标（起点/中间 2/中间 3/终点）。 */
+    private final int[] mColors;
     /** 文字左边缘在绘制坐标里的 x 偏移（居中的 TextView 不为 0）。 */
     private final float mXOffset;
-    /** 渐变方向：0 水平 / 1 竖直 / 2 对角（ClockSecondsConfig.GRADIENT_DIRECTION_*）。 */
+    /** 渐变方向：0..9（ClockSecondsConfig.GRADIENT_DIRECTION_*，8 径向 / 9 扫掠）。 */
     private final int mDirection;
 
     /** 重入护栏：万一测量/绘制链路再回调进来，直接复用上一次的 shader，绝不递归。 */
@@ -45,8 +45,8 @@ public class GradientTextSpan extends CharacterStyle {
 
     private Shader mShader;
     private float mShaderBand = -1f;
-    private int mShaderStart;
-    private int mShaderEnd;
+    private int mShaderDir = -1;
+    private int[] mShaderColors;
     private boolean mShaderColorsSet;
     /** 一个完整色带的宽度 = 这段文字实测宽度（不用 Layout，避免 BoringLayout 递归）。 */
     private float mBand;
@@ -54,7 +54,7 @@ public class GradientTextSpan extends CharacterStyle {
     private int mBandTextLength = -1;
 
     public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd) {
-        this(view, text, colorStart, colorEnd, 0f, 0);
+        this(view, text, new int[]{colorStart, colorEnd}, 0f, 0);
     }
 
     /**
@@ -63,16 +63,25 @@ public class GradientTextSpan extends CharacterStyle {
      */
     public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
                             float xOffset) {
-        this(view, text, colorStart, colorEnd, xOffset, 0);
+        this(view, text, new int[]{colorStart, colorEnd}, xOffset, 0);
     }
 
-    /** @param direction 0 水平 / 1 竖直 / 2 对角。 */
+    /** 旧两色构造：{@code direction} 0 水平 / 1 竖直 / 2 对角。 */
     public GradientTextSpan(TextView view, CharSequence text, int colorStart, int colorEnd,
+                            float xOffset, int direction) {
+        this(view, text, new int[]{colorStart, colorEnd}, xOffset, direction);
+    }
+
+    /**
+     * t6 多色标构造：{@code colors} 长度 2（两色）或 4（四色渐变），
+     * 颜色顺序 = 沿渐变轴的色标顺序。方向 8=径向 / 9=扫掠用中心对称 shader。
+     */
+    public GradientTextSpan(TextView view, CharSequence text, int[] colors,
                             float xOffset, int direction) {
         mView = new WeakReference<>(view);
         mText = text;
-        mColorStart = colorStart;
-        mColorEnd = colorEnd;
+        mColors = colors != null && colors.length >= 2 ? colors.clone()
+                : new int[]{0xFFEAE6F8, 0xFF7C5CE0};
         mXOffset = xOffset;
         mDirection = direction;
     }
@@ -98,30 +107,63 @@ public class GradientTextSpan extends CharacterStyle {
                 mBandTextLength = mText.length();
                 mBand = Math.max(1f, tp.measureText(mText, 0, mText.length()));
             }
-            // shader 只按「色带宽度 + 端点色」建一次，之后直接复用。
+            // shader 只按「色带宽度 + 色标颜色」建一次，之后直接复用。
             if (mShader == null || mShaderBand != mBand || !mShaderColorsSet
-                    || mShaderStart != mColorStart || mShaderEnd != mColorEnd) {
+                    || mShaderDir != mDirection || !colorsEqual(mShaderColors, mColors)) {
                 // 色带必须从「文字左边缘」起算，否则居中的 TextView 只画到色带的中后段
                 // （MIRROR 会把它翻成反向渐变，真机表现就是预览卡的颜色顺序和状态栏相反）。
                 // 竖直 / 对角方向用字形盒（ascent..descent，相对基线的负/正值）做纵向跨度。
                 // 竖直 / 对角：纵向跨整个行盒。注意 shader 坐标原点是行顶（不是基线），
                 // 所以跨度是 0..行高（descent - ascent），而不是 tp.ascent()..tp.descent()——
                 // 后者把色带整体悬到文字上方，被 MIRROR 翻成反渐变（真机实测顶紫底青）。
-                if (mDirection == 1) {
+                final int[] cols = mColors;
+                final float[] positions = cols.length > 2
+                        ? uniformPositions(cols.length) : null;
+                if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL
+                        || mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_SWEEP) {
+                    // 径向 / 扫掠：圆心 = 色带中心，纵向圆心取行盒垂直中点。
+                    final float cy = (tp.descent() - tp.ascent()) / 2f;
+                    final float radius = Math.max(mBand, tp.descent() - tp.ascent()) / 2f;
+                    if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL) {
+                        mShader = new android.graphics.RadialGradient(
+                                mXOffset + mBand / 2f, cy, radius,
+                                cols, positions, Shader.TileMode.CLAMP);
+                    } else {
+                        mShader = new android.graphics.SweepGradient(
+                                mXOffset + mBand / 2f, cy, cols, positions);
+                    }
+                } else if (mDirection == 1) {
                     mShader = new LinearGradient(mXOffset, 0f, mXOffset,
                             tp.descent() - tp.ascent(),
-                            new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                            cols, positions, Shader.TileMode.MIRROR);
                 } else if (mDirection == 2) {
                     mShader = new LinearGradient(mXOffset, 0f, mXOffset + mBand,
                             tp.descent() - tp.ascent(),
-                            new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                            cols, positions, Shader.TileMode.MIRROR);
+                } else if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_RTL) {
+                    // 右 → 左：色标顺序翻转即可
+                    mShader = new LinearGradient(mXOffset + mBand, 0f, mXOffset, 0f,
+                            cols, positions, Shader.TileMode.MIRROR);
+                } else if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_BTT) {
+                    mShader = new LinearGradient(mXOffset, tp.descent() - tp.ascent(),
+                            mXOffset, 0f, cols, positions, Shader.TileMode.MIRROR);
+                } else if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_BRTL) {
+                    mShader = new LinearGradient(mXOffset + mBand, tp.descent() - tp.ascent(),
+                            mXOffset, 0f, cols, positions, Shader.TileMode.MIRROR);
+                } else if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_TRBL) {
+                    mShader = new LinearGradient(mXOffset + mBand, 0f,
+                            mXOffset, tp.descent() - tp.ascent(),
+                            cols, positions, Shader.TileMode.MIRROR);
+                } else if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_BLTR) {
+                    mShader = new LinearGradient(mXOffset, tp.descent() - tp.ascent(),
+                            mXOffset + mBand, 0f, cols, positions, Shader.TileMode.MIRROR);
                 } else {
                     mShader = new LinearGradient(mXOffset, 0f, mXOffset + mBand, 0f,
-                            new int[]{mColorStart, mColorEnd}, null, Shader.TileMode.MIRROR);
+                            cols, positions, Shader.TileMode.MIRROR);
                 }
                 mShaderBand = mBand;
-                mShaderStart = mColorStart;
-                mShaderEnd = mColorEnd;
+                mShaderDir = mDirection;
+                mShaderColors = cols.clone();
                 mShaderColorsSet = true;
             }
             tp.setShader(mShader);
@@ -130,5 +172,29 @@ public class GradientTextSpan extends CharacterStyle {
         } finally {
             IN_DRAW.set(Boolean.FALSE);
         }
+    }
+
+    /** n 个色标均匀分布的位置数组（0..1，首尾必在端点）。 */
+    private static float[] uniformPositions(int n) {
+        float[] p = new float[n];
+        for (int i = 0; i < n; i++) {
+            p[i] = n == 1 ? 0f : (float) i / (float) (n - 1);
+        }
+        return p;
+    }
+
+    private static boolean colorsEqual(int[] a, int[] b) {
+        if (a == b) {
+            return true;
+        }
+        if (a == null || b == null || a.length != b.length) {
+            return false;
+        }
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
