@@ -590,18 +590,20 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     }
 
     /**
-     * 浅色调色板当前是否参与显示（U-20261115⑬）：与模块 effectiveSlotColor/gradientRawStart/End
-     * 完全同语义——epoch 已置位 && 自适应开 && 状态栏文字亮度 < 0.5（浅色背景）。
-     * 页签（mLightMode）只决定「编辑哪一组键」，不决定「显示哪一组键」；背景明暗才是显示判据，
-     * 预览与状态栏共用 sys_text_color 这唯一信号，保证两边永远一致。
+     * 浅色调色板当前是否参与显示（U-20261115⑭）：与模块 effectiveSlotColor/gradientRawStart/End
+     * 完全同语义——epoch 已置位 && 自适应开 && 系统浅色模式。
+     * 页签（mLightMode）只决定「编辑哪一组键」，不决定「显示哪一组键」；
+     * 页面进程 Resources 的 uiMode 可靠（与 SystemUI 不同），直接按配置判定。
      */
     private boolean lightPaletteActive() {
         if (!mAdaptiveColor
                 || !ClockSecondsConfig.isLightPaletteUsed(getContentResolver())) {
             return false;
         }
-        int sys = ClockSecondsConfig.getSystemTextColor(getContentResolver(), 0xFFEAE6F8);
-        return android.graphics.Color.luminance(sys) < 0.5f;
+        return ClockSecondsConfig.isSystemLightMode(getContentResolver(),
+                (getResources().getConfiguration().uiMode
+                        & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                        != android.content.res.Configuration.UI_MODE_NIGHT_YES);
     }
 
     /**

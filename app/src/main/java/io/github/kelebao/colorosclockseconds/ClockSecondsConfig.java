@@ -658,6 +658,23 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     }
 
     /**
+     * U-20261115⑭：系统深浅色模式（secure ui_night_mode：1=浅色/day，2=深色/night）。
+     * 「系统模式自适应」以它为准——SystemUI 进程 Resources uiMode 恒 NIGHT_YES 不可用
+     * （U-20261115 修复教训），壁纸亮度（状态栏文字色）只反映壁纸明暗、不反映系统模式。
+     * 读不到该键时回落 fallback（调用方自行选择：页面用自身 Resources，模块用亮度判据）。
+     */
+    public static final String UI_NIGHT_MODE_KEY = "ui_night_mode";
+
+    /** 系统当前是否浅色模式；键不存在时返回 fallback。 */
+    public static boolean isSystemLightMode(ContentResolver resolver, boolean fallback) {
+        if (resolver == null) {
+            return fallback;
+        }
+        int mode = Settings.Secure.getInt(resolver, UI_NIGHT_MODE_KEY, -1);
+        return mode == -1 ? fallback : mode != 2;
+    }
+
+    /**
      * 状态栏配色规则（**唯一实现**，模块与设置页共用，两边不要各写一份）。
      *
      * <p>系统文字是深色 = 背景偏亮，此时把亮度过高的颜色各通道 ×0.42 压暗（保持色相），

@@ -472,6 +472,12 @@ public final class ModuleSettingsActivity extends Activity {
         super.onResume();
         refreshStatus();
         refreshConfigCache();
+        // U-20261115⑭：首页跟随系统深浅色模式决定编辑哪一组键（mLightMode 原本从未赋值恒 false，
+        // 浅色系统下改色全写常规键；若浅色调色板已启用，状态栏显示浅色组 → 改色“看不到”）。
+        mLightMode = ClockSecondsConfig.isSystemLightMode(getContentResolver(),
+                (getResources().getConfiguration().uiMode
+                        & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                        != android.content.res.Configuration.UI_MODE_NIGHT_YES);
         // U-20261115⑨：返回本页时让页签跟随配置实际状态（在高级页改了单色/渐变，回来页签要同步，
         // 否则停在渐变页但页签还亮在单色 —— 页签即开关语义下两者必须一致）。
         if (mTabDigit != null && mCfgGradientOn != mGradPage) {
@@ -1727,13 +1733,6 @@ public final class ModuleSettingsActivity extends Activity {
         }
         // t36②：渐变回 2 色——UI which 1（终点）必须映射到 Config 键序 3（END），1/2 是四色时代的中间键。
         int keyIndex = which == 0 ? 0 : 3;
-        // U-20261115⑩：先清对应端点浅色副键再写常规键（首页渐变预设整对写入路径同样生效）。
-        applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), null,
-                new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
-                        .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
-                        .putExtra(ClockSecondsConfig.EXTRA_COLOR,
-                                ClockSecondsConfig.GRADIENT_COLOR_AUTO),
-                lightOk -> { });
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -1830,13 +1829,6 @@ public final class ModuleSettingsActivity extends Activity {
         }
         // t36②：渐变回 2 色——UI which 1（终点）必须映射到 Config 键序 3（END）。
         int keyIndex = which == 0 ? 0 : 3;
-        // U-20261115⑩：先清对应端点浅色副键再写常规键，防止旧副键遮蔽新渐变色。
-        applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), null,
-                new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
-                        .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
-                        .putExtra(ClockSecondsConfig.EXTRA_COLOR,
-                                ClockSecondsConfig.GRADIENT_COLOR_AUTO),
-                lightOk -> { });
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -3349,25 +3341,25 @@ public final class ModuleSettingsActivity extends Activity {
         return ClockSecondsConfig.adaptColorForBackground(color, sys);
     }
     /**
-     * 浅色调色板当前是否参与显示（U-20261115⑬）：与模块 effectiveSlotColor/gradientRawStart/End
-     * 完全同语义——epoch 已置位 && 自适应开 && 状态栏文字亮度 < 0.5（浅色背景）。
-     * 首页页签概念不存在，但历史 mLightMode 恒 false 导致预览永远读常规键；浅色背景 + epoch
-     * 置位时模块会走浅色副键，预览必须同样走副键才能与状态栏一致。
+     * 浅色调色板当前是否参与显示（U-20261115⑭）：与模块 effectiveSlotColor/gradientRawStart/End
+     * 完全同语义——epoch 已置位 && 自适应开 && 系统浅色模式（secure ui_night_mode 为准，
+     * 页面 Resources uiMode 只作键缺失时的回落）。
      */
     private boolean lightPaletteActive() {
         if (!mAdaptiveColor
                 || !ClockSecondsConfig.isLightPaletteUsed(getContentResolver())) {
             return false;
         }
-        int sys = ClockSecondsConfig.getSystemTextColor(getContentResolver(), text());
-        return android.graphics.Color.luminance(sys) < 0.5f;
+        return ClockSecondsConfig.isSystemLightMode(getContentResolver(),
+                (getResources().getConfiguration().uiMode
+                        & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                        != android.content.res.Configuration.UI_MODE_NIGHT_YES);
     }
 
 
-        // vc240：brightenForDark 已删除 —— 预览不再自己提亮，改为完全复刻状态栏配色。
-
     /** 选中位被抬起的高度：向上移动一点点，一眼看出「正在编辑这一位」。 */
     private int liftPx() {
+        // vc240：brightenForDark 已删除 —— 预览不再自己提亮，改为完全复刻状态栏配色。
         return dp(10);
     }
 
@@ -3439,14 +3431,6 @@ public final class ModuleSettingsActivity extends Activity {
             });
             return;
         }
-        // U-20261115⑩：先清该位浅色副键再写常规键——模块重读时新色不再被旧副键遮蔽
-        // （高级设置浅色页签仍可重新设置浅色专用色板）。
-        applyLightConfig(ClockSecondsConfig.digitLightKey(slot), null,
-                new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR)
-                        .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
-                        .putExtra(ClockSecondsConfig.EXTRA_COLOR,
-                                ClockSecondsConfig.DIGIT_COLOR_FOLLOW),
-                lightOk -> { });
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
