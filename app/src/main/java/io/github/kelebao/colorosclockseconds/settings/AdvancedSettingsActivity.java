@@ -35,6 +35,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
 import io.github.kelebao.colorosclockseconds.R;
 
@@ -115,10 +116,27 @@ public class AdvancedSettingsActivity extends Activity {
     /** 渐变页四个圆形色标（t6）：wrap（Ripple+选中环）与下方 ①②③④ 小字。 */
     private FrameLayout[] mStopCircles;
     private TextView[] mStopLabels;
+    /** 渐变页选中色圆的呼吸涟漪 Drawable（照搬首页起点/终点色点，breathTick 每 50ms 推进相位）。 */
+    private BreathSwatchDrawable mGradBreath;
+    /** 与首页 EDGE_SOLID_RATIO 一致：实心圆占容器比例，外部留白给涟漪扩散。 */
+    private static final float GRAD_SOLID_RATIO = 14f / 24f;
     /** 渐变页端点预览条：onDraw 实时读键，写入后 invalidate 即刷新。 */
     private final java.util.concurrent.atomic.AtomicInteger mWriteSeq =
             new java.util.concurrent.atomic.AtomicInteger();
     private Handler handler = new Handler(Looper.getMainLooper());
+
+    /** 照搬首页：选中色圆呼吸涟漪相位推进（每 50ms 一次）。 */
+    private final Runnable breathTick = new Runnable() {
+        @Override
+        public void run() {
+            long now = System.currentTimeMillis();
+            if (mGradBreath != null) {
+                mGradBreath.setPhase((now % BreathSwatchDrawable.RIPPLE_PERIOD_MS)
+                        / (float) BreathSwatchDrawable.RIPPLE_PERIOD_MS);
+            }
+            handler.postDelayed(this, 50L);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,6 +200,10 @@ public class AdvancedSettingsActivity extends Activity {
             mPreviewClock.refreshNow();
         }
         syncSlidersToColor();
+        if (mGradPage) {
+            handler.removeCallbacks(breathTick);
+            handler.post(breathTick);
+        }
     }
 
     @Override
@@ -190,6 +212,7 @@ public class AdvancedSettingsActivity extends Activity {
         if (mPreviewClock != null) {
             mPreviewClock.setAutoTick(false);
         }
+        handler.removeCallbacks(breathTick);
     }
 
     // ==================================================================
@@ -298,9 +321,26 @@ public class AdvancedSettingsActivity extends Activity {
         return tab;
     }
 
-    /** t26⑥：切换单色/渐变页——重写 intent 页参数后 recreate（saved state 保留编辑位置）。 */
+    /** t26⑥：切换单色/渐变页——重写 intent 页参数后 recreate（saved state 保留编辑位置）。
+     *  U-20261115⑥：页签即渐变总开关（与首页 selectDigitPage 同语义）——停在渐变页=开渐变，
+     *  切到单色页=关渐变；写盘成功再 recreate，状态栏时间与页内预览立即跟随单色/渐变效果。 */
     private void switchPage(boolean grad) {
         if (grad == mGradPage) {
+            return;
+        }
+        boolean cfgOn = ClockSecondsConfig.isGradientEnabled(getContentResolver());
+        if (cfgOn != grad) {
+            Intent it = new android.content.Intent(this, getClass());
+            it.putExtra(EXTRA_PAGE, grad ? PAGE_GRAD : PAGE_MONO);
+            setIntent(it);
+            Intent broadcast = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, grad ? 1 : 0);
+            applyConfig(ClockSecondsConfig.GRADIENT_ENABLED_KEY, grad ? 1 : 0, broadcast, ok -> {
+                if (!ok) {
+                    toastWriteFailed();
+                }
+                recreate();
+            });
             return;
         }
         android.content.Intent it = new android.content.Intent(this, getClass());
@@ -662,54 +702,22 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         sl.topMargin = dp(14);
         rippleHost.setLayoutParams(sl);
         if (mGradPage) {
-            // 两个圆角色标（t36② 渐变回 2 色，仍沿用 R3 圆圈样式）：底色=当前色标颜色，
-            // 选中=accent 描边环 + 自绘水波纹。label 用带圈数字 ①②。
+            // 两个圆角色标（t36② 渐变回 2 色）：照搬首页起点/终点色点效果——底色=当前色标颜色，
+            // 选中=常驻呼吸涟漪（BreathSwatchDrawable，breathTick 每 50ms 推进相位，与首页一致）。label 用带圈数字 ①②。
             mStopCircles = new FrameLayout[GRAD_UI_STOPS];
             mStopLabels = new TextView[GRAD_UI_STOPS];
             for (int i = 0; i < GRAD_UI_STOPS; i++) {
                 FrameLayout wrap = new FrameLayout(this);
-                // t14：四色圆改成「单层 GradientDrawable 背景」——底色与选中环都在同一层，
-                // setColor/setStroke 一次画完。不再用 RippleDrawable 的 content 层当底圆：
-                // t13 真机像素级复验证实，对 android.R.id.background 调 setDrawableByLayerId
-                // 不生效，无色 content 层把底色整片遮住，四圆（含描边环）全隐形。
-                GradientDrawable circle = new GradientDrawable();
-                circle.setShape(GradientDrawable.OVAL);
-                circle.setColor(isNight() ? 0xFF3A3152 : 0xFFD8D4E8);
-                circle.setStroke(dp(1), isNight() ? 0x4F3B6E : 0xBBBBBB);
-                wrap.setBackground(circle);
-                // t14：连前景也不用 RippleDrawable（t13 已证该机型上其图层行为不可靠）。
-                // 用纯 StateListDrawable 做按压反馈：默认全透明、按下叠一层半透明 accent，
-                // 两层都是普通 GradientDrawable，绝不会遮住背景实心圆。
-                android.graphics.drawable.StateListDrawable press =
-                        new android.graphics.drawable.StateListDrawable();
-                GradientDrawable pressed = new GradientDrawable();
-                pressed.setShape(GradientDrawable.OVAL);
-                pressed.setColor(0x337C5CE0);
-                press.addState(new int[]{android.R.attr.state_pressed}, pressed);
-                GradientDrawable idle = new GradientDrawable();
-                idle.setShape(GradientDrawable.OVAL);
-                idle.setColor(0x00000000);
-                press.addState(new int[]{}, idle);
-                wrap.setForeground(press);
+                // 照搬首页起点/终点色点效果：占位灰圆（无呼吸），refreshStopCircles 用真实色重画并决定是否呼吸。
+                BreathSwatchDrawable placeholder = new BreathSwatchDrawable(
+                        isNight() ? 0xFF3A3152 : 0xFFD8D4E8, false, accent(), 0f, GRAD_SOLID_RATIO);
+                wrap.setBackground(placeholder);
                 wrap.setClickable(true);
                 wrap.setFocusable(true);
                 final int which = i;
-                // t26⑦ + t40 U40-2：自绘涟漪宿主从圆圈自身 wrap 改挂 selRow——
-                // refreshStopCircles 切换目标/刷新底圆时会把 wrap 的子 View 清掉，
-                // 叠在 wrap 里的涟漪 overlay 会在 ACTION_UP 触发 click→setGradTarget→
-                // refreshStopCircles 的瞬间被移除，涟漪从未有机会画完（这正是用户看不到
-                // 渐变页涟漪而单色页正常的根因）；同时 24dp 圆圈自身裁切也太紧。
-                // 挂 selRow 后不被 refreshStopCircles 管理，坐标按 wrap 在 selRow 中的偏移换算。
-                wrap.setOnTouchListener((v, ev) -> {
-                    if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
-                        startStopRipple(rippleHost, wrap.getLeft() + ev.getX(),
-                                wrap.getTop() + ev.getY());
-                    }
-                    return false;   // 不消费，click 照常触发
-                });
                 wrap.setOnClickListener(v -> setGradTarget(which));
-                // t18③：圆直径 44→24dp（用户要求减半；24dp 是触控下限）
-                LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(dp(24), dp(24));
+                // t18③ + 本版：圆直径放大到 44dp（与首页起点色圆同比例），给呼吸涟漪留出扩散空间。
+                LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(dp(44), dp(44));
                 wl.rightMargin = dp(10);
                 wrap.setLayoutParams(wl);
                 selRow.addView(wrap);
@@ -902,29 +910,46 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         hs.setClipChildren(false);
         hs.setClipToPadding(false);
         hs.addView(row);
-        // t26⑤ + t38② + t42：可滑动提示——淡色「← 左右滑动 →」叠在方向行右端（与方向胶囊同一行，
-        // 竖直居中），首次横向滑动后淡出；提高对比度使其在浅/深色下都清晰可读。
+        // t26⑤ + t38② + t42 + B：可滑动提示移到「渐变方向」标题行（与 10 徽标同排），不再压住方向胶囊；
+        // 首次横向滑动后淡出；浅/深色下都清晰可读。
         final TextView swipeHint = new TextView(this);
-        swipeHint.setText(R.string.settings_dir_swipe_hint);
-        swipeHint.setTextSize(10f);
+        // U-20261115②：只保留动态箭头本体（「左右滑动」文字取消），箭头自身往返平移示意。
+        // U-20261115③/④：放大加粗 + 全不透明高对比色 + 去掉 alpha 呼吸，解决「太小、不清晰」。
+        swipeHint.setText("⇆");
+        // U-20261115⑤：箭头恢复以前的大小（22f 常规字重），仅保留动态往返动画。
+        swipeHint.setTextSize(22f);
         swipeHint.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        swipeHint.setTextColor(isNight() ? 0x99A98CFF : 0x997A728A);
+        swipeHint.setTextColor(isNight() ? 0xFFCBBBFF : 0xFF7C5CE0);
         swipeHint.setGravity(Gravity.CENTER_VERTICAL);
-        swipeHint.setPadding(dp(2), 0, dp(8), 0);
-        android.widget.FrameLayout dirHost = new android.widget.FrameLayout(this);
-        dirHost.addView(hs, new android.widget.FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        android.widget.FrameLayout.LayoutParams hintLp = new android.widget.FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, dp(26),
-                android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL);
-        hintLp.rightMargin = dp(4);
-        dirHost.addView(swipeHint, hintLp);
+        swipeHint.setPadding(dp(10), 0, dp(4), 0);
+        dirTitle.addView(swipeHint);
+
+        // 动态箭头提醒：常驻不淡出，箭头做左右往返平移 + 轻微缩放脉动；
+        // 文字始终 alpha=1f，保证任何时刻都清晰可读。
+        final android.animation.ValueAnimator hintAnim =
+                android.animation.ValueAnimator.ofFloat(0f, 1f);
+        hintAnim.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        hintAnim.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+        hintAnim.setDuration(1100);
+        hintAnim.addUpdateListener(a -> {
+            float k = (float) a.getAnimatedValue();   // 0..1 往返
+            swipeHint.setTranslationX(dp(14) * (k - 0.5f) * 2f);
+            float pulse = 0.92f + 0.08f * (1f - Math.abs(k - 0.5f) * 2f);
+            swipeHint.setScaleX(pulse);
+            swipeHint.setScaleY(pulse);
+        });
+        hintAnim.start();
+        // 页面销毁时停掉无限动画，避免泄漏
+        swipeHint.addOnAttachStateChangeListener(new android.view.View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(android.view.View v) { }
+            @Override public void onViewDetachedFromWindow(android.view.View v) { hintAnim.cancel(); }
+        });
 
         LinearLayout.LayoutParams hl = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         hl.topMargin = dp(7);
-        dirHost.setLayoutParams(hl);
-        card.addView(dirHost);
+        hs.setLayoutParams(hl);
+        card.addView(hs);
 
         refreshDirPills(currentDir);
         // t20②：进入页面把选中胶囊滚入视野（首帧布局完成后按选中 pill 的右缘滚动）
@@ -1066,13 +1091,15 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     }
 
     /**
-     * 刷新四个圆形色标（t6，R3 图样式）：底色=当前色标颜色（浅色页签读副键）、
-     * 选中=accent 描边环（外圈 4dp），未选中=细描边。色标未自定义（AUTO）时用暗灰占位。
+     * 刷新渐变页圆角色标：照搬首页起点/终点色点效果——底色=当前色标颜色（浅色页签读副键），
+     * 选中=常驻呼吸涟漪（BreathSwatchDrawable，由 breathTick 每 50ms 推进相位），未选中=纯色圆。
+     * 色标未自定义（AUTO）时用暗灰占位。
      */
     private void refreshStopCircles() {
         if (mStopCircles == null) {
             return;
         }
+        mGradBreath = null;
         for (int i = 0; i < mStopCircles.length; i++) {
             FrameLayout wrap = mStopCircles[i];
             if (wrap == null) {
@@ -1095,20 +1122,15 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                     }
                 }
             }
-            GradientDrawable circle = new GradientDrawable();
-            circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(color);
-            if (i == mGradTarget) {
-                // 选中：accent 外圈环（底圆白描边隔开，环与色面不糊色）
-                circle.setStroke(dp(4), 0xFF7C5CE0);
-            } else {
-                circle.setStroke(dp(1), isNight() ? 0x4F3B6E : 0xBBBBBB);
+            final boolean selected = (i == mGradTarget);
+            // 照搬首页：色点=实心圆 + （选中时）同色呼吸涟漪；不另加 accent 描边环。
+            BreathSwatchDrawable bg = new BreathSwatchDrawable(color, selected, accent(), 0f,
+                    GRAD_SOLID_RATIO);
+            wrap.setBackground(bg);
+            if (selected) {
+                mGradBreath = bg;
             }
-            // t14：单层 GradientDrawable 直接作背景（实心色 + 选中描边环都在这一层）。
-            // 绝不再向任何 LayerDrawable / RippleDrawable 追加或替换图层。
-            wrap.setBackground(circle);
             // AUTO 占位：圆心叠「AUTO」小字（accent 自适应），可见不隐形。
-            // 用 wrap 的子 View 管理（首个子 View 即 AUTO 文字），不引入 tag id 资源。
             if (isAuto) {
                 TextView auto = wrap.getChildCount() > 0 && wrap.getChildAt(0) instanceof TextView
                         ? (TextView) wrap.getChildAt(0) : null;
@@ -1118,7 +1140,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                     auto.setTextSize(6f);
                     auto.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                     auto.setGravity(Gravity.CENTER);
-                    auto.setLayoutParams(new FrameLayout.LayoutParams(dp(24), dp(24)));
+                    auto.setLayoutParams(new FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER));
                     wrap.addView(auto);
                 }
                 auto.setTextColor(isAutoColor());
@@ -1128,7 +1150,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 }
             }
             if (mStopLabels != null && i < mStopLabels.length && mStopLabels[i] != null) {
-                mStopLabels[i].setTextColor(i == mGradTarget ? 0xFFB9A6F5 : text2());
+                mStopLabels[i].setTextColor(selected ? 0xFFB9A6F5 : text2());
             }
         }
     }

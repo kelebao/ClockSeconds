@@ -2921,18 +2921,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /** 同上，view 非 null 时优先用它的 Resources 判定系统深浅色模式。 */
     private static boolean isLightBackground(int systemTextColor, TextView view) {
-        if (view != null) {
-            try {
-                int mask = view.getResources().getConfiguration().uiMode
-                        & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-                return mask != android.content.res.Configuration.UI_MODE_NIGHT_YES;
-            } catch (Throwable ignored) {
-                // 取不到配置回落旧判定
-            }
-        }
+        // 【U-20261115 修复】不能用 StatusClock 视图自身的 resources.Configuration.uiMode 判定明暗：
+        // SystemUI 自身是深色主题应用，其 Resources 的 uiMode 永远是 NIGHT_YES，导致「明暗自适应」
+        // 在状态栏上永远判定为「深色」，浅色副键（或浅色渐变端点）从不生效 —— 用户在浅色系统下改色、
+        // 状态栏时间颜色纹丝不动即此因（vc327 引入的回归）。
+        // 可靠判据是状态栏时钟自身的文字色亮度：浅色背景时钟文字是黑的（亮度低）、深色背景是白的（亮度高）。
+        // 浮窗时钟同理，用各自视图的 getCurrentTextColor 即可。
         return android.graphics.Color.luminance(systemTextColor) < 0.5f;
     }
-
     /**
      * 某一位的生效颜色：明暗自适应开且当前浅色背景时优先用浅色副键，
      * 未设副键回落常规键；「跟随系统」位永远跟随（issue #11 的兼容要求）。

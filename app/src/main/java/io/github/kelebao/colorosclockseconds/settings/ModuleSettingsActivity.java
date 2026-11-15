@@ -1300,7 +1300,12 @@ public final class ModuleSettingsActivity extends Activity {
         card.addView(dashedDivider());
         // t26⑥：首页合并为单个「高级设置」入口；单色/渐变在高级页内切换（appbar 页签）。
         card.addView(linkRow(R.string.settings_advanced_title, R.string.settings_advanced_sum,
-                v -> startActivity(new Intent(this, AdvancedSettingsActivity.class))));
+                        v -> {
+                            android.content.Intent ai = new android.content.Intent(this, AdvancedSettingsActivity.class);
+                            ai.putExtra(AdvancedSettingsActivity.EXTRA_PAGE, mGradPage ? AdvancedSettingsActivity.PAGE_GRAD : AdvancedSettingsActivity.PAGE_MONO);
+                            startActivity(ai);
+                        }
+                        ));
 
         root.addView(card);
 
@@ -1679,16 +1684,20 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 点一下整套换掉渐变（起点 + 终点两个键都写）。 */
     private void applyGradientPair(final int start, final int end) {
+        // U-20261115⑧：应用渐变预设即「用渐变」——确保总开关开启（浅色副键分支同样覆盖）。
+        if (!ClockSecondsConfig.isGradientEnabled(getContentResolver())) {
+            mCfgGradientOn = true;
+            Intent gi = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, 1);
+            applyConfig(ClockSecondsConfig.GRADIENT_ENABLED_KEY, 1, gi,
+                    ok -> { if (!ok) { toastWriteFailed(); } });
+        }
         writeGradientEndpoint(0, start, ok0 -> writeGradientEndpoint(1, end, ok1 -> {
             if (!ok0 || !ok1) {
                 toastWriteFailed();
                 return;
             }
             mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
-            mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
-            if (!mCfgGradientOn && mGradPage) {
-                selectDigitPage(true);
-            }
             refreshDigitSwatches();
             refreshGradientPresets();
             updatePreview();
@@ -1781,6 +1790,15 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 写渐变端点色（0 = 起点，1 = 终点）。自适应浅色页写「_light 副键」。 */
     private void applyGradientColor(final int which, final int color) {
+        // U-20261115⑧：渐变取色即「用渐变」——总开关没开（或脱同步为关）时先开，保证立即生效。
+        // （原实现仅在普通分支且 mGradPage 时兜底，浅色副键分支完全没有开启逻辑。）
+        if (!ClockSecondsConfig.isGradientEnabled(getContentResolver())) {
+            mCfgGradientOn = true;
+            Intent gi = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, 1);
+            applyConfig(ClockSecondsConfig.GRADIENT_ENABLED_KEY, 1, gi,
+                    ok -> { if (!ok) { toastWriteFailed(); } });
+        }
         if (mAdaptiveColor && mLightMode) {
             final boolean auto = color == ClockSecondsConfig.GRADIENT_COLOR_AUTO;
             Integer light = auto ? null : color;
@@ -1810,11 +1828,6 @@ public final class ModuleSettingsActivity extends Activity {
             }
             mCfgGradStart = ClockSecondsConfig.getGradientStartColor(getContentResolver());
             mCfgGradEnd = ClockSecondsConfig.getGradientEndColor(getContentResolver());
-            // 取色即视为启用渐变：在渐变页取色本身就是「用渐变」的意图，切到渐变页即写盘启用。
-            if (!mCfgGradientOn && mGradPage) {
-                selectDigitPage(true);
-            }
-            refreshDigitSwatches();
             updatePreview();
             if (previewView != null) {
                 previewView.post(this::positionMark);
@@ -3362,6 +3375,15 @@ public final class ModuleSettingsActivity extends Activity {
     private void applyDigitColor(final int slot, final int color) {
         if (slot < 0 || slot >= ClockSecondsConfig.DIGIT_COUNT) {
             return;
+        }
+        // U-20261115⑧：单色取色即「用单色」——若渐变总开关还开着（如在高级页切过页签后脱同步），
+        // 状态栏仍按渐变渲染、本次改色不可见；先关渐变再写色，保证立即生效。
+        if (ClockSecondsConfig.isGradientEnabled(getContentResolver())) {
+            mCfgGradientOn = false;
+            Intent gi = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT)
+                    .putExtra(ClockSecondsConfig.EXTRA_ENABLED, 0);
+            applyConfig(ClockSecondsConfig.GRADIENT_ENABLED_KEY, 0, gi,
+                    ok -> { if (!ok) { toastWriteFailed(); } });
         }
         // 改色即进入设置状态：同步展开，不等写配置回调（否则拖色相滑条每帧等一次写盘往返，展开明显滞后）。
         if (!mDigitsExpanded) {
