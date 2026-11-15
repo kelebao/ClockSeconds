@@ -1495,10 +1495,11 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
         mPresetWrap.removeAllViews();
         List<Preset>[] all = loadAllPresets();
-        mPresetWrap.addView(presetGroupLabel(all[0], R.string.settings_preset_group_dark, true));
+        // U-20261115⑰：单色页只显示单色预设、渐变页只显示渐变预设；分组标题计数随之过滤。
+        mPresetWrap.addView(presetGroupLabel(filteredPresets(all[0]), R.string.settings_preset_group_dark, true));
         // 横滑区（R2.1）：每组一条 HorizontalScrollView，4 组完整 + 第 5 组露边表示可滑。
         mPresetWrap.addView(presetScroller(presetChips(all[0], false)));
-        mPresetWrap.addView(presetGroupLabel(all[1], R.string.settings_preset_group_light, false));
+        mPresetWrap.addView(presetGroupLabel(filteredPresets(all[1]), R.string.settings_preset_group_light, false));
         mPresetWrap.addView(presetScroller(presetChips(all[1], true)));
     }
 
@@ -1528,14 +1529,30 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         return l;
     }
 
-    /** 一组预设色片：六格渐变方块，点击整组应用，长按删除。 */
+    /** U-20261115⑰：当前页（单色/渐变）可显示的预设子集，供分组标题计数。 */
+    private List<Preset> filteredPresets(List<Preset> list) {
+        List<Preset> out = new ArrayList<>();
+        for (Preset p : list) {
+            if ((p.grad != null) == mGradPage) {
+                out.add(p);
+            }
+        }
+        return out;
+    }
+
+    /** 一组预设色片：六格渐变方块，点击整组应用，长按删除。
+     *  U-20261115⑰：只显示与当前页同类型的预设（单色页只显单色、渐变页只显渐变）；
+     *  倒序遍历＝最新保存的排最前；chipIndex 仍为全量列表真实索引，重命名/删除按索引定位不受影响。 */
     private LinearLayout presetChips(List<Preset> list, boolean light) {
         LinearLayout wrap = new LinearLayout(this);
         wrap.setOrientation(LinearLayout.HORIZONTAL);
         wrap.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        for (int i = 0; i < list.size(); i++) {
+        for (int i = list.size() - 1; i >= 0; i--) {
             final Preset p = list.get(i);
+            if ((p.grad != null) != mGradPage) {
+                continue;   // ⑰ 单色页跳过渐变预设，渐变页跳过单色预设
+            }
             LinearLayout chip = new LinearLayout(this);
             chip.setOrientation(LinearLayout.VERTICAL);
             chip.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -1596,6 +1613,16 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             clp.topMargin = dp(4);
             chip.setLayoutParams(clp);
             wrap.addView(chip);
+        }
+
+        // ⑰ 本组当前页类型无预设时给占位提示，避免留白（全部预设仍可在「› 更多」全量页查看）。
+        if (wrap.getChildCount() == 0) {
+            TextView empty = new TextView(this);
+            empty.setText(R.string.settings_preset_empty);
+            empty.setTextSize(12f);
+            empty.setTextColor(text2());
+            empty.setPadding(dp(6), dp(8), dp(6), dp(2));
+            wrap.addView(empty);
         }
 
         // 新建入口已移至「我的预设」标题行右侧常驻胶囊（R2.1），横滑区只放已存预设。
@@ -1828,6 +1855,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             return grid;
         }
         int rows = (list.size() + 2) / 3;
+        // U-20261115⑰：倒序展示——最新保存的排第一格；idx 映射回全量列表真实索引（长按菜单按索引定位依赖）。
         for (int r = 0; r < rows; r++) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
@@ -1836,8 +1864,9 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             rl.topMargin = r == 0 ? 0 : dp(10);
             row.setLayoutParams(rl);
             for (int c = 0; c < 3; c++) {
-                int idx = r * 3 + c;
-                if (idx < list.size()) {
+                int disp = r * 3 + c;
+                if (disp < list.size()) {
+                    int idx = list.size() - 1 - disp;
                     final Preset p = list.get(idx);
                     row.addView(presetGridCell(p, light, idx));
                 } else {
