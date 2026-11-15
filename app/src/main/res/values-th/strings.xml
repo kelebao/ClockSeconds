@@ -198,4 +198,5 @@
     <string name="settings_preset_empty">ยังไม่มีพรีเซ็ต——บันทึกสีปัจจุบันด้วยปุ่มด้านล่าง</string>
     <string name="settings_preset_delete">ลบ</string>
     <string name="settings_preset_save_failed">บันทึกไม่สำเร็จ — ลองอีกครั้ง</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

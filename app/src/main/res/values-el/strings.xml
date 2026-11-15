@@ -198,4 +198,5 @@
     <string name="settings_preset_empty">Δεν υπάρχουν προεπιλογές ακόμη——αποθηκεύστε τα τρέχοντα χρώματα παρακάτω</string>
     <string name="settings_preset_delete">Διαγραφή</string>
     <string name="settings_preset_save_failed">Αποτυχία αποθήκευσης — δοκιμάστε ξανά</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

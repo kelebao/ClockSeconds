@@ -198,4 +198,5 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_preset_empty">Noch keine Presets——aktuelle Farben unten speichern</string>
     <string name="settings_preset_delete">Löschen</string>
     <string name="settings_preset_save_failed">Speichern fehlgeschlagen — bitte erneut versuchen</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

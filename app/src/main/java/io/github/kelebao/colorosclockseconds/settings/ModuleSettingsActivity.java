@@ -5637,6 +5637,8 @@ public final class ModuleSettingsActivity extends Activity {
         final int[][] colorsHolder = {fromTask ? draft.colors.clone()
                 : ClockSecondsConfig.getDigitColors(getContentResolver())};
         final int[][][] schemesHolder = {fromTask ? draft.schemes : null};
+        final ClockTask.Scheme[][] detailHolder = {
+                fromTask && draft.schemeList != null ? draft.schemeList.clone() : null};
         final int[] edgeHolder = {fromTask ? draft.gradStart
                 : ClockSecondsConfig.getGradientStartColor(getContentResolver()),
                 fromTask ? draft.gradEnd
@@ -5740,134 +5742,234 @@ public final class ModuleSettingsActivity extends Activity {
             prev.setPadding(0, dp(10), 0, dp(6));
             pick.addView(prev, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            final java.util.List<int[]> presets = new ArrayList<>();
+            // U-20261115⑯：预设清单 = 内置渐变预设 + 高级设置存的用户预设（深浅两组、单色/渐变都读），
+            // 按深色/浅色页签切换显示，单色与渐变分组列出。
+            final java.util.List<ClockTask.Scheme> entries = new ArrayList<>();
+            final java.util.List<String> names = new ArrayList<>();
             for (int[] p0 : GRADIENT_PRESETS) {
-                presets.add(p0);
+                ClockTask.Scheme g = new ClockTask.Scheme();
+                g.gradient = true;
+                g.gradStart = p0[0];
+                g.gradEnd = p0[1];
+                entries.add(g);
+                names.add("");
             }
-            presets.addAll(loadCustomGradPresets());
-            // 把任务里已存、但不在预设列表中的方案补进来，保证重开时全部可见可保留
-            int[][] existSc = schemesHolder[0];
-            if (existSc != null) {
-                for (int[] one : existSc) {
-                    if (one == null || one.length < 2) {
-                        continue;
-                    }
+            for (int[] cp0 : loadCustomGradPresets()) {
+                ClockTask.Scheme g = new ClockTask.Scheme();
+                g.gradient = true;
+                g.gradStart = cp0[0];
+                g.gradEnd = cp0[1];
+                entries.add(g);
+                names.add("");
+            }
+            java.util.List<AdvancedSettingsActivity.Preset>[] saved =
+                    AdvancedSettingsActivity.loadPresets(this);
+            for (AdvancedSettingsActivity.Preset p : saved[1]) {
+                ClockTask.Scheme g = new ClockTask.Scheme();
+                g.gradient = p.grad != null;
+                g.light = true;
+                g.name = p.name;
+                g.dir = p.dir;
+                if (g.gradient) {
+                    g.gradStart = p.grad[0];
+                    g.gradEnd = p.grad[1];
+                } else {
+                    g.colors = p.colors.clone();
+                }
+                entries.add(g);
+                names.add(p.name);
+            }
+            for (AdvancedSettingsActivity.Preset p : saved[0]) {
+                ClockTask.Scheme g = new ClockTask.Scheme();
+                g.gradient = p.grad != null;
+                g.light = false;
+                g.name = p.name;
+                g.dir = p.dir;
+                if (g.gradient) {
+                    g.gradStart = p.grad[0];
+                    g.gradEnd = p.grad[1];
+                } else {
+                    g.colors = p.colors.clone();
+                }
+                entries.add(g);
+                names.add(p.name);
+            }
+            // 任务里已存、但不在预设列表中的方案补进来，保证重开时全部可见可保留
+            final ClockTask.Scheme[] existList = detailHolder[0];
+            if (existList != null) {
+                for (ClockTask.Scheme one : existList) {
                     boolean found = false;
-                    for (int[] pv : presets) {
-                        if (pv[0] == one[0] && pv[1] == one[one.length - 1]) {
+                    for (ClockTask.Scheme pv : entries) {
+                        if (pv.gradient == one.gradient
+                                && pv.light == one.light
+                                && pv.dir == one.dir
+                                && pv.gradStart == one.gradStart
+                                && pv.gradEnd == one.gradEnd) {
                             found = true;
                             break;
                         }
                     }
                     if (!found) {
-                        presets.add(new int[]{one[0], one[one.length - 1]});
+                        entries.add(one.copy());
+                        names.add(one.name);
+                    }
+                }
+            } else if (schemesHolder[0] != null) {
+                for (int[] one : schemesHolder[0]) {
+                    if (one == null || one.length < 2) {
+                        continue;
+                    }
+                    boolean found = false;
+                    for (ClockTask.Scheme pv : entries) {
+                        if (pv.gradient && pv.gradStart == one[0] && pv.gradEnd == one[1]) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        ClockTask.Scheme g = new ClockTask.Scheme();
+                        g.gradient = true;
+                        g.gradStart = one[0];
+                        g.gradEnd = one[1];
+                        entries.add(g);
+                        names.add("");
                     }
                 }
             }
             final java.util.Set<Integer> selSet = new java.util.LinkedHashSet<>();
             final int[] previewIdx = {-1};
-            int[][] initSchemes = schemesHolder[0];
-            boolean matchedAny = false;
-            if (initSchemes != null && initSchemes.length > 0) {
-                for (int[] one : initSchemes) {
-                    if (one == null || one.length < 2) {
-                        continue;
-                    }
-                    for (int i = 0; i < presets.size(); i++) {
-                        if (presets.get(i)[0] == one[0] && presets.get(i)[1] == one[one.length - 1]) {
-                            selSet.add(i);
-                            if (previewIdx[0] < 0) {
-                                previewIdx[0] = i;
-                            }
-                            matchedAny = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (!matchedAny) {
-                for (int i = 0; i < presets.size(); i++) {
-                    if (presets.get(i)[0] == edgeHolder[0] && presets.get(i)[1] == edgeHolder[1]) {
-                        selSet.add(i);
-                        previewIdx[0] = i;
-                        break;
-                    }
-                }
-            }
+            final int[] pickLight = {0};
+            final Runnable[] renderGridRef = new Runnable[1];
+            final TextView tabDark = makeTabPill(R.string.settings_tab_dark, this, night);
+            final TextView tabLight = makeTabPill(R.string.settings_tab_light, this, night);
+            LinearLayout tabRow = new LinearLayout(this);
+            tabRow.setOrientation(LinearLayout.HORIZONTAL);
+            tabRow.setGravity(Gravity.CENTER_VERTICAL);
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            tlp.leftMargin = dp(6);
+            tlp.rightMargin = dp(6);
+            tabRow.addView(tabDark, tlp);
+            tabRow.addView(tabLight, tlp);
+            final Runnable applyTabStyle = () -> {
+                int on = 0xFFFFFFFF;
+                int off = night ? 0xFFC3C4EC : 0xFF666666;
+                tabDark.setTextColor(pickLight[0] == 0 ? on : off);
+                tabLight.setTextColor(pickLight[0] == 1 ? on : off);
+                tabDark.getBackground().setAlpha(pickLight[0] == 0 ? 255 : 120);
+                tabLight.getBackground().setAlpha(pickLight[0] == 1 ? 255 : 120);
+            };
+            tabDark.setOnClickListener(v -> {
+                pickLight[0] = 0;
+                applyTabStyle.run();
+                renderGridRef[0].run();
+            });
+            tabLight.setOnClickListener(v -> {
+                pickLight[0] = 1;
+                applyTabStyle.run();
+                renderGridRef[0].run();
+            });
             LinearLayout grid = new LinearLayout(this);
             grid.setOrientation(LinearLayout.VERTICAL);
+            pick.addView(tabRow);
             pick.addView(grid);
             final java.util.List<TextView> badges = new ArrayList<>();
-            final Runnable[] renderPrevHolder = new Runnable[1];
-            LinearLayout curRow = null;
-            for (int i = 0; i < presets.size(); i++) {
-                final int idx = i;
-                final int[] pr = presets.get(i);
-                if (i % 2 == 0) {
-                    final LinearLayout rowF = new LinearLayout(this);
-                    rowF.setOrientation(LinearLayout.HORIZONTAL);
-                    LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    rlp.topMargin = dp(8);
-                    grid.addView(rowF, rlp);
-                    curRow = rowF;
-                }
-                final LinearLayout rowRef = curRow;
-                FrameLayout cell = new FrameLayout(this);
-                View capsule = new View(this);
-                GradientDrawable cg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                        new int[]{pr[0], pr[1]});
-                cg.setCornerRadius(dp(12));
-                capsule.setBackground(cg);
-                cell.addView(capsule, new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
-                final TextView badge = new TextView(this);
-                badge.setText("\u2713");
-                badge.setTextSize(11f);
-                badge.setTextColor(0xFFFFFFFF);
-                badge.setGravity(Gravity.CENTER);
-                GradientDrawable bdg = new GradientDrawable();
-                bdg.setShape(GradientDrawable.OVAL);
-                bdg.setColor(accent());
-                badge.setBackground(bdg);
-                FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(18), dp(18));
-                blp.gravity = Gravity.BOTTOM | Gravity.END;
-                blp.setMargins(0, 0, dp(6), dp(4));
-                badge.setVisibility(selSet.contains(idx) ? View.VISIBLE : View.GONE);
-                cell.addView(badge, blp);
-                badges.add(badge);
-                LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-                clp.rightMargin = (i % 2 == 0) ? dp(6) : 0;
-                cell.setOnClickListener(v -> {
-                    if (!selSet.remove(idx)) {
-                        selSet.add(idx);
-                    }
-                    for (int j = 0; j < badges.size(); j++) {
-                        badges.get(j).setVisibility(selSet.contains(j) ? View.VISIBLE : View.GONE);
-                    }
-                    if (selSet.contains(idx)) {
-                        previewIdx[0] = idx;
-                    } else if (previewIdx[0] == idx) {
-                        previewIdx[0] = selSet.isEmpty() ? -1 : selSet.iterator().next();
-                    }
-                    renderPrevHolder[0].run();
-                });
-                rowRef.addView(cell, clp);
-            }
-            renderPrevHolder[0] = () -> {
+            final Runnable renderPreview = () -> {
                 SpannableStringBuilder psb = new SpannableStringBuilder("12:34:56");
                 if (previewIdx[0] >= 0) {
-                    int[] pr = presets.get(previewIdx[0]);
+                    ClockTask.Scheme sc = entries.get(previewIdx[0]);
                     float w = prev.getPaint().measureText(psb, 0, psb.length());
-                    psb.setSpan(new GradientTextSpan(prev, psb,
-                                    adaptPreviewColor(pr[0]), adaptPreviewColor(pr[1]), w),
-                            0, psb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    if (sc.gradient) {
+                        psb.setSpan(new GradientTextSpan(prev, psb,
+                                adaptPreviewColor(sc.gradStart), adaptPreviewColor(sc.gradEnd), w),
+                                0, psb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    } else {
+                        int first = sc.colors == null ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                                : sc.colors[0];
+                        psb.setSpan(new ForegroundColorSpan(adaptPreviewColor(first)),
+                                0, psb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
                 }
                 prev.setText(psb);
             };
-            renderPrevHolder[0].run();
-            // 保存：六位数字色 = 沿渐变等距插值；渐变端点 = 套装两端；回编辑页
+            final Runnable updateBadges = () -> {
+                for (TextView b : badges) {
+                    b.setVisibility(View.GONE);
+                }
+                for (int idx : selSet) {
+                    if (idx < badges.size()) {
+                        TextView b = badges.get(idx);
+                        b.setVisibility(View.VISIBLE);
+                        b.setText(String.valueOf(selSet.size()));
+                    }
+                }
+            };
+            final Runnable renderGrid = () -> {
+                grid.removeAllViews();
+                badges.clear();
+                java.util.List<Integer> visIdx = new ArrayList<>();
+                for (int i = 0; i < entries.size(); i++) {
+                    if (entries.get(i).light != (pickLight[0] == 1)) {
+                        continue;
+                    }
+                    visIdx.add(i);
+                }
+                selSet.clear();
+                if (existList != null) {
+                    for (ClockTask.Scheme one : existList) {
+                        if (one.light != (pickLight[0] == 1)) {
+                            continue;
+                        }
+                        for (int idx : visIdx) {
+                            ClockTask.Scheme pv = entries.get(idx);
+                            if (pv.gradient == one.gradient && pv.dir == one.dir
+                                    && pv.gradStart == one.gradStart
+                                    && pv.gradEnd == one.gradEnd) {
+                                selSet.add(idx);
+                                if (previewIdx[0] < 0) {
+                                    previewIdx[0] = idx;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (previewIdx[0] < 0 && !selSet.isEmpty()) {
+                    previewIdx[0] = selSet.iterator().next();
+                }
+                java.util.List<Integer> gradIdx = new ArrayList<>();
+                java.util.List<Integer> monoIdx = new ArrayList<>();
+                for (int idx : visIdx) {
+                    if (entries.get(idx).gradient) {
+                        gradIdx.add(idx);
+                    } else {
+                        monoIdx.add(idx);
+                    }
+                }
+                addSectionLabel(grid, getString(R.string.settings_tab_gradient));
+                LinearLayout curRow = null;
+                int gi = 0;
+                for (int idx : gradIdx) {
+                    curRow = buildPickerCell(grid, curRow, gi, idx, entries, names, selSet,
+                            badges, previewIdx, renderPreview, updateBadges);
+                    gi++;
+                }
+                if (!monoIdx.isEmpty()) {
+                    addSectionLabel(grid, getString(R.string.settings_tab_mono));
+                    curRow = null;
+                    gi = 0;
+                    for (int idx : monoIdx) {
+                        curRow = buildPickerCell(grid, curRow, gi, idx, entries, names, selSet,
+                                badges, previewIdx, renderPreview, updateBadges);
+                        gi++;
+                    }
+                }
+                updateBadges.run();
+                renderPreview.run();
+                applyTabStyle.run();
+            };
+            renderGridRef[0] = renderGrid;
+            renderGrid.run();
             TextView pickSave = new TextView(this);
             pickSave.setText(R.string.settings_task_save);
             pickSave.setTextSize(15f);
@@ -5883,21 +5985,33 @@ public final class ModuleSettingsActivity extends Activity {
             pslp.topMargin = dp(14);
             pickSave.setOnClickListener(v -> {
                 if (!selSet.isEmpty()) {
-                    java.util.List<int[]> picked = new ArrayList<>();
-                    for (int i = 0; i < presets.size(); i++) {
+                    java.util.List<ClockTask.Scheme> picked = new ArrayList<>();
+                    for (int i = 0; i < entries.size(); i++) {
                         if (selSet.contains(i)) {
-                            picked.add(presets.get(i));
+                            picked.add(entries.get(i).copy());
                         }
                     }
                     int[][] schemes = new int[picked.size()][2];
                     for (int k = 0; k < picked.size(); k++) {
-                        int[] pr = picked.get(k);
-                        schemes[k][0] = pr[0];
-                        schemes[k][1] = pr[1];
+                        ClockTask.Scheme pr = picked.get(k);
+                        if (pr.gradient) {
+                            schemes[k][0] = pr.gradStart;
+                            schemes[k][1] = pr.gradEnd;
+                        } else {
+                            int first = pr.colors == null ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                                    : pr.colors[0];
+                            int last = pr.colors == null ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                                    : pr.colors[pr.colors.length - 1];
+                            schemes[k][0] = first;
+                            schemes[k][1] = last;
+                        }
                     }
                     schemesHolder[0] = schemes;
-                    edgeHolder[0] = schemes[0][0];
-                    edgeHolder[1] = schemes[0][1];
+                    detailHolder[0] = picked.toArray(new ClockTask.Scheme[0]);
+                    if (picked.get(0).gradient) {
+                        edgeHolder[0] = picked.get(0).gradStart;
+                        edgeHolder[1] = picked.get(0).gradEnd;
+                    }
                     renderSwatch.run();
                 }
                 sv.removeAllViews();
@@ -5989,6 +6103,7 @@ public final class ModuleSettingsActivity extends Activity {
                 draft.gradStart = edgeHolder[0];
                 draft.gradEnd = edgeHolder[1];
                 draft.schemes = schemesHolder[0];
+                draft.schemeList = detailHolder[0];
             }
             draft.normalize();
             List<ClockTask> next = new ArrayList<>(mTasks);
@@ -6065,6 +6180,118 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         row.addView(valueView);
         return row;
+    }
+
+    /** 选色面板的深色/浅色页签。 */
+    private TextView makeTabPill(int textRes, Context ctx, boolean night) {
+        TextView t = new TextView(ctx);
+        t.setText(textRes);
+        t.setTextSize(13f);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(dp(18), dp(9), dp(18), dp(9));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(999));
+        bg.setColor(night ? 0x22FFFFFF : 0x11000000);
+        t.setBackground(bg);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        t.setLayoutParams(lp);
+        return t;
+    }
+
+    /** 分组小标题。 */
+    private void addSectionLabel(LinearLayout host, String label) {
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(12f);
+        tv.setTextColor(text3());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(12);
+        lp.bottomMargin = dp(6);
+        host.addView(tv, lp);
+    }
+
+    /** 选色面板里的一个预设单元格：色条 + 勾选 + 名称。 */
+    private LinearLayout buildPickerCell(LinearLayout grid, LinearLayout curRow, int i, int idx,
+                                         java.util.List<ClockTask.Scheme> entries,
+                                         java.util.List<String> names,
+                                         java.util.Set<Integer> selSet,
+                                         java.util.List<TextView> badges,
+                                         int[] previewIdx, Runnable renderPreview,
+                                         Runnable updateBadges) {
+        if (i % 2 == 0) {
+            LinearLayout rowF = new LinearLayout(this);
+            rowF.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rlp.topMargin = dp(8);
+            grid.addView(rowF, rlp);
+            curRow = rowF;
+        }
+        final LinearLayout rowRef = curRow;
+        ClockTask.Scheme pr = entries.get(idx);
+        final int start = pr.gradient ? pr.gradStart
+                : (pr.colors == null ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW : pr.colors[0]);
+        final int end = pr.gradient ? pr.gradEnd
+                : (pr.colors == null ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                        : pr.colors[pr.colors.length - 1]);
+        LinearLayout cell = new LinearLayout(this);
+        cell.setOrientation(LinearLayout.VERTICAL);
+        FrameLayout box = new FrameLayout(this);
+        View capsule = new View(this);
+        GradientDrawable cg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{start, end});
+        cg.setCornerRadius(dp(12));
+        capsule.setBackground(cg);
+        box.addView(capsule, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
+        final TextView badge = new TextView(this);
+        badge.setText("✓");
+        badge.setTextSize(11f);
+        badge.setTextColor(0xFFFFFFFF);
+        badge.setGravity(Gravity.CENTER);
+        GradientDrawable bdg = new GradientDrawable();
+        bdg.setShape(GradientDrawable.OVAL);
+        bdg.setColor(accent());
+        badge.setBackground(bdg);
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(18), dp(18));
+        blp.gravity = Gravity.BOTTOM | Gravity.END;
+        blp.setMargins(0, 0, dp(6), dp(4));
+        badge.setVisibility(selSet.contains(idx) ? View.VISIBLE : View.GONE);
+        box.addView(badge, blp);
+        badges.add(badge);
+        cell.addView(box, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        String name = idx < names.size() ? names.get(idx) : "";
+        if (!name.isEmpty()) {
+            TextView nm = new TextView(this);
+            nm.setText(name);
+            nm.setTextSize(11f);
+            nm.setTextColor(text3());
+            nm.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            nlp.topMargin = dp(4);
+            cell.addView(nm, nlp);
+        }
+        cell.setOnClickListener(v -> {
+            if (!selSet.remove(idx)) {
+                selSet.add(idx);
+            }
+            if (selSet.contains(idx)) {
+                previewIdx[0] = idx;
+            } else if (previewIdx[0] == idx) {
+                previewIdx[0] = selSet.isEmpty() ? -1 : selSet.iterator().next();
+            }
+            updateBadges.run();
+            renderPreview.run();
+        });
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        clp.rightMargin = (i % 2 == 0) ? dp(6) : 0;
+        rowRef.addView(cell, clp);
+        return curRow;
     }
 
     private RadioButton makeRadio(int textRes) {

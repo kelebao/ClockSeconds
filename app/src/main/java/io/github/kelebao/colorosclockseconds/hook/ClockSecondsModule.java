@@ -4221,48 +4221,93 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
         if (ctx == null || t == null) {
             return;
         }
-        int gs = t.gradStart;
-        int ge = t.gradEnd;
-        // 多选配色：每次触发按顺序换下一套（只有一套时永远同一套）。
-        // 轮换进度必须持久化：sSchemeTick 只在内存里，SystemUI 一重启就归零，用户看到
-        // 「永远第一套」。改用 Secure 记 [下一套下标, 上次应用分钟桶]，重启后继续轮换。
-        if (t.schemes != null && t.schemes.length > 0) {
-            int n = t.schemes.length;
-            long bucket = System.currentTimeMillis() / 60_000L;
-            org.json.JSONObject st = readSchemeState(ctx);
-            org.json.JSONArray arr = st.optJSONArray(String.valueOf(t.id));
-            int idx = arr == null ? 0 : arr.optInt(0, 0);
-            long lastBucket = arr == null ? -1L : arr.optLong(1, -1L);
-            if (lastBucket == bucket) {
-                // 同一个「分钟窗口」内重复触发（如 SystemUI 在窗口里重启后重新评估）：
-                // 沿用已写入的颜色，不跳下一套。
-                return;
-            }
-            idx = ((idx % n) + n) % n;
-            int[] one = t.schemes[idx];
-            gs = one[0];
-            ge = one[one.length - 1];
-            try {
-                st.put(String.valueOf(t.id),
-                        new org.json.JSONArray().put((idx + 1) % n).put(bucket));
-                writeSchemeState(ctx, st);
-            } catch (Throwable ignored) {
-            }
+        // U-20261115⑯：完整预设方案优先（含单色六位、渐变方向、深浅组），旧任务回退到两端色方案。
+        io.github.kelebao.colorosclockseconds.ClockTask.Scheme sch = pickScheme(ctx, t);
+        if (sch == null) {
+            return;
         }
         try {
             ContentResolver cr = ctx.getContentResolver();
-            ClockSecondsConfig.setGradientEdgeColor(cr, true, gs);
-            ClockSecondsConfig.setGradientEdgeColor(cr, false, ge);
-            ClockSecondsConfig.setGradientEnabled(cr, true);
-            sGradientOn = true;
+            if (sch.gradient) {
+                // 渐变预设：两端色写入色标 0/3（并写旧端点键），恢复预设记录的方向，打开渐变总开关。
+                ClockSecondsConfig.setGradientStopColor(cr, 0, sch.gradStart);
+                ClockSecondsConfig.setGradientStopColor(cr, 3, sch.gradEnd);
+                if (sch.light) {
+                    ClockSecondsConfig.setGradientStopLightColor(cr, 0, sch.gradStart);
+                    ClockSecondsConfig.setGradientStopLightColor(cr, 3, sch.gradEnd);
+                }
+                ClockSecondsConfig.setGradientEnabled(cr, true);
+                sGradientOn = true;
+                if (sch.dir >= 0
+                        && sch.dir < io.github.kelebao.colorosclockseconds.ClockSecondsConfig.GRADIENT_DIRECTION_COUNT) {
+                    ClockSecondsConfig.setGradientDirection(cr, sch.dir);
+                }
+            } else {
+                // 单色预设：六位数字色整组写入，关闭渐变总开关。
+                int[] colors = sch.colors;
+                if (colors != null && colors.length == io.github.kelebao.colorosclockseconds.ClockSecondsConfig.DIGIT_COUNT) {
+                    io.github.kelebao.colorosclockseconds.ClockSecondsConfig.setDigitColorsBatch(cr, colors);
+                    if (sch.light) {
+                        for (int i = 0; i < colors.length; i++) {
+                            io.github.kelebao.colorosclockseconds.ClockSecondsConfig.setDigitLightColor(
+                                    cr, i, colors[i]);
+                        }
+                    }
+                }
+                ClockSecondsConfig.setGradientEnabled(cr, false);
+                sGradientOn = false;
+            }
             reloadDigitColors(ctx);
             refreshClockNow();
             if (BuildConfig.DEBUG) {
-                XposedBridge.log(LOG_PREFIX + "TASK colors applied id=" + t.id);
+                XposedBridge.log(LOG_PREFIX + "TASK colors applied id=" + t.id
+                        + " grad=" + sch.gradient + " light=" + sch.light);
             }
         } catch (Throwable tr) {
             noteHookError(tr);
         }
+    }
+
+    /** 取出本轮要应用的完整预设方案：优先 {@code schemeList}，缺失时用两端色拼一个深色渐变方案。 */
+    private static io.github.kelebao.colorosclockseconds.ClockTask.Scheme pickScheme(
+            Context ctx, io.github.kelebao.colorosclockseconds.ClockTask t) {
+        io.github.kelebao.colorosclockseconds.ClockTask.Scheme[] list = t.schemeList;
+        int n = (list != null && list.length > 0)
+                ? list.length
+                : (t.schemes != null ? t.schemes.length : 0);
+        if (n <= 0) {
+            return null;
+        }
+        // 多选配色：每次触发按顺序换下一套（只有一套时永远同一套）。
+        // 轮换进度必须持久化：sSchemeTick 只在内存里，SystemUI 一重启就归零，用户看到
+        // 「永远第一套」。改用 Secure 记 [下一套下标, 上次应用分钟桶]，重启后继续轮换。
+        long bucket = System.currentTimeMillis() / 60_000L;
+        org.json.JSONObject st = readSchemeState(ctx);
+        org.json.JSONArray arr = st.optJSONArray(String.valueOf(t.id));
+        int idx = arr == null ? 0 : arr.optInt(0, 0);
+        long lastBucket = arr == null ? -1L : arr.optLong(1, -1L);
+        if (lastBucket == bucket) {
+            // 同一个「分钟窗口」内重复触发（如 SystemUI 在窗口里重启后重新评估）：
+            // 沿用已写入的颜色，不跳下一套。
+            return list != null ? list[0] : null;
+        }
+        idx = ((idx % n) + n) % n;
+        try {
+            st.put(String.valueOf(t.id),
+                    new org.json.JSONArray().put((idx + 1) % n).put(bucket));
+            writeSchemeState(ctx, st);
+        } catch (Throwable ignored) {
+        }
+        if (list != null) {
+            return list[idx];
+        }
+        io.github.kelebao.colorosclockseconds.ClockTask.Scheme s =
+                new io.github.kelebao.colorosclockseconds.ClockTask.Scheme();
+        s.gradient = true;
+        int[] one = t.schemes[idx];
+        s.gradStart = one[0];
+        s.gradEnd = one[one.length - 1];
+        return s;
     }
 
     /** 任务把显秒翻了个面：按新状态重写时钟文本并同步 ticker。 */

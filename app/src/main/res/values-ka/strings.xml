@@ -198,4 +198,5 @@
     <string name="settings_preset_empty">პრესეტები ჯერ არ არის——შეინახეთ მიმდინარე ფერები ქვემოთ ღილაკით</string>
     <string name="settings_preset_delete">წაშლა</string>
     <string name="settings_preset_save_failed">შენახვა ვერ მოხერხდა — სცადეთ ხელახლა</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

@@ -1290,15 +1290,18 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
 
     // ---------------- ③ 我的预设 ----------------
 
-    private static class Preset {
+    static class Preset {
         final String name;
         final int[] colors;
         /** 渐变色标（可空，t36② 起 2 色：[起点, 终点]；旧四色预设读入时取首尾）：单色预设为 null。 */
         final int[] grad;
-        Preset(String name, int[] colors, int[] grad) {
+        /** U-20261115⑯：渐变方向 0..9；-1 = 旧预设未记录方向（应用时不改方向）。 */
+        final int dir;
+        Preset(String name, int[] colors, int[] grad, int dir) {
             this.name = name;
             this.colors = colors;
             this.grad = grad;
+            this.dir = dir;
         }
     }
 
@@ -1308,14 +1311,20 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
 
     /** 读取全部预设（JSON 文本，容错解析）。 */
     private List<Preset>[] loadAllPresets() {
-        String json = prefs().getString(KEY_PRESETS, null);
+        return loadPresets(this);
+    }
+
+    /** 同一份 advanced_presets 由自定义任务选色面板共用（同 UID 的应用私有目录）。 */
+    static List<Preset>[] loadPresets(android.content.Context ctx) {
+        String json = ctx.getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_PRESETS, null);
         List<Preset> dark = new ArrayList<>();
         List<Preset> light = new ArrayList<>();
         if (json != null) {
             try {
                 org.json.JSONObject root = new org.json.JSONObject(json);
-                dark = parsePresetList(root.optJSONArray("dark"));
-                light = parsePresetList(root.optJSONArray("light"));
+                dark = parsePresetList(root.optJSONArray("dark"), ctx);
+                light = parsePresetList(root.optJSONArray("light"), ctx);
             } catch (Throwable ignored) {
                 // 数据损坏：视为空
             }
@@ -1323,7 +1332,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         return new List[]{dark, light};
     }
 
-    private List<Preset> parsePresetList(org.json.JSONArray arr) {
+    private static List<Preset> parsePresetList(org.json.JSONArray arr, android.content.Context ctx) {
         List<Preset> list = new ArrayList<>();
         if (arr == null) {
             return list;
@@ -1350,8 +1359,13 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 grad[0] = g.optInt(0, ClockSecondsConfig.GRADIENT_COLOR_AUTO);
                 grad[1] = g.optInt(g.length() - 1, ClockSecondsConfig.GRADIENT_COLOR_AUTO);
             }
+            // 旧预设没有 dir 键：记 -1，应用时保持当前方向不变。
+            int dir = o.optInt("dir", -1);
+            if (dir < 0 || dir >= ClockSecondsConfig.GRADIENT_DIRECTION_COUNT) {
+                dir = -1;
+            }
             list.add(new Preset(o.optString("name",
-                    getString(R.string.settings_preset_default_name, i + 1)), colors, grad));
+                    ctx.getString(R.string.settings_preset_default_name, i + 1)), colors, grad, dir));
         }
         return list;
     }
@@ -1381,6 +1395,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                     c.put(color);
                 }
                 o.put("colors", c);
+                o.put("dir", p.dir);
                 if (p.grad != null) {
                     org.json.JSONArray g = new org.json.JSONArray();
                     for (int color : p.grad) {
@@ -1410,8 +1425,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
         // 渐变页：保存当前起点/终点色标（t36② 两色；AUTO 原样存，应用时按 AUTO 语义回落）。
         int[] grad = null;
+        int dir = -1;
         if (mGradPage) {
             grad = displayedGradientStops();
+            dir = ClockSecondsConfig.getGradientDirection(getContentResolver());
         }
         List<Preset>[] all = loadAllPresets();
         List<Preset> group = light ? all[1] : all[0];
@@ -1420,7 +1437,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             return;
         }
         String name = getString(R.string.settings_preset_default_name, group.size() + 1);
-        group.add(new Preset(name, colors.clone(), grad));
+        group.add(new Preset(name, colors.clone(), grad, dir));
         // t34 F31-3：写盘确认成功后才提示，避免假成功。
         if (storePresets(all[0], all[1])) {
             rebuildPresetRows();
@@ -1530,7 +1547,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             // AUTO 色标按首尾插值回落（-1 直接 setColor 会变白/透明）。
             int[] renderColors = p.grad != null ? renderGradColors(p.grad)
                     : renderDigitColors(p.colors);
-            box.addView(presetBarView(renderColors, p.grad != null));
+            box.addView(presetBarView(renderColors, p.grad != null, p.dir));
             LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
                     dp(48), dp(30));
             blp.leftMargin = dp(4);
@@ -1555,8 +1572,11 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             chip.setClickable(true);
             chip.setFocusable(true);
             chip.setOnClickListener(v -> {
+                if (!presetApplicable(p, light)) {
+                    return;
+                }
                 if (p.grad != null) {
-                    applyGradPreset(p.grad);
+                    applyGradPreset(p.grad, p.dir);
                 } else {
                     applyPreset(p.colors);
                 }
@@ -1634,16 +1654,41 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
      * 替代旧多 swatch 方案（真机只渲染首段）。
      * U-20261115⑮：渐变预设（grad!=null）改为横向 LinearGradient 平滑渐变，不再画两段硬色块。
      */
-    private View presetBarView(final int[] colors, final boolean gradient) {
+    private View presetBarView(final int[] colors, final boolean gradient, final int dir) {
         View bar = new View(this) {
             @Override protected void onDraw(Canvas canvas) {
                 super.onDraw(canvas);
                 Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
                 p.setStyle(Paint.Style.FILL);
                 if (gradient && colors.length >= 2) {
-                    p.setShader(new LinearGradient(0, 0, getWidth(), 0, colors, null,
-                            Shader.TileMode.CLAMP));
-                    canvas.drawRect(0, 0, getWidth(), getHeight(), p);
+                    float w = getWidth(), h = getHeight();
+                    if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL) {
+                        p.setShader(new android.graphics.RadialGradient(w / 2f, h / 2f,
+                                Math.max(w, h) / 2f, colors, null, Shader.TileMode.CLAMP));
+                    } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_SWEEP) {
+                        p.setShader(new android.graphics.SweepGradient(
+                                w / 2f, h / 2f, colors, null));
+                    } else {
+                        float x0 = 0f, y0 = 0f, x1 = w, y1 = 0f;
+                        if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_VERTICAL) {
+                            x0 = x1 = w / 2f; y0 = h; y1 = 0f;
+                        } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_DIAGONAL) {
+                            y1 = h;
+                        } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_RTL) {
+                            x0 = w; x1 = 0f;
+                        } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_BTT) {
+                            x0 = x1 = w / 2f; y0 = h; y1 = 0f;
+                        } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_BRTL) {
+                            x0 = w; y0 = h; x1 = 0f; y1 = 0f;
+                        } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_TRBL) {
+                            x0 = w; x1 = 0f; y1 = h;
+                        } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_BLTR) {
+                            y0 = h; x1 = w;
+                        }
+                        p.setShader(new LinearGradient(x0, y0, x1, y1, colors, null,
+                                Shader.TileMode.CLAMP));
+                    }
+                    canvas.drawRect(0, 0, w, h, p);
                     p.setShader(null);
                     return;
                 }
@@ -1661,10 +1706,25 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         return bar;
     }
 
-    /** 应用渐变预设：四色标逐个写入（AUTO 原样传），并确保渐变总开关开启。 */
-    private void applyGradPreset(int[] grad) {
+    /**
+     * U-20261115⑯：当前页签（深浅）与页面类型（单色/渐变）都必须与预设一致，
+     * 否则只提示不应用，避免「浅色预设在深色渐变页点了没反应还改乱颜色」。
+     */
+    private boolean presetApplicable(Preset p, boolean light) {
+        if (light != mLightMode || (p.grad != null) != mGradPage) {
+            toast(R.string.settings_preset_incompatible);
+            return false;
+        }
+        return true;
+    }
+
+    /** 应用渐变预设：两端色标逐个写入（AUTO 原样传），有方向记录时一并恢复。 */
+    private void applyGradPreset(int[] grad, int dir) {
         for (int i = 0; i < grad.length && i < GRAD_UI_STOPS; i++) {
             writeGradientColor(i, grad[i]);
+        }
+        if (dir >= 0 && dir < ClockSecondsConfig.GRADIENT_DIRECTION_COUNT) {
+            applyGradientDirection(dir);
         }
         try {
             Settings.Secure.putInt(getContentResolver(),
@@ -1808,7 +1868,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         // f12-2 重修（t18）：与横滑 chip 同样改单 View 自绘等分色条，保证满宽铺满。
         int[] renderColors = p.grad != null ? renderGradColors(p.grad)
                 : renderDigitColors(p.colors);
-        box.addView(presetBarView(renderColors, p.grad != null));
+        box.addView(presetBarView(renderColors, p.grad != null, p.dir));
         GradientDrawable bb = new GradientDrawable();
         bb.setCornerRadius(dp(11));
         bb.setStroke(dp(1.5f), accent());
@@ -1835,8 +1895,11 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         cell.setClickable(true);
         cell.setFocusable(true);
         cell.setOnClickListener(v -> {
+            if (!presetApplicable(p, light)) {
+                return;
+            }
             if (p.grad != null) {
-                applyGradPreset(p.grad);
+                applyGradPreset(p.grad, p.dir);
             } else {
                 applyPreset(p.colors);
             }
@@ -1857,6 +1920,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
      */
     private boolean isPresetActive(Preset p, boolean light) {
         if (p.grad != null) {
+            if (p.dir >= 0
+                    && ClockSecondsConfig.getGradientDirection(getContentResolver()) != p.dir) {
+                return false;
+            }
             for (int i = 0; i < p.grad.length; i++) {
                 Integer cur = stopColorForCompare(stopKeyIndex(i), light);
                 if (cur == null || cur != p.grad[i]) {
@@ -1954,7 +2021,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                         return;   // 二次校验
                     }
                     Preset old = g.get(index);
-                    g.set(index, new Preset(name, old.colors, old.grad));
+                    g.set(index, new Preset(name, old.colors, old.grad, old.dir));
                     if (storePresets(fresh[0], fresh[1])) {
                         rebuildPresetRows();
                         toast(R.string.settings_preset_saved);

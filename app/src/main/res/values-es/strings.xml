@@ -198,4 +198,5 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_preset_empty">Aún no hay ajustes——guarda tus colores actuales abajo</string>
     <string name="settings_preset_delete">Eliminar</string>
     <string name="settings_preset_save_failed">No se pudo guardar — inténtalo de nuevo</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

@@ -198,4 +198,5 @@
     <string name="settings_preset_empty">아직 프리셋이 없습니다——아래 버튼으로 현재 색상을 저장하세요</string>
     <string name="settings_preset_delete">삭제</string>
     <string name="settings_preset_save_failed">저장하지 못했습니다. 다시 시도해 주세요</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

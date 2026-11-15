@@ -199,4 +199,5 @@
     <string name="settings_preset_empty">还没有预设——点下方按钮保存当前配色</string>
     <string name="settings_preset_delete">删除</string>
     <string name="settings_preset_save_failed">保存失败，请重试</string>
+    <string name="settings_preset_incompatible">当前模式不可应用该预设</string>
 </resources>

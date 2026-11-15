@@ -198,4 +198,5 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_preset_empty">Belum ada prasetel——simpan warna saat ini lewat tombol di bawah</string>
     <string name="settings_preset_delete">Hapus</string>
     <string name="settings_preset_save_failed">Gagal menyimpan — coba lagi</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

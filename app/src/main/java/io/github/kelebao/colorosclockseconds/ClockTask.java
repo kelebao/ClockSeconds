@@ -71,9 +71,86 @@ public final class ClockTask {
     public int gradEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
     /** 多套配色方案（「选择配色」支持多选）；每套 8 个 int = 6 位数字色 + 渐变起 + 渐变止，每次触发轮换应用一套。 */
     public int[][] schemes;
+    /**
+     * U-20261115⑯：与 {@link #schemes} 同序的完整方案（保留预设名/单色或渐变/渐变方向/深浅组），
+     * 到点时按它写颜色、方向与单色组。旧数据没有该字段，回退到 {@code schemes} 两端色。
+     */
+    public Scheme[] schemeList;
     public boolean enabled = true;
 
     public ClockTask() {
+    }
+
+    /** 一套配色方案：可以是单色预设（colors 六位）或渐变预设（start/end + dir）。 */
+    public static final class Scheme {
+        /** 单色预设的六位数字色；渐变预设为 null。 */
+        public int[] colors;
+        /** 渐变两端色；单色预设无意义。 */
+        public int gradStart = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+        public int gradEnd = ClockSecondsConfig.GRADIENT_COLOR_AUTO;
+        /** 渐变方向，-1 = 保持当前方向不变。 */
+        public int dir = -1;
+        /** 是否属于浅色预设组（浅色组到点写 _light 副键）。 */
+        public boolean light;
+        /** true = 渐变预设，false = 单色预设。 */
+        public boolean gradient;
+        /** 预设名，仅用于记录。 */
+        public String name = "";
+
+        public Scheme copy() {
+            Scheme o = new Scheme();
+            o.colors = colors == null ? null : colors.clone();
+            o.gradStart = gradStart;
+            o.gradEnd = gradEnd;
+            o.dir = dir;
+            o.light = light;
+            o.gradient = gradient;
+            o.name = name;
+            return o;
+        }
+
+        public JSONObject toJson() {
+            JSONObject o = new JSONObject();
+            try {
+                o.put("g", gradient ? 1 : 0);
+                o.put("light", light ? 1 : 0);
+                o.put("dir", dir);
+                if (colors != null) {
+                    JSONArray c = new JSONArray();
+                    for (int v : colors) {
+                        c.put(v);
+                    }
+                    o.put("c", c);
+                } else {
+                    o.put("s", gradStart);
+                    o.put("e", gradEnd);
+                }
+                o.put("n", name == null ? "" : name);
+            } catch (Throwable ignored) {
+            }
+            return o;
+        }
+
+        public static Scheme fromJson(JSONObject o) {
+            Scheme s = new Scheme();
+            if (o == null) {
+                return s;
+            }
+            s.gradient = o.optInt("g", 0) != 0;
+            s.light = o.optInt("light", 0) != 0;
+            s.dir = o.optInt("dir", -1);
+            s.name = o.optString("n", "");
+            JSONArray c = o.optJSONArray("c");
+            if (c != null) {
+                s.colors = new int[6];
+                for (int i = 0; i < 6; i++) {
+                    s.colors[i] = (int) c.optLong(i, ClockSecondsConfig.DIGIT_COLOR_FOLLOW);
+                }
+            }
+            s.gradStart = (int) o.optLong("s", ClockSecondsConfig.GRADIENT_COLOR_AUTO);
+            s.gradEnd = (int) o.optLong("e", ClockSecondsConfig.GRADIENT_COLOR_AUTO);
+            return s;
+        }
     }
 
     public ClockTask copy() {
@@ -95,6 +172,12 @@ public final class ClockTask {
             t.schemes = new int[schemes.length][];
             for (int i = 0; i < schemes.length; i++) {
                 t.schemes[i] = schemes[i].clone();
+            }
+        }
+        if (schemeList != null) {
+            t.schemeList = new Scheme[schemeList.length];
+            for (int i = 0; i < schemeList.length; i++) {
+                t.schemeList[i] = schemeList[i].copy();
             }
         }
         t.enabled = enabled;
@@ -300,6 +383,13 @@ public final class ClockTask {
                     }
                     o.put("sc", sc);
                 }
+                if (schemeList != null && schemeList.length > 0) {
+                    JSONArray sc = new JSONArray();
+                    for (Scheme one : schemeList) {
+                        sc.put(one.toJson());
+                    }
+                    o.put("sch", sc);
+                }
             }
             o.put("enabled", enabled);
         } catch (Throwable ignored) {
@@ -366,6 +456,33 @@ public final class ClockTask {
                         scArr[si] = one;
                     }
                     t.schemes = scArr;
+                }
+                JSONArray sch = o.optJSONArray("sch");
+                if (sch != null && sch.length() > 0) {
+                    Scheme[] list = new Scheme[sch.length()];
+                    for (int si = 0; si < sch.length(); si++) {
+                        Scheme one = Scheme.fromJson(sch.optJSONObject(si));
+                        list[si] = one;
+                    }
+                    t.schemeList = list;
+                    Scheme first = list[0];
+                    if (first.gradient) {
+                        t.gradStart = first.gradStart;
+                        t.gradEnd = first.gradEnd;
+                    } else if (first.colors != null) {
+                        t.colors = first.colors.clone();
+                    }
+                } else if (t.schemes != null && t.schemes.length > 0) {
+                    Scheme[] list = new Scheme[t.schemes.length];
+                    for (int si = 0; si < t.schemes.length; si++) {
+                        Scheme one = new Scheme();
+                        one.gradient = true;
+                        one.dir = -1;
+                        one.gradStart = t.schemes[si][0];
+                        one.gradEnd = t.schemes[si][1];
+                        list[si] = one;
+                    }
+                    t.schemeList = list;
                 }
                 t.enabled = o.optBoolean("enabled", true);
                 t.normalize();

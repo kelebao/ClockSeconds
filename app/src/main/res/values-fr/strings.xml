@@ -198,4 +198,5 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_preset_empty">Aucun préréglage pour l’instant——enregistrez vos couleurs actuelles ci-dessous</string>
     <string name="settings_preset_delete">Supprimer</string>
     <string name="settings_preset_save_failed">Échec de l\'enregistrement — réessayez</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

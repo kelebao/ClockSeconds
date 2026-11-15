@@ -198,4 +198,5 @@
     <string name="settings_preset_empty">Пресетов пока нет——сохраните текущие цвета кнопкой ниже</string>
     <string name="settings_preset_delete">Удалить</string>
     <string name="settings_preset_save_failed">Не удалось сохранить — попробуйте ещё раз</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

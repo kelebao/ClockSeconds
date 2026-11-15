@@ -198,4 +198,5 @@
     <string name="settings_preset_empty">هنوز پیش‌تنظیمی نیست——رنگ‌های فعلی را از دکمه زیر ذخیره کنید</string>
     <string name="settings_preset_delete">حذف</string>
     <string name="settings_preset_save_failed">ذخیره نشد — دوباره تلاش کنید</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

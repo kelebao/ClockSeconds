@@ -198,4 +198,5 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_preset_empty">Henüz ön ayar yok——mevcut renklerinizi aşağıdan kaydedin</string>
     <string name="settings_preset_delete">Sil</string>
     <string name="settings_preset_save_failed">Kaydedilemedi — lütfen tekrar deneyin</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>

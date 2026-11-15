@@ -198,4 +198,5 @@
     <string name="settings_preset_empty">プリセットはまだありません——下のボタンから現在の色を保存できます</string>
     <string name="settings_preset_delete">削除</string>
     <string name="settings_preset_save_failed">保存できませんでした。もう一度お試しください</string>
+    <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
 </resources>
