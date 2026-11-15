@@ -3414,10 +3414,13 @@ public final class ModuleSettingsActivity extends Activity {
         if (!mDigitsExpanded) {
             expandDigits();
         }
-        // 明暗自适应浅色页：写「_light 副键」，不动常规键（issue #11）。跟随系统 = 清除副键回落常规键。
+        // 明暗自适应浅色页：写「_light 副键」，不动常规键（issue #11）。
+        // U-20261115⑱：浅色页点「跟随系统」= 副键写 FOLLOW(0)（浅色模式下该位跟随系统文字色，
+        // 深色模式继续用主键色）；副键 null 只保留「未设置回落主键」原义——
+        // 旧实现清除副键导致回落主键紫，用户看到「点跟随系统没成功」。
         if (mAdaptiveColor && mLightMode) {
             final boolean follow = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
-            Integer light = follow ? null : color;
+            Integer light = follow ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW : color;
             Intent li = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR)
                     .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
                     .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);

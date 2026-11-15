@@ -2948,6 +2948,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             Integer[] light = sDigitLightColors;
             Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
             if (c != null) {
+                // U-20261115⑱：副键 FOLLOW(0) = 浅色跟随系统文字色（首页浅色页签「跟随系统」圆点）。
+                if (c == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                    return systemTextColor;
+                }
                 return c;
             }
         }
@@ -4904,18 +4908,17 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.EXTRA_NIGHT, false);
                                 switchSystemTheme(ctx, toNight);
                             } else if (ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR.equals(action)) {
-                                // 浅色背景副键（issue #11）：FOLLOW = 清除（回落常规键）。
+                                // 浅色背景副键（issue #11）。
+                                // U-20261115⑱：FOLLOW(0) = 浅色跟随系统（副键写 "0"），
+                                // 渲染侧 effectiveSlotColor 解析为 systemTextColor；
+                                // 副键 null 只表示「未设置回落主键」。旧语义（0=清除）作废。
                                 int slot = intent.getIntExtra(ClockSecondsConfig.EXTRA_SLOT, 0);
                                 int color = intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR,
                                         ClockSecondsConfig.DIGIT_COLOR_FOLLOW);
-                                boolean followLight = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
-                                ClockSecondsConfig.setDigitLightColor(cr, slot,
-                                        followLight ? null : color);
-                                if (!followLight) {
-                                    // U-20261115⑩：主动设置浅色副键 = 启用浅色调色板（此后浅色系统优先用副键）。
-                                    ClockSecondsConfig.setLightPaletteUsed(cr, true);
-                                }
+                                ClockSecondsConfig.setDigitLightColor(cr, slot, color);
+                                // U-20261115⑩：主动设置浅色副键 = 启用浅色调色板（此后浅色系统优先用副键）。
+                                ClockSecondsConfig.setLightPaletteUsed(cr, true);
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR.equals(action)) {
