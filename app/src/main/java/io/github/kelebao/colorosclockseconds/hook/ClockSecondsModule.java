@@ -130,6 +130,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     /** 渐变端点「浅色背景用」颜色缓存；null = 未设（回落常规键 / AUTO 语义）。 */
     private static volatile Integer sGradStartLight;
     private static volatile Integer sGradEndLight;
+    // U-20261115⑩：浅色副键调色板仅在用户于高级设置浅色页签主动设置过颜色后才启用；
+    // 未启用时忽略所有 *_light 副键，旧版本/测试残留的副键不再遮蔽常规键（浅色改色不生效根因）。
+    private static volatile boolean sLightPaletteUsed;
 
     /**
      * 「通知栏（下拉面板）时间跟随状态栏」开关缓存（默认关闭）。
@@ -2938,7 +2941,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     private static int effectiveSlotColor(int slot, int normalColor, int systemTextColor, TextView view) {
-        if (sAdaptiveColor && normalColor != ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+        // U-20261115⑩：浅色调色板未启用时直接走常规键。
+        if (sLightPaletteUsed && sAdaptiveColor && normalColor != ClockSecondsConfig.DIGIT_COLOR_FOLLOW
                 && isLightBackground(systemTextColor, view)) {
             Integer[] light = sDigitLightColors;
             Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
@@ -2958,7 +2962,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     private static int gradientRawStart(int[] colors, int systemTextColor, TextView view) {
-        if (sAdaptiveColor && isLightBackground(systemTextColor, view)
+        // U-20261115⑩：浅色调色板未启用时端点直接走常规键 / AUTO 回落。
+        if (sLightPaletteUsed && sAdaptiveColor && isLightBackground(systemTextColor, view)
                 && sGradStartLight != null) {
             return sGradStartLight;
         }
@@ -2971,7 +2976,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     private static int gradientRawEnd(int[] colors, int systemTextColor, TextView view) {
-        if (sAdaptiveColor && isLightBackground(systemTextColor, view)
+        if (sLightPaletteUsed && sAdaptiveColor && isLightBackground(systemTextColor, view)
                 && sGradEndLight != null) {
             return sGradEndLight;
         }
@@ -3379,6 +3384,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             sDigitLightColors = light;
             sGradStartLight = ClockSecondsConfig.getGradientLightColor(ctx.getContentResolver(), true);
             sGradEndLight = ClockSecondsConfig.getGradientLightColor(ctx.getContentResolver(), false);
+        sLightPaletteUsed = ClockSecondsConfig.isLightPaletteUsed(ctx.getContentResolver());
             // t36②：渐变回 2 色，中间色标（GRADIENT_STOP_2/3）不再读取与缓存。
         } catch (Throwable ignored) {
             // 读取失败保持上一次值，不影响上色。
@@ -4857,8 +4863,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 int color = intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR,
                                         ClockSecondsConfig.DIGIT_COLOR_FOLLOW);
+                                boolean followLight = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
                                 ClockSecondsConfig.setDigitLightColor(cr, slot,
-                                        color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW ? null : color);
+                                        followLight ? null : color);
+                                if (!followLight) {
+                                    // U-20261115⑩：主动设置浅色副键 = 启用浅色调色板（此后浅色系统优先用副键）。
+                                    ClockSecondsConfig.setLightPaletteUsed(cr, true);
+                                }
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR.equals(action)) {
@@ -4871,8 +4882,13 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                 int color = intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR,
                                         ClockSecondsConfig.GRADIENT_COLOR_AUTO);
+                                boolean autoLight = color == ClockSecondsConfig.GRADIENT_COLOR_AUTO;
                                 ClockSecondsConfig.setGradientStopLightColor(cr, stopIndex,
-                                        color == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? null : color);
+                                        autoLight ? null : color);
+                                if (!autoLight) {
+                                    // U-20261115⑩：主动设置浅色副键 = 启用浅色调色板。
+                                    ClockSecondsConfig.setLightPaletteUsed(cr, true);
+                                }
                                 reloadDigitColors(ctx);
                                 refreshClockNow();
                             } else if (ClockSecondsConfig.ACTION_SET_DIGIT_COLORS_BATCH.equals(action)) {

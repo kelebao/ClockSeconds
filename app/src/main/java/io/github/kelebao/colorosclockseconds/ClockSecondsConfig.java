@@ -606,6 +606,27 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     public static String gradientLightKey(boolean start) {
         return (start ? GRADIENT_START_KEY : GRADIENT_END_KEY) + LIGHT_KEY_SUFFIX;
     }
+
+    /**
+     * U-20261115⑩：浅色副键调色板启用标记。仅当用户在高级设置浅色页签主动设置过颜色
+     * （模块收到非 FOLLOW/AUTO 的浅色副键写入）时置位；未置位时模块忽略所有 *_light 副键，
+     * 避免旧版本/测试残留的副键在浅色系统下遮蔽常规键（改色「不生效」的根因）。
+     */
+    public static final String LIGHT_PALETTE_USED_KEY =
+            "coloros_clock_seconds_light_palette_used";
+
+    /** 浅色副键调色板是否已被用户主动启用。 */
+    public static boolean isLightPaletteUsed(ContentResolver resolver) {
+        return resolver != null
+                && Settings.Secure.getInt(resolver, LIGHT_PALETTE_USED_KEY, 0) == 1;
+    }
+
+    /** 置位/清除浅色副键调色板启用标记（模块在收到浅色副键写入广播时调用）。 */
+    public static void setLightPaletteUsed(ContentResolver resolver, boolean used) {
+        if (resolver != null) {
+            Settings.Secure.putInt(resolver, LIGHT_PALETTE_USED_KEY, used ? 1 : 0);
+        }
+    }
     // ==================================================================
     // 状态栏当前文字色（由 SystemUI 侧模块采样写入）
     // ==================================================================

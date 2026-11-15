@@ -472,6 +472,11 @@ public final class ModuleSettingsActivity extends Activity {
         super.onResume();
         refreshStatus();
         refreshConfigCache();
+        // U-20261115⑨：返回本页时让页签跟随配置实际状态（在高级页改了单色/渐变，回来页签要同步，
+        // 否则停在渐变页但页签还亮在单色 —— 页签即开关语义下两者必须一致）。
+        if (mTabDigit != null && mCfgGradientOn != mGradPage) {
+            selectDigitPage(mCfgGradientOn);
+        }
         registerConfigObserver();
         ticker.removeCallbacks(tick);
         ticker.post(tick);
@@ -1714,7 +1719,7 @@ public final class ModuleSettingsActivity extends Activity {
             final boolean auto = color == ClockSecondsConfig.GRADIENT_COLOR_AUTO;
             Integer light = auto ? null : color;
             Intent li = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
-                    .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                    .putExtra(ClockSecondsConfig.EXTRA_SLOT, which == 0 ? 0 : 3) // U-20261115⑩：广播槽位同步 t36② 键序（0=起点 / 3=终点）
                     .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
             applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), light, li,
                     after::accept);
@@ -1722,6 +1727,13 @@ public final class ModuleSettingsActivity extends Activity {
         }
         // t36②：渐变回 2 色——UI which 1（终点）必须映射到 Config 键序 3（END），1/2 是四色时代的中间键。
         int keyIndex = which == 0 ? 0 : 3;
+        // U-20261115⑩：先清对应端点浅色副键再写常规键（首页渐变预设整对写入路径同样生效）。
+        applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), null,
+                new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
+                        .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
+                        .putExtra(ClockSecondsConfig.EXTRA_COLOR,
+                                ClockSecondsConfig.GRADIENT_COLOR_AUTO),
+                lightOk -> { });
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -1803,7 +1815,7 @@ public final class ModuleSettingsActivity extends Activity {
             final boolean auto = color == ClockSecondsConfig.GRADIENT_COLOR_AUTO;
             Integer light = auto ? null : color;
             Intent li = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
-                    .putExtra(ClockSecondsConfig.EXTRA_SLOT, which)
+                    .putExtra(ClockSecondsConfig.EXTRA_SLOT, which == 0 ? 0 : 3) // U-20261115⑩：广播槽位同步 t36② 键序（0=起点 / 3=终点）
                     .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
             applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), light, li, ok -> {
                 if (!ok) {
@@ -1818,6 +1830,13 @@ public final class ModuleSettingsActivity extends Activity {
         }
         // t36②：渐变回 2 色——UI which 1（终点）必须映射到 Config 键序 3（END）。
         int keyIndex = which == 0 ? 0 : 3;
+        // U-20261115⑩：先清对应端点浅色副键再写常规键，防止旧副键遮蔽新渐变色。
+        applyLightConfig(ClockSecondsConfig.gradientLightKey(which == 0), null,
+                new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR)
+                        .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
+                        .putExtra(ClockSecondsConfig.EXTRA_COLOR,
+                                ClockSecondsConfig.GRADIENT_COLOR_AUTO),
+                lightOk -> { });
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, keyIndex)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
@@ -3406,6 +3425,14 @@ public final class ModuleSettingsActivity extends Activity {
             });
             return;
         }
+        // U-20261115⑩：先清该位浅色副键再写常规键——模块重读时新色不再被旧副键遮蔽
+        // （高级设置浅色页签仍可重新设置浅色专用色板）。
+        applyLightConfig(ClockSecondsConfig.digitLightKey(slot), null,
+                new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR)
+                        .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
+                        .putExtra(ClockSecondsConfig.EXTRA_COLOR,
+                                ClockSecondsConfig.DIGIT_COLOR_FOLLOW),
+                lightOk -> { });
         Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_COLOR)
                 .putExtra(ClockSecondsConfig.EXTRA_SLOT, slot)
                 .putExtra(ClockSecondsConfig.EXTRA_COLOR, color);
