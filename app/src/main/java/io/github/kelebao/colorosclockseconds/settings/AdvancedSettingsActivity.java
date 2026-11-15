@@ -618,10 +618,11 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     }
 
     /**
-     * 预览渐变端点（t36②：渐变回 2 色，只取 start/end；AUTO 按默认回落），
-     * 传给预览钟的数组即 2 端点——渲染天然走线性两色。
+     * 当前显示的渐变端点原始色（不做预览压暗）：浅色调色板激活时优先浅色副键，
+     * 否则读常规键；AUTO 回落首/末位数字生效色（与模块 gradientRawStart/End 同语义）。
+     * 保存预设与预览共用此判据，保证「保存的就是看到的」。
      */
-    private int[] previewStops() {
+    private int[] displayedGradientStops() {
         // U-20261115⑪：浅色调色板启用且当前浅色页签时，端点优先读浅色副键（与模块
         // gradientRawStart/End 同语义），否则读常规键——保证预览与状态栏渐变一致。
         boolean useLight = lightPaletteActive();   // U-20261115⑬：与模块同语义
@@ -633,12 +634,19 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 : ClockSecondsConfig.getGradientStopColor(getContentResolver(), 0);
         int c3 = l3 != null ? l3
                 : ClockSecondsConfig.getGradientStopColor(getContentResolver(), 3);
-        // U-20261115⑬：AUTO 回落与模块 gradientRawStart/End 同语义——解析首位/末位生效色
-        // （浅色调色板激活时含浅色副键），不再用固定硬编码色。
         int s0 = c0 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c0 : effectiveSlotPreviewColor(0);
         int s3 = c3 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c3 : effectiveSlotPreviewColor(
                 ClockSecondsConfig.DIGIT_COUNT - 1);
-        return new int[]{previewAdapt(s0), previewAdapt(s3)};
+        return new int[]{s0, s3};
+    }
+
+    /**
+     * 预览渐变端点（t36②：渐变回 2 色，只取 start/end；AUTO 按默认回落），
+     * 传给预览钟的数组即 2 端点——渲染天然走线性两色。
+     */
+    private int[] previewStops() {
+        int[] stops = displayedGradientStops();
+        return new int[]{previewAdapt(stops[0]), previewAdapt(stops[1])};
     }
 
     /** 预设条插值（ARGB 线性，仅 UI 用）。 */
@@ -1388,20 +1396,22 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         return arr;
     }
 
-    /** 保存当前暗色（或浅色）配色为新预设；渐变页保存时附带当前四色标。 */
+    /** 保存当前暗色（或浅色）配色为新预设；渐变页保存时附带当前两端色标。 */
     private void saveCurrentColors(boolean light) {
-        int[] colors = ClockSecondsConfig.getDigitColors(getContentResolver());
-        if (colors == null || colors.length < 2) {
+        // U-20261115⑮：保存「显示出来」的颜色——浅色调色板激活时读浅色副键、AUTO 回落，
+        // 否则读常规键；与预览钟 effectiveSlotPreviewColor/displayedGradientStops 同一判据。
+        int[] colors = new int[ClockSecondsConfig.DIGIT_COUNT];
+        for (int i = 0; i < colors.length; i++) {
+            colors[i] = effectiveSlotPreviewColor(i);
+        }
+        if (colors.length < 2) {
             Toast.makeText(this, R.string.settings_preset_saved, Toast.LENGTH_SHORT).show();
             return;
         }
         // 渐变页：保存当前起点/终点色标（t36② 两色；AUTO 原样存，应用时按 AUTO 语义回落）。
         int[] grad = null;
         if (mGradPage) {
-            grad = new int[GRAD_UI_STOPS];
-            for (int i = 0; i < grad.length; i++) {
-                grad[i] = ClockSecondsConfig.getGradientStopColor(getContentResolver(), stopKeyIndex(i));
-            }
+            grad = displayedGradientStops();
         }
         List<Preset>[] all = loadAllPresets();
         List<Preset> group = light ? all[1] : all[0];
@@ -1520,7 +1530,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             // AUTO 色标按首尾插值回落（-1 直接 setColor 会变白/透明）。
             int[] renderColors = p.grad != null ? renderGradColors(p.grad)
                     : renderDigitColors(p.colors);
-            box.addView(presetBarView(renderColors));
+            box.addView(presetBarView(renderColors, p.grad != null));
             LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
                     dp(48), dp(30));
             blp.leftMargin = dp(4);
@@ -1619,16 +1629,24 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     }
 
     /**
-     * t18：预设等分色条——单 View 自绘（onSizeChanged 后按实际宽等分 n 段纯色，
-     * 必定铺满整个胶囊；圆角裁切由外层 box.setClipToOutline 完成）。
+     * t18：预设等分色条——单 View 自绘（按实际宽等分 n 段纯色，必定铺满整个胶囊；
+     * 圆角裁切由外层 box.setClipToOutline 完成）。
      * 替代旧多 swatch 方案（真机只渲染首段）。
+     * U-20261115⑮：渐变预设（grad!=null）改为横向 LinearGradient 平滑渐变，不再画两段硬色块。
      */
-    private View presetBarView(final int[] colors) {
+    private View presetBarView(final int[] colors, final boolean gradient) {
         View bar = new View(this) {
             @Override protected void onDraw(Canvas canvas) {
                 super.onDraw(canvas);
                 Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
                 p.setStyle(Paint.Style.FILL);
+                if (gradient && colors.length >= 2) {
+                    p.setShader(new LinearGradient(0, 0, getWidth(), 0, colors, null,
+                            Shader.TileMode.CLAMP));
+                    canvas.drawRect(0, 0, getWidth(), getHeight(), p);
+                    p.setShader(null);
+                    return;
+                }
                 int n = colors.length;
                 float seg = getWidth() / (float) n;
                 for (int i = 0; i < n; i++) {
@@ -1790,7 +1808,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         // f12-2 重修（t18）：与横滑 chip 同样改单 View 自绘等分色条，保证满宽铺满。
         int[] renderColors = p.grad != null ? renderGradColors(p.grad)
                 : renderDigitColors(p.colors);
-        box.addView(presetBarView(renderColors));
+        box.addView(presetBarView(renderColors, p.grad != null));
         GradientDrawable bb = new GradientDrawable();
         bb.setCornerRadius(dp(11));
         bb.setStroke(dp(1.5f), accent());
