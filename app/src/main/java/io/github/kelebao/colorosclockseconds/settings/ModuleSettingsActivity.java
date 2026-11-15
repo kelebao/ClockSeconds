@@ -5745,26 +5745,11 @@ public final class ModuleSettingsActivity extends Activity {
             prev.setPadding(0, dp(10), 0, dp(6));
             pick.addView(prev, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            // U-20261115⑯：预设清单 = 内置渐变预设 + 高级设置存的用户预设（深浅两组、单色/渐变都读），
+            // U-20261115⑯：预设清单 = 高级设置存的用户预设（深浅两组、单色/渐变都读），
             // 按深色/浅色页签切换显示，单色与渐变分组列出。
+            // U-20261115⑲④：不再混入内置渐变预设与首页旧自定义渐变预设，只列「我的预设颜色」。
             final java.util.List<ClockTask.Scheme> entries = new ArrayList<>();
             final java.util.List<String> names = new ArrayList<>();
-            for (int[] p0 : GRADIENT_PRESETS) {
-                ClockTask.Scheme g = new ClockTask.Scheme();
-                g.gradient = true;
-                g.gradStart = p0[0];
-                g.gradEnd = p0[1];
-                entries.add(g);
-                names.add("");
-            }
-            for (int[] cp0 : loadCustomGradPresets()) {
-                ClockTask.Scheme g = new ClockTask.Scheme();
-                g.gradient = true;
-                g.gradStart = cp0[0];
-                g.gradEnd = cp0[1];
-                entries.add(g);
-                names.add("");
-            }
             java.util.List<AdvancedSettingsActivity.Preset>[] saved =
                     AdvancedSettingsActivity.loadPresets(this);
             for (AdvancedSettingsActivity.Preset p : saved[1]) {
@@ -5806,8 +5791,10 @@ public final class ModuleSettingsActivity extends Activity {
                         if (pv.gradient == one.gradient
                                 && pv.light == one.light
                                 && pv.dir == one.dir
-                                && pv.gradStart == one.gradStart
-                                && pv.gradEnd == one.gradEnd) {
+                                && (one.gradient
+                                        ? (pv.gradStart == one.gradStart
+                                            && pv.gradEnd == one.gradEnd)
+                                        : java.util.Arrays.equals(pv.colors, one.colors))) {
                             found = true;
                             break;
                         }
@@ -5855,12 +5842,16 @@ public final class ModuleSettingsActivity extends Activity {
             tabRow.addView(tabDark, tlp);
             tabRow.addView(tabLight, tlp);
             final Runnable applyTabStyle = () -> {
-                int on = 0xFFFFFFFF;
+                // U-20261115⑲③：当前页签用 accent 紫实底 + 白字，未选中保持弱化灰底。
                 int off = night ? 0xFFC3C4EC : 0xFF666666;
-                tabDark.setTextColor(pickLight[0] == 0 ? on : off);
-                tabLight.setTextColor(pickLight[0] == 1 ? on : off);
-                tabDark.getBackground().setAlpha(pickLight[0] == 0 ? 255 : 120);
-                tabLight.getBackground().setAlpha(pickLight[0] == 1 ? 255 : 120);
+                int dim = night ? 0x22FFFFFF : 0x11000000;
+                boolean darkOn = pickLight[0] == 0;
+                ((GradientDrawable) tabDark.getBackground().mutate())
+                        .setColor(darkOn ? accent() : dim);
+                ((GradientDrawable) tabLight.getBackground().mutate())
+                        .setColor(darkOn ? dim : accent());
+                tabDark.setTextColor(darkOn ? 0xFFFFFFFF : off);
+                tabLight.setTextColor(darkOn ? off : 0xFFFFFFFF);
             };
             tabDark.setOnClickListener(v -> {
                 pickLight[0] = 0;
@@ -5896,14 +5887,14 @@ public final class ModuleSettingsActivity extends Activity {
                 prev.setText(psb);
             };
             final Runnable updateBadges = () -> {
+                // U-20261115⑲②：徽标按各自单元格的 entries 下标（setTag）判定，
+                // 修复此前把 entries 下标当徽标序号导致的勾选错位/丢显；文案固定 ✓。
                 for (TextView b : badges) {
-                    b.setVisibility(View.GONE);
-                }
-                for (int idx : selSet) {
-                    if (idx < badges.size()) {
-                        TextView b = badges.get(idx);
-                        b.setVisibility(View.VISIBLE);
-                        b.setText(String.valueOf(selSet.size()));
+                    Integer own = (Integer) b.getTag();
+                    boolean on = own != null && selSet.contains(own);
+                    b.setVisibility(on ? View.VISIBLE : View.GONE);
+                    if (on) {
+                        b.setText("✓");
                     }
                 }
             };
@@ -5926,8 +5917,10 @@ public final class ModuleSettingsActivity extends Activity {
                         for (int idx : visIdx) {
                             ClockTask.Scheme pv = entries.get(idx);
                             if (pv.gradient == one.gradient && pv.dir == one.dir
-                                    && pv.gradStart == one.gradStart
-                                    && pv.gradEnd == one.gradEnd) {
+                                    && (one.gradient
+                                        ? (pv.gradStart == one.gradStart
+                                            && pv.gradEnd == one.gradEnd)
+                                        : java.util.Arrays.equals(pv.colors, one.colors))) {
                                 selSet.add(idx);
                                 if (previewIdx[0] < 0) {
                                     previewIdx[0] = idx;
@@ -6247,6 +6240,10 @@ public final class ModuleSettingsActivity extends Activity {
                 new int[]{start, end});
         cg.setCornerRadius(dp(12));
         capsule.setBackground(cg);
+        if (selSet.contains(idx)) {
+            // U-20261115⑲②：选中态胶囊加 accent 描边，比仅靠角标更明显。
+            cg.setStroke(dp(2), accent());
+        }
         box.addView(capsule, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
         final TextView badge = new TextView(this);
@@ -6261,6 +6258,7 @@ public final class ModuleSettingsActivity extends Activity {
         FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(18), dp(18));
         blp.gravity = Gravity.BOTTOM | Gravity.END;
         blp.setMargins(0, 0, dp(6), dp(4));
+        badge.setTag(idx);
         badge.setVisibility(selSet.contains(idx) ? View.VISIBLE : View.GONE);
         box.addView(badge, blp);
         badges.add(badge);
@@ -6279,8 +6277,18 @@ public final class ModuleSettingsActivity extends Activity {
             cell.addView(nm, nlp);
         }
         cell.setOnClickListener(v -> {
+            boolean nowSel;
             if (!selSet.remove(idx)) {
                 selSet.add(idx);
+                nowSel = true;
+            } else {
+                nowSel = false;
+            }
+            // U-20261115⑲②：选中态描边即时跟随点击。
+            if (nowSel) {
+                cg.setStroke(dp(2), accent());
+            } else {
+                cg.setStroke(0, 0);
             }
             if (selSet.contains(idx)) {
                 previewIdx[0] = idx;
