@@ -2331,10 +2331,14 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             ((HsvBarDrawable) mHueSlider.getProgressDrawable()).notifyGradientChanged();
         }
         if (mSatSlider != null) {
-            ((HsvBarDrawable) mSatSlider.getProgressDrawable()).setContext(hue, sat, val);
+            HsvBarDrawable satBar = (HsvBarDrawable) mSatSlider.getProgressDrawable();
+            satBar.setContext(hue, sat, val);
+            satBar.notifyGradientChanged();
         }
         if (mValSlider != null) {
-            ((HsvBarDrawable) mValSlider.getProgressDrawable()).setContext(hue, sat, val);
+            HsvBarDrawable valBar = (HsvBarDrawable) mValSlider.getProgressDrawable();
+            valBar.setContext(hue, sat, val);
+            valBar.notifyGradientChanged();
         }
     }
 
