@@ -536,7 +536,6 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             mPreviewClock.clearGradient();
             android.text.SpannableStringBuilder sb =
                     new android.text.SpannableStringBuilder(t);
-            int[] colors = ClockSecondsConfig.getDigitColors(getContentResolver());
             for (int i = 0; i < sb.length(); i++) {
                 if (sb.charAt(i) == ':' || sb.charAt(i) == '：') {
                     sb.setSpan(new io.github.kelebao.colorosclockseconds.ColonLiftSpan(),
@@ -547,15 +546,9 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 if (slot < 0) {
                     continue;
                 }
-                int color = colors != null && colors.length > slot
-                        ? colors[slot] : ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
-                if (mAdaptiveColor && mLightMode) {
-                    Integer light = ClockSecondsConfig.getDigitLightColor(
-                            getContentResolver(), slot);
-                    if (light != null) {
-                        color = light;
-                    }
-                }
+                // U-20261115⑬：生效色解析抽到 effectiveSlotPreviewColor（与模块 effectiveSlotColor
+                // 同语义：epoch+背景亮度门、FOLLOW 位不读副键），单色/渐变两个预览共用。
+                int color = effectiveSlotPreviewColor(slot);
                 if (!ClockSecondsConfig.isHourColorEnabled(getContentResolver())
                         || color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
                     continue;
@@ -579,10 +572,46 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
     }
 
-    /** 预览用系统文字色：无采样时按当前明暗页签给一个合理默认。 */
+    /**
+     * 预览钟某一位的生效色（U-20261115⑬）：模块 effectiveSlotColor 同语义——常规键 FOLLOW 时
+     * 跟随系统文字色；浅色调色板激活且常规键非 FOLLOW 时优先浅色副键，未设回落常规键。
+     */
+    private int effectiveSlotPreviewColor(int slot) {
+        int[] colors = ClockSecondsConfig.getDigitColors(getContentResolver());
+        int normal = colors != null && colors.length > slot
+                ? colors[slot] : ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+        if (lightPaletteActive() && normal != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            Integer light = ClockSecondsConfig.getDigitLightColor(getContentResolver(), slot);
+            if (light != null) {
+                return light;
+            }
+        }
+        return normal;
+    }
+
+    /**
+     * 浅色调色板当前是否参与显示（U-20261115⑬）：与模块 effectiveSlotColor/gradientRawStart/End
+     * 完全同语义——epoch 已置位 && 自适应开 && 状态栏文字亮度 < 0.5（浅色背景）。
+     * 页签（mLightMode）只决定「编辑哪一组键」，不决定「显示哪一组键」；背景明暗才是显示判据，
+     * 预览与状态栏共用 sys_text_color 这唯一信号，保证两边永远一致。
+     */
+    private boolean lightPaletteActive() {
+        if (!mAdaptiveColor
+                || !ClockSecondsConfig.isLightPaletteUsed(getContentResolver())) {
+            return false;
+        }
+        int sys = ClockSecondsConfig.getSystemTextColor(getContentResolver(), 0xFFEAE6F8);
+        return android.graphics.Color.luminance(sys) < 0.5f;
+    }
+
+    /**
+     * 预览用系统文字色（U-20261115⑫）：模块每秒把状态栏真实文字色写进 sys_text_color，
+     * 这里直接复用同一样本——预览与状态栏共用同一判据。无采样时两个页签都用浅色兜底
+     * （亮度 > 0.5 → 不触发压暗），避免浅色页签凭空把接近白的颜色压暗而与状态栏对不上。
+     */
     private int previewAdapt(int color) {
         int sys = ClockSecondsConfig.getSystemTextColor(getContentResolver(),
-                mLightMode ? 0xFF1A1526 : 0xFFEAE6F8);
+                0xFFEAE6F8);
         return ClockSecondsConfig.adaptColorForBackground(color, sys);
     }
 
@@ -591,10 +620,22 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
      * 传给预览钟的数组即 2 端点——渲染天然走线性两色。
      */
     private int[] previewStops() {
-        int c0 = ClockSecondsConfig.getGradientStopColor(getContentResolver(), 0);
-        int c3 = ClockSecondsConfig.getGradientStopColor(getContentResolver(), 3);
-        int s0 = c0 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c0 : 0xFFF44336;
-        int s3 = c3 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c3 : 0xFF7C5CE0;
+        // U-20261115⑪：浅色调色板启用且当前浅色页签时，端点优先读浅色副键（与模块
+        // gradientRawStart/End 同语义），否则读常规键——保证预览与状态栏渐变一致。
+        boolean useLight = lightPaletteActive();   // U-20261115⑬：与模块同语义
+        Integer l0 = useLight
+                ? ClockSecondsConfig.getGradientStopLightColor(getContentResolver(), 0) : null;
+        Integer l3 = useLight
+                ? ClockSecondsConfig.getGradientStopLightColor(getContentResolver(), 3) : null;
+        int c0 = l0 != null ? l0
+                : ClockSecondsConfig.getGradientStopColor(getContentResolver(), 0);
+        int c3 = l3 != null ? l3
+                : ClockSecondsConfig.getGradientStopColor(getContentResolver(), 3);
+        // U-20261115⑬：AUTO 回落与模块 gradientRawStart/End 同语义——解析首位/末位生效色
+        // （浅色调色板激活时含浅色副键），不再用固定硬编码色。
+        int s0 = c0 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c0 : effectiveSlotPreviewColor(0);
+        int s3 = c3 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c3 : effectiveSlotPreviewColor(
+                ClockSecondsConfig.DIGIT_COUNT - 1);
         return new int[]{previewAdapt(s0), previewAdapt(s3)};
     }
 

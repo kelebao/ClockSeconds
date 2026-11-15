@@ -1754,7 +1754,7 @@ public final class ModuleSettingsActivity extends Activity {
     /** 渐变端点色：用户自定义优先，未自定义时回落到首位 / 末位数字的颜色。
      *  （自适应浅色页：端点浅色副键优先，未设副键再走常规解析。） */
     private int gradientTargetColor(int which) {
-        if (mAdaptiveColor && mLightMode) {
+        if (lightPaletteActive()) {   // U-20261115⑬：预览显示与模块同语义（epoch+背景亮度），页签只决定编辑对象
             Integer light = which == 0 ? mCfgGradStartLight : mCfgGradEndLight;
             if (light != null) {
                 return light;
@@ -1764,10 +1764,10 @@ public final class ModuleSettingsActivity extends Activity {
         if (stored != ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
             return stored;
         }
-        if (mCfgDigitColors == null || mCfgDigitColors.length < ClockSecondsConfig.DIGIT_COUNT) {
-            mCfgDigitColors = ClockSecondsConfig.getDigitColors(getContentResolver());
-        }
-        return mCfgDigitColors[which == 0 ? 0 : mCfgDigitColors.length - 1];
+        // U-20261115⑬：AUTO 回落与模块 gradientRawStart/End 同语义——走 slotColor（浅色副键激活时
+        // 会解析到副键值），不直接读常规键。
+        return which == 0 ? slotColor(0)
+                : slotColor(ClockSecondsConfig.DIGIT_COUNT - 1);
     }
 
     // ==================================================================
@@ -3348,6 +3348,20 @@ public final class ModuleSettingsActivity extends Activity {
         }
         return ClockSecondsConfig.adaptColorForBackground(color, sys);
     }
+    /**
+     * 浅色调色板当前是否参与显示（U-20261115⑬）：与模块 effectiveSlotColor/gradientRawStart/End
+     * 完全同语义——epoch 已置位 && 自适应开 && 状态栏文字亮度 < 0.5（浅色背景）。
+     * 首页页签概念不存在，但历史 mLightMode 恒 false 导致预览永远读常规键；浅色背景 + epoch
+     * 置位时模块会走浅色副键，预览必须同样走副键才能与状态栏一致。
+     */
+    private boolean lightPaletteActive() {
+        if (!mAdaptiveColor
+                || !ClockSecondsConfig.isLightPaletteUsed(getContentResolver())) {
+            return false;
+        }
+        int sys = ClockSecondsConfig.getSystemTextColor(getContentResolver(), text());
+        return android.graphics.Color.luminance(sys) < 0.5f;
+    }
 
 
         // vc240：brightenForDark 已删除 —— 预览不再自己提亮，改为完全复刻状态栏配色。
@@ -3537,17 +3551,19 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 某一位当前的颜色（-1 = 跟随系统）。自适应浅色页优先读浅色副键，未设回落常规键。 */
     private int slotColor(int slot) {
-        if (mAdaptiveColor && mLightMode) {
+        // U-20261115⑬：预览显示与模块同语义（epoch+背景亮度+非FOLLOW 才走浅色副键），页签只决定编辑对象。
+        if (mCfgDigitColors == null || slot < 0 || slot >= mCfgDigitColors.length) {
+            return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+        }
+        int normal = mCfgDigitColors[slot];
+        if (lightPaletteActive() && normal != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
             Integer[] light = mCfgDigitLightColors;
             Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
             if (c != null) {
                 return c;
             }
         }
-        if (mCfgDigitColors == null || slot < 0 || slot >= mCfgDigitColors.length) {
-            return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
-        }
-        return mCfgDigitColors[slot];
+        return normal;
     }
 
     /** 位名（时十/时个/分十/分个/秒十/秒个），随语言走 settings_digit_slots 的逗号分隔列表。 */
