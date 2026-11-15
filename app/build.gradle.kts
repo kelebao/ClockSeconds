@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.kelebao.colorosclockseconds"
         minSdk = 29
         targetSdk = 35
-        versionCode = 326
-        versionName = "1.2.0-test.20261113-0115"
+        versionCode = 327
+        versionName = "1.2.0-test.20261115-0936"
     }
 
     signingConfigs {
@@ -44,14 +44,14 @@ android {
             }
         }
         debug {
-            // 调试期用生产 key 签名，便于直接覆盖安�?v1.0.4 �?release 包抓日志（无需卸载）�?
+            // 调试期用生产 key 签名，便于直接覆盖安�?v1.0.4 �?release 包抓日志（无需卸载）�?
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
     }
 
-    // 启用 BuildConfig 生成（AGP 8.x 默认关闭），�?release 构建�?BuildConfig.DEBUG 门控排查日志�?
+    // 启用 BuildConfig 生成（AGP 8.x 默认关闭），�?release 构建�?BuildConfig.DEBUG 门控排查日志�?
 
     flavorDimensions += "xposedapi"
     productFlavors {
