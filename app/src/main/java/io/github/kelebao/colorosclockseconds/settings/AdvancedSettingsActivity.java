@@ -549,7 +549,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                     continue;
                 }
                 // U-20261115⑬：生效色解析抽到 effectiveSlotPreviewColor（与模块 effectiveSlotColor
-                // 同语义：epoch+背景亮度门、FOLLOW 位不读副键），单色/渐变两个预览共用。
+                // 同语义：epoch+系统模式门、副键优先；副键「跟随系统」位预览按页面文字色渲染），单色/渐变两个预览共用。
                 int color = effectiveSlotPreviewColor(slot);
                 if (!ClockSecondsConfig.isHourColorEnabled(getContentResolver())
                         || color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
@@ -575,14 +575,16 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     }
 
     /**
-     * 预览钟某一位的生效色（U-20261115⑬）：模块 effectiveSlotColor 同语义——常规键 FOLLOW 时
-     * 跟随系统文字色；浅色调色板激活且常规键非 FOLLOW 时优先浅色副键，未设回落常规键。
+     * 预览钟某一位的生效色（U-20261115⑬ / U-20261116a）：模块 effectiveSlotColor 同语义——
+     * 浅色调色板激活时优先浅色副键（常规键 FOLLOW 不再挡副键）；副键未设回落常规键。
+     * 副键为「跟随系统」时预览回落页面文字色（预览无法采样真实壁纸，见 span 处 continue）。
      */
     private int effectiveSlotPreviewColor(int slot) {
         int[] colors = ClockSecondsConfig.getDigitColors(getContentResolver());
         int normal = colors != null && colors.length > slot
                 ? colors[slot] : ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
-        if (lightPaletteActive() && normal != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+        // U-20261116a：常规键 FOLLOW(0) 不再挡住浅色副键——浅色调色盘的编辑要在预览与状态栏一致生效。
+        if (lightPaletteActive()) {
             Integer light = ClockSecondsConfig.getDigitLightColor(getContentResolver(), slot);
             if (light != null) {
                 return light;
