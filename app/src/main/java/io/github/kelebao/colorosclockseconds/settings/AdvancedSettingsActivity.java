@@ -96,6 +96,8 @@ public class AdvancedSettingsActivity extends Activity {
     public static final String PAGE_GRAD = "grad";
     /** 全量预设管理页（t5）：「更多 ›」胶囊进入，3 列网格 + 重命名/删除。 */
     public static final String PAGE_ALL = "all";
+    /** U-20261115⑰b：全量页沿用来源页（单色/渐变）的预设类型过滤语义。 */
+    public static final String PAGE_ALL_GRAD = "all_grad";
 
     // t22：暗/浅页签联动页面主题切换——recreate 前用 instance state 带走编辑与渲染态。
     // t44：明暗单一来源 = KEY_EDIT_LIGHT（mLightMode），night 恒等 !mLightMode（F23-1 不变量）不再单独存键；
@@ -144,8 +146,8 @@ public class AdvancedSettingsActivity extends Activity {
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         // 入口页参数（t3）：首页「单色/渐变」两行入口分别进入对应高级页
         String page = getIntent() != null ? getIntent().getStringExtra(EXTRA_PAGE) : null;
-        mGradPage = PAGE_GRAD.equals(page);
-        mAllPage = PAGE_ALL.equals(page);
+        mAllPage = PAGE_ALL.equals(page) || PAGE_ALL_GRAD.equals(page);
+        mGradPage = PAGE_GRAD.equals(page) || PAGE_ALL_GRAD.equals(page);
         mGradTarget = mGradPage ? 0 : -1;
         setTitle(mAllPage ? R.string.settings_preset_all_title
                 : mGradPage ? R.string.settings_advanced_grad_title
@@ -1807,8 +1809,9 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     // ---------------- ③b 全量预设管理页（t5） ----------------
 
     private void openAllPresets() {
+        // U-20261115⑰b：按来源页（单色/渐变）传类型，全量页沿用同一过滤语义。
         Intent i = new Intent(this, AdvancedSettingsActivity.class)
-                .putExtra(EXTRA_PAGE, PAGE_ALL);
+                .putExtra(EXTRA_PAGE, mGradPage ? PAGE_ALL_GRAD : PAGE_ALL);
         startActivity(i);
     }
 
@@ -1828,16 +1831,18 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         mAllWrap.removeAllViews();
         List<Preset>[] all = loadAllPresets();
 
-        mAllWrap.addView(presetGroupLabel(all[0], R.string.settings_preset_group_dark, true));
+        // U-20261115⑰b：全量页同样只显示当前页类型的预设（单色页只显单色、渐变页只显渐变）。
+        mAllWrap.addView(presetGroupLabel(filteredPresets(all[0]), R.string.settings_preset_group_dark, true));
         mAllWrap.addView(presetGrid(all[0], false));
         mAllWrap.addView(saveDashedButton(false));
 
-        mAllWrap.addView(presetGroupLabel(all[1], R.string.settings_preset_group_light, false));
+        mAllWrap.addView(presetGroupLabel(filteredPresets(all[1]), R.string.settings_preset_group_light, false));
         mAllWrap.addView(presetGrid(all[1], true));
         mAllWrap.addView(saveDashedButton(true));
     }
 
-    /** 一组预设的 3 列网格；列表为空时显示占位文案。 */
+    /** 一组预设的 3 列网格；U-20261115⑰b：只显示与当前页同类型的预设，倒序展示（最新在前）；
+     *  索引经 idxs 列表映射回全量真实索引，长按重命名/删除定位不受影响；无匹配时显示占位文案。 */
     private LinearLayout presetGrid(List<Preset> list, final boolean light) {
         LinearLayout grid = new LinearLayout(this);
         grid.setOrientation(LinearLayout.VERTICAL);
@@ -1845,7 +1850,14 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         glp.bottomMargin = dp(14);
         grid.setLayoutParams(glp);
-        if (list.isEmpty()) {
+        // U-20261115⑰b：先按当前页类型过滤并倒序收集全量真实索引（最新保存的排第一格）。
+        List<Integer> idxs = new ArrayList<>();
+        for (int i = list.size() - 1; i >= 0; i--) {
+            if ((list.get(i).grad != null) == mGradPage) {
+                idxs.add(i);
+            }
+        }
+        if (idxs.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText(R.string.settings_preset_empty);
             empty.setTextSize(12f);
@@ -1854,8 +1866,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             grid.addView(empty);
             return grid;
         }
-        int rows = (list.size() + 2) / 3;
-        // U-20261115⑰：倒序展示——最新保存的排第一格；idx 映射回全量列表真实索引（长按菜单按索引定位依赖）。
+        int rows = (idxs.size() + 2) / 3;
         for (int r = 0; r < rows; r++) {
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
@@ -1865,8 +1876,8 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             row.setLayoutParams(rl);
             for (int c = 0; c < 3; c++) {
                 int disp = r * 3 + c;
-                if (disp < list.size()) {
-                    int idx = list.size() - 1 - disp;
+                if (disp < idxs.size()) {
+                    int idx = idxs.get(disp);
                     final Preset p = list.get(idx);
                     row.addView(presetGridCell(p, light, idx));
                 } else {
