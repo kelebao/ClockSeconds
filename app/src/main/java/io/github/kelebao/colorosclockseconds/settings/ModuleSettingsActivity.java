@@ -6227,25 +6227,61 @@ public final class ModuleSettingsActivity extends Activity {
         }
         final LinearLayout rowRef = curRow;
         ClockTask.Scheme pr = entries.get(idx);
-        final int start = pr.gradient ? pr.gradStart
-                : (pr.colors == null ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW : pr.colors[0]);
-        final int end = pr.gradient ? pr.gradEnd
-                : (pr.colors == null ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW
-                        : pr.colors[pr.colors.length - 1]);
         LinearLayout cell = new LinearLayout(this);
         cell.setOrientation(LinearLayout.VERTICAL);
         FrameLayout box = new FrameLayout(this);
-        View capsule = new View(this);
-        GradientDrawable cg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{start, end});
-        cg.setCornerRadius(dp(12));
-        capsule.setBackground(cg);
+        // U-20261115⑳：单色预设胶囊=六位等分纯色条（FOLLOW 位回落首位实色），不再画成
+        // colors[0]→colors[last] 的双色渐变条（用户反馈「单色预设显示的是渐变的」）；
+        // 渐变预设维持左→右渐变胶囊；圆角由外层 box 裁切，选中描边统一画在 box 上。
+        if (pr.gradient) {
+            View capsule = new View(this);
+            GradientDrawable cg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                    new int[]{pr.gradStart, pr.gradEnd});
+            cg.setCornerRadius(dp(12));
+            capsule.setBackground(cg);
+            box.addView(capsule, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
+        } else {
+            final int[] monoColors = pr.colors == null
+                    ? new int[]{ClockSecondsConfig.DIGIT_COLOR_FOLLOW,
+                        ClockSecondsConfig.DIGIT_COLOR_FOLLOW, ClockSecondsConfig.DIGIT_COLOR_FOLLOW,
+                        ClockSecondsConfig.DIGIT_COLOR_FOLLOW, ClockSecondsConfig.DIGIT_COLOR_FOLLOW,
+                        ClockSecondsConfig.DIGIT_COLOR_FOLLOW}
+                    : pr.colors;
+            View capsule = new View(this) {
+                @Override protected void onDraw(Canvas canvas) {
+                    super.onDraw(canvas);
+                    int first = 0xFFF44336;
+                    for (int c : monoColors) {
+                        if (c != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                            first = c;
+                            break;
+                        }
+                    }
+                    Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    p.setStyle(Paint.Style.FILL);
+                    int n = monoColors.length;
+                    float seg = getWidth() / (float) n;
+                    for (int i = 0; i < n; i++) {
+                        p.setColor(monoColors[i] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                                ? first : monoColors[i]);
+                        canvas.drawRect(i * seg, 0, (i + 1) * seg + (i == n - 1 ? 1 : 0),
+                                getHeight(), p);
+                    }
+                }
+            };
+            box.addView(capsule, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
+        }
+        GradientDrawable cg2 = new GradientDrawable();
+        cg2.setCornerRadius(dp(12));
+        cg2.setColor(0x00000000);
         if (selSet.contains(idx)) {
             // U-20261115⑲②：选中态胶囊加 accent 描边，比仅靠角标更明显。
-            cg.setStroke(dp(2), accent());
+            cg2.setStroke(dp(2), accent());
         }
-        box.addView(capsule, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
+        box.setBackground(cg2);
+        box.setClipToOutline(true);   // 圆角裁切内部色条（单色 6 段为直角矩形）
         final TextView badge = new TextView(this);
         badge.setText("✓");
         badge.setTextSize(11f);
@@ -6286,9 +6322,9 @@ public final class ModuleSettingsActivity extends Activity {
             }
             // U-20261115⑲②：选中态描边即时跟随点击。
             if (nowSel) {
-                cg.setStroke(dp(2), accent());
+                cg2.setStroke(dp(2), accent());
             } else {
-                cg.setStroke(0, 0);
+                cg2.setStroke(0, 0);
             }
             if (selSet.contains(idx)) {
                 previewIdx[0] = idx;
