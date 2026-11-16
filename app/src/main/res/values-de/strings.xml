@@ -118,15 +118,8 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_gradient_dir_bltr">Unten links nach oben rechts</string>
     <string name="settings_gradient_dir_radial">Radial</string>
     <string name="settings_gradient_dir_sweep">Rotation</string>
-    <string name="settings_gradient_dir_mesh_radial">Mesh Radial</string>
     <string name="settings_gradient_dir_mesh_quadrant">Mesh Quadrant</string>
-    <string name="settings_gradient_dir_conic">Konisch</string>
-    <string name="settings_gradient_dir_liquid">Liquid</string>
-    <string name="settings_gradient_dir_chromatic">Chromatisch</string>
-    <string name="settings_gradient_dir_holographic">Holografisch</string>
     <string name="settings_gradient_dir_grain">Körnung</string>
-    <string name="settings_gradient_dir_gooey">Gooey</string>
-    <string name="settings_gradient_dir_glow">Glow</string>
     <string name="settings_digit_tab_digit">Einfarbig</string>
     <string name="settings_gradient_start">Startfarbe</string>
     <string name="settings_gradient_end">Endfarbe</string>

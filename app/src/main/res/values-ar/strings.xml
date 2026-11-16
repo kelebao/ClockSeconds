@@ -147,15 +147,8 @@
     <string name="settings_gradient_dir_bltr">من الأسفل يسارًا إلى الأعلى يمينًا</string>
     <string name="settings_gradient_dir_radial">شعاعي</string>
     <string name="settings_gradient_dir_sweep">دوراني</string>
-    <string name="settings_gradient_dir_mesh_radial">توهين نقطي</string>
     <string name="settings_gradient_dir_mesh_quadrant">توهين ربعي</string>
-    <string name="settings_gradient_dir_conic">مخروطي</string>
-    <string name="settings_gradient_dir_liquid">سائل</string>
-    <string name="settings_gradient_dir_chromatic">تشابه لوني</string>
-    <string name="settings_gradient_dir_holographic">شعاعي</string>
     <string name="settings_gradient_dir_grain">حبيبي</string>
-    <string name="settings_gradient_dir_gooey">انصهار</string>
-    <string name="settings_gradient_dir_glow">توهج</string>
     <string name="settings_digit_tab_digit">لون واحد</string>
     <string name="settings_gradient_start">لون البداية</string>
     <string name="settings_gradient_end">لون النهاية</string>

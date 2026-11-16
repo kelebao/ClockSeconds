@@ -147,15 +147,8 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_gradient_dir_bltr">Bas-gauche vers haut-droite</string>
     <string name="settings_gradient_dir_radial">Radial</string>
     <string name="settings_gradient_dir_sweep">Balayage</string>
-    <string name="settings_gradient_dir_mesh_radial">Mesh radial</string>
     <string name="settings_gradient_dir_mesh_quadrant">Mesh quadrant</string>
-    <string name="settings_gradient_dir_conic">Conique</string>
-    <string name="settings_gradient_dir_liquid">Liquide</string>
-    <string name="settings_gradient_dir_chromatic">Chromatique</string>
-    <string name="settings_gradient_dir_holographic">Holographique</string>
     <string name="settings_gradient_dir_grain">Grain</string>
-    <string name="settings_gradient_dir_gooey">Gooey</string>
-    <string name="settings_gradient_dir_glow">Lueur</string>
     <string name="settings_digit_tab_digit">Uni</string>
     <string name="settings_gradient_start">Couleur de départ</string>
     <string name="settings_gradient_end">Couleur de fin</string>

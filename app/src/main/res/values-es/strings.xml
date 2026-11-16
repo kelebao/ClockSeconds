@@ -147,15 +147,8 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_gradient_dir_bltr">Abajo-izquierda a arriba-derecha</string>
     <string name="settings_gradient_dir_radial">Radial</string>
     <string name="settings_gradient_dir_sweep">Barrido</string>
-    <string name="settings_gradient_dir_mesh_radial">Mesh radial</string>
     <string name="settings_gradient_dir_mesh_quadrant">Mesh cuadrante</string>
-    <string name="settings_gradient_dir_conic">Cónico</string>
-    <string name="settings_gradient_dir_liquid">Líquido</string>
-    <string name="settings_gradient_dir_chromatic">Cromático</string>
-    <string name="settings_gradient_dir_holographic">Holográfico</string>
     <string name="settings_gradient_dir_grain">Grano</string>
-    <string name="settings_gradient_dir_gooey">Gooey</string>
-    <string name="settings_gradient_dir_glow">Brillo</string>
     <string name="settings_digit_tab_digit">Un solo color</string>
     <string name="settings_gradient_start">Color inicial</string>
     <string name="settings_gradient_end">Color final</string>

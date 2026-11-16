@@ -57,7 +57,7 @@ public final class GradientShaderFactory {
             final float height = Math.max(1f, bottom - top);
             final float cy = top + height / 2f;
             final float cx = x0 + band / 2f;
-            if (dir >= ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL) {
+            if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_MESH_QUADRANT || dir == ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN) {
                 return buildEffect(cols, dir, x0, band, top, bottom, height, cy, cx, c0, c1);
             }
             final float[] positions = cols.length > 2 ? uniformPositions(cols.length) : null;
@@ -106,22 +106,13 @@ public final class GradientShaderFactory {
         }
     }
 
-    // ---------------- 10..18 特效方向 ----------------
+    // ---------------- 特效方向（U-20261118②：仅保留 象限光晕/颗粒噪点，其余已删，旧 dir 值回落二色线性） ----------------
 
     private static Shader buildEffect(int[] cols, int dir, float x0, float band,
                                       float top, float bottom, float height,
                                       float cy, float cx, int c0, int c1) {
         final Shader base = baseLinear(c0, c1, x0, band, top, bottom);
         switch (dir) {
-            case ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL: {
-                // 10 径向光晕 Mesh：线性底 + 中心径向光晕（ADD 提亮）
-                final int glow = towardWhite(mix(c0, c1, 0.5f), 0.45f);
-                final Shader halo = new RadialGradient(cx, cy,
-                        Math.max(band, height) * 0.75f,
-                        new int[]{withAlpha(glow, 0xB3), withAlpha(glow, 0x00)},
-                        null, Shader.TileMode.CLAMP);
-                return new ComposeShader(base, halo, PorterDuff.Mode.ADD);
-            }
             case ClockSecondsConfig.GRADIENT_DIRECTION_MESH_QUADRANT: {
                 // 11 象限光晕 Mesh：线性底 + 左上/右下两团对角光晕（ADD）
                 final int gA = towardWhite(c0, 0.35f);
@@ -136,79 +127,12 @@ public final class GradientShaderFactory {
                 final Shader glows = new ComposeShader(g1, g2, PorterDuff.Mode.ADD);
                 return new ComposeShader(base, glows, PorterDuff.Mode.ADD);
             }
-            case ClockSecondsConfig.GRADIENT_DIRECTION_CONIC:
-                // 12 锥形：绕中心旋转一圈的两色 SweepGradient
-                return new SweepGradient(cx, cy, new int[]{c0, c1}, null);
-            case ClockSecondsConfig.GRADIENT_DIRECTION_LIQUID: {
-                // 13 液态流光：线性底 + 两道对角流光（ADD），静态「熔融高光」质感
-                final Shader sheen1 = new LinearGradient(x0, bottom, x0 + band, top,
-                        new int[]{
-                                withAlpha(darken(c1, 0.25f), 0x00),
-                                withAlpha(towardWhite(c1, 0.50f), 0x66),
-                                withAlpha(darken(c1, 0.25f), 0x00)},
-                        new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP);
-                final Shader sheen2 = new LinearGradient(
-                        x0 + band * 0.15f, top, x0 + band * 0.85f, bottom,
-                        new int[]{
-                                withAlpha(towardWhite(c0, 0.45f), 0x50),
-                                withAlpha(darken(c0, 0.20f), 0x00)},
-                        null, Shader.TileMode.CLAMP);
-                final Shader sheens = new ComposeShader(sheen1, sheen2, PorterDuff.Mode.ADD);
-                return new ComposeShader(base, sheens, PorterDuff.Mode.ADD);
-            }
-            case ClockSecondsConfig.GRADIENT_DIRECTION_CHROMATIC: {
-                // 14 色散霓虹：R/G/B 三通道错位线性渐变 ADD 合成
-                // （通道对齐处还原用户原色，色带边缘出现红/青霓虹条纹）
-                final float shift = Math.max(2f, band * 0.055f);
-                final Shader r = new LinearGradient(x0 - shift, top, x0 + band - shift, top,
-                        new int[]{chanR(c0), chanR(c1)}, null, Shader.TileMode.CLAMP);
-                final Shader g = new LinearGradient(x0, top, x0 + band, top,
-                        new int[]{chanG(c0), chanG(c1)}, null, Shader.TileMode.CLAMP);
-                final Shader b = new LinearGradient(x0 + shift, top, x0 + band + shift, top,
-                        new int[]{chanB(c0), chanB(c1)}, null, Shader.TileMode.CLAMP);
-                final Shader rg = new ComposeShader(r, g, PorterDuff.Mode.ADD);
-                return new ComposeShader(rg, b, PorterDuff.Mode.ADD);
-            }
-            case ClockSecondsConfig.GRADIENT_DIRECTION_HOLOGRAPHIC: {
-                // 15 全息亮带：线性底 + 两道对角高亮条（SRC_OVER）
-                final Shader stripes = new LinearGradient(x0, bottom, x0 + band, top,
-                        new int[]{
-                                0x00000000,
-                                withAlpha(towardWhite(c1, 0.72f), 0x59),
-                                0x00000000,
-                                withAlpha(towardWhite(c0, 0.72f), 0x44),
-                                0x00000000},
-                        new float[]{0f, 0.28f, 0.5f, 0.74f, 1f}, Shader.TileMode.CLAMP);
-                return new ComposeShader(base, stripes, PorterDuff.Mode.SRC_OVER);
-            }
             case ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN: {
                 // 16 颗粒噪点：线性底 + 细噪点贴图（SRC_OVER，固定种子静态噪声）
                 final Shader grain = new BitmapShader(noise(),
                         Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
                 return new ComposeShader(base, grain, PorterDuff.Mode.SRC_OVER);
             }
-            case ClockSecondsConfig.GRADIENT_DIRECTION_GOOEY: {
-                // 17 液态融合：线性底 + 多团软边色斑（SRC_OVER 叠出「液滴融合」感）
-                final int mA = towardWhite(c0, 0.18f);
-                final int mB = towardWhite(c1, 0.12f);
-                final int mM = towardWhite(mix(c0, c1, 0.5f), 0.22f);
-                final Shader b1 = new RadialGradient(
-                        x0 + band * 0.30f, cy - height * 0.06f, band * 0.30f,
-                        new int[]{withAlpha(mA, 0xE0), withAlpha(mA, 0x00)},
-                        null, Shader.TileMode.CLAMP);
-                final Shader b2 = new RadialGradient(
-                        x0 + band * 0.66f, cy + height * 0.05f, band * 0.27f,
-                        new int[]{withAlpha(mB, 0xD9), withAlpha(mB, 0x00)},
-                        null, Shader.TileMode.CLAMP);
-                final Shader b3 = new RadialGradient(
-                        x0 + band * 0.48f, cy, band * 0.22f,
-                        new int[]{withAlpha(mM, 0xC8), withAlpha(mM, 0x00)},
-                        null, Shader.TileMode.CLAMP);
-                Shader blobs = new ComposeShader(b1, b2, PorterDuff.Mode.SRC_OVER);
-                blobs = new ComposeShader(blobs, b3, PorterDuff.Mode.SRC_OVER);
-                return new ComposeShader(base, blobs, PorterDuff.Mode.SRC_OVER);
-            }
-            case ClockSecondsConfig.GRADIENT_DIRECTION_GLOW:
             default: {
                 // 18 霓虹辉光：线性底 + 中心强光晕（ADD）
                 final int glow = towardWhite(mix(c0, c1, 0.5f), 0.55f);

@@ -922,7 +922,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         LinearLayout.LayoutParams spl = new LinearLayout.LayoutParams(0, 1, 1f);
         dirTitle.addView(spacer, spl);
         TextView countBadge = new TextView(this);
-        // U-20261118①：徽标显示 UI 实际暴露的方向数（2 基础 + 9 特效 = 11），不再等于 COUNT。
+        // U-20261118①：徽标显示 UI 实际暴露的方向数（2 基础 + 2 特效 = 4），不再等于 COUNT。
         countBadge.setTextSize(10f);
         countBadge.setTextColor(text2());
         GradientDrawable badgeBg = new GradientDrawable();
@@ -946,30 +946,16 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         final int[] dirOrder = {
                 ClockSecondsConfig.GRADIENT_DIRECTION_VERTICAL,
                 ClockSecondsConfig.GRADIENT_DIRECTION_HORIZONTAL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL,
                 ClockSecondsConfig.GRADIENT_DIRECTION_MESH_QUADRANT,
-                ClockSecondsConfig.GRADIENT_DIRECTION_CONIC,
-                ClockSecondsConfig.GRADIENT_DIRECTION_LIQUID,
-                ClockSecondsConfig.GRADIENT_DIRECTION_CHROMATIC,
-                ClockSecondsConfig.GRADIENT_DIRECTION_HOLOGRAPHIC,
-                ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN,
-                ClockSecondsConfig.GRADIENT_DIRECTION_GOOEY,
-                ClockSecondsConfig.GRADIENT_DIRECTION_GLOW
+                ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN
         };
         final String[] dirLabels = {
                 getString(R.string.settings_gradient_dir_v),
                 getString(R.string.settings_gradient_dir_h),
-                getString(R.string.settings_gradient_dir_mesh_radial),
                 getString(R.string.settings_gradient_dir_mesh_quadrant),
-                getString(R.string.settings_gradient_dir_conic),
-                getString(R.string.settings_gradient_dir_liquid),
-                getString(R.string.settings_gradient_dir_chromatic),
-                getString(R.string.settings_gradient_dir_holographic),
-                getString(R.string.settings_gradient_dir_grain),
-                getString(R.string.settings_gradient_dir_gooey),
-                getString(R.string.settings_gradient_dir_glow)
+                getString(R.string.settings_gradient_dir_grain)
         };
-        countBadge.setText(dirOrder.length + "");   // U-20261118①：2 基础 + 9 特效 = 11
+        countBadge.setText(dirOrder.length + "");   // U-20261118①：2 基础 + 2 特效 = 4
         final int currentDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);

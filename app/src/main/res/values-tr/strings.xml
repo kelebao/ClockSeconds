@@ -147,15 +147,8 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_gradient_dir_bltr">Sol alttan sağ üste</string>
     <string name="settings_gradient_dir_radial">Radyal</string>
     <string name="settings_gradient_dir_sweep">Döner</string>
-    <string name="settings_gradient_dir_mesh_radial">Mesh Radyal</string>
     <string name="settings_gradient_dir_mesh_quadrant">Mesh Dörtlü</string>
-    <string name="settings_gradient_dir_conic">Konik</string>
-    <string name="settings_gradient_dir_liquid">Sıvı</string>
-    <string name="settings_gradient_dir_chromatic">Kromatik</string>
-    <string name="settings_gradient_dir_holographic">Holografik</string>
     <string name="settings_gradient_dir_grain">Granül</string>
-    <string name="settings_gradient_dir_gooey">Gooey</string>
-    <string name="settings_gradient_dir_glow">Parıltı</string>
     <string name="settings_digit_tab_digit">Tek renk</string>
     <string name="settings_gradient_start">Başlangıç rengi</string>
     <string name="settings_gradient_end">Bitiş rengi</string>

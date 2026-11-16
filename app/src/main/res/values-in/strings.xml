@@ -147,15 +147,8 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_gradient_dir_bltr">Kiri bawah ke kanan atas</string>
     <string name="settings_gradient_dir_radial">Radial</string>
     <string name="settings_gradient_dir_sweep">Sapuan</string>
-    <string name="settings_gradient_dir_mesh_radial">Mesh Radial</string>
     <string name="settings_gradient_dir_mesh_quadrant">Mesh Kuadran</string>
-    <string name="settings_gradient_dir_conic">Kerucut</string>
-    <string name="settings_gradient_dir_liquid">Cair</string>
-    <string name="settings_gradient_dir_chromatic">Kromatik</string>
-    <string name="settings_gradient_dir_holographic">Holografis</string>
     <string name="settings_gradient_dir_grain">Butiran</string>
-    <string name="settings_gradient_dir_gooey">Gooey</string>
-    <string name="settings_gradient_dir_glow">Cahaya</string>
     <string name="settings_digit_tab_digit">Warna tunggal</string>
     <string name="settings_gradient_start">Warna awal</string>
     <string name="settings_gradient_end">Warna akhir</string>

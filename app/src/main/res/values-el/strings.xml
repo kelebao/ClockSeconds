@@ -147,15 +147,8 @@
     <string name="settings_gradient_dir_bltr">Κάτω αριστερά προς πάνω δεξιά</string>
     <string name="settings_gradient_dir_radial">Ακτινικό</string>
     <string name="settings_gradient_dir_sweep">Σάρωση</string>
-    <string name="settings_gradient_dir_mesh_radial">Mesh Ακτινικό</string>
     <string name="settings_gradient_dir_mesh_quadrant">Mesh Τεταρτημόρια</string>
-    <string name="settings_gradient_dir_conic">Κωνικό</string>
-    <string name="settings_gradient_dir_liquid">Υγρό</string>
-    <string name="settings_gradient_dir_chromatic">Χρωματικό</string>
-    <string name="settings_gradient_dir_holographic">Ολογραφικό</string>
     <string name="settings_gradient_dir_grain">Κόκκοι</string>
-    <string name="settings_gradient_dir_gooey">Gooey</string>
-    <string name="settings_gradient_dir_glow">Λάμψη</string>
     <string name="settings_digit_tab_digit">Μονόχρωμο</string>
     <string name="settings_gradient_start">Χρώμα έναρξης</string>
     <string name="settings_gradient_end">Χρώμα τέλους</string>
