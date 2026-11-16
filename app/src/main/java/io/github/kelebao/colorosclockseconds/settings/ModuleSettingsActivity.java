@@ -5760,7 +5760,11 @@ public final class ModuleSettingsActivity extends Activity {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             prevLp.setMargins(dp(14), dp(6), dp(14), dp(2));
             prevHost.addView(prev, prevLp);
-            pick.addView(prevHost);
+            // U-20261117c：预览板与深色/浅色页签行之间加呼吸间距（用户反馈「这挨的太近了」）。
+            LinearLayout.LayoutParams prevHostLp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            prevHostLp.bottomMargin = dp(14);
+            pick.addView(prevHost, prevHostLp);
             // U-20261115⑯：预设清单 = 高级设置存的用户预设（深浅两组、单色/渐变都读），
             // 按深色/浅色页签切换显示，单色与渐变分组列出。
             // U-20261115⑲④：不再混入内置渐变预设与首页旧自定义渐变预设，只列「我的预设颜色」。
@@ -5862,11 +5866,11 @@ public final class ModuleSettingsActivity extends Activity {
         tabHelp.setText("?");
         tabHelp.setTextSize(12f);
         tabHelp.setTypeface(Typeface.create("sans-serif-bold", Typeface.NORMAL));
-        tabHelp.setTextColor(text2());
+        tabHelp.setTextColor(accent());
         GradientDrawable hbg = new GradientDrawable();
         hbg.setCornerRadius(dp(999));
-        hbg.setColor(night ? 0x2A2340 : 0xFFE7DFFF);
-        hbg.setStroke(dp(1), night ? 0x37305A : 0xDDDDDD);
+        hbg.setColor(night ? 0x5CA98CFF : 0x1F6C4CF1);
+        hbg.setStroke(dp(1), night ? 0xFFA98CFF : 0xFF6C4CF1);
         tabHelp.setBackground(hbg);
         LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(dp(17), dp(17));
         hlp.leftMargin = dp(6);

@@ -384,11 +384,11 @@ public class AdvancedSettingsActivity extends Activity {
         mHelpIcon.setText("?");
         mHelpIcon.setTextSize(12f);
         mHelpIcon.setTypeface(Typeface.create("sans-serif-bold", Typeface.NORMAL));
-        mHelpIcon.setTextColor(text2());
+        mHelpIcon.setTextColor(accent());
         GradientDrawable qbg = new GradientDrawable();
         qbg.setCornerRadius(dp(999));
-        qbg.setColor(isNight() ? 0x2A2340 : 0xFFE7DFFF);
-        qbg.setStroke(dp(1), isNight() ? 0x37305A : 0xDDDDDD);
+        qbg.setColor(isNight() ? 0x5CA98CFF : 0x1F6C4CF1);
+        qbg.setStroke(dp(1), isNight() ? 0xFFA98CFF : 0xFF6C4CF1);
         mHelpIcon.setBackground(qbg);
         LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(
                 dp(17), dp(17));
@@ -449,11 +449,11 @@ public class AdvancedSettingsActivity extends Activity {
         help.setText("?");
         help.setTextSize(12f);
         help.setTypeface(Typeface.create("sans-serif-bold", Typeface.NORMAL));
-        help.setTextColor(text2());
+        help.setTextColor(accent());
         GradientDrawable qbg = new GradientDrawable();
         qbg.setCornerRadius(dp(999));
-        qbg.setColor(isNight() ? 0x2A2340 : 0xFFE7DFFF);
-        qbg.setStroke(dp(1), isNight() ? 0x37305A : 0xDDDDDD);
+        qbg.setColor(isNight() ? 0x5CA98CFF : 0x1F6C4CF1);
+        qbg.setStroke(dp(1), isNight() ? 0xFFA98CFF : 0xFF6C4CF1);
         help.setBackground(qbg);
         LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(dp(17), dp(17));
         qlp.leftMargin = dp(6);
