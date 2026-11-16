@@ -150,6 +150,10 @@ public final class ModuleSettingsActivity extends Activity {
     private static final int ACCENT_DARK = 0xFFA98CFF;
 
     private boolean night;
+    private GradientDrawable mTaskSheetBg;
+    private TextView mTaskTitle;
+    private TextView mTaskClose;
+    private View mTaskDecorView;
     private TextView chipView;
     private TextView previewView;
     /** 预览时间所在的背景板容器。 */
@@ -5193,6 +5197,7 @@ public final class ModuleSettingsActivity extends Activity {
         sheetBg.setCornerRadius(dp(28));
         sheetBg.setColor(night ? DARK_CARD : LIGHT_CARD);
         sheet.setBackground(sheetBg);
+        mTaskSheetBg = sheetBg;
         sheet.setClickable(true);
         FrameLayout.LayoutParams sheetLp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -5208,6 +5213,7 @@ public final class ModuleSettingsActivity extends Activity {
         title.setTextSize(20f);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setTextColor(text());
+        mTaskTitle = title;
         header.addView(title, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         TextView close = new TextView(this);
@@ -5216,6 +5222,7 @@ public final class ModuleSettingsActivity extends Activity {
         close.setTextColor(text2());
         close.setGravity(Gravity.CENTER);
         close.setBackground(circleBg(dp(32), night ? 0x22FFFFFF : 0x11000000));
+        mTaskClose = close;
         close.setOnClickListener(v -> dialog.dismiss());
         header.addView(close, new LinearLayout.LayoutParams(dp(32), dp(32)));
         sheet.addView(header);
@@ -5228,7 +5235,7 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         refreshTaskList();
 
-        dialog.setOnDismissListener(d -> mTaskHost = null);
+        dialog.setOnDismissListener(d -> { mTaskHost = null; mTaskSheetBg = null; mTaskTitle = null; mTaskClose = null; mTaskDecorView = null; });
         dialog.setContentView(overlay);
         // Theme_Translucent_NoTitleBar_Fullscreen 自带 FLAG_FULLSCREEN，会把状态栏整条隐藏
         // （用户反馈「进自定义任务界面状态栏没了」）。这里显式清掉全屏标志，并让状态栏
@@ -5249,6 +5256,7 @@ public final class ModuleSettingsActivity extends Activity {
                 uiFlags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
             }
             dialogDecor.setSystemUiVisibility(uiFlags);
+            mTaskDecorView = dialogDecor;
         }
         sheet.setVisibility(View.INVISIBLE);
         dialog.show();
@@ -5270,6 +5278,29 @@ public final class ModuleSettingsActivity extends Activity {
             anim.setDuration(280L);
             anim.start();
         });
+    }
+
+    /** 自定义任务弹窗整体主题：sheet 底色、标题/关闭文字、状态栏图标颜色随深色/浅色页签切换。 */
+    private void applyTaskDialogTheme(boolean dark) {
+        if (mTaskSheetBg != null) {
+            mTaskSheetBg.setColor(dark ? DARK_CARD : LIGHT_CARD);
+        }
+        if (mTaskTitle != null) {
+            mTaskTitle.setTextColor(dark ? DARK_TEXT : LIGHT_TEXT);
+        }
+        if (mTaskClose != null) {
+            mTaskClose.setTextColor(dark ? DARK_TEXT_2 : LIGHT_TEXT_2);
+            mTaskClose.setBackground(circleBg(dp(32), dark ? 0x22FFFFFF : 0x11000000));
+        }
+        if (mTaskDecorView != null) {
+            int uiFlags = mTaskDecorView.getSystemUiVisibility();
+            if (dark) {
+                uiFlags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            } else {
+                uiFlags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            mTaskDecorView.setSystemUiVisibility(uiFlags);
+        }
     }
 
     /** 任务弹窗的列表页：滚动列表 + 右下角「＋」。 */
@@ -5735,6 +5766,7 @@ public final class ModuleSettingsActivity extends Activity {
             pickHead.addView(pickBack, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             pickBack.setOnClickListener(v -> {
+                applyTaskDialogTheme(night);
                 sv.removeAllViews();
                 sv.addView(box, new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -5892,6 +5924,7 @@ public final class ModuleSettingsActivity extends Activity {
                 final GradientDrawable hbgM = (GradientDrawable) hbg.mutate();
                 hbgM.setColor(pn ? 0x2A2340 : 0xFFE7DFFF);
                 hbgM.setStroke(dp(1), pn ? 0x37305A : 0xDDDDDD);
+                applyTaskDialogTheme(pn);
             };
             tabDark.setOnClickListener(v -> {
                 pickLight[0] = 0;
