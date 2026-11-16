@@ -1,4 +1,5 @@
-package io.github.kelebao.colorosclockseconds.settings;
+package io.github.kelebao.colorosclockseconds.settings;import io.github.kelebao.colorosclockseconds.GradientShaderFactory;
+
 
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
 
@@ -278,7 +279,11 @@ public class SettingsPreviewClock extends TextView {
             final float bottom = baseline + fm.descent;
             final float height = bottom - top;
             final float cy = top + height / 2f;
-            if (mGradDir == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL) {
+            if (mGradDir >= ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL) {
+                // U-20261118①：特效方向委托共享工厂（与状态栏/悬浮窗一致）。
+                mGradShader = GradientShaderFactory.build(cols, mGradDir,
+                        sx0, band, top, bottom);
+            } else if (mGradDir == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL) {
                 float radius = Math.max(band, height) / 2f;
                 mGradShader = new android.graphics.RadialGradient(sx0 + band / 2f, cy, radius,
                         cols, positions, Shader.TileMode.CLAMP);

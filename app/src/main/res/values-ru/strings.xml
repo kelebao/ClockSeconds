@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">Снизу-слева в верх-право</string>
     <string name="settings_gradient_dir_radial">Радиальный</string>
     <string name="settings_gradient_dir_sweep">Веерный</string>
+    <string name="settings_gradient_dir_mesh_radial">Радиальный Mesh</string>
+    <string name="settings_gradient_dir_mesh_quadrant">Квадрант Mesh</string>
+    <string name="settings_gradient_dir_conic">Конический</string>
+    <string name="settings_gradient_dir_liquid">Жидкий</string>
+    <string name="settings_gradient_dir_chromatic">Хроматик</string>
+    <string name="settings_gradient_dir_holographic">Голограмма</string>
+    <string name="settings_gradient_dir_grain">Зерно</string>
+    <string name="settings_gradient_dir_gooey">Gooey</string>
+    <string name="settings_gradient_dir_glow">Свечение</string>
     <string name="settings_digit_tab_digit">Одноцветный</string>
     <string name="settings_gradient_start">Начальный цвет</string>
     <string name="settings_gradient_end">Конечный цвет</string>

@@ -1,4 +1,5 @@
-package io.github.kelebao.colorosclockseconds.settings;
+package io.github.kelebao.colorosclockseconds.settings;import io.github.kelebao.colorosclockseconds.GradientShaderFactory;
+
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -921,7 +922,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         LinearLayout.LayoutParams spl = new LinearLayout.LayoutParams(0, 1, 1f);
         dirTitle.addView(spacer, spl);
         TextView countBadge = new TextView(this);
-        countBadge.setText(ClockSecondsConfig.GRADIENT_DIRECTION_COUNT + "");
+        // U-20261118①：徽标显示 UI 实际暴露的方向数（2 基础 + 9 特效 = 11），不再等于 COUNT。
         countBadge.setTextSize(10f);
         countBadge.setTextColor(text2());
         GradientDrawable badgeBg = new GradientDrawable();
@@ -936,32 +937,39 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         dirTitle.setLayoutParams(dtl);
         card.addView(dirTitle);
 
-        // 单行横滑：10 胶囊一排（顺序与 R3 网格一致）。
+        // 单行横滑：U-20261118① 方向精简——只留 上→下 / 左→右 两个基础方向，
+        // 其余 8 个基础方向从 UI 收起（旧 dir 2..9 键值保留，老预设仍能正确回显选中态）；
+        // 新增 9 个特效方向（径向光晕 Mesh / 象限光晕 Mesh / 锥形 Conic / 液态流光
+        // Liquid / 色散霓虹 Chromatic / 全息亮带 Holographic / 颗粒噪点 Grain /
+        // 液态融合 Gooey / 霓虹辉光 Glow），渲染统一走 GradientShaderFactory。
         mDirPills = new TextView[ClockSecondsConfig.GRADIENT_DIRECTION_COUNT];
         final int[] dirOrder = {
                 ClockSecondsConfig.GRADIENT_DIRECTION_VERTICAL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_BTT,
                 ClockSecondsConfig.GRADIENT_DIRECTION_HORIZONTAL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_RTL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_DIAGONAL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_BRTL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_TRBL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_BLTR,
-                ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL,
-                ClockSecondsConfig.GRADIENT_DIRECTION_SWEEP
+                ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL,
+                ClockSecondsConfig.GRADIENT_DIRECTION_MESH_QUADRANT,
+                ClockSecondsConfig.GRADIENT_DIRECTION_CONIC,
+                ClockSecondsConfig.GRADIENT_DIRECTION_LIQUID,
+                ClockSecondsConfig.GRADIENT_DIRECTION_CHROMATIC,
+                ClockSecondsConfig.GRADIENT_DIRECTION_HOLOGRAPHIC,
+                ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN,
+                ClockSecondsConfig.GRADIENT_DIRECTION_GOOEY,
+                ClockSecondsConfig.GRADIENT_DIRECTION_GLOW
         };
         final String[] dirLabels = {
                 getString(R.string.settings_gradient_dir_v),
-                getString(R.string.settings_gradient_dir_btt),
                 getString(R.string.settings_gradient_dir_h),
-                getString(R.string.settings_gradient_dir_rtl),
-                getString(R.string.settings_gradient_dir_d),
-                getString(R.string.settings_gradient_dir_brtl),
-                getString(R.string.settings_gradient_dir_trbl),
-                getString(R.string.settings_gradient_dir_bltr),
-                getString(R.string.settings_gradient_dir_radial),
-                getString(R.string.settings_gradient_dir_sweep)
+                getString(R.string.settings_gradient_dir_mesh_radial),
+                getString(R.string.settings_gradient_dir_mesh_quadrant),
+                getString(R.string.settings_gradient_dir_conic),
+                getString(R.string.settings_gradient_dir_liquid),
+                getString(R.string.settings_gradient_dir_chromatic),
+                getString(R.string.settings_gradient_dir_holographic),
+                getString(R.string.settings_gradient_dir_grain),
+                getString(R.string.settings_gradient_dir_gooey),
+                getString(R.string.settings_gradient_dir_glow)
         };
+        countBadge.setText(dirOrder.length + "");   // U-20261118①：2 基础 + 9 特效 = 11
         final int currentDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -988,7 +996,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         hs.setClipChildren(false);
         hs.setClipToPadding(false);
         hs.addView(row);
-        // t26⑤ + t38② + t42 + B：可滑动提示移到「渐变方向」标题行（与 10 徽标同排），不再压住方向胶囊；
+        // t26⑤ + t38② + t42 + B：可滑动提示移到「渐变方向」标题行（与方向数徽标同排），不再压住方向胶囊；
         // 首次横向滑动后淡出；浅/深色下都清晰可读。
         final TextView swipeHint = new TextView(this);
         // U-20261115②：只保留动态箭头本体（「左右滑动」文字取消），箭头自身往返平移示意。
@@ -1718,7 +1726,11 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 p.setStyle(Paint.Style.FILL);
                 if (gradient && colors.length >= 2) {
                     float w = getWidth(), h = getHeight();
-                    if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL) {
+                    if (dir >= ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL) {
+                        // U-20261118①：特效方向委托共享工厂（条形预览按 0..w/0..h 画）。
+                        p.setShader(GradientShaderFactory.build(colors, dir,
+                                0f, w, 0f, h));
+                    } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL) {
                         p.setShader(new android.graphics.RadialGradient(w / 2f, h / 2f,
                                 Math.max(w, h) / 2f, colors, null, Shader.TileMode.CLAMP));
                     } else if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_SWEEP) {
@@ -2155,6 +2167,9 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
         for (int i = 0; i < mDirPills.length; i++) {
             TextView pill = mDirPills[i];
+            if (pill == null) {
+                continue;   // U-20261118①：2..9 等已从 UI 收起的方向没有胶囊
+            }
             boolean sel = (i == dir);
             GradientDrawable bg = new GradientDrawable();
             bg.setCornerRadius(dp(999));

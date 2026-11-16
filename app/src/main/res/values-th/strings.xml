@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">ซ้ายล่างไปขวาบน</string>
     <string name="settings_gradient_dir_radial">รัศมี</string>
     <string name="settings_gradient_dir_sweep">กวาด</string>
+    <string name="settings_gradient_dir_mesh_radial">เมชรัศมี</string>
+    <string name="settings_gradient_dir_mesh_quadrant">เมชควอดรันต์</string>
+    <string name="settings_gradient_dir_conic">กรวย</string>
+    <string name="settings_gradient_dir_liquid">เหลว</string>
+    <string name="settings_gradient_dir_chromatic">โครมาติก</string>
+    <string name="settings_gradient_dir_holographic">โฮโลกราฟิก</string>
+    <string name="settings_gradient_dir_grain">เกรน</string>
+    <string name="settings_gradient_dir_gooey">กูอี้</string>
+    <string name="settings_gradient_dir_glow">เรืองแสง</string>
     <string name="settings_digit_tab_digit">สีเดียว</string>
     <string name="settings_gradient_start">สีเริ่มต้น</string>
     <string name="settings_gradient_end">สีสิ้นสุด</string>

@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">左下↗</string>
     <string name="settings_gradient_dir_radial">徑向</string>
     <string name="settings_gradient_dir_sweep">掃掠</string>
+    <string name="settings_gradient_dir_mesh_radial">徑向光暈</string>
+    <string name="settings_gradient_dir_mesh_quadrant">象限光暈</string>
+    <string name="settings_gradient_dir_conic">錐形</string>
+    <string name="settings_gradient_dir_liquid">液態流光</string>
+    <string name="settings_gradient_dir_chromatic">色散霓虹</string>
+    <string name="settings_gradient_dir_holographic">全息亮帶</string>
+    <string name="settings_gradient_dir_grain">顆粒噪點</string>
+    <string name="settings_gradient_dir_gooey">液態融合</string>
+    <string name="settings_gradient_dir_glow">霓虹輝光</string>
     <string name="settings_digit_tab_digit">單色</string>
     <string name="settings_gradient_start">起點色</string>
     <string name="settings_gradient_end">終點色</string>

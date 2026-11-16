@@ -147,6 +147,15 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_gradient_dir_bltr">Dưới trái lên phải</string>
     <string name="settings_gradient_dir_radial">Tròn</string>
     <string name="settings_gradient_dir_sweep">Quét</string>
+    <string name="settings_gradient_dir_mesh_radial">Mesh tỏa</string>
+    <string name="settings_gradient_dir_mesh_quadrant">Mesh góc phần tư</string>
+    <string name="settings_gradient_dir_conic">Nón</string>
+    <string name="settings_gradient_dir_liquid">Lỏng</string>
+    <string name="settings_gradient_dir_chromatic">Tán sắc</string>
+    <string name="settings_gradient_dir_holographic">Toàn tưởng</string>
+    <string name="settings_gradient_dir_grain">Hạt</string>
+    <string name="settings_gradient_dir_gooey">Gooey</string>
+    <string name="settings_gradient_dir_glow">Phát sáng</string>
     <string name="settings_digit_tab_digit">Một màu</string>
     <string name="settings_gradient_start">Màu bắt đầu</string>
     <string name="settings_gradient_end">Màu kết thúc</string>

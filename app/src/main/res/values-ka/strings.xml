@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">ქვედა მარცხნიდან ზედა მარჯვნივ</string>
     <string name="settings_gradient_dir_radial">რადიალური</string>
     <string name="settings_gradient_dir_sweep">გადაბრუნება</string>
+    <string name="settings_gradient_dir_mesh_radial">Mesh Radial</string>
+    <string name="settings_gradient_dir_mesh_quadrant">Mesh Quadrant</string>
+    <string name="settings_gradient_dir_conic">Conic</string>
+    <string name="settings_gradient_dir_liquid">Liquid</string>
+    <string name="settings_gradient_dir_chromatic">Chromatic</string>
+    <string name="settings_gradient_dir_holographic">Holographic</string>
+    <string name="settings_gradient_dir_grain">Grain</string>
+    <string name="settings_gradient_dir_gooey">Gooey</string>
+    <string name="settings_gradient_dir_glow">Glow</string>
     <string name="settings_digit_tab_digit">ერთი ფერი</string>
     <string name="settings_gradient_start">საწყისი ფერი</string>
     <string name="settings_gradient_end">დასასრული ფერი</string>

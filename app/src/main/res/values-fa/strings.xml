@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">از پایین چپ به بالا راست</string>
     <string name="settings_gradient_dir_radial">شعاعی</string>
     <string name="settings_gradient_dir_sweep">چرخشی</string>
+    <string name="settings_gradient_dir_mesh_radial">درخشش شعاعی</string>
+    <string name="settings_gradient_dir_mesh_quadrant">درخشش ربعی</string>
+    <string name="settings_gradient_dir_conic">مخروطی</string>
+    <string name="settings_gradient_dir_liquid">مایع</string>
+    <string name="settings_gradient_dir_chromatic">پراکندگی</string>
+    <string name="settings_gradient_dir_holographic">هولوگرافیک</string>
+    <string name="settings_gradient_dir_grain">دانه‌ای</string>
+    <string name="settings_gradient_dir_gooey">چسبناک</string>
+    <string name="settings_gradient_dir_glow">درخشش</string>
     <string name="settings_digit_tab_digit">تک‌رنگ</string>
     <string name="settings_gradient_start">رنگ شروع</string>
     <string name="settings_gradient_end">رنگ پایان</string>

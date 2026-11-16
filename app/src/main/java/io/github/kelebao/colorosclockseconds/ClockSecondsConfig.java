@@ -515,10 +515,29 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     /** 渐变方向：扫掠（围绕文字中心旋转一圈，{@code SweepGradient}）。 */
     public static final int GRADIENT_DIRECTION_SWEEP = 9;
 
-    /** 渐变方向总数（t6 十方向）。 */
-    public static final int GRADIENT_DIRECTION_COUNT = 10;
+    /** 渐变方向：径向光晕 Mesh（U-20261118①：横向线性底 + 中心径向光晕叠加）。 */
+    public static final int GRADIENT_DIRECTION_MESH_RADIAL = 10;
+    /** 渐变方向：象限光晕 Mesh（对角双光晕叠加）。 */
+    public static final int GRADIENT_DIRECTION_MESH_QUADRANT = 11;
+    /** 渐变方向：锥形 Conic（{@code SweepGradient} 绕中心一圈）。 */
+    public static final int GRADIENT_DIRECTION_CONIC = 12;
+    /** 渐变方向：液态流光 Liquid（对角流光高光叠加）。 */
+    public static final int GRADIENT_DIRECTION_LIQUID = 13;
+    /** 渐变方向：色散霓虹 Chromatic（R/G/B 三通道错位 ADD 合成）。 */
+    public static final int GRADIENT_DIRECTION_CHROMATIC = 14;
+    /** 渐变方向：全息亮带 Holographic（对角亮条叠加）。 */
+    public static final int GRADIENT_DIRECTION_HOLOGRAPHIC = 15;
+    /** 渐变方向：颗粒噪点 Grain（线性底 + 静态细噪点贴图）。 */
+    public static final int GRADIENT_DIRECTION_GRAIN = 16;
+    /** 渐变方向：液态融合 Gooey（多团软边色斑叠加）。 */
+    public static final int GRADIENT_DIRECTION_GOOEY = 17;
+    /** 渐变方向：霓虹辉光 Glow（线性底 + 中心强光晕）。 */
+    public static final int GRADIENT_DIRECTION_GLOW = 18;
 
-    /** 存「渐变方向」的 Secure 键（int 0..9，默认水平）。 */
+    /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
+    public static final int GRADIENT_DIRECTION_COUNT = 19;
+
+    /** 存「渐变方向」的 Secure 键（int 0..18，默认水平）。 */
     public static final String GRADIENT_DIRECTION_KEY =
             "coloros_clock_seconds_gradient_direction";
 

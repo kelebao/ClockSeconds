@@ -147,6 +147,15 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_gradient_dir_bltr">Bottom-left to top-right</string>
     <string name="settings_gradient_dir_radial">Radial</string>
     <string name="settings_gradient_dir_sweep">Sweep</string>
+    <string name="settings_gradient_dir_mesh_radial">径向光晕</string>
+    <string name="settings_gradient_dir_mesh_quadrant">象限光晕</string>
+    <string name="settings_gradient_dir_conic">锥形</string>
+    <string name="settings_gradient_dir_liquid">液态流光</string>
+    <string name="settings_gradient_dir_chromatic">色散霓虹</string>
+    <string name="settings_gradient_dir_holographic">全息亮带</string>
+    <string name="settings_gradient_dir_grain">颗粒噪点</string>
+    <string name="settings_gradient_dir_gooey">液态融合</string>
+    <string name="settings_gradient_dir_glow">霓虹辉光</string>
     <string name="settings_digit_tab_digit">Single</string>
     <string name="settings_gradient_start">Start color</string>
     <string name="settings_gradient_end">End color</string>

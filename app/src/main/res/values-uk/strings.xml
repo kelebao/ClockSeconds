@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">Знизу-ліворуч на верх-праворуч</string>
     <string name="settings_gradient_dir_radial">Радіальний</string>
     <string name="settings_gradient_dir_sweep">Конічний</string>
+    <string name="settings_gradient_dir_mesh_radial">Радіальний Mesh</string>
+    <string name="settings_gradient_dir_mesh_quadrant">Квадрант Mesh</string>
+    <string name="settings_gradient_dir_conic">Конічний</string>
+    <string name="settings_gradient_dir_liquid">Рідкий</string>
+    <string name="settings_gradient_dir_chromatic">Хроматик</string>
+    <string name="settings_gradient_dir_holographic">Голограма</string>
+    <string name="settings_gradient_dir_grain">Зерно</string>
+    <string name="settings_gradient_dir_gooey">Gooey</string>
+    <string name="settings_gradient_dir_glow">Свічення</string>
     <string name="settings_digit_tab_digit">Однотонний</string>
     <string name="settings_gradient_start">Початковий колір</string>
     <string name="settings_gradient_end">Кінцевий колір</string>

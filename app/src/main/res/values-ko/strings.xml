@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">왼쪽 아래→오른쪽 위</string>
     <string name="settings_gradient_dir_radial">방사형</string>
     <string name="settings_gradient_dir_sweep">스윕</string>
+    <string name="settings_gradient_dir_mesh_radial">메시 방사</string>
+    <string name="settings_gradient_dir_mesh_quadrant">메시 사분</string>
+    <string name="settings_gradient_dir_conic">콘형</string>
+    <string name="settings_gradient_dir_liquid">리퀴드</string>
+    <string name="settings_gradient_dir_chromatic">크로마틱</string>
+    <string name="settings_gradient_dir_holographic">홀로그래픽</string>
+    <string name="settings_gradient_dir_grain">그레인</string>
+    <string name="settings_gradient_dir_gooey">구이</string>
+    <string name="settings_gradient_dir_glow">글로우</string>
     <string name="settings_digit_tab_digit">단색</string>
     <string name="settings_gradient_start">시작 색상</string>
     <string name="settings_gradient_end">끝 색상</string>

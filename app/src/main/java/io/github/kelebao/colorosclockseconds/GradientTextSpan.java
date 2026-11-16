@@ -119,7 +119,12 @@ public class GradientTextSpan extends CharacterStyle {
                 final int[] cols = mColors;
                 final float[] positions = cols.length > 2
                         ? uniformPositions(cols.length) : null;
-                if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL
+                if (mDirection >= ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL) {
+                    // U-20261118①：10..18 特效方向统一委托共享工厂，
+                    // 与悬浮窗 / 预览钟 / 预设色条保持同一渲染结果。
+                    mShader = GradientShaderFactory.build(cols, mDirection,
+                            mXOffset, mBand, 0f, tp.descent() - tp.ascent());
+                } else if (mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_RADIAL
                         || mDirection == ClockSecondsConfig.GRADIENT_DIRECTION_SWEEP) {
                     // 径向 / 扫掠：圆心 = 色带中心，纵向圆心取行盒垂直中点。
                     final float cy = (tp.descent() - tp.ascent()) / 2f;

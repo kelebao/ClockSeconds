@@ -147,6 +147,15 @@
     <string name="settings_gradient_dir_bltr">左下から右上</string>
     <string name="settings_gradient_dir_radial">放射状</string>
     <string name="settings_gradient_dir_sweep">スイープ</string>
+    <string name="settings_gradient_dir_mesh_radial">メッシュ放射</string>
+    <string name="settings_gradient_dir_mesh_quadrant">メッシュ四分</string>
+    <string name="settings_gradient_dir_conic">コニカル</string>
+    <string name="settings_gradient_dir_liquid">リキッド</string>
+    <string name="settings_gradient_dir_chromatic">クロマティック</string>
+    <string name="settings_gradient_dir_holographic">ホログラフィック</string>
+    <string name="settings_gradient_dir_grain">グレイン</string>
+    <string name="settings_gradient_dir_gooey">グーイー</string>
+    <string name="settings_gradient_dir_glow">グロー</string>
     <string name="settings_digit_tab_digit">単色</string>
     <string name="settings_gradient_start">開始色</string>
     <string name="settings_gradient_end">終了色</string>

@@ -1,4 +1,5 @@
-package io.github.kelebao.colorosclockseconds.hook;
+package io.github.kelebao.colorosclockseconds.hook;import io.github.kelebao.colorosclockseconds.GradientShaderFactory;
+
 
 
 import android.content.BroadcastReceiver;
@@ -3022,6 +3023,11 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     private static android.graphics.Shader makeGradientShader(int[] colors, int dir,
                                                               float x0, float band,
                                                               float top, float bottom) {
+        // U-20261118①：特效方向（径向光晕 Mesh 等）统一走共享工厂；
+        // 老方向 0..9 仍走本地 switch，保持悬浮窗原有渲染零变化。
+        if (dir >= ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL) {
+            return GradientShaderFactory.build(colors, dir, x0, band, top, bottom);
+        }
         final int[] cols = colors != null && colors.length >= 2 ? colors
                 : new int[]{0xFFEAE6F8, 0xFF7C5CE0};
         final float[] positions = cols.length > 2 ? uniformStopPositions(cols.length) : null;
