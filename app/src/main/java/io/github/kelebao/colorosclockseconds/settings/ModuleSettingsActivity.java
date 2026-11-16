@@ -1310,7 +1310,8 @@ public final class ModuleSettingsActivity extends Activity {
         // HSV 滑杆、明暗预设、渐变浅色端点都收进二级页，首页只留预设圆点。
         card.addView(dashedDivider());
         // t26⑥：首页合并为单个「高级设置」入口；单色/渐变在高级页内切换（appbar 页签）。
-        card.addView(linkRow(R.string.settings_advanced_title, R.string.settings_advanced_sum,
+        // U-20261117f：高级设置入口去掉过长的说明副标题，改为紧凑单行（用户反馈「占用太宽」）。
+        card.addView(linkRow(R.string.settings_advanced_title, null,
                         v -> {
                             android.content.Intent ai = new android.content.Intent(this, AdvancedSettingsActivity.class);
                             ai.putExtra(AdvancedSettingsActivity.EXTRA_PAGE, mGradPage ? AdvancedSettingsActivity.PAGE_GRAD : AdvancedSettingsActivity.PAGE_MONO);
@@ -1461,15 +1462,10 @@ public final class ModuleSettingsActivity extends Activity {
     private void buildGradientRows(LinearLayout box) {
         // 没有「启用渐变」开关：页签就是开关——停在渐变页即启用渐变，回到逐位颜色页即关闭。
         // 起点 / 终点色：点一下选中，下面两排预设色与三条滑杆就改为编辑这个颜色。
-        LinearLayout edgeRow = new LinearLayout(this);
-        edgeRow.setOrientation(LinearLayout.HORIZONTAL);
-        edgeRow.setGravity(Gravity.CENTER_VERTICAL);
-        edgeRow.setPadding(0, dp(12), 0, 0);
-        mGradStartDot = makeEdgeSwatch(0, R.string.settings_gradient_start);
-        mGradEndDot = makeEdgeSwatch(1, R.string.settings_gradient_end);
-        edgeRow.addView(mGradStartDot);
-        edgeRow.addView(mGradEndDot);
-        box.addView(edgeRow);
+        // U-20261117f：按用户要求删除首页渐变页的「起点色 / 终点色」色点行
+        // （端点色改由预设与高级设置页管理），此处不再创建该行。
+        mGradStartDot = null;
+        mGradEndDot = null;
 
         // 渐变预设：每个胶囊就是一套「起点 → 终点」，点一下整套换掉（用户 m19814 的形态：
         // 左右渐变的长条、不写色值）。逐位颜色页的实心预设点在渐变页隐藏，两套预设不打架。
@@ -1521,6 +1517,8 @@ public final class ModuleSettingsActivity extends Activity {
     /** 刷新渐变端点色点：颜色 + 选中环；渐变关闭时整行置灰不可点。 */
     private void refreshGradientDots() {
         if (mGradStartDot == null || mGradEndDot == null) {
+            // U-20261117f：端点色点行已删除，这里只刷新预设选中态。
+            refreshGradientPresets();
             return;
         }
         final boolean on = mCfgGradientOn;
