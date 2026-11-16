@@ -191,6 +191,22 @@ public class AdvancedSettingsActivity extends Activity {
         scroll.setFitsSystemWindows(true);
         scroll.setBackgroundColor(isNight() ? 0xFF151021 : 0xFFF3F0FA);
         setContentView(scroll);
+        // U-20261116c：浅色渲染时声明 LIGHT_STATUS_BAR（状态栏深字），否则 ColorOS 对本窗口
+        // 用白字渲染 → 「跟随系统」位（冒号）在高级页浅色界面变白（用户反馈 bug）。
+        // 与首页 ModuleSettingsActivity.applyStatusBarAppearance 同语义；页签切换走 recreate 再进 onCreate。
+        applyStatusBarAppearance();
+    }
+
+    /** 按页面渲染模式声明状态栏文字深浅（浅色渲染=深字）。 */
+    private void applyStatusBarAppearance() {
+        android.view.View decor = getWindow().getDecorView();
+        int flags = decor.getSystemUiVisibility();
+        if (isNight()) {
+            flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        } else {
+            flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        }
+        decor.setSystemUiVisibility(flags);
     }
 
     @Override
@@ -575,16 +591,18 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     }
 
     /**
-     * 预览钟某一位的生效色（U-20261115⑬）：模块 effectiveSlotColor 同语义——常规键 FOLLOW 时
-     * 跟随系统文字色；浅色调色板激活且常规键非 FOLLOW 时优先浅色副键，未设回落常规键。
+     * 预览钟某一位的生效色（U-20261115⑫，U-20261116b 语义重排）：
+     * 浅色副键真色永远优先（含常规键 FOLLOW 位）；副键 FOLLOW 回落常规键，不再跟随系统文字色。模块 effectiveSlotColor 同语义。
      */
     private int effectiveSlotPreviewColor(int slot) {
         int[] colors = ClockSecondsConfig.getDigitColors(getContentResolver());
         int normal = colors != null && colors.length > slot
                 ? colors[slot] : ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
-        if (lightPaletteActive() && normal != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+        if (lightPaletteActive()) {
             Integer light = ClockSecondsConfig.getDigitLightColor(getContentResolver(), slot);
-            if (light != null) {
+            // U-20261116b：副键真色永远优先（含常规键=FOLLOW 位）；
+            // 副键 FOLLOW(0) 回落常规键，不解析 systemTextColor（与模块同语义）。
+            if (light != null && light != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
                 return light;
             }
         }

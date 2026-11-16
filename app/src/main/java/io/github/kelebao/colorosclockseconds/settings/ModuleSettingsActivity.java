@@ -3415,8 +3415,8 @@ public final class ModuleSettingsActivity extends Activity {
             expandDigits();
         }
         // 明暗自适应浅色页：写「_light 副键」，不动常规键（issue #11）。
-        // U-20261115⑱：浅色页点「跟随系统」= 副键写 FOLLOW(0)（浅色模式下该位跟随系统文字色，
-        // 深色模式继续用主键色）；副键 null 只保留「未设置回落主键」原义——
+        // U-20261116b：浅色页点「跟随系统」= 副键写 FOLLOW(0)（浅色模式下该位回落常规键色，不再跟随系统文字色，
+        // 深色模式继续用主键色；副键真色则永远优先）；副键 null 只保留「未设置回落主键」原义——
         // 旧实现清除副键导致回落主键紫，用户看到「点跟随系统没成功」。
         if (mAdaptiveColor && mLightMode) {
             final boolean follow = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
