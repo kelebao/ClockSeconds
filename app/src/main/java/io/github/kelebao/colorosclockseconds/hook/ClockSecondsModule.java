@@ -2935,17 +2935,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
 
     /**
      * 某一位的生效颜色：明暗自适应开且当前浅色背景时优先用浅色副键，
-     * 未设副键回落常规键；「跟随系统」副键位跟随系统文字色，常规键 FOLLOW 不影响浅色副键（U-20261116a）。
+     * 未设副键回落常规键；「跟随系统」位永远跟随（issue #11 的兼容要求）。
      */
     private static int effectiveSlotColor(int slot, int normalColor, int systemTextColor) {
         return effectiveSlotColor(slot, normalColor, systemTextColor, null);
     }
 
     private static int effectiveSlotColor(int slot, int normalColor, int systemTextColor, TextView view) {
-        // U-20261115⑩：浅色副键未启用时直接走常规键。
-        // U-20261116a：常规键 FOLLOW(0) 不再挡住浅色副键（U-20261116：浅色调色盘的编辑
-        // 也要在状态栏生效；「跟随系统」语义由下方副键==FOLLOW 分支统一处理）。
-        if (sLightPaletteUsed && sAdaptiveColor && isLightBackground(systemTextColor, view)) {
+        // U-20261115⑩：浅色调色板未启用时直接走常规键。
+        if (sLightPaletteUsed && sAdaptiveColor && normalColor != ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                && isLightBackground(systemTextColor, view)) {
             Integer[] light = sDigitLightColors;
             Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
             if (c != null) {
