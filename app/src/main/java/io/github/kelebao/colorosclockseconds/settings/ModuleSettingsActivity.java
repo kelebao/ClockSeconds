@@ -5427,10 +5427,11 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         TextView back = new TextView(this);
         back.setText(R.string.settings_task_back);
-        back.setTextSize(14f);
+        // U-20261117d：返回胶囊与配色面板统一缩小（字号 14->12，内边距 16/8 -> 12/5）。
+        back.setTextSize(12f);
         back.setTextColor(0xFFFFFFFF);
         back.setGravity(Gravity.CENTER);
-        back.setPadding(dp(16), dp(8), dp(16), dp(8));
+        back.setPadding(dp(12), dp(5), dp(12), dp(5));
         GradientDrawable backBg = new GradientDrawable();
         backBg.setCornerRadius(dp(999));
         backBg.setColor(accent());
@@ -5721,14 +5722,18 @@ public final class ModuleSettingsActivity extends Activity {
             pickTitle.setText(R.string.settings_task_pick);
             pickTitle.setTextSize(13f);
             pickTitle.setTextColor(text2());
-            pickHead.addView(pickTitle, new LinearLayout.LayoutParams(0,
+            // U-20261117d：标题按内容宽度，右侧补弹性占位——「?」紧跟标题，返回按钮仍靠右。
+            pickHead.addView(pickTitle, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            pickHead.addView(new View(this), new LinearLayout.LayoutParams(0,
                     ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             TextView pickBack = new TextView(this);
             pickBack.setText(R.string.settings_task_back);
-            pickBack.setTextSize(14f);
+            // U-20261117d：返回按钮缩小（字号 14->12，内边距 16/8 -> 12/5）。
+            pickBack.setTextSize(12f);
             pickBack.setTextColor(0xFFFFFFFF);
             pickBack.setGravity(Gravity.CENTER);
-            pickBack.setPadding(dp(16), dp(8), dp(16), dp(8));
+            pickBack.setPadding(dp(12), dp(5), dp(12), dp(5));
             GradientDrawable pbbg = new GradientDrawable();
             pbbg.setCornerRadius(dp(999));
             pbbg.setColor(accent());
@@ -5861,7 +5866,8 @@ public final class ModuleSettingsActivity extends Activity {
             tlp.rightMargin = dp(6);
             tabRow.addView(tabDark, tlp);
             tabRow.addView(tabLight, tlp);
-        // U-20261116e：深色/浅色页签旁「?」帮助图标，解释两个模式及"一个任务只保存当前模式"的语义。
+        // U-20261116e：深浅色模式帮助图标，解释两个模式及"一个任务只保存当前模式"的语义。
+        // U-20261117d：位置由页签行改到标题行（紧跟「添加配色」）。
         final TextView tabHelp = new TextView(this);
         tabHelp.setText("?");
         tabHelp.setTextSize(12f);
@@ -5887,7 +5893,11 @@ public final class ModuleSettingsActivity extends Activity {
             showTabHelp.run();
             return true;
         });
-        tabRow.addView(tabHelp);
+        // U-20261117d：问号从页签行移到标题行（紧跟「添加配色」，插在标题与弹性占位之间）；
+        // 页签行尾部补等宽占位，保持两枚页签胶囊宽度与原先一致（只有「?」换位置）。
+        pickHead.addView(tabHelp, 1);
+        tabRow.addView(new View(this), new LinearLayout.LayoutParams(dp(23),
+                ViewGroup.LayoutParams.WRAP_CONTENT));
             final Runnable applyTabStyle = () -> {
                 // U-20261115⑲③：当前页签用 accent 紫实底 + 白字，未选中保持弱化灰底。
                 // U-20261117b：页签胶囊配色回归应用主题，面板不再随页签变底色/文字色；
