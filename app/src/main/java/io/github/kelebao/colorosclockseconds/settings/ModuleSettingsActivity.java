@@ -1753,7 +1753,7 @@ public final class ModuleSettingsActivity extends Activity {
     /** 渐变端点色：用户自定义优先，未自定义时回落到首位 / 末位数字的颜色。
      *  （自适应浅色页：端点浅色副键优先，未设副键再走常规解析。） */
     private int gradientTargetColor(int which) {
-        if (lightPaletteActive()) {   // U-20261115⑬：预览显示与模块同语义（epoch+背景亮度），页签只决定编辑对象
+        if (lightPaletteActive()) {   // U-20261115⑬ + U-20261116b：副键真色优先（含 FOLLOW 位）、副键 FOLLOW 回落常规键，与模块同语义
             Integer light = which == 0 ? mCfgGradStartLight : mCfgGradEndLight;
             if (light != null) {
                 return light;
@@ -3538,17 +3538,17 @@ public final class ModuleSettingsActivity extends Activity {
 
     /** 某一位当前的颜色（-1 = 跟随系统）。自适应浅色页优先读浅色副键，未设回落常规键。 */
     private int slotColor(int slot) {
-        // U-20261115⑬：预览显示与模块同语义（epoch+背景亮度+非FOLLOW 才走浅色副键），页签只决定编辑对象。
+        // U-20261115⑬ + U-20261116d：预览与模块同语义——浅色副键真色永远优先（含常规键=FOLLOW 位），副键 FOLLOW(0) 回落常规键；页签只决定编辑对象。
         if (mCfgDigitColors == null || slot < 0 || slot >= mCfgDigitColors.length) {
             return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
         }
         int normal = mCfgDigitColors[slot];
-        if (lightPaletteActive() && normal != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+        if (lightPaletteActive()) {
             Integer[] light = mCfgDigitLightColors;
             Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
-            if (c != null) {
-                return c;
-            }
+        if (c != null && c != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            return c;
+        }   // 副键 FOLLOW(0) 落到底部 return normal（回落常规键，与模块 U-20261116d 同语义）
         }
         return normal;
     }
