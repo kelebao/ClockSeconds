@@ -592,7 +592,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
 
     /**
      * 预览钟某一位的生效色（U-20261115⑫，U-20261116b 语义重排）：
-     * 浅色副键真色永远优先（含常规键 FOLLOW 位）；副键 FOLLOW 回落常规键，不再跟随系统文字色。模块 effectiveSlotColor 同语义。
+     * 浅色副键真色优先；副键 FOLLOW(0)=浅色下该位跟随系统文字色（U-20261116x）；null 回落常规键。模块 effectiveSlotColor 同语义。
      */
     private int effectiveSlotPreviewColor(int slot) {
         int[] colors = ClockSecondsConfig.getDigitColors(getContentResolver());
@@ -600,10 +600,13 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 ? colors[slot] : ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
         if (lightPaletteActive()) {
             Integer light = ClockSecondsConfig.getDigitLightColor(getContentResolver(), slot);
-            // U-20261116b：副键真色永远优先（含常规键=FOLLOW 位）；
-            // 副键 FOLLOW(0) 回落常规键，不解析 systemTextColor（与模块同语义）。
             if (light != null && light != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
                 return light;
+            }
+            // U-20261116x（浅色模式点「跟随系统」改不回默认色）：副键显式 FOLLOW(0)
+            // = 浅色下该位跟随系统文字色；null（从未设置）才回落常规键。与模块同语义。
+            if (light != null) {
+                return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
             }
         }
         return normal;
@@ -634,6 +637,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     private int previewAdapt(int color) {
         int sys = ClockSecondsConfig.getSystemTextColor(getContentResolver(),
                 0xFFEAE6F8);
+        if (color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+            // U-20261116x：FOLLOW(0) 直接 adaptColorForBackground 会算出全透明，预览断色。
+            return sys;
+        }
         return ClockSecondsConfig.adaptColorForBackground(color, sys);
     }
 
@@ -1649,13 +1656,14 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         return wrap;
     }
 
-    /** f12-2：渐变预设渲染色——AUTO(-1) 色标按 start→end 线性插值回落，条形不再空白。 */
+    /** f12-2：渐变预设渲染色——AUTO(-1)/FOLLOW(0) 色标按 start→end 线性插值回落，条形不再空白/透明。 */
     private static int[] renderGradColors(int[] grad) {
         int n = grad.length;
         int[] out = new int[n];
         int first = -1, last = -1;
         for (int i = 0; i < n; i++) {
-            if (grad[i] != ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
+            if (grad[i] != ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                    && grad[i] != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {   // U-20261116x：FOLLOW(0) 按 AUTO 插值（0 直接 setColor = 透明）
                 if (first < 0) {
                     first = i;
                 }
@@ -1663,7 +1671,8 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             }
         }
         for (int i = 0; i < n; i++) {
-            if (grad[i] != ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
+            if (grad[i] != ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                    && grad[i] != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {   // U-20261116x：FOLLOW(0) 按 AUTO 插值（0 直接 setColor = 透明）
                 out[i] = grad[i];
                 continue;
             }

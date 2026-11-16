@@ -3419,9 +3419,9 @@ public final class ModuleSettingsActivity extends Activity {
             expandDigits();
         }
         // 明暗自适应浅色页：写「_light 副键」，不动常规键（issue #11）。
-        // U-20261116b：浅色页点「跟随系统」= 副键写 FOLLOW(0)（浅色模式下该位回落常规键色，不再跟随系统文字色，
-        // 深色模式继续用主键色；副键真色则永远优先）；副键 null 只保留「未设置回落主键」原义——
-        // 旧实现清除副键导致回落主键紫，用户看到「点跟随系统没成功」。
+        // U-20261116b + U-20261116x：浅色页点「跟随系统」= 副键写 FOLLOW(0)，
+        // 浅色模式下该位跟随系统文字色（effectiveSlotColor/slotColor 同步解析），
+        // 深色模式继续用主键色；副键 null 只保留「未设置回落常规键」原义。
         if (mAdaptiveColor && mLightMode) {
             final boolean follow = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
             Integer light = follow ? ClockSecondsConfig.DIGIT_COLOR_FOLLOW : color;
@@ -3540,9 +3540,11 @@ public final class ModuleSettingsActivity extends Activity {
         }
     }
 
-    /** 某一位当前的颜色（-1 = 跟随系统）。自适应浅色页优先读浅色副键，未设回落常规键。 */
+    /** 某一位当前的颜色（FOLLOW = 跟随系统）。自适应浅色页优先读浅色副键：真色优先；副键显式 FOLLOW(0) = 浅色下跟随系统；未设（null）回落常规键。 */
     private int slotColor(int slot) {
-        // U-20261115⑬ + U-20261116d：预览与模块同语义——浅色副键真色永远优先（含常规键=FOLLOW 位），副键 FOLLOW(0) 回落常规键；页签只决定编辑对象。
+        // U-20261115⑬ + U-20261116d + U-20261116x：预览与模块同语义——浅色副键真色永远优先
+        // （含常规键=FOLLOW 位）；副键显式 FOLLOW(0)（浅色页点过「跟随系统」）返回 FOLLOW，
+        // 预览按系统文字色渲染、「跟随系统」圆点选中态正确；副键未设（null）回落常规键。
         if (mCfgDigitColors == null || slot < 0 || slot >= mCfgDigitColors.length) {
             return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
         }
@@ -3550,9 +3552,12 @@ public final class ModuleSettingsActivity extends Activity {
         if (lightPaletteActive()) {
             Integer[] light = mCfgDigitLightColors;
             Integer c = light != null && slot >= 0 && slot < light.length ? light[slot] : null;
-        if (c != null && c != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
-            return c;
-        }   // 副键 FOLLOW(0) 落到底部 return normal（回落常规键，与模块 U-20261116d 同语义）
+            if (c != null && c != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+                return c;
+            }
+            if (c != null) {
+                return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;   // U-20261116x：浅色下跟随系统
+            }
         }
         return normal;
     }

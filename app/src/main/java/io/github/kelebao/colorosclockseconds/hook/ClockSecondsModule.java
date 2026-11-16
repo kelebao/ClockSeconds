@@ -2934,8 +2934,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
     }
 
     /**
-     * 某一位的生效颜色：明暗自适应开且当前浅色背景时优先用浅色副键，
-     * 未设副键回落常规键；「跟随系统」位永远跟随（issue #11 的兼容要求）。
+     * 某一位的生效颜色：明暗自适应开且当前浅色背景时优先用浅色副键。
+     * 副键未设置（null）回落常规键（旧版本兼容）；副键显式为 FOLLOW(0)（浅色页点过
+     * 「跟随系统」圆点）= 该位在浅色模式下跟随系统文字色（U-20261116x）。
      */
     private static int effectiveSlotColor(int slot, int normalColor, int systemTextColor) {
         return effectiveSlotColor(slot, normalColor, systemTextColor, null);
@@ -2951,10 +2952,16 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 // 浅色页给「跟随系统」位设的浅色永远不生效。
                 return c;
             }
-            // U-20261116b（U-20261116a 教训）：副键 FOLLOW(0) 回落常规键，
-            // 不再解析为 systemTextColor —— 深色壁纸浅色模式下系统文字色是白，
-            // 未设浅色副键的位（用户口径「默认色」）不应变白。
-            // 首页浅色页签「跟随系统」圆点语义同步：浅色下用常规键色。
+            if (c != null) {
+                // U-20261116x（用户反馈「浅色模式下不能改回默认色」）：副键显式 FOLLOW(0)
+                // = 浅色页点过「跟随系统」，该位在浅色模式下跟随系统文字色，不再回落
+                // 常规键自定义色——否则浅色页永远无法改回默认色（用户实测点圆点无效）。
+                // 返回 FOLLOW 交给渲染路径按系统文字色渲染（applyDigitColors 跳过 span、
+                // gradientEdgeColor 解析 systemTextColor）。「单色页签变白」的真根因是
+                // 高级页缺 applyStatusBarAppearance（c7e4e39 已修），与本语义无关。
+                return ClockSecondsConfig.DIGIT_COLOR_FOLLOW;
+            }
+            // c == null（从未设过浅色副键）：回落常规键，保持旧版本兼容。
         }
         return normalColor;
     }
@@ -4909,9 +4916,9 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                         ClockSecondsConfig.EXTRA_NIGHT, false);
                                 switchSystemTheme(ctx, toNight);
                             } else if (ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR.equals(action)) {
-                                // U-20261116b：FOLLOW(0) = 浅色下回落常规键（副键写 "0"），
-                                // 渲染侧 effectiveSlotColor 回落常规键，不解析 systemTextColor；
-                                // 副键 null 只表示「未设置回落主键」。旧语义（0=清除）作废。
+                                // U-20261116b + U-20261116x：FOLLOW(0) = 浅色下跟随系统文字色
+                                // （副键写 "0"，effectiveSlotColor 解析为 FOLLOW 交给渲染路径）；
+                                // 副键 null 表示「未设置回落常规键」。旧语义（0=清除/回落常规键）作废。
                                 int slot = intent.getIntExtra(ClockSecondsConfig.EXTRA_SLOT, 0);
                                 int color = intent.getIntExtra(
                                         ClockSecondsConfig.EXTRA_COLOR,
