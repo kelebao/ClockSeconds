@@ -183,6 +183,10 @@ public static final String EFFECTIVE_SECONDS_KEY = "coloros_clock_seconds_effect
      *  高级设置页「我的预设」整组应用时用：避免六次单写广播带来的中途闪烁。 */
     public static final String ACTION_SET_DIGIT_COLORS_BATCH =
             "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_COLORS_BATCH";
+    /** 设置页 → SystemUI 整套写入六位数字颜色「浅色副键」（U-20261117a：浅色页签应用预设；
+     *  {@link #EXTRA_COLORS} 逗号分隔 ARGB；0 = 浅色下跟随系统文字色）。 */
+    public static final String ACTION_SET_DIGIT_LIGHT_COLORS_BATCH =
+            "io.github.kelebao.colorosclockseconds.action.SET_DIGIT_LIGHT_COLORS_BATCH";
     /** String extra：六位颜色 CSV（"RRGGBB 形式的 int,…"，用 {@link Integer#parseInt} 解析）。 */
     public static final String EXTRA_COLORS = "colors";
     /** 设置页 → SystemUI 写入明暗自适应开关（{@link #EXTRA_ENABLED}）。 */
@@ -949,6 +953,16 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
         }
         for (int i = 0; i < DIGIT_COUNT && i < colors.length; i++) {
             setDigitColor(resolver, i, colors[i]);
+        }
+    }
+
+    /** U-20261117a：整套写入六位「浅色副键」（浅色页签「我的预设」整组应用）。 */
+    public static void setDigitLightColorsBatch(ContentResolver resolver, int[] colors) {
+        if (resolver == null || colors == null) {
+            return;
+        }
+        for (int i = 0; i < DIGIT_COUNT && i < colors.length; i++) {
+            setDigitLightColor(resolver, i, colors[i]);
         }
     }
 

@@ -1801,7 +1801,12 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             }
             sb.append(colors[i]);
         }
-        Intent intent = new Intent(ClockSecondsConfig.ACTION_SET_DIGIT_COLORS_BATCH)
+        // U-20261117a：浅色页签（明暗自适应+浅色组）应用预设时写「浅色副键」，
+        // 否则副键保持原值（0=跟随系统）导致浅色预设看似未生效；深色页签维持常规键。
+        final boolean lightApply = mAdaptiveColor && mLightMode;
+        Intent intent = new Intent(lightApply
+                ? ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLORS_BATCH
+                : ClockSecondsConfig.ACTION_SET_DIGIT_COLORS_BATCH)
                 .putExtra(ClockSecondsConfig.EXTRA_COLORS, sb.toString());
         intent.setPackage(ClockSecondsConfig.SYSTEM_UI_PACKAGE);
         sendBroadcast(intent);

@@ -4841,6 +4841,7 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_LIGHT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_COLORS_BATCH);
+                filter.addAction(ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLORS_BATCH);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_COLOR);
                 filter.addAction(ClockSecondsConfig.ACTION_SET_GRADIENT_DIRECTION);
@@ -4963,6 +4964,25 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                                     }
                                     reloadDigitColors(ctx);
                                     sFloatHourColor = sDigitColors[0];
+                                    refreshClockNow();
+                                }
+                            } else if (ClockSecondsConfig.ACTION_SET_DIGIT_LIGHT_COLORS_BATCH.equals(action)) {
+                                // U-20261117a：浅色页签「我的预设」整组应用——写六位浅色副键
+                                // （0 = 浅色下跟随系统文字色），并启用浅色调色板；一次写六位只刷一次。
+                                String csvL = intent.getStringExtra(ClockSecondsConfig.EXTRA_COLORS);
+                                if (csvL != null) {
+                                    try {
+                                        String[] partsL = csvL.split(",");
+                                        int[] colorsL = new int[partsL.length];
+                                        for (int i = 0; i < partsL.length; i++) {
+                                            colorsL[i] = Integer.parseInt(partsL[i].trim());
+                                        }
+                                        ClockSecondsConfig.setDigitLightColorsBatch(cr, colorsL);
+                                    } catch (NumberFormatException ignored) {
+                                        // 非法 CSV 忽略整包
+                                    }
+                                    ClockSecondsConfig.setLightPaletteUsed(cr, true);
+                                    reloadDigitColors(ctx);
                                     refreshClockNow();
                                 }
                             } else if (ClockSecondsConfig.ACTION_SET_GRADIENT.equals(action)) {

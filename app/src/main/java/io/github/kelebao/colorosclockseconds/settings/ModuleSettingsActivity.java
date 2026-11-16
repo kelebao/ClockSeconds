@@ -5753,8 +5753,18 @@ public final class ModuleSettingsActivity extends Activity {
             prev.setGravity(Gravity.CENTER);
             prev.setFontFeatureSettings("tnum");
             prev.setPadding(0, dp(10), 0, dp(6));
-            pick.addView(prev, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            // U-20261117a：预览时间背景板——深浅随「深色模式/浅色模式」页签切换
+            // （深色页签=深底板衬托深色组颜色，浅色页签=浅底板衬托浅色组颜色）。
+            final FrameLayout prevHost = new FrameLayout(this);
+            final GradientDrawable prevBg = new GradientDrawable();
+            prevBg.setCornerRadius(dp(14));
+            prevBg.setColor(0xFF161226);
+            prevHost.setBackground(prevBg);
+            FrameLayout.LayoutParams prevLp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            prevLp.setMargins(dp(14), dp(6), dp(14), dp(2));
+            prevHost.addView(prev, prevLp);
+            pick.addView(prevHost);
             // U-20261115⑯：预设清单 = 高级设置存的用户预设（深浅两组、单色/渐变都读），
             // 按深色/浅色页签切换显示，单色与渐变分组列出。
             // U-20261115⑲④：不再混入内置渐变预设与首页旧自定义渐变预设，只列「我的预设颜色」。
@@ -5897,6 +5907,8 @@ public final class ModuleSettingsActivity extends Activity {
                 final GradientDrawable hbgM = (GradientDrawable) hbg.mutate();
                 hbgM.setColor(pn ? 0x2A2340 : 0xFFE7DFFF);
                 hbgM.setStroke(dp(1), pn ? 0x37305A : 0xDDDDDD);
+                // U-20261117a：预览背景板跟随页签深浅。
+                prevBg.setColor(pn ? 0xFF161226 : 0xFFF1EEF9);
             };
             tabDark.setOnClickListener(v -> {
                 pickLight[0] = 0;
