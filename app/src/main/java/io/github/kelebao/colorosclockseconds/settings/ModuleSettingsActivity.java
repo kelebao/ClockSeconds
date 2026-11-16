@@ -5769,6 +5769,8 @@ public final class ModuleSettingsActivity extends Activity {
             LinearLayout.LayoutParams prevHostLp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             prevHostLp.bottomMargin = dp(14);
+            // U-20261117e：预览时间背景板整体下移一点（顶部留出与标题行的呼吸间距）。
+            prevHostLp.topMargin = dp(12);
             pick.addView(prevHost, prevHostLp);
             // U-20261115⑯：预设清单 = 高级设置存的用户预设（深浅两组、单色/渐变都读），
             // 按深色/浅色页签切换显示，单色与渐变分组列出。
