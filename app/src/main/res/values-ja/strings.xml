@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">もっと見る</string>
     <string name="settings_preset_help">プリセットを長押しで名前変更・削除できます。</string>
+    <string name="settings_task_mode_help">暗色 / ライトのタブは、いま編集している色のセットを切り替えます。“暗色”はダークモードの色、“ライト”はライトモードの色を編集します。タスクに保存されるのは現在のモードで選択した色だけです — 保存前にタブを切り替えても、もう一方のモードの選択は引き継がれません。</string>
     <string name="settings_dir_swipe_hint">← 左右にスワイプ →</string>
     <string name="settings_tab_mono">単色</string>
     <string name="settings_tab_gradient">グラデーション</string>

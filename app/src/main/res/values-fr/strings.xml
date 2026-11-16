@@ -188,6 +188,7 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Plus</string>
     <string name="settings_preset_help">Appui long sur un preset pour renommer ou supprimer.</string>
+    <string name="settings_task_mode_help">Les onglets Sombre / Clair déterminent quel jeu de couleurs vous modifiez : “Sombre” modifie les couleurs du mode sombre, “Clair” celles du mode clair. Une tâche n\'enregistre que les couleurs cochées dans le mode actuel — changer d\'onglet avant d\'enregistrer ne reprend pas les choix de l\'autre mode.</string>
     <string name="settings_dir_swipe_hint">← Glissez →</string>
     <string name="settings_tab_mono">Uni</string>
     <string name="settings_tab_gradient">Dégradé</string>

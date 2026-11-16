@@ -188,6 +188,7 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Mais</string>
     <string name="settings_preset_help">Toque e segure uma predefinição para renomear ou excluir.</string>
+    <string name="settings_task_mode_help">As abas Escuro / Claro definem qual conjunto de cores você está editando: “Escuro” edita as cores do modo escuro, “Claro” as do modo claro. Uma tarefa salva apenas as cores marcadas no modo atual — trocar de aba antes de salvar não leva as escolhas do outro modo.</string>
     <string name="settings_dir_swipe_hint">← Deslize →</string>
     <string name="settings_tab_mono">Mono</string>
     <string name="settings_tab_gradient">Gradiente</string>

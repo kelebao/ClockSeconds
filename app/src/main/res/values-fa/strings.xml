@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">بیشتر</string>
     <string name="settings_preset_help">برای تغییر نام یا حذف، روی preset نگه دارید.</string>
+    <string name="settings_task_mode_help">زبانه‌های تیره / روشن تعیین می‌کنند کدام مجموعه رنگ را ویرایش می‌کنید: “تیره” رنگ‌های حالت تیره و “روشن” رنگ‌های حالت روشن را ویرایش می‌کند. یک وظیفه فقط رنگ‌های انتخاب‌شده در حالت فعلی را ذخیره می‌کند — تغییر زبانه پیش از ذخیره، انتخاب‌های حالت دیگر را منتقل نمی‌کند.</string>
     <string name="settings_dir_swipe_hint">← کشیدن انگشت →</string>
     <string name="settings_tab_mono">تک‌رنگ</string>
     <string name="settings_tab_gradient">گرادیان</string>

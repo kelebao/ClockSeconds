@@ -188,6 +188,7 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Więcej</string>
     <string name="settings_preset_help">Przytrzymaj preset, aby zmienić nazwę lub usunąć.</string>
+    <string name="settings_task_mode_help">Karty Ciemny / Jasny określają, który zestaw kolorów edytujesz: „Ciemny” edytuje kolory trybu ciemnego, „Jasny” — trybu jasnego. Zadanie zapisuje tylko kolory zaznaczone w bieżącym trybie — przełączenie karty przed zapisem nie przenosi wyborów z drugiego trybu.</string>
     <string name="settings_dir_swipe_hint">← Przesuń →</string>
     <string name="settings_tab_mono">Jednolity</string>
     <string name="settings_tab_gradient">Gradient</string>

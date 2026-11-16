@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">المزيد</string>
     <string name="settings_preset_help">اضغط مطولاً علىpreset لإعادة تسميته أو حذفه.</string>
+    <string name="settings_task_mode_help">تبويب داكن / فاتح يحدد مجموعة الألوان التي تعدّلها الآن: “داكن” يعدّل ألوان الوضع الداكن، و“فاتح” يعدّل ألوان الوضع الفاتح. المهمة تحفظ الألوان المحددة في الوضع الحالي فقط — تبديل التبويب قبل الحفظ لا ينقل اختيارات الوضع الآخر.</string>
     <string name="settings_dir_swipe_hint">← اسحب يميناً ويساراً →</string>
     <string name="settings_tab_mono">لون واحد</string>
     <string name="settings_tab_gradient">تدرج</string>

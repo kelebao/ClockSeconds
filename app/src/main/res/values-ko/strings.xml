@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">더보기</string>
     <string name="settings_preset_help">프리셋을 길게 눌러 이름을 바꾸거나 삭제하세요.</string>
+    <string name="settings_task_mode_help">어두움 / 밝음 탭은 지금 편집 중인 색상 세트를 결정합니다. “어두움”은 다크 모드의 색상, “밝음”은 라이트 모드의 색상을 편집합니다. 작업에는 현재 모드에서 선택한 색상만 저장됩니다 — 저장 전에 탭을 바꿔도 다른 모드의 선택은 함께 저장되지 않습니다.</string>
     <string name="settings_dir_swipe_hint">← 좌우로 스와이프 →</string>
     <string name="settings_tab_mono">단색</string>
     <string name="settings_tab_gradient">그라데이션</string>

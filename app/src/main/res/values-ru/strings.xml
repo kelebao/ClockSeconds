@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Ещё</string>
     <string name="settings_preset_help">Долгое нажатие на пресет: переименовать или удалить.</string>
+    <string name="settings_task_mode_help">Вкладки Тёмный / Светлый определяют, какой набор цветов вы редактируете: “Тёмный” — цвета тёмного режима, “Светлый” — светлого. Задача сохраняет только цвета, отмеченные в текущем режиме; переключение вкладки перед сохранением не переносит выбор из другого режима.</string>
     <string name="settings_dir_swipe_hint">← Проведите пальцем →</string>
     <string name="settings_tab_mono">Один цвет</string>
     <string name="settings_tab_gradient">Градиент</string>

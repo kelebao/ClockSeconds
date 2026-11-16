@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">მეტი</string>
     <string name="settings_preset_help">დააჭირეთ ხანგრძლივად პრესეტს სახელის გადარქმევისთვის ან წასაშლელად.</string>
+    <string name="settings_task_mode_help">მუქი / ღია ჩანართები განსაზღვრავს, რომელი ფერების ნაკრებს არედაქტირებთ: “მუქი” არედაქტირებს მუქი რეჟიმის ფერებს, “ღია” — ღია რეჟიმისას. დავალება ინახავს მხოლოდ მიმდინარე რეჟიმში მონიშნულ ფერებს — ჩანართის გადართვა შენახვამდე მეორე რეჟიმის არჩევანს არ გადმოიტანს.</string>
     <string name="settings_dir_swipe_hint">← გაასრიალეთ →</string>
     <string name="settings_tab_mono">ერთი ფერი</string>
     <string name="settings_tab_gradient">გრადიენტი</string>

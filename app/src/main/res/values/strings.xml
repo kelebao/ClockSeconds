@@ -188,6 +188,7 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">More</string>
     <string name="settings_preset_help">Long-press a preset to rename or delete it.</string>
+    <string name="settings_task_mode_help">Deep color / light color switch which set of colors you are editing: “Dark” edits the colors used in dark mode, “Light” edits the colors used in light mode. A task saves only the colors checked under the mode you are in now — switching the tab before saving will not carry the other mode\'s picks over.</string>
     <string name="settings_dir_swipe_hint">←  Swipe  →</string>
     <string name="settings_tab_mono">Mono</string>
     <string name="settings_tab_gradient">Gradient</string>

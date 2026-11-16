@@ -188,6 +188,7 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Mehr</string>
     <string name="settings_preset_help">Preset gedrückt halten zum Umbenennen oder Löschen.</string>
+    <string name="settings_task_mode_help">Die Tabs Dunkel / Hell legen fest, welche Farben du gerade bearbeitest: „Dunkel“ bearbeitet die Farben im dunklen Modus, „Hell“ die im hellen Modus. Eine Aufgabe speichert nur die im aktuellen Modus gewählten Farben – ein Tab-Wechsel vor dem Speichern übernimmt die Auswahl des anderen Modus nicht.</string>
     <string name="settings_dir_swipe_hint">← Wischen →</string>
     <string name="settings_tab_mono">Mono</string>
     <string name="settings_tab_gradient">Verlauf</string>

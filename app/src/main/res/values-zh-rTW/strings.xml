@@ -96,8 +96,8 @@
     <string name="settings_digit_palette">調色盤</string>
     <string name="settings_adaptive_color">明暗自適應</string>
     <string name="settings_adaptive_color_sum">為淺色和暗色背景分別取色；未設定淺色時沿用暗色</string>
-    <string name="settings_tab_dark">深色</string>
-    <string name="settings_tab_light">淺色</string>
+    <string name="settings_tab_dark">深色模式</string>
+    <string name="settings_tab_light">浅色模式</string>
     <string name="settings_digit_follow">跟隨系統</string>
     <string name="settings_digit_done">完成</string>
     <string name="settings_digit_slots">時十,時個,分十,分個,秒十,秒個</string>
@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">更多</string>
     <string name="settings_preset_help">長按某個預設可重新命名或刪除。</string>
+    <string name="settings_task_mode_help">深色 / 淺色頁籤決定你現在編輯的是哪一套顏色：“深色”編輯深色模式下的顏色，“淺色”編輯淺色模式下的顏色。一個任務只儲存目前模式下勾選的顏色——儲存前切換頁籤，不會把另一個模式勾選的顏色一起帶過去。</string>
     <string name="settings_dir_swipe_hint">← 左右滑動 →</string>
     <string name="settings_tab_mono">單色</string>
     <string name="settings_tab_gradient">漸層</string>

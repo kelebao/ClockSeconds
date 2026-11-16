@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Περισσότερα</string>
     <string name="settings_preset_help">Πατήστε παρατεταμένα σε ένα preset για μετονομασία ή διαγραφή.</string>
+    <string name="settings_task_mode_help">Οι καρτέλες Σκοτεινό / Φωτεινό καθορίζουν ποιο σύνολο χρωμάτων επεξεργάζεστε: το “Σκοτεινό” επεξεργάζεται τα χρώματα της σκοτεινής λειτουργίας, το “Φωτεινό” της φωτεινής. Μια εργασία αποθηκεύει μόνο τα χρώματα που επιλέχθηκαν στη τρέχουσα λειτουργία — η αλλαγή καρτέλας πριν την αποθήκευση δεν μεταφέρει τις επιλογές της άλλης.</string>
     <string name="settings_dir_swipe_hint">← Σύρετε →</string>
     <string name="settings_tab_mono">Μονοχρωμος</string>
     <string name="settings_tab_gradient">Διαβάθμιση</string>

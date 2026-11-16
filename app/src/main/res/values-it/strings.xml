@@ -188,6 +188,7 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Altro</string>
     <string name="settings_preset_help">Tieni premuto un preset per rinominare o eliminare.</string>
+    <string name="settings_task_mode_help">Le schede Scuro / Chiaro decidono quale insieme di colori stai modificando: “Scuro” modifica i colori della modalità scura, “Chiaro” quelli della modalità chiara. Un\'attività salva solo i colori selezionati nella modalità corrente: cambiare scheda prima di salvare non trasferisce le scelte dell\'altra modalità.</string>
     <string name="settings_dir_swipe_hint">← Scorri →</string>
     <string name="settings_tab_mono">Monocolore</string>
     <string name="settings_tab_gradient">Gradiente</string>

@@ -188,6 +188,7 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Daha fazla</string>
     <string name="settings_preset_help">Yeniden adlandırmak veya silmek için ön ayara uzun basın.</string>
+    <string name="settings_task_mode_help">Koyu / Açık sekmeleri hangi renk kümesini düzenlediğinizi belirler: “Koyu” koyu modun, “Açık” açık modun renklerini düzenler. Bir görev yalnızca geçerli modda seçilen renkleri kaydeder — kaydetmeden önce sekme değiştirmek diğer modun seçimlerini taşımaz.</string>
     <string name="settings_dir_swipe_hint">← Kaydırın →</string>
     <string name="settings_tab_mono">Tek renk</string>
     <string name="settings_tab_gradient">Degradasyon</string>

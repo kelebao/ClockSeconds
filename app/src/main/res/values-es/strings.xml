@@ -188,6 +188,7 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Más</string>
     <string name="settings_preset_help">Mantén pulsado un preajuste para renombrar o borrar.</string>
+    <string name="settings_task_mode_help">Las pestañas Oscuro / Claro deciden qué conjunto de colores estás editando: “Oscuro” edita los colores del modo oscuro, “Claro” los del modo claro. Una tarea guarda solo los colores marcados en el modo actual: cambiar de pestaña antes de guardar no traslada las selecciones del otro modo.</string>
     <string name="settings_dir_swipe_hint">← Desliza →</string>
     <string name="settings_tab_mono">Un color</string>
     <string name="settings_tab_gradient">Degradado</string>

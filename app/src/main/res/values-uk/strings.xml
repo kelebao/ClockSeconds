@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Більше</string>
     <string name="settings_preset_help">Довге натискання на пресет: перейменувати або видалити.</string>
+    <string name="settings_task_mode_help">Вкладки Темний / Світлий визначають, який набір кольорів ви редагуєте: “Темний” — кольори темного режиму, “Світлий” — світлого. Завдання зберігає лише кольори, позначені в поточному режимі; перемикання вкладки перед збереженням не переносить вибір з іншого режиму.</string>
     <string name="settings_dir_swipe_hint">← Проведіть пальцем →</string>
     <string name="settings_tab_mono">Один колір</string>
     <string name="settings_tab_gradient">Градієнт</string>

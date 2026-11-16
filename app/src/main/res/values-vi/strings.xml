@@ -188,6 +188,7 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Thêm</string>
     <string name="settings_preset_help">Nhấn giữ một cài đặt sẵn để đổi tên hoặc xóa.</string>
+    <string name="settings_task_mode_help">Tab Tối / Sáng quyết định bạn đang chỉnh bộ màu nào: “Tối” chỉnh màu của chế độ tối, “Sáng” chỉnh màu của chế độ sáng. Một tác vụ chỉ lưu các màu được chọn trong chế độ hiện tại — đổi tab trước khi lưu sẽ không mang theo lựa chọn của chế độ kia.</string>
     <string name="settings_dir_swipe_hint">← Vuốt sang ngang →</string>
     <string name="settings_tab_mono">Một màu</string>
     <string name="settings_tab_gradient">Gradient</string>

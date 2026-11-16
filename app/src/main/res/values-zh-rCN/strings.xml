@@ -99,8 +99,8 @@
     <string name="settings_digit_palette">调色盘</string>
     <string name="settings_adaptive_color">系统模式自适应</string>
     <string name="settings_adaptive_color_sum">颜色跟随系统深色 / 浅色模式自动切换</string>
-    <string name="settings_tab_dark">深色</string>
-    <string name="settings_tab_light">浅色</string>
+    <string name="settings_tab_dark">深色模式</string>
+    <string name="settings_tab_light">浅色模式</string>
     <string name="settings_digit_follow">跟随系统</string>
     <string name="settings_digit_done">完成</string>
     <string name="settings_digit_slots">时十,时个,分十,分个,秒十,秒个</string>
@@ -189,6 +189,7 @@
     <string name="settings_preset_default_name">预设 %1$d</string>
     <string name="settings_preset_more">更多</string>
     <string name="settings_preset_help">长按某个预设可重命名或删除。</string>
+    <string name="settings_task_mode_help">深色 / 浅色页签决定你现在编辑的是哪一套颜色：“深色”编辑深色模式下的颜色，“浅色”编辑浅色模式下的颜色。一个任务只保存当前模式下勾选的颜色——保存前切换页签，不会把另一个模式勾选的颜色一起带过去。</string>
     <string name="settings_dir_swipe_hint">← 左右滑动 →</string>
     <string name="settings_tab_mono">单色</string>
     <string name="settings_tab_gradient">渐变</string>

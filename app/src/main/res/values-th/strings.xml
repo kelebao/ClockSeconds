@@ -188,6 +188,7 @@
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">เพิ่มเติม</string>
     <string name="settings_preset_help">กดค้างที่พรีเซ็ตเพื่อเปลี่ยนชื่อหรือลบ</string>
+    <string name="settings_task_mode_help">แท็บ มืด / สว่าง ใช้เลือกว่าจะแก้ไขชุดสีไหน: “มืด” แก้ไขสีของโหมดมืด “สว่าง” แก้ไขสีของโหมดสว่าง งานจะบันทึกเฉพาะสีที่เลือกไว้ในโหมดปัจจุบันเท่านั้น — การสลับแท็บก่อนบันทึกจะไม่นำสีที่เลือกไว้ในอีกโหมดมาด้วย</string>
     <string name="settings_dir_swipe_hint">← ปัดซ้ายขวา →</string>
     <string name="settings_tab_mono">สีเดียว</string>
     <string name="settings_tab_gradient">ไล่เฉด</string>

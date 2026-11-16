@@ -188,6 +188,7 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_preset_default_name">Preset %1$d</string>
     <string name="settings_preset_more">Lainnya</string>
     <string name="settings_preset_help">Tekan lama preset untuk mengganti nama atau menghapus.</string>
+    <string name="settings_task_mode_help">Tab Gelap / Terang menentukan set warna mana yang sedang Anda edit: “Gelap” mengedit warna mode gelap, “Terang” mengedit warna mode terang. Tugas hanya menyimpan warna yang dicentang pada mode saat ini — berpindah tab sebelum menyimpan tidak membawa pilihan mode lainnya.</string>
     <string name="settings_dir_swipe_hint">← Geser →</string>
     <string name="settings_tab_mono">Satu warna</string>
     <string name="settings_tab_gradient">Gradien</string>
