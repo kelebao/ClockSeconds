@@ -5713,11 +5713,7 @@ public final class ModuleSettingsActivity extends Activity {
             LinearLayout pick = new LinearLayout(this);
             pick.setOrientation(LinearLayout.VERTICAL);
             pick.setPadding(0, dp(4), 0, dp(12));
-            // U-20261116o3：选色面板整体背景随深色/浅色页签切换（深色页签=深底、浅色页签=浅底）。
-            final GradientDrawable panelBg = new GradientDrawable();
-            panelBg.setCornerRadius(dp(16));
-            panelBg.setColor(DARK_CARD);
-            pick.setBackground(panelBg);
+            // U-20261117b：去掉面板整体深浅背景（不随页签切换，透出弹窗底色），仅预览背景板随页签。
             LinearLayout pickHead = new LinearLayout(this);
             pickHead.setOrientation(LinearLayout.HORIZONTAL);
             pickHead.setGravity(Gravity.CENTER_VERTICAL);
@@ -5890,23 +5886,17 @@ public final class ModuleSettingsActivity extends Activity {
         tabRow.addView(tabHelp);
             final Runnable applyTabStyle = () -> {
                 // U-20261115⑲③：当前页签用 accent 紫实底 + 白字，未选中保持弱化灰底。
-                // U-20261116o3：页签切换时面板整体背景与文字色随模式切换。
+                // U-20261117b：页签胶囊配色回归应用主题，面板不再随页签变底色/文字色；
+                // 仅预览背景板跟随页签深浅（U-20261117a）。
                 final boolean pn = pickLight[0] == 0;
-                final int off = pn ? 0xFFC3C4EC : 0xFF666666;
-                final int dim = pn ? 0x22FFFFFF : 0x11000000;
-                final int panelAccent = pn ? ACCENT_DARK : ACCENT_LIGHT;
+                final int off = night ? 0xFFC3C4EC : 0xFF666666;
+                final int dim = night ? 0x22FFFFFF : 0x11000000;
                 ((GradientDrawable) tabDark.getBackground().mutate())
-                        .setColor(pn ? panelAccent : dim);
+                        .setColor(pn ? accent() : dim);
                 ((GradientDrawable) tabLight.getBackground().mutate())
-                        .setColor(pn ? dim : panelAccent);
+                        .setColor(pn ? dim : accent());
                 tabDark.setTextColor(pn ? 0xFFFFFFFF : off);
                 tabLight.setTextColor(pn ? off : 0xFFFFFFFF);
-                panelBg.setColor(pn ? DARK_CARD : LIGHT_CARD);
-                pickTitle.setTextColor(pn ? DARK_TEXT_2 : LIGHT_TEXT_2);
-                tabHelp.setTextColor(pn ? DARK_TEXT_2 : LIGHT_TEXT_2);
-                final GradientDrawable hbgM = (GradientDrawable) hbg.mutate();
-                hbgM.setColor(pn ? 0x2A2340 : 0xFFE7DFFF);
-                hbgM.setStroke(dp(1), pn ? 0x37305A : 0xDDDDDD);
                 // U-20261117a：预览背景板跟随页签深浅。
                 prevBg.setColor(pn ? 0xFF161226 : 0xFFF1EEF9);
             };
@@ -6268,7 +6258,7 @@ public final class ModuleSettingsActivity extends Activity {
         TextView tv = new TextView(this);
         tv.setText(label);
         tv.setTextSize(12f);
-        tv.setTextColor(pn ? DARK_TEXT_3 : LIGHT_TEXT_3);
+        tv.setTextColor(text3()); // U-20261117b
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = dp(12);
@@ -6347,7 +6337,7 @@ public final class ModuleSettingsActivity extends Activity {
         cg2.setColor(0x00000000);
         if (selSet.contains(idx)) {
             // U-20261115⑲②：选中态胶囊加 accent 描边，比仅靠角标更明显。
-            cg2.setStroke(dp(2), pn ? ACCENT_DARK : ACCENT_LIGHT);
+            cg2.setStroke(dp(2), accent()); // U-20261117b
         }
         box.setBackground(cg2);
         box.setClipToOutline(true);   // 圆角裁切内部色条（单色 6 段为直角矩形）
@@ -6358,7 +6348,7 @@ public final class ModuleSettingsActivity extends Activity {
         badge.setGravity(Gravity.CENTER);
         GradientDrawable bdg = new GradientDrawable();
         bdg.setShape(GradientDrawable.OVAL);
-        bdg.setColor(pn ? ACCENT_DARK : ACCENT_LIGHT);
+        bdg.setColor(accent()); // U-20261117b
         badge.setBackground(bdg);
         FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(18), dp(18));
         blp.gravity = Gravity.BOTTOM | Gravity.END;
@@ -6374,7 +6364,7 @@ public final class ModuleSettingsActivity extends Activity {
             TextView nm = new TextView(this);
             nm.setText(name);
             nm.setTextSize(11f);
-            nm.setTextColor(pn ? DARK_TEXT_3 : LIGHT_TEXT_3);
+            nm.setTextColor(text3()); // U-20261117b
             nm.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -6391,7 +6381,7 @@ public final class ModuleSettingsActivity extends Activity {
             }
             // U-20261115⑲②：选中态描边即时跟随点击。
             if (nowSel) {
-                cg2.setStroke(dp(2), pn ? ACCENT_DARK : ACCENT_LIGHT);
+                cg2.setStroke(dp(2), accent()); // U-20261117b
             } else {
                 cg2.setStroke(0, 0);
             }
