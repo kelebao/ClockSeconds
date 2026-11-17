@@ -139,9 +139,15 @@ public final class GradientShaderFactory {
                 return new ComposeShader(base, grain, PorterDuff.Mode.SRC_OVER);
             }
             case ClockSecondsConfig.GRADIENT_DIRECTION_CHROME: {
-                // 19 镀铬金属：垂直 7 段金属带（固定铬色序：暗-灰-亮-白热-亮-灰-暗，Y2K 铬字，不取用户配色）
+                // 19 镀铬金属：垂直 7 段反光带保留，色阶全部由用户两端色派生（跟随渐变色）
+                // 顺序：暗起点 → 起点 → 亮起点 → 白热高光(两色混合) → 亮终点 → 终点 → 暗终点
+                final int[] ramp = {
+                        darken(c0, 0.82f), darken(c0, 0.45f), towardWhite(c0, 0.38f),
+                        towardWhite(mix(c0, c1, 0.5f), 0.88f),
+                        towardWhite(c1, 0.32f), darken(c1, 0.45f), darken(c1, 0.82f)
+                };
                 return new LinearGradient(x0, top, x0, bottom,
-                        CHROME_RAMP, CHROME_STOPS, Shader.TileMode.CLAMP);
+                        ramp, CHROME_STOPS, Shader.TileMode.CLAMP);
             }
             case ClockSecondsConfig.GRADIENT_DIRECTION_STRIPES: {
                 // 20 斜纹糖果：45° 四色硬界循环条纹（用户两色各派生一个亮伴色），REPEAT 平铺
@@ -216,12 +222,6 @@ public final class GradientShaderFactory {
     }
 
     // ---------------- 新形式方向（U-20261118③：镀铬金属 / 斜纹糖果 / 波浪切割） ----------------
-
-    /** 镀铬金属固定铬色序（垂直 7 段）。 */
-    private static final int[] CHROME_RAMP = {
-            0xFF14171F, 0xFF454E63, 0xFFA8D4FF, 0xFFF4F9FF,
-            0xFF8FB6E8, 0xFF2C3448, 0xFF171B26
-    };
 
     private static final float[] CHROME_STOPS = {0f, 0.22f, 0.45f, 0.5f, 0.56f, 0.78f, 1f};
 
