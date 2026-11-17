@@ -329,14 +329,14 @@ public final class GradientShaderFactory {
         return b;
     }
 
-    /** 绘制单个三角面：面心双线性取色 + 逐面固定 ±7 明暗扰动。 */
+    /** 绘制单个三角面：面心双线性取色 + 逐面固定 ±14 明暗扰动 + 细边线（U-20261118⑥ 提升小字可见度）。 */
     private static void drawFacet(Canvas cv, Paint p,
                                   float ax, float ay, float bx, float by, float cx, float cy,
                                   int c0, int c1, int w, int h, float noise) {
         final float fx = (ax + bx + cx) / 3f;
         final float fy = (ay + by + cy) / 3f;
         final int base = mix(c0, c1, fx / w);
-        final int shifted = (int) (noise * 14f) - 7;
+        final int shifted = (int) (noise * 28f) - 14;
         final int r = Math.max(0, Math.min(255, Color.red(base) + shifted));
         final int g = Math.max(0, Math.min(255, Color.green(base) + shifted));
         final int bl = Math.max(0, Math.min(255, Color.blue(base) + shifted));
@@ -347,6 +347,12 @@ public final class GradientShaderFactory {
         path.lineTo(cx, cy);
         path.close();
         cv.drawPath(path, p);
+        // 三角面细边线：让小字（状态栏约 40px 高）也能看出晶格切面，而不是一片糊色
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeWidth(0.7f);
+        p.setColor(0x66000000);
+        cv.drawPath(path, p);
+        p.setStyle(Paint.Style.FILL);
     }
 
     /** 固定种子面扰动（0..1），不用 Random，保证同色同尺寸每次生成完全一致的晶格。 */
