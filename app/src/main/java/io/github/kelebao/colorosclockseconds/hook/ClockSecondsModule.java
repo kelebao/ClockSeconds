@@ -4275,6 +4275,14 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 ClockSecondsConfig.setGradientEnabled(cr, false);
                 sGradientOn = false;
             }
+            // U-20261118⑦：深色组预设到点若系统还停在浅色，切到深色；浅色组反之。
+            // 否则颜色写进常规键但模块按系统浅色取副键/系统文字色，用户看到「没生效」。
+            boolean sysLight = ClockSecondsConfig.isSystemLightMode(cr, true);
+            if (sysLight != sch.light) {
+                switchSystemTheme(ctx, !sch.light);
+                XposedBridge.log(LOG_PREFIX + "TASK theme switch id=" + t.id
+                        + " to=" + (sch.light ? "day" : "night"));
+            }
             reloadDigitColors(ctx);
             refreshClockNow();
             if (BuildConfig.DEBUG) {

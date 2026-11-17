@@ -43,6 +43,7 @@ import io.github.kelebao.colorosclockseconds.CornerArcsDrawable;
 import io.github.kelebao.colorosclockseconds.HsvPickerView;
 import io.github.kelebao.colorosclockseconds.DigitGlowDrawable;
 import io.github.kelebao.colorosclockseconds.DustTitleView;
+import io.github.kelebao.colorosclockseconds.GradientShaderFactory;
 import io.github.kelebao.colorosclockseconds.SlantCardDrawable;
 import io.github.kelebao.colorosclockseconds.UnderlineDrawable;
 import io.github.kelebao.colorosclockseconds.WavyLineView;
@@ -6306,11 +6307,23 @@ public final class ModuleSettingsActivity extends Activity {
         // colors[0]→colors[last] 的双色渐变条（用户反馈「单色预设显示的是渐变的」）；
         // 渐变预设维持左→右渐变胶囊；圆角由外层 box 裁切，选中描边统一画在 box 上。
         if (pr.gradient) {
-            View capsule = new View(this);
-            GradientDrawable cg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{pr.gradStart, pr.gradEnd});
-            cg.setCornerRadius(dp(12));
-            capsule.setBackground(cg);
+            // U-20261118⑦：预设胶囊按预设记录的渐变方向绘制（dir=-1 用当前全局方向），
+            // 不再固定 LEFT_RIGHT——共享工厂保证 0..25 方向与实际渲染一致。
+            final int[] gColors = new int[]{
+                    pr.gradStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFFF44336 : pr.gradStart,
+                    pr.gradEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFF667DD1 : pr.gradEnd};
+            final int gDir = pr.dir >= 0 ? pr.dir
+                    : ClockSecondsConfig.getGradientDirection(getContentResolver());
+            View capsule = new View(this) {
+                @Override protected void onDraw(Canvas canvas) {
+                    super.onDraw(canvas);
+                    float w = getWidth(), h = getHeight();
+                    Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    p.setShader(GradientShaderFactory.build(gColors, gDir, 0f, w, 0f, h));
+                    canvas.drawRect(0, 0, w, h, p);
+                    p.setShader(null);
+                }
+            };
             box.addView(capsule, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
         } else {
