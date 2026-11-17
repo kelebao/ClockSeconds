@@ -18,6 +18,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
@@ -5136,43 +5137,93 @@ public final class ModuleSettingsActivity extends Activity {
         return bar;
     }
 
-    /** 任务行/编辑器共用的配色预览：六位数字色小圆点（跟随系统画空心圈）+ 渐变端点小胶囊。 */
-    private View buildScheduleSwatchRow(int[][] schemes, int gradStart, int gradEnd) {
+    /** U-20261118⑧：按渐变方向绘制小胶囊（共享工厂，dir=-1 由调用方回落当前方向）。 */
+    private View directionGradientBar(final int[] cs, final int dir, final float radiusDp) {
+        return new View(this) {
+            @Override protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                float w = getWidth(), h = getHeight();
+                if (w <= 0 || h <= 0) return;
+                float r = Math.min(dp((int) radiusDp), Math.min(w, h) / 2f);
+                Path path = new Path();
+                path.addRoundRect(0, 0, w, h, r, r, Path.Direction.CW);
+                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                p.setShader(GradientShaderFactory.build(cs, dir, 0f, w, 0f, h));
+                canvas.drawPath(path, p);
+                p.setShader(null);
+            }
+        };
+    }
+
+    /** U-20261118⑧：单色方案的六段纯色小胶囊（FOLLOW 位回落首位实色）。 */
+    private View monoSegmentsBar(final int[] colors, final float radiusDp) {
+        final int[] cs = colors == null || colors.length == 0
+                ? new int[]{0xFFF44336, 0xFFF44336, 0xFFF44336, 0xFFF44336, 0xFFF44336, 0xFFF44336}
+                : colors;
+        return new View(this) {
+            @Override protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                float w = getWidth(), h = getHeight();
+                if (w <= 0 || h <= 0) return;
+                float r = Math.min(dp((int) radiusDp), Math.min(w, h) / 2f);
+                Path path = new Path();
+                path.addRoundRect(0, 0, w, h, r, r, Path.Direction.CW);
+                canvas.save();
+                canvas.clipPath(path);
+                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+                p.setStyle(Paint.Style.FILL);
+                int first = 0xFFF44336;
+                for (int c : cs) {
+                    if (c != ClockSecondsConfig.DIGIT_COLOR_FOLLOW) { first = c; break; }
+                }
+                float seg = w / (float) cs.length;
+                for (int i = 0; i < cs.length; i++) {
+                    p.setColor(cs[i] == ClockSecondsConfig.DIGIT_COLOR_FOLLOW ? first : cs[i]);
+                    canvas.drawRect(i * seg, 0, (i + 1) * seg + (i == cs.length - 1 ? 1 : 0), h, p);
+                }
+                canvas.restore();
+            }
+        };
+    }
+    /** U-20261118⑧：任务行配色预览按方案方向绘制，不再固定 LEFT_RIGHT。 */
+    private View buildScheduleSwatchRow(ClockTask task) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, dp(8), 0, 0);
         boolean any = false;
-        if (schemes != null && schemes.length > 0) {
-            for (int i = 0; i < schemes.length; i++) {
-                int[] one = schemes[i];
-                if (one == null || one.length < 2) {
-                    continue;
-                }
-                View grad = new View(this);
-                GradientDrawable gg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                        new int[]{one[0], one[one.length - 1]});
-                gg.setCornerRadius(dp(999));
-                grad.setBackground(gg);
-                LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(dp(40), dp(14));
-                if (i > 0) {
-                    glp.leftMargin = dp(6);
-                }
-                row.addView(grad, glp);
+        final int curDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
+        ClockTask.Scheme[] details = task.schemeList != null && task.schemeList.length > 0
+                ? task.schemeList : null;
+        if (details != null) {
+            for (ClockTask.Scheme sch : details) {
+                if (sch == null) continue;
+                View bar = sch.gradient
+                        ? directionGradientBar(new int[]{
+                                sch.gradStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFF888888 : sch.gradStart,
+                                sch.gradEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFF888888 : sch.gradEnd},
+                                sch.dir >= 0 ? sch.dir : curDir, 999f)
+                        : monoSegmentsBar(sch.colors, 999f);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(40), dp(14));
+                if (any) lp.leftMargin = dp(6);
+                row.addView(bar, lp);
                 any = true;
             }
         }
-        if (!any && (gradStart != ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                || gradEnd != ClockSecondsConfig.GRADIENT_COLOR_AUTO)) {
-            View grad = new View(this);
-            GradientDrawable gg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{gradStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                            ? 0xFF888888 : gradStart,
-                            gradEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                                    ? 0xFF888888 : gradEnd});
-            gg.setCornerRadius(dp(999));
-            grad.setBackground(gg);
-            row.addView(grad, new LinearLayout.LayoutParams(dp(40), dp(14)));
+        if (!any && task.schemes != null) {
+            for (int[] one : task.schemes) {
+                if (one == null || one.length < 2) continue;
+                row.addView(directionGradientBar(new int[]{one[0], one[one.length - 1]}, curDir, 999f),
+                        new LinearLayout.LayoutParams(dp(40), dp(14)));
+                any = true;
+            }
+        }
+        if (!any && (task.gradStart != ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                || task.gradEnd != ClockSecondsConfig.GRADIENT_COLOR_AUTO)) {
+            row.addView(directionGradientBar(new int[]{
+                    task.gradStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFF888888 : task.gradStart,
+                    task.gradEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFF888888 : task.gradEnd},
+                    curDir, 999f), new LinearLayout.LayoutParams(dp(40), dp(14)));
         }
         return row;
     }
@@ -5386,7 +5437,7 @@ public final class ModuleSettingsActivity extends Activity {
         sum.setPadding(0, dp(4), 0, 0);
         rowView.addView(sum);
         if (task.action == ClockTask.ACTION_COLOR) {
-            rowView.addView(buildScheduleSwatchRow(task.schemes, task.gradStart, task.gradEnd));
+            rowView.addView(buildScheduleSwatchRow(task));
         }
         rowView.setOnClickListener(v -> openTaskEditor(task));
         return rowView;
@@ -5673,34 +5724,38 @@ public final class ModuleSettingsActivity extends Activity {
         colorArea.addView(swatchRow);
         final Runnable renderSwatch = () -> {
             swatchRow.removeAllViews();
-            int[][] cur = schemesHolder[0];
             boolean drew = false;
-            if (cur != null && cur.length > 0) {
-                for (int i = 0; i < cur.length; i++) {
-                    int[] one = cur[i];
-                    if (one == null || one.length < 2) {
-                        continue;
-                    }
-                    View bar = new View(this);
-                    GradientDrawable sg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                            new int[]{one[0], one[one.length - 1]});
-                    sg.setCornerRadius(dp(10));
-                    bar.setBackground(sg);
+            final int curDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
+            ClockTask.Scheme[] details = detailHolder[0];
+            if (details != null && details.length > 0) {
+                for (ClockTask.Scheme sch : details) {
+                    if (sch == null) continue;
+                    View bar = sch.gradient
+                            ? directionGradientBar(new int[]{
+                                    sch.gradStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFF888888 : sch.gradStart,
+                                    sch.gradEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO ? 0xFF888888 : sch.gradEnd},
+                                    sch.dir >= 0 ? sch.dir : curDir, 10f)
+                            : monoSegmentsBar(sch.colors, 10f);
                     LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, dp(36), 1f);
-                    if (i > 0) {
-                        slp.leftMargin = dp(6);
-                    }
+                    if (drew) slp.leftMargin = dp(6);
+                    slp.topMargin = dp(8);
+                    swatchRow.addView(bar, slp);
+                    drew = true;
+                }
+            }
+            if (!drew && schemesHolder[0] != null && schemesHolder[0].length > 0) {
+                for (int[] one : schemesHolder[0]) {
+                    if (one == null || one.length < 2) continue;
+                    View bar = directionGradientBar(new int[]{one[0], one[one.length - 1]}, curDir, 10f);
+                    LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, dp(36), 1f);
+                    if (drew) slp.leftMargin = dp(6);
                     slp.topMargin = dp(8);
                     swatchRow.addView(bar, slp);
                     drew = true;
                 }
             }
             if (!drew) {
-                View bar = new View(this);
-                GradientDrawable sg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                        new int[]{edgeHolder[0], edgeHolder[1]});
-                sg.setCornerRadius(dp(10));
-                bar.setBackground(sg);
+                View bar = directionGradientBar(new int[]{edgeHolder[0], edgeHolder[1]}, curDir, 10f);
                 LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
                 slp.topMargin = dp(8);
