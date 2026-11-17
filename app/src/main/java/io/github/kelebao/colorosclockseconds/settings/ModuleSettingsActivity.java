@@ -5802,11 +5802,13 @@ public final class ModuleSettingsActivity extends Activity {
             // 小预览时间：跟随选中套装实时着色（GradientTextSpan，与状态栏同款渐变）
             final TextView prev = new TextView(this);
             prev.setText("12:34:56");
-            prev.setTextSize(20f);
-            prev.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            // U-20261118⑨：预览时间放大加粗，并在背景板内水平/垂直都居中。
+            prev.setTextSize(30f);
+            prev.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
             prev.setGravity(Gravity.CENTER);
             prev.setFontFeatureSettings("tnum");
-            prev.setPadding(0, dp(10), 0, dp(6));
+            prev.setPadding(0, 0, 0, 0);
+            prev.setIncludeFontPadding(false);
             // U-20261117a：预览时间背景板——深浅随「深色模式/浅色模式」页签切换
             // （深色页签=深底板衬托深色组颜色，浅色页签=浅底板衬托浅色组颜色）。
             final FrameLayout prevHost = new FrameLayout(this);
@@ -5814,9 +5816,10 @@ public final class ModuleSettingsActivity extends Activity {
             prevBg.setCornerRadius(dp(14));
             prevBg.setColor(0xFF161226);
             prevHost.setBackground(prevBg);
+            // U-20261118⑨：固定背景板高度并让文字 gravity=CENTER，解决左右/上下不居中。
             FrameLayout.LayoutParams prevLp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            prevLp.setMargins(dp(14), dp(6), dp(14), dp(2));
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
+            prevLp.gravity = Gravity.CENTER;
             prevHost.addView(prev, prevLp);
             // U-20261117c：预览板与深色/浅色页签行之间加呼吸间距（用户反馈「这挨的太近了」）。
             LinearLayout.LayoutParams prevHostLp = new LinearLayout.LayoutParams(
