@@ -5993,8 +5993,15 @@ public final class ModuleSettingsActivity extends Activity {
                     ClockTask.Scheme sc = entries.get(previewIdx[0]);
                     float w = prev.getPaint().measureText(psb, 0, psb.length());
                     if (sc.gradient) {
+                        // U-20261118⑩：预览时间必须体现当前勾选方案的渐变方向，不能固定水平。
+                        // xOffset 用 TextView 实际宽度与文字宽度之差的一半（居中 TextView 的文字左缘）；
+                        // 方向缺失的老方案回落系统当前方向，和状态栏/预设胶囊渲染保持一致。
+                        float xOff = prev.getWidth() > 0 ? Math.max(0f, (prev.getWidth() - w) / 2f) : 0f;
+                        int dir = sc.dir >= 0 ? sc.dir
+                                : ClockSecondsConfig.getGradientDirection(getContentResolver());
                         psb.setSpan(new GradientTextSpan(prev, psb,
-                                adaptPreviewColor(sc.gradStart), adaptPreviewColor(sc.gradEnd), w),
+                                        new int[]{adaptPreviewColor(sc.gradStart),
+                                                adaptPreviewColor(sc.gradEnd)}, xOff, dir),
                                 0, psb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     } else {
                         // U-20261116o4：单色方案按 6 位逐位着色，呈现所选方案的完整配色，
