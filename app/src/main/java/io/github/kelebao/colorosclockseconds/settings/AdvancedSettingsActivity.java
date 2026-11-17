@@ -267,12 +267,11 @@ public class AdvancedSettingsActivity extends Activity {
         }
 
         // 卡序（t20）：自适应 → 实时预览 → 调色盘（渐变页含方向选择）→ 我的预设。
-        // 渐变页原独立「渐变卡」整块迁入调色盘卡（方向选择单行横滑），空卡壳删除。
+        // U-20261118⑪（01+光晕）：自适应与实时预览合并成一张卡，标题+问号整体居中，时间区加紫红光晕。
         root.addView(card());
-        buildAdaptiveRows((LinearLayout) root.getChildAt(root.getChildCount() - 1));
-
-        root.addView(card());
-        buildPreviewCard((LinearLayout) root.getChildAt(root.getChildCount() - 1));
+        LinearLayout mergedCard = (LinearLayout) root.getChildAt(root.getChildCount() - 1);
+        buildAdaptiveRows(mergedCard);
+        buildPreviewCard(mergedCard);
 
         root.addView(card());
         buildPaletteCard((LinearLayout) root.getChildAt(root.getChildCount() - 1));
@@ -444,7 +443,7 @@ public class AdvancedSettingsActivity extends Activity {
         // 标题行 = 名称 + 问号帮助（开关已移除：系统模式自适应默认开启）
         LinearLayout title = new LinearLayout(this);
         title.setOrientation(LinearLayout.HORIZONTAL);
-        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.setGravity(Gravity.CENTER);
         TextView t = new TextView(this);
         t.setText(R.string.settings_adaptive_color);
         t.setTextSize(13f);
@@ -469,6 +468,10 @@ public class AdvancedSettingsActivity extends Activity {
         mHelpIcon.setGravity(Gravity.CENTER);
         mHelpIcon.setOnClickListener(v -> showAdaptiveHelp());
         title.addView(mHelpIcon);
+
+        // U-20261118⑪（01+光晕）：标题行整体居中——名称与问号作为一组，占满整行后居中。
+        title.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         card.addView(title);
 
@@ -502,6 +505,15 @@ public class AdvancedSettingsActivity extends Activity {
         tl.topMargin = dp(10);
         mLightTabs.setLayoutParams(tl);
         card.addView(mLightTabs);
+
+        // U-20261118⑪（01+光晕）：合并卡内一条细分隔线，分隔「模式切换」与「时间预览」。
+        View cardDivider = new View(this);
+        cardDivider.setBackgroundColor(isNight() ? 0x22FFFFFF : 0xFFF0EDF7);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
+        dlp.topMargin = dp(16);
+        dlp.bottomMargin = dp(2);
+        card.addView(cardDivider, dlp);
 
         refreshAdaptiveUi();
     }
@@ -600,14 +612,51 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
 
     // ---------------- ② 单色调色盘（HSV） ----------------
 
+    /** U-20261118⑪：预览时间底层的紫红光晕，纯装饰，不参与点击/取景框。 */
+    private View makePreviewGlow() {
+        View glow = new View(this) {
+            @Override
+            protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                final int w = getWidth();
+                final int h = getHeight();
+                if (w <= 0 || h <= 0) {
+                    return;
+                }
+                final boolean night = isNight();
+                // 横向紫→红渐变；纵向用 DST_IN 蒙版让上下边缘淡出，四边都不出现硬边。
+                int purple = night ? 0x666C4CF1 : 0x556C4CF1;
+                int red = night ? 0x55C42E52 : 0x44C42E52;
+                int layer = canvas.saveLayer(0, 0, w, h, null);
+                Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                paint.setShader(new android.graphics.LinearGradient(0, 0, w, 0,
+                        new int[]{0x00000000, purple, red, 0x00000000},
+                        new float[]{0.0f, 0.34f, 0.72f, 1.0f},
+                        Shader.TileMode.CLAMP));
+                canvas.drawRect(0, 0, w, h, paint);
+                Paint mask = new Paint(Paint.ANTI_ALIAS_FLAG);
+                mask.setShader(new android.graphics.LinearGradient(0, 0, 0, h,
+                        new int[]{0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000},
+                        new float[]{0.0f, 0.28f, 0.72f, 1.0f},
+                        Shader.TileMode.CLAMP));
+                mask.setXfermode(new android.graphics.PorterDuffXfermode(
+                        android.graphics.PorterDuff.Mode.DST_IN));
+                canvas.drawRect(0, 0, w, h, mask);
+                canvas.restoreToCount(layer);
+            }
+        };
+        glow.setWillNotDraw(false);
+        return glow;
+    }
+
     /** 实时预览钟（vc328）：显示 18:17:07 样式的时间，写入颜色立即反映。 */
     private void buildPreviewCard(LinearLayout card) {
         mPreviewClock = new SettingsPreviewClock(this);
-        mPreviewClock.setTextSize(34f);
+        mPreviewClock.setTextSize(44f);
         mPreviewClock.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         mPreviewClock.getPaint().setFakeBoldText(true);
         mPreviewClock.setFontFeatureSettings("tnum");
-        mPreviewClock.setGravity(Gravity.CENTER_HORIZONTAL);
+        mPreviewClock.setGravity(Gravity.CENTER);
         mPreviewClock.setTextColor(text());
         // 取景框（t11）：单色页框住当前编辑位；颜色跟 accent，随明暗页签在 refreshPreview 里刷新
         mPreviewClock.setViewfinderColor(accent());
@@ -651,7 +700,20 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             // 单色页（t11）：点预览钟上任意数字位 = 切到那一位编辑（跟点下方胶囊同一入口）
             mPreviewClock.setOnActiveDigitClickListener(slot -> setSlotTarget(slot));
         }
-        card.addView(mPreviewClock);
+        // U-20261118⑪（01+光晕）：时间作视觉主角——预览钟放进 FrameLayout，底层画两团紫/红径向光晕；
+        // 文本仍走 SettingsPreviewClock（单色/渐变/取景框逻辑完全不变），光晕只做视觉托底、不参与交互。
+        FrameLayout hero = new FrameLayout(this);
+        LinearLayout.LayoutParams heroLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        heroLp.topMargin = dp(2);
+        hero.setLayoutParams(heroLp);
+        hero.setMinimumHeight(dp(104));
+        hero.addView(makePreviewGlow(), new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        hero.addView(mPreviewClock, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
+                Gravity.CENTER));
+        card.addView(hero);
         // t36①：渐变页大预览条已删除——渐变效果直接看上方预览钟（编辑即所见），
         // 两条渐变展示重复且占空间。
 
