@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">波浪切割</string>
 
     <string name="settings_gradient_dir_low_poly">低多邊形晶格</string>
+
+    <string name="settings_gradient_dir_terrazzo">水磨石</string>
+    <string name="settings_gradient_dir_qr_code">二維碼</string>
 </resources>

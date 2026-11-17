@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">เส้นคลื่นตัด</string>
 
     <string name="settings_gradient_dir_low_poly">โลว์โปลี</string>
+
+    <string name="settings_gradient_dir_terrazzo">เทอร์ราซโซ</string>
+    <string name="settings_gradient_dir_qr_code">โค้ด QR</string>
 </resources>

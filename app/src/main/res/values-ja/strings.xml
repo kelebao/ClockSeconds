@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">ウェーブスライス</string>
 
     <string name="settings_gradient_dir_low_poly">ローポリ</string>
+
+    <string name="settings_gradient_dir_terrazzo">テラゾー</string>
+    <string name="settings_gradient_dir_qr_code">QRコード</string>
 </resources>

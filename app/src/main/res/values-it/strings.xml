@@ -208,4 +208,7 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_gradient_dir_wave_slice">Taglio ondulato</string>
 
     <string name="settings_gradient_dir_low_poly">Low-Poly</string>
+
+    <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
+    <string name="settings_gradient_dir_qr_code">Codice QR</string>
 </resources>

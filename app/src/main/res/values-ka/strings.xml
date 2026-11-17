@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">ტალღის კვეთა</string>
 
     <string name="settings_gradient_dir_low_poly">დაბალი პოლიგონი</string>
+
+    <string name="settings_gradient_dir_terrazzo">ტერაცო</string>
+    <string name="settings_gradient_dir_qr_code">QR კოდი</string>
 </resources>

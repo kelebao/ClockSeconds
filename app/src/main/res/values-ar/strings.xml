@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">قص الموجة</string>
 
     <string name="settings_gradient_dir_low_poly">متعدد الأضلاع</string>
+
+    <string name="settings_gradient_dir_terrazzo">تيرازو</string>
+    <string name="settings_gradient_dir_qr_code">رمز الاستجابة السريعة</string>
 </resources>

@@ -546,10 +546,16 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     /** U-20261118④：低多边形晶格 Low-Poly（不规则三角切面，逐面独立明暗）。 */
     public static final int GRADIENT_DIRECTION_LOW_POLY = 22;
 
-    /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
-    public static final int GRADIENT_DIRECTION_COUNT = 23;
+    /** U-20261118⑤：水磨石 Terrazzo（碎石片密铺）。 */
+    public static final int GRADIENT_DIRECTION_TERRAZZO = 23;
 
-    /** 存「渐变方向」的 Secure 键（int 0..22，默认水平）。 */
+    /** U-20261118⑤：二维码 QR Code（方块矩阵 + 定位角）。 */
+    public static final int GRADIENT_DIRECTION_QR_CODE = 24;
+
+    /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
+    public static final int GRADIENT_DIRECTION_COUNT = 25;
+
+    /** 存「渐变方向」的 Secure 键（int 0..24，默认水平）。 */
     public static final String GRADIENT_DIRECTION_KEY =
             "coloros_clock_seconds_gradient_direction";
 

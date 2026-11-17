@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">برش موجی</string>
 
     <string name="settings_gradient_dir_low_poly">لو پولی</string>
+
+    <string name="settings_gradient_dir_terrazzo">ترازو</string>
+    <string name="settings_gradient_dir_qr_code">کد QR</string>
 </resources>

@@ -208,4 +208,7 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_gradient_dir_wave_slice">Cięcie falowe</string>
 
     <string name="settings_gradient_dir_low_poly">Low-Poly</string>
+
+    <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
+    <string name="settings_gradient_dir_qr_code">Kod QR</string>
 </resources>

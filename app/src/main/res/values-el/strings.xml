@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">Κυματοκοπή</string>
 
     <string name="settings_gradient_dir_low_poly">Χαμηλά πολύγωνα</string>
+
+    <string name="settings_gradient_dir_terrazzo">Τερράτσο</string>
+    <string name="settings_gradient_dir_qr_code">Κωδικός QR</string>
 </resources>

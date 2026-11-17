@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">Волновой срез</string>
 
     <string name="settings_gradient_dir_low_poly">Низкополигональный</string>
+
+    <string name="settings_gradient_dir_terrazzo">Терраццо</string>
+    <string name="settings_gradient_dir_qr_code">QR-код</string>
 </resources>

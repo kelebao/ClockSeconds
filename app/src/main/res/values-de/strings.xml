@@ -208,4 +208,7 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_gradient_dir_wave_slice">Wellenschnitt</string>
 
     <string name="settings_gradient_dir_low_poly">Low-Poly</string>
+
+    <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
+    <string name="settings_gradient_dir_qr_code">QR-Code</string>
 </resources>

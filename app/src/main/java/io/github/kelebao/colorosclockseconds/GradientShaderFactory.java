@@ -47,7 +47,7 @@ public final class GradientShaderFactory {
      * 构建渐变 shader。
      *
      * @param colors 色标颜色（沿渐变轴顺序；0..9 用全部色标，10..18 只取首尾两色）
-     * @param dir    ClockSecondsConfig.GRADIENT_DIRECTION_*（0..22）
+     * @param dir    ClockSecondsConfig.GRADIENT_DIRECTION_*（0..24）
      * @param x0     色带左边缘 x
      * @param band   色带宽度（文字实测宽 / 预览矩形容）
      * @param top    行盒顶部 y（绘制坐标系原点由调用方决定）
@@ -177,6 +177,30 @@ public final class GradientShaderFactory {
                 final int w = Math.max(2, (int) Math.ceil(band));
                 final int h = Math.max(2, (int) Math.ceil(height));
                 final Bitmap bmp = lowPolyBitmap(c0, c1, w, h);
+                final BitmapShader bs = new BitmapShader(bmp,
+                        Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                final Matrix lm = new Matrix();
+                lm.postTranslate(x0, top);
+                bs.setLocalMatrix(lm);
+                return bs;
+            }
+            case ClockSecondsConfig.GRADIENT_DIRECTION_TERRAZZO: {
+                // 23 水磨石：底色渐变 + 不规则碎石片密铺（固定种子、细描边）
+                final int w = Math.max(2, (int) Math.ceil(band));
+                final int h = Math.max(2, (int) Math.ceil(height));
+                final Bitmap bmp = terrazzoBitmap(c0, c1, w, h);
+                final BitmapShader bs = new BitmapShader(bmp,
+                        Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                final Matrix lm = new Matrix();
+                lm.postTranslate(x0, top);
+                bs.setLocalMatrix(lm);
+                return bs;
+            }
+            case ClockSecondsConfig.GRADIENT_DIRECTION_QR_CODE: {
+                // 24 二维码：方块矩阵 + 三个定位角（固定种子伪随机，颜色取用户两端色）
+                final int w = Math.max(2, (int) Math.ceil(band));
+                final int h = Math.max(2, (int) Math.ceil(height));
+                final Bitmap bmp = qrBitmap(c0, c1, w, h);
                 final BitmapShader bs = new BitmapShader(bmp,
                         Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
                 final Matrix lm = new Matrix();
@@ -362,6 +386,110 @@ public final class GradientShaderFactory {
         v *= 1274126177;
         v ^= (v >>> 16);
         return (v & 0x7FFFFFFF) / (float) 0x7FFFFFFF;
+    }
+
+    /** 水磨石/二维码位图缓存（与波浪切割同策略：按颜色+尺寸缓存，最多 6 张）。 */
+    private static final java.util.LinkedHashMap<String, Bitmap> sPatternCache =
+            new java.util.LinkedHashMap<String, Bitmap>(8, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<String, Bitmap> eldest) {
+                    return size() > 6;
+                }
+            };
+
+    /** 水磨石位图：双色渐变底 + 固定种子的彩色碎石片（多边形 + 细描边）。 */
+    private static Bitmap terrazzoBitmap(int c0, int c1, int w, int h) {
+        final String key = "T" + c0 + "|" + c1 + "|" + w + "x" + h;
+        synchronized (sPatternCache) {
+            final Bitmap hit = sPatternCache.get(key);
+            if (hit != null && !hit.isRecycled()) return hit;
+        }
+        final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        final Canvas cv = new Canvas(b);
+        final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setStyle(Paint.Style.FILL);
+        p.setShader(new LinearGradient(0, 0, w, 0, c0, c1, Shader.TileMode.CLAMP));
+        cv.drawRect(0, 0, w, h, p);
+        p.setShader(null);
+        final int[] chips = {
+                towardWhite(c0, 0.45f), darken(c1, 0.25f), towardWhite(c1, 0.4f),
+                darken(c0, 0.35f), mix(c0, c1, 0.5f)
+        };
+        final float size = Math.max(4f, h * 0.22f);
+        final int count = Math.max(12, Math.min(70, (int) (w * h / (size * size) * 0.6f)));
+        for (int i = 0; i < count; i++) {
+            final float x = facetNoise(i, 1, 0) * w;
+            final float y = facetNoise(i, 2, 1) * h;
+            final int sides = 3 + (int) (facetNoise(i, 3, 2) * 4f);
+            final float r = size * (0.4f + 0.6f * facetNoise(i, 4, 3));
+            final float ph = facetNoise(i, 5, 4) * 6.28f;
+            final Path path = new Path();
+            for (int k = 0; k < sides; k++) {
+                final float a = ph + k * 6.2831853f / sides;
+                final float px = x + r * (float) Math.cos(a);
+                final float py = y + r * (float) Math.sin(a) * 0.8f;
+                if (k == 0) path.moveTo(px, py); else path.lineTo(px, py);
+            }
+            path.close();
+            p.setColor(chips[(int) (facetNoise(i, 6, 5) * chips.length) % chips.length]);
+            cv.drawPath(path, p);
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(0.6f);
+            p.setColor(0x66000000);
+            cv.drawPath(path, p);
+            p.setStyle(Paint.Style.FILL);
+        }
+        synchronized (sPatternCache) {
+            sPatternCache.put(key, b);
+        }
+        return b;
+    }
+
+    /** 二维码位图：伪随机方块矩阵 + 三个定位角（颜色全部由用户两端色派生）。 */
+    private static Bitmap qrBitmap(int c0, int c1, int w, int h) {
+        final String key = "Q" + c0 + "|" + c1 + "|" + w + "x" + h;
+        synchronized (sPatternCache) {
+            final Bitmap hit = sPatternCache.get(key);
+            if (hit != null && !hit.isRecycled()) return hit;
+        }
+        final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        final Canvas cv = new Canvas(b);
+        final Paint p = new Paint();
+        p.setStyle(Paint.Style.FILL);
+        cv.drawColor(c0);
+        p.setColor(towardWhite(c1, 0.12f));
+        final int module = Math.max(3, (int) Math.ceil(h / 8f));
+        final int cols = Math.max(1, (int) Math.ceil(w / module));
+        final int rows = Math.max(1, (int) Math.ceil(h / module));
+        final float cw = w / (float) cols;
+        final float ch = h / (float) rows;
+        final int finder = Math.min(7, rows);
+        for (int j = 0; j < rows; j++) {
+            for (int i = 0; i < cols; i++) {
+                if (i < finder + 1 && j < finder + 1) continue;
+                if (i >= cols - finder - 1 && j < finder + 1) continue;
+                if (i < finder + 1 && j >= rows - finder - 1) continue;
+                if (facetNoise(i, j, 7) > 0.52f) {
+                    cv.drawRect(i * cw, j * ch, (i + 1) * cw, (j + 1) * ch, p);
+                }
+            }
+        }
+        // 三个定位角：外框 → 内空 → 中心块
+        final int[][] corners = {{0, 0}, {cols - finder, 0}, {0, rows - finder}};
+        for (int[] c : corners) {
+            p.setColor(towardWhite(c1, 0.12f));
+            cv.drawRect(c[0] * cw, c[1] * ch, (c[0] + finder) * cw, (c[1] + finder) * ch, p);
+            p.setColor(c0);
+            cv.drawRect((c[0] + 1) * cw, (c[1] + 1) * ch,
+                    (c[0] + finder - 1) * cw, (c[1] + finder - 1) * ch, p);
+            p.setColor(towardWhite(c1, 0.12f));
+            cv.drawRect((c[0] + 2) * cw, (c[1] + 2) * ch,
+                    (c[0] + finder - 2) * cw, (c[1] + finder - 2) * ch, p);
+        }
+        synchronized (sPatternCache) {
+            sPatternCache.put(key, b);
+        }
+        return b;
     }
 
     // ---------------- 颜色工具 ----------------

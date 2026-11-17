@@ -208,4 +208,7 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_gradient_dir_wave_slice">Potongan Gelombang</string>
 
     <string name="settings_gradient_dir_low_poly">Low-Poly</string>
+
+    <string name="settings_gradient_dir_terrazzo">Teraso</string>
+    <string name="settings_gradient_dir_qr_code">Kode QR</string>
 </resources>

@@ -208,4 +208,7 @@
     <string name="settings_gradient_dir_wave_slice">웨이브 슬라이스</string>
 
     <string name="settings_gradient_dir_low_poly">로우 폴리</string>
+
+    <string name="settings_gradient_dir_terrazzo">테라조</string>
+    <string name="settings_gradient_dir_qr_code">QR 코드</string>
 </resources>

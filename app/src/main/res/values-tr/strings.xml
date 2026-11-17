@@ -208,4 +208,7 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_gradient_dir_wave_slice">Dalga Kesimi</string>
 
     <string name="settings_gradient_dir_low_poly">Düşük Poli</string>
+
+    <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
+    <string name="settings_gradient_dir_qr_code">QR Kodu</string>
 </resources>
