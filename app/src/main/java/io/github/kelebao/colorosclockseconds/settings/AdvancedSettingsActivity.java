@@ -272,6 +272,8 @@ public class AdvancedSettingsActivity extends Activity {
         LinearLayout mergedCard = (LinearLayout) root.getChildAt(root.getChildCount() - 1);
         buildAdaptiveRows(mergedCard);
         buildPreviewCard(mergedCard);
+        // U-20261118⑬：用户要求卡片底边裁到时间下方，去掉光晕区多余留白；仅底部收窄。
+        mergedCard.setPadding(dp(18), dp(18), dp(18), dp(6));
 
         root.addView(card());
         buildPaletteCard((LinearLayout) root.getChildAt(root.getChildCount() - 1));
@@ -660,7 +662,8 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         mPreviewClock.setTextColor(text());
         // 取景框（t11）：单色页框住当前编辑位；颜色跟 accent，随明暗页签在 refreshPreview 里刷新
         mPreviewClock.setViewfinderColor(accent());
-        mPreviewClock.setPadding(0, dp(6), 0, dp(2));
+        mPreviewClock.setPadding(0, 0, 0, 0);
+        mPreviewClock.setIncludeFontPadding(false);
         // 预览状态提供器：与首页 updatePreview 同一套规则（渐变开→整条渐变；否则逐位上色）。
         mPreviewClock.setTimeProvider(now -> {
             CharSequence t = previewTimeText();
@@ -707,11 +710,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         heroLp.topMargin = dp(2);
         hero.setLayoutParams(heroLp);
-        hero.setMinimumHeight(dp(104));
         hero.addView(makePreviewGlow(), new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         hero.addView(mPreviewClock, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER));
         card.addView(hero);
         // t36①：渐变页大预览条已删除——渐变效果直接看上方预览钟（编辑即所见），
