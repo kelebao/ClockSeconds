@@ -99,6 +99,7 @@
     <string name="settings_tab_dark">暗色</string>
     <string name="settings_tab_light">明色</string>
     <string name="settings_digit_follow">システムに従う</string>
+    <string name="settings_digit_hex">カスタム</string>
     <string name="settings_digit_done">完了</string>
     <string name="settings_digit_slots">時十,時一,分十,分一,秒十,秒一</string>
     <string name="settings_digit_editing">編集中：%1$s</string>

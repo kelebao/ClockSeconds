@@ -99,6 +99,7 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
     <string name="settings_tab_dark">Koyu</string>
     <string name="settings_tab_light">Açık</string>
     <string name="settings_digit_follow">Sistemi izle</string>
+    <string name="settings_digit_hex">Özel</string>
     <string name="settings_digit_done">Bitti</string>
     <string name="settings_digit_slots">Saat onlar,Saat birler,Dakika onlar,Dakika birler,Saniye onlar,Saniye birler</string>
     <string name="settings_digit_editing">Düzenleniyor: %1$s</string>

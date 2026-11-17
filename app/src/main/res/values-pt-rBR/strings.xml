@@ -99,6 +99,7 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_tab_dark">Escuro</string>
     <string name="settings_tab_light">Claro</string>
     <string name="settings_digit_follow">Seguir o sistema</string>
+    <string name="settings_digit_hex">Personalizado</string>
     <string name="settings_digit_done">Concluir</string>
     <string name="settings_digit_slots">Dezena hora,Unidade hora,Dezena minuto,Unidade minuto,Dezena segundo,Unidade segundo</string>
     <string name="settings_digit_editing">Editando: %1$s</string>

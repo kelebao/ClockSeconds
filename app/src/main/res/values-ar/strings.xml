@@ -99,6 +99,7 @@
     <string name="settings_tab_dark">داكن</string>
     <string name="settings_tab_light">فاتح</string>
     <string name="settings_digit_follow">اتّباع النظام</string>
+    <string name="settings_digit_hex">مخصص</string>
     <string name="settings_digit_done">تم</string>
     <string name="settings_digit_slots">عشرات الساعة,آحاد الساعة,عشرات الدقيقة,آحاد الدقيقة,عشرات الثانية,آحاد الثانية</string>
     <string name="settings_digit_editing">التعديل: %1$s</string>

@@ -238,6 +238,10 @@ public final class ModuleSettingsActivity extends Activity {
     private android.widget.SeekBar mHueSlider;
     private android.widget.SeekBar mSatSlider;
     private android.widget.SeekBar mValSlider;
+    /** 滑杆下方的 16 进制色号输入框；改色时回填，正在编辑时不覆盖。 */
+    private EditText mHexInput;
+    /** 回填输入框时置位，避免触发 TextWatcher 又写一次配置。 */
+    private boolean mHexSyncing;
     private TextView mDigitEditingView;
     private TextView mDigitSummaryView;
     private View mDigitDoneView;
@@ -1309,6 +1313,10 @@ public final class ModuleSettingsActivity extends Activity {
         // 三条 HSV 滑杆：色相 / 饱和度 / 明度，拖动即生效，并同步更新当前选中位的颜色。
         buildHsvSliders(card);
 
+        // 16 进制色号输入：滑杆下面单独一行，直接敲 #RRGGBB 精确取色。
+        // 与滑杆、预设点共用同一个取色目标（selTarget），所以渐变页里改的就是当前端点色。
+        buildHexInputRow(card);
+
         // 渐变页：启用开关 + 起点色 / 终点色（下面的预设与滑杆改为编辑该端点色）。
         buildGradientRows(mPageGradient);
 
@@ -1585,6 +1593,12 @@ public final class ModuleSettingsActivity extends Activity {
         box.addView(label);
 
         box.setOnClickListener(v -> {
+            if (mGradTarget == which) {
+                // 已经是当前取色目标，再点一次 = 打开调色盘（可拖面板或填 16 进制色号）。
+                showPaletteDialog(6 + which);
+                return;
+            }
+            // 首次点击只切换取色目标，保持原有的「点哪个端点就编辑哪个」手感。
             mGradTarget = which;
             refreshDigitSwatches();
             updatePreview();
@@ -3639,6 +3653,8 @@ public final class ModuleSettingsActivity extends Activity {
         mSatSlider.setProgress(Math.round(hsv[1] * 255f));
         mValSlider.setProgress(Math.round(hsv[2] * 255f));
         updateSliderGradients(hsv[0], hsv[1], hsv[2]);
+        // 滑杆、预设点、渐变端点切换目标后，16 进制输入框跟着回填。
+        syncHexInput();
     }
 
     /** 刷新预设色块的选中环 + 「正在编辑」行 + 底部摘要。 */
@@ -3791,6 +3807,96 @@ public final class ModuleSettingsActivity extends Activity {
         return sb;
     }
 
+    /**
+     * 16 进制色号输入行：一行「标签 + 输入框」，放在三条滑杆下面。
+     *
+     * <p>输入合法色号立即应用（与滑杆、预设点走同一个 {@link #applyColor}），
+     * 输入不完整时静默忽略，不打断用户继续敲。失焦时规范成 #RRGGBB。</p>
+     */
+    private void buildHexInputRow(LinearLayout card) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(10), 0, dp(2));
+
+        TextView label = new TextView(this);
+        label.setText(R.string.settings_digit_hex);
+        label.setTextSize(12f);
+        label.setTextColor(text2());
+        label.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(label);
+
+        final EditText input = new EditText(this);
+        input.setTextSize(13f);
+        input.setSingleLine(true);
+        input.setHint("#RRGGBB");
+        input.setHintTextColor(text3());
+        input.setTextColor(text());
+        input.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        input.setFilters(new android.text.InputFilter[]{
+                new android.text.InputFilter.LengthFilter(7)});
+        input.setPadding(dp(10), dp(6), dp(10), dp(6));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(10));
+        bg.setColor(night ? 0xFF3A2F5C : 0xFFF0ECFF);
+        input.setBackground(bg);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                dp(110), ViewGroup.LayoutParams.WRAP_CONTENT);
+        input.setLayoutParams(lp);
+        row.addView(input);
+        card.addView(row);
+
+        // 滑杆 / 预设点改色时同步回填输入框；正在输入时不覆盖用户内容。
+        mHexInput = input;
+        mHexSyncing = false;
+        input.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int st, int c, int a) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int st, int b, int c) {
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                if (mHexSyncing) {
+                    return;
+                }
+                final Integer parsed = parseHexColor(s.toString());
+                if (parsed == null) {
+                    return;
+                }
+                mHexSyncing = true;
+                applyColor(selTarget(), parsed);
+                mHexSyncing = false;
+            }
+        });
+        input.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                syncHexInput();
+            }
+        });
+        syncHexInput();
+    }
+
+    /** 把当前取色目标的颜色回填到 16 进制输入框（正在编辑时不覆盖）。 */
+    private void syncHexInput() {
+        if (mHexInput == null || mHexSyncing || mHexInput.hasFocus()) {
+            return;
+        }
+        mHexSyncing = true;
+        final int color = selColor();
+        mHexInput.setText(color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                || color == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? "" : hexOf(color));
+        mHexSyncing = false;
+    }
+
     private void updateSliderGradients(float hue, float sat, float val) {
         if (mHueSlider != null) ((HsvBarDrawable) mHueSlider.getProgressDrawable()).notifyGradientChanged();
         if (mSatSlider != null) ((HsvBarDrawable) mSatSlider.getProgressDrawable()).setContext(hue, sat, val);
@@ -3883,11 +3989,14 @@ public final class ModuleSettingsActivity extends Activity {
                 ? getString(R.string.settings_digit_follow) : hexOf(color);
     }
 
-    /** 调色盘：自绘 HSV 面板 + 色相条，确定后立即生效。 */
-    private void showPaletteDialog(final int slot) {
+    /** 调色盘：自绘 HSV 面板 + 色相条 + 16 进制输入，确定后立即生效。
+     *
+     * @param target 0..5 = 数字位；6 = 渐变起点；7 = 渐变终点（与 {@link #selTarget()} 一致）
+     */
+    private void showPaletteDialog(final int target) {
         final LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(18), dp(14), dp(18), dp(2));
+        box.setPadding(dp(18), dp(14), dp(18), dp(6));
 
         final HsvPickerView panel = new HsvPickerView(this, HsvPickerView.MODE_SV);
         panel.setLayoutParams(new LinearLayout.LayoutParams(
@@ -3897,27 +4006,112 @@ public final class ModuleSettingsActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(26));
         hueLp.topMargin = dp(14);
         hueBar.setLayoutParams(hueLp);
-        box.addView(panel);
-        box.addView(hueBar);
+
+        // 色号行：左边显示当前色号，右边可直接输入 #RRGGBB。
+        // 放在面板上方而不是最底部 —— 弹窗内容区高度有限，放底部容易被按钮栏挤掉。
+        // 面板和输入框要双向同步，所以用 syncing 挡住回环（输入框改色 → 面板改色 → 又回调刷新输入框）。
+        final boolean[] syncing = {false};
+
+        LinearLayout hexRow = new LinearLayout(this);
+        hexRow.setOrientation(LinearLayout.HORIZONTAL);
+        hexRow.setGravity(Gravity.CENTER_VERTICAL);
+        hexRow.setPadding(0, 0, 0, dp(10));
 
         final TextView hex = new TextView(this);
         hex.setTextSize(13f);
         hex.setTextColor(text2());
-        hex.setPadding(0, dp(12), 0, 0);
-        box.addView(hex);
+        hex.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        hexRow.addView(hex);
 
-        // 起始色：该位当前色；跟随系统时从默认红起步。
-        int start = slotColor(slot);
-        if (start == ClockSecondsConfig.DIGIT_COLOR_FOLLOW) {
+        final EditText hexInput = new EditText(this);
+        hexInput.setTextSize(13f);
+        hexInput.setSingleLine(true);
+        hexInput.setHint("#RRGGBB");
+        hexInput.setHintTextColor(text3());
+        hexInput.setTextColor(text());
+        hexInput.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        hexInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        hexInput.setFilters(new android.text.InputFilter[]{
+                new android.text.InputFilter.LengthFilter(7)});
+        hexInput.setPadding(dp(10), dp(6), dp(10), dp(6));
+        GradientDrawable inputBg = new GradientDrawable();
+        inputBg.setCornerRadius(dp(10));
+        inputBg.setColor(night ? 0xFF3A2F5C : 0xFFF0ECFF);
+        hexInput.setBackground(inputBg);
+        LinearLayout.LayoutParams inputLp = new LinearLayout.LayoutParams(
+                dp(110), ViewGroup.LayoutParams.WRAP_CONTENT);
+        inputLp.leftMargin = dp(10);
+        hexInput.setLayoutParams(inputLp);
+        hexRow.addView(hexInput);
+
+        box.addView(hexRow);
+        box.addView(panel);
+        box.addView(hueBar);
+
+        // 起始色：数字位读 slotColor，渐变端点读 gradientTargetColor；跟随系统时从默认红起步。
+        int start = target >= 6 ? gradientTargetColor(target - 6) : slotColor(target);
+        if (start == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                || start == ClockSecondsConfig.GRADIENT_COLOR_AUTO) {
             start = HOUR_COLORS[0];
         }
         panel.setColor(start);
         hueBar.setColor(start);
-        final Runnable syncHex = () -> hex.setText(swatchDesc(panel.getColor()));
+
+        final Runnable syncHex = () -> {
+            if (syncing[0]) {
+                return;
+            }
+            syncing[0] = true;
+            final int color = panel.getColor();
+            hex.setText(swatchDesc(color));
+            // 正在输入时不覆盖用户内容，只在不聚焦时回填
+            if (!hexInput.hasFocus()) {
+                hexInput.setText(hexOf(color));
+            }
+            syncing[0] = false;
+        };
         panel.setOnColorChanged(c -> syncHex.run());
         hueBar.setOnColorChanged(c -> {
             panel.setHue(hueBar.getHue());
             syncHex.run();
+        });
+
+        // 输入框改色：合法就立即应用到面板，非法保持原样不打断输入。
+        hexInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int st, int c, int a) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int st, int b, int c) {
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                if (syncing[0]) {
+                    return;
+                }
+                final Integer parsed = parseHexColor(s.toString());
+                if (parsed == null) {
+                    return;
+                }
+                syncing[0] = true;
+                panel.setColor(parsed);
+                hueBar.setColor(parsed);
+                hex.setText(swatchDesc(parsed));
+                syncing[0] = false;
+            }
+        });
+        // 失焦时把输入框规范成 #RRGGBB，避免留下 "f43" 这种半截内容
+        hexInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                syncing[0] = true;
+                hexInput.setText(hexOf(panel.getColor()));
+                syncing[0] = false;
+            }
         });
         syncHex.run();
 
@@ -3926,8 +4120,47 @@ public final class ModuleSettingsActivity extends Activity {
                 .setView(box)
                 .setNegativeButton(R.string.settings_cancel, null)
                 .setPositiveButton(R.string.settings_rule_apply,
-                        (dialog, which) -> applyDigitColor(slot, panel.getColor()))
+                        (dialog, which) -> applyColor(target, panel.getColor()))
                 .show();
+    }
+
+    /**
+     * 解析用户输入的色号，支持 {@code #RGB}、{@code RGB}、{@code #RRGGBB}、{@code RRGGBB}。
+     *
+     * <p>返回 null 表示当前内容还不构成一个合法颜色（例如只敲了 "#F4"），
+     * 调用方据此跳过应用，让用户继续输入。</p>
+     */
+    private static Integer parseHexColor(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String s = raw.trim();
+        if (s.startsWith("#")) {
+            s = s.substring(1);
+        }
+        if (s.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            if (Character.digit(s.charAt(i), 16) < 0) {
+                return null;
+            }
+        }
+        try {
+            if (s.length() == 3) {
+                // #RGB → #RRGGBB：每位复制一遍
+                final int r = Character.digit(s.charAt(0), 16);
+                final int g = Character.digit(s.charAt(1), 16);
+                final int b = Character.digit(s.charAt(2), 16);
+                return 0xFF000000 | (r * 17) << 16 | (g * 17) << 8 | (b * 17);
+            }
+            if (s.length() == 6) {
+                return 0xFF000000 | Integer.parseInt(s, 16);
+            }
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+        return null;
     }
 
     /**

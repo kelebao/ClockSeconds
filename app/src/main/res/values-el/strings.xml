@@ -99,6 +99,7 @@
     <string name="settings_tab_dark">Σκοτεινό</string>
     <string name="settings_tab_light">Φωτεινό</string>
     <string name="settings_digit_follow">Ακολούθηση συστήματος</string>
+    <string name="settings_digit_hex">Προσαρμοσμένο</string>
     <string name="settings_digit_done">Τέλος</string>
     <string name="settings_digit_slots">Δεκάδες ώρας,Μονάδες ώρας,Δεκάδες λεπτού,Μονάδες λεπτού,Δεκάδες δευτ.,Μονάδες δευτ.</string>
     <string name="settings_digit_editing">Επεξεργασία: %1$s</string>

@@ -99,6 +99,7 @@
     <string name="settings_tab_dark">Тёмный</string>
     <string name="settings_tab_light">Светлый</string>
     <string name="settings_digit_follow">Как в системе</string>
+    <string name="settings_digit_hex">Свой цвет</string>
     <string name="settings_digit_done">Готово</string>
     <string name="settings_digit_slots">Часы-десятки,Часы-единицы,Минуты-десятки,Минуты-единицы,Секунды-десятки,Секунды-единицы</string>
     <string name="settings_digit_editing">Изменение: %1$s</string>

@@ -99,6 +99,7 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_tab_dark">Gelap</string>
     <string name="settings_tab_light">Terang</string>
     <string name="settings_digit_follow">Ikuti sistem</string>
+    <string name="settings_digit_hex">Kustom</string>
     <string name="settings_digit_done">Selesai</string>
     <string name="settings_digit_slots">Puluhan jam,Satuan jam,Puluhan menit,Satuan menit,Puluhan detik,Satuan detik</string>
     <string name="settings_digit_editing">Mengedit: %1$s</string>
