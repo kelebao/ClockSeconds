@@ -534,8 +534,17 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     /** 渐变方向：霓虹辉光 Glow（线性底 + 中心强光晕）。 */
     public static final int GRADIENT_DIRECTION_GLOW = 18;
 
+    /** U-20261118③：镀铬金属 Chrome（垂直多段金属带，固定铬色序）。 */
+    public static final int GRADIENT_DIRECTION_CHROME = 19;
+
+    /** U-20261118③：斜纹糖果 Stripes（45° 四色循环条纹）。 */
+    public static final int GRADIENT_DIRECTION_STRIPES = 20;
+
+    /** U-20261118③：波浪切割 Wave-Slice（正弦波浪线分割的双渐变）。 */
+    public static final int GRADIENT_DIRECTION_WAVE_SLICE = 21;
+
     /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
-    public static final int GRADIENT_DIRECTION_COUNT = 19;
+    public static final int GRADIENT_DIRECTION_COUNT = 22;
 
     /** 存「渐变方向」的 Secure 键（int 0..18，默认水平）。 */
     public static final String GRADIENT_DIRECTION_KEY =

@@ -202,4 +202,8 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_preset_delete">Delete</string>
     <string name="settings_preset_save_failed">Couldn\'t save — please try again</string>
     <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
+
+    <string name="settings_gradient_dir_chrome">Chrome</string>
+    <string name="settings_gradient_dir_stripes">Candy Stripes</string>
+    <string name="settings_gradient_dir_wave_slice">Wave-Slice</string>
 </resources>

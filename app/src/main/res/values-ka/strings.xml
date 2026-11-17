@@ -202,4 +202,8 @@
     <string name="settings_preset_delete">წაშლა</string>
     <string name="settings_preset_save_failed">შენახვა ვერ მოხერხდა — სცადეთ ხელახლა</string>
     <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
+
+    <string name="settings_gradient_dir_chrome">ქრომი</string>
+    <string name="settings_gradient_dir_stripes">კანფეტის ზოლები</string>
+    <string name="settings_gradient_dir_wave_slice">ტალღის კვეთა</string>
 </resources>

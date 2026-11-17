@@ -202,4 +202,8 @@
     <string name="settings_preset_delete">Διαγραφή</string>
     <string name="settings_preset_save_failed">Αποτυχία αποθήκευσης — δοκιμάστε ξανά</string>
     <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
+
+    <string name="settings_gradient_dir_chrome">Χρώμιο</string>
+    <string name="settings_gradient_dir_stripes">Ριγέ καραμέλα</string>
+    <string name="settings_gradient_dir_wave_slice">Κυματοκοπή</string>
 </resources>

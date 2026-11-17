@@ -203,4 +203,8 @@
     <string name="settings_preset_delete">删除</string>
     <string name="settings_preset_save_failed">保存失败，请重试</string>
     <string name="settings_preset_incompatible">当前模式不可应用该预设</string>
+
+    <string name="settings_gradient_dir_chrome">镀铬金属</string>
+    <string name="settings_gradient_dir_stripes">斜纹糖果</string>
+    <string name="settings_gradient_dir_wave_slice">波浪切割</string>
 </resources>

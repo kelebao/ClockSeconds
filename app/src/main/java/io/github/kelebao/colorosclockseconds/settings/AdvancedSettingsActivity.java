@@ -937,25 +937,30 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         dirTitle.setLayoutParams(dtl);
         card.addView(dirTitle);
 
-        // 单行横滑：U-20261118① 方向精简——只留 上→下 / 左→右 两个基础方向，
-        // 其余 8 个基础方向从 UI 收起（旧 dir 2..9 键值保留，老预设仍能正确回显选中态）；
-        // 新增 9 个特效方向（径向光晕 Mesh / 象限光晕 Mesh / 锥形 Conic / 液态流光
-        // Liquid / 色散霓虹 Chromatic / 全息亮带 Holographic / 颗粒噪点 Grain /
-        // 液态融合 Gooey / 霓虹辉光 Glow），渲染统一走 GradientShaderFactory。
+        // 单行横滑：U-20261118① 方向精简 + U-20261118③ 新形式——
+        // 上→下 / 左→右 两个基础方向，象限光晕 Mesh / 颗粒噪点 Grain 两个特效方向，
+        // 镀铬金属 Chrome / 斜纹糖果 Stripes / 波浪切割 Wave-Slice 三个新形式方向；
+        // 旧 dir 2..9 与已收编特效键值保留（老预设仍能正确回显），渲染统一走 GradientShaderFactory。
         mDirPills = new TextView[ClockSecondsConfig.GRADIENT_DIRECTION_COUNT];
         final int[] dirOrder = {
                 ClockSecondsConfig.GRADIENT_DIRECTION_VERTICAL,
                 ClockSecondsConfig.GRADIENT_DIRECTION_HORIZONTAL,
                 ClockSecondsConfig.GRADIENT_DIRECTION_MESH_QUADRANT,
-                ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN
+                ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN,
+                ClockSecondsConfig.GRADIENT_DIRECTION_CHROME,
+                ClockSecondsConfig.GRADIENT_DIRECTION_STRIPES,
+                ClockSecondsConfig.GRADIENT_DIRECTION_WAVE_SLICE
         };
         final String[] dirLabels = {
                 getString(R.string.settings_gradient_dir_v),
                 getString(R.string.settings_gradient_dir_h),
                 getString(R.string.settings_gradient_dir_mesh_quadrant),
-                getString(R.string.settings_gradient_dir_grain)
+                getString(R.string.settings_gradient_dir_grain),
+                getString(R.string.settings_gradient_dir_chrome),
+                getString(R.string.settings_gradient_dir_stripes),
+                getString(R.string.settings_gradient_dir_wave_slice)
         };
-        countBadge.setText(dirOrder.length + "");   // U-20261118①：2 基础 + 2 特效 = 4
+        countBadge.setText(dirOrder.length + "");   // U-20261118①③：2 基础 + 2 特效 + 3 新形式 = 7
         final int currentDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);

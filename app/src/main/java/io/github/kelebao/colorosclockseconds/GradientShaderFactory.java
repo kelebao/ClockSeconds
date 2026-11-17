@@ -2,9 +2,13 @@ package io.github.kelebao.colorosclockseconds;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ComposeShader;
 import android.graphics.LinearGradient;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
@@ -18,10 +22,9 @@ import android.graphics.SweepGradient;
  * 四条渲染路径共用这一份实现，保证「预览即所得」。</p>
  *
  * <p>方向语义：0..9 与旧版完全一致（0 水平 / 1 竖直 / 2 对角 / 3..7 斜向 / 8 径向 / 9 扫掠）；
- * 10..18 为 U-20261118 新增特效方向（全部为静态渲染，无动画，遵守 vc212「渐变不流动」约定）：
- * 10 径向光晕 Mesh / 11 象限光晕 Mesh / 12 锥形 Conic / 13 液态流光 Liquid /
- * 14 色散霓虹 Chromatic / 15 全息亮带 Holographic / 16 颗粒噪点 Grain /
- * 17 液态融合 Gooey / 18 霓虹辉光 Glow。</p>
+ * 10..18 为 U-20261118 特效方向（11 象限光晕 Mesh / 16 颗粒噪点 Grain 保留；其余已收编，
+ * 旧 dir 值回落普通二色线性渐变）；
+ * 19 镀铬金属 Chrome / 20 斜纹糖果 Stripes / 21 波浪切割 Wave-Slice 为 U-20261118③ 新形式方向。</p>
  *
  * <p>特效方向 = 横向二色线性底 + 叠加层（ComposeShader：ADD 提亮 / SRC_OVER 覆盖），
  * 叠加层颜色全部由用户两端色派生，不引入固定配色。整个构建过程 try/catch 兜死，
@@ -42,7 +45,7 @@ public final class GradientShaderFactory {
      * 构建渐变 shader。
      *
      * @param colors 色标颜色（沿渐变轴顺序；0..9 用全部色标，10..18 只取首尾两色）
-     * @param dir    ClockSecondsConfig.GRADIENT_DIRECTION_*（0..18）
+     * @param dir    ClockSecondsConfig.GRADIENT_DIRECTION_*（0..21）
      * @param x0     色带左边缘 x
      * @param band   色带宽度（文字实测宽 / 预览矩形容）
      * @param top    行盒顶部 y（绘制坐标系原点由调用方决定）
@@ -57,7 +60,7 @@ public final class GradientShaderFactory {
             final float height = Math.max(1f, bottom - top);
             final float cy = top + height / 2f;
             final float cx = x0 + band / 2f;
-            if (dir == ClockSecondsConfig.GRADIENT_DIRECTION_MESH_QUADRANT || dir == ClockSecondsConfig.GRADIENT_DIRECTION_GRAIN) {
+            if (dir >= ClockSecondsConfig.GRADIENT_DIRECTION_MESH_RADIAL) {
                 return buildEffect(cols, dir, x0, band, top, bottom, height, cy, cx, c0, c1);
             }
             final float[] positions = cols.length > 2 ? uniformPositions(cols.length) : null;
@@ -133,14 +136,36 @@ public final class GradientShaderFactory {
                         Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
                 return new ComposeShader(base, grain, PorterDuff.Mode.SRC_OVER);
             }
+            case ClockSecondsConfig.GRADIENT_DIRECTION_CHROME: {
+                // 19 镀铬金属：垂直 7 段金属带（固定铬色序：暗-灰-亮-白热-亮-灰-暗，Y2K 铬字，不取用户配色）
+                return new LinearGradient(x0, top, x0, bottom,
+                        CHROME_RAMP, CHROME_STOPS, Shader.TileMode.CLAMP);
+            }
+            case ClockSecondsConfig.GRADIENT_DIRECTION_STRIPES: {
+                // 20 斜纹糖果：45° 四色硬界循环条纹（用户两色各派生一个亮伴色），REPEAT 平铺
+                final float period = Math.max(8f, height * 0.5f);
+                final int s1 = towardWhite(c0, 0.5f);
+                final int s3 = towardWhite(c1, 0.5f);
+                return new LinearGradient(x0, top, x0 + period, top + period,
+                        new int[]{c0, c0, s1, s1, c1, c1, s3, s3},
+                        new float[]{0f, 0.25f, 0.25f, 0.5f, 0.5f, 0.75f, 0.75f, 1f},
+                        Shader.TileMode.REPEAT);
+            }
+            case ClockSecondsConfig.GRADIENT_DIRECTION_WAVE_SLICE: {
+                // 21 波浪切割：正弦波浪线把色带切成上下两半，各填一套横向渐变（预渲染位图 + BitmapShader）
+                final int w = Math.max(2, (int) Math.ceil(band));
+                final int h = Math.max(2, (int) Math.ceil(height));
+                final Bitmap bmp = waveBitmap(c0, c1, w, h);
+                final BitmapShader bs = new BitmapShader(bmp,
+                        Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                final Matrix lm = new Matrix();
+                lm.postTranslate(x0, top);
+                bs.setLocalMatrix(lm);
+                return bs;
+            }
             default: {
-                // 18 霓虹辉光：线性底 + 中心强光晕（ADD）
-                final int glow = towardWhite(mix(c0, c1, 0.5f), 0.55f);
-                final Shader halo = new RadialGradient(cx, cy,
-                        Math.max(band, height) * 0.62f,
-                        new int[]{withAlpha(glow, 0xCC), withAlpha(glow, 0x00)},
-                        null, Shader.TileMode.CLAMP);
-                return new ComposeShader(base, halo, PorterDuff.Mode.ADD);
+                // 已收编的旧特效 dir（10/12..15/17/18）：回落普通二色线性渐变
+                return base;
             }
         }
     }
@@ -173,6 +198,72 @@ public final class GradientShaderFactory {
             }
         }
         return b;
+    }
+
+    // ---------------- 新形式方向（U-20261118③：镀铬金属 / 斜纹糖果 / 波浪切割） ----------------
+
+    /** 镀铬金属固定铬色序（垂直 7 段）。 */
+    private static final int[] CHROME_RAMP = {
+            0xFF14171F, 0xFF454E63, 0xFFA8D4FF, 0xFFF4F9FF,
+            0xFF8FB6E8, 0xFF2C3448, 0xFF171B26
+    };
+
+    private static final float[] CHROME_STOPS = {0f, 0.22f, 0.45f, 0.5f, 0.56f, 0.78f, 1f};
+
+    /** 波浪切割位图缓存（key=两色+尺寸；小位图，最多留 6 张）。 */
+    private static final java.util.LinkedHashMap<String, Bitmap> sWaveCache =
+            new java.util.LinkedHashMap<String, Bitmap>(8, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<String, Bitmap> eldest) {
+                    return size() > 6;
+                }
+            };
+
+    /** 波浪切割位图：上半 c0→亮伴色，下半 c1→亮伴色，正弦波浪分界。 */
+    private static Bitmap waveBitmap(int c0, int c1, int w, int h) {
+        final String key = c0 + "|" + c1 + "|" + w + "x" + h;
+        synchronized (sWaveCache) {
+            final Bitmap hit = sWaveCache.get(key);
+            if (hit != null && !hit.isRecycled()) return hit;
+        }
+        final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        final Canvas cv = new Canvas(b);
+        final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        final float amp = h * 0.18f;
+        final float wl = Math.max(w * 0.5f, 24f);
+        final int steps = 36;
+        final Path top = new Path();
+        top.moveTo(0, 0);
+        top.lineTo(w, 0);
+        top.lineTo(w, waveY(w, h, amp, wl));
+        for (int i = steps - 1; i >= 0; i--) {
+            final float x = w * i / (float) steps;
+            top.lineTo(x, waveY(x, h, amp, wl));
+        }
+        top.close();
+        final Path bottom = new Path();
+        bottom.moveTo(0, h);
+        bottom.lineTo(w, h);
+        bottom.lineTo(w, waveY(w, h, amp, wl));
+        for (int i = steps - 1; i >= 0; i--) {
+            final float x = w * i / (float) steps;
+            bottom.lineTo(x, waveY(x, h, amp, wl));
+        }
+        bottom.close();
+        p.setShader(new LinearGradient(0, 0, w, 0, c0, towardWhite(c0, 0.55f),
+                Shader.TileMode.CLAMP));
+        cv.drawPath(top, p);
+        p.setShader(new LinearGradient(0, 0, w, 0, c1, towardWhite(c1, 0.55f),
+                Shader.TileMode.CLAMP));
+        cv.drawPath(bottom, p);
+        synchronized (sWaveCache) {
+            sWaveCache.put(key, b);
+        }
+        return b;
+    }
+
+    private static float waveY(float x, float h, float amp, float wl) {
+        return h * 0.5f + amp * (float) Math.sin(x * (Math.PI * 2.0) / wl);
     }
 
     // ---------------- 颜色工具 ----------------

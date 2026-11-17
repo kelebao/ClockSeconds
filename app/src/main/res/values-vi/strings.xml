@@ -202,4 +202,8 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_preset_delete">Xóa</string>
     <string name="settings_preset_save_failed">Không thể lưu — vui lòng thử lại</string>
     <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
+
+    <string name="settings_gradient_dir_chrome">Mạ crôm</string>
+    <string name="settings_gradient_dir_stripes">Sọc kẹo</string>
+    <string name="settings_gradient_dir_wave_slice">Cắt sóng</string>
 </resources>

@@ -202,4 +202,8 @@
     <string name="settings_preset_delete">حذف</string>
     <string name="settings_preset_save_failed">تعذر الحفظ — حاول مرة أخرى</string>
     <string name="settings_preset_incompatible">This preset is not available in the current mode</string>
+
+    <string name="settings_gradient_dir_chrome">كروم</string>
+    <string name="settings_gradient_dir_stripes">خطوط الحلوى</string>
+    <string name="settings_gradient_dir_wave_slice">قص الموجة</string>
 </resources>
