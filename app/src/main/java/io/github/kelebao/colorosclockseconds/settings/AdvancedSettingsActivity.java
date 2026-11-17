@@ -249,7 +249,7 @@ public class AdvancedSettingsActivity extends Activity {
     private LinearLayout build() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(18), dp(18), dp(18), dp(28));
+        root.setPadding(dp(18), dp(4), dp(18), dp(28));
         root.setClipChildren(false);
         root.setClipToPadding(false);
         // t22：页面渲染模式跟随暗/浅页签（默认跟随系统）——window 背景随系统主题不变，
@@ -349,11 +349,11 @@ public class AdvancedSettingsActivity extends Activity {
                 () -> switchPage(true)));
 
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(26));
-        plp.leftMargin = dp(8);
-        plp.rightMargin = dp(8);
-        plp.topMargin = dp(3);
-        plp.bottomMargin = dp(3);
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(34));
+        plp.leftMargin = dp(12);
+        plp.rightMargin = dp(12);
+        plp.topMargin = dp(5);
+        plp.bottomMargin = dp(5);
         row.addView(pill, plp);
         return row;
     }

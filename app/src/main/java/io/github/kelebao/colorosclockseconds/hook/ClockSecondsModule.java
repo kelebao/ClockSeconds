@@ -2413,10 +2413,8 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
                 if (sGradientOn && tv instanceof FloatTimeView) {
                     // 自绘路径：把色标交给视图，onDraw 里 canvas.drawText 一次画完整条色带。
                     int sysFloatColor = tv.getCurrentTextColor();
-                    int rawStartF = sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                            ? colors[0] : sGradientStart;
-                    int rawEndF = sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                            ? colors[colors.length - 1] : sGradientEnd;
+                    int rawStartF = gradientRawStart(colors, sysFloatColor, tv);
+                    int rawEndF = gradientRawEnd(colors, sysFloatColor, tv);
                     int c0f = gradientEdgeColor(rawStartF, sysFloatColor);
                     int c1f = gradientEdgeColor(rawEndF, sysFloatColor);
                     ((FloatTimeView) tv).setGradient(
@@ -3294,10 +3292,10 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             return NO_STARTS;
         }
         int systemTextColor = view.getCurrentTextColor();
-        int rawStart = sGradientStart == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                ? colors[0] : sGradientStart;
-        int rawEnd = sGradientEnd == ClockSecondsConfig.GRADIENT_COLOR_AUTO
-                ? colors[colors.length - 1] : sGradientEnd;
+        // U-20261118：FCS 退化渐变同样按浅色副键解析端点，避免 ColorOS StatClock
+        // 走 FCS 时只用常规键，浅色预设看起来「不生效、和预设不一样」。
+        int rawStart = gradientRawStart(colors, systemTextColor, view);
+        int rawEnd = gradientRawEnd(colors, systemTextColor, view);
         int c0 = gradientEdgeColor(rawStart, systemTextColor);
         int c1 = gradientEdgeColor(rawEnd, systemTextColor);
         // t6：四色标插值（中间色标 AUTO 时回落 start→end 两色插值，与 shader 路径一致）。
