@@ -285,7 +285,7 @@ public class AdvancedSettingsActivity extends Activity {
 
     private View appbar() {
         FrameLayout row = new FrameLayout(this);
-        row.setPadding(0, dp(8), 0, dp(8));
+        row.setPadding(0, 0, 0, 0);
         row.setClipChildren(false);
 
         if (mAllPage) {
@@ -323,25 +323,24 @@ public class AdvancedSettingsActivity extends Activity {
         pill.setGravity(Gravity.CENTER_VERTICAL);
         GradientDrawable pillBg = new GradientDrawable();
         pillBg.setColor(isNight() ? 0xFF241D38 : 0xFFFFFFFF);
-        pillBg.setCornerRadius(dp(28));
+        pillBg.setCornerRadius(dp(999));
         pill.setBackground(pillBg);
         pill.setClipToOutline(true);
         pill.setElevation(dp(2));
 
         TextView back = new TextView(this);
         back.setText("‹");
-        back.setTextSize(24f);
+        back.setTextSize(20f);
         back.setTextColor(text2());
         back.setGravity(Gravity.CENTER);
         back.setClickable(true);
         back.setFocusable(true);
         back.setOnClickListener(v -> finish());
-        pill.addView(back, new LinearLayout.LayoutParams(dp(56), ViewGroup.LayoutParams.MATCH_PARENT));
+        pill.addView(back, new LinearLayout.LayoutParams(dp(28), ViewGroup.LayoutParams.MATCH_PARENT));
 
         View divider = new View(this);
-        divider.setBackgroundColor(isNight() ? 0x1FFFFFFF : 0x14000000);
-        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(1), dp(26));
-        dlp.gravity = Gravity.CENTER_VERTICAL;
+        divider.setBackgroundColor(isNight() ? 0x22FFFFFF : 0xFFEDE8F6);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT);
         pill.addView(divider, dlp);
 
         pill.addView(fullWidthTab(getString(R.string.settings_tab_mono), !mGradPage,
@@ -350,20 +349,18 @@ public class AdvancedSettingsActivity extends Activity {
                 () -> switchPage(true)));
 
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
-        plp.leftMargin = dp(16);
-        plp.rightMargin = dp(16);
-        plp.topMargin = dp(4);
-        plp.bottomMargin = dp(4);
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(26));
+        plp.leftMargin = dp(8);
+        plp.rightMargin = dp(8);
+        plp.topMargin = dp(3);
+        plp.bottomMargin = dp(3);
         row.addView(pill, plp);
         return row;
     }
 
-    /** U-20261118⑫（02D）：全宽胶囊内的单个页签，选中态=紫色文字+底部指示线。 */
+    /** U-20261118⑫（02D）：全宽胶囊内的单个页签，选中态=紫色文字+整条页签下划线（贴胶囊底边）。 */
     private View fullWidthTab(String label, boolean selected, Runnable onClick) {
-        LinearLayout wrap = new LinearLayout(this);
-        wrap.setOrientation(LinearLayout.VERTICAL);
-        wrap.setGravity(Gravity.CENTER);
+        FrameLayout wrap = new FrameLayout(this);
         wrap.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         wrap.setClickable(true);
         wrap.setFocusable(true);
@@ -375,16 +372,16 @@ public class AdvancedSettingsActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         tv.setTypeface(Typeface.create("sans-serif-medium", selected ? Typeface.BOLD : Typeface.NORMAL));
         tv.setTextColor(selected ? accent() : text2());
-        wrap.addView(tv, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        wrap.addView(tv, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER));
 
         View line = new View(this);
         line.setBackgroundColor(selected ? accent() : 0x00000000);
-        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(dp(28), dp(2));
-        llp.topMargin = dp(3);
-        llp.gravity = Gravity.CENTER_HORIZONTAL;
-        line.setLayoutParams(llp);
-        wrap.addView(line);
+        FrameLayout.LayoutParams llp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(2),
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        wrap.addView(line, llp);
         return wrap;
     }
 
