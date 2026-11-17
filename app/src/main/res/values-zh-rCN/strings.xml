@@ -207,4 +207,6 @@
     <string name="settings_gradient_dir_chrome">镀铬金属</string>
     <string name="settings_gradient_dir_stripes">斜纹糖果</string>
     <string name="settings_gradient_dir_wave_slice">波浪切割</string>
+
+    <string name="settings_gradient_dir_low_poly">低多边形晶格</string>
 </resources>

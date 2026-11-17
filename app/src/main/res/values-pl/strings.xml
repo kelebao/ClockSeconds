@@ -206,4 +206,6 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_gradient_dir_chrome">Chrom</string>
     <string name="settings_gradient_dir_stripes">Paski cukierkowe</string>
     <string name="settings_gradient_dir_wave_slice">Cięcie falowe</string>
+
+    <string name="settings_gradient_dir_low_poly">Low-Poly</string>
 </resources>

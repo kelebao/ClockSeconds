@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">クローム</string>
     <string name="settings_gradient_dir_stripes">キャンディストライプ</string>
     <string name="settings_gradient_dir_wave_slice">ウェーブスライス</string>
+
+    <string name="settings_gradient_dir_low_poly">ローポリ</string>
 </resources>

@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">Χρώμιο</string>
     <string name="settings_gradient_dir_stripes">Ριγέ καραμέλα</string>
     <string name="settings_gradient_dir_wave_slice">Κυματοκοπή</string>
+
+    <string name="settings_gradient_dir_low_poly">Χαμηλά πολύγωνα</string>
 </resources>

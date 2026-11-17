@@ -206,4 +206,6 @@ Code source de ce module : MIT © kelebao</string>
     <string name="settings_gradient_dir_chrome">Chrome</string>
     <string name="settings_gradient_dir_stripes">Rayures bonbon</string>
     <string name="settings_gradient_dir_wave_slice">Découpe en vague</string>
+
+    <string name="settings_gradient_dir_low_poly">Low-Poly</string>
 </resources>

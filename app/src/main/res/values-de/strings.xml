@@ -206,4 +206,6 @@ Quellcode dieses Moduls: MIT © kelebao</string>
     <string name="settings_gradient_dir_chrome">Chrom</string>
     <string name="settings_gradient_dir_stripes">Zuckerstreifen</string>
     <string name="settings_gradient_dir_wave_slice">Wellenschnitt</string>
+
+    <string name="settings_gradient_dir_low_poly">Low-Poly</string>
 </resources>

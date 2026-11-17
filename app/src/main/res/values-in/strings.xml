@@ -206,4 +206,6 @@ Kode sumber modul ini: MIT © kelebao</string>
     <string name="settings_gradient_dir_chrome">Krom</string>
     <string name="settings_gradient_dir_stripes">Garis Permen</string>
     <string name="settings_gradient_dir_wave_slice">Potongan Gelombang</string>
+
+    <string name="settings_gradient_dir_low_poly">Low-Poly</string>
 </resources>

@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">크롬</string>
     <string name="settings_gradient_dir_stripes">사탕 줄무늬</string>
     <string name="settings_gradient_dir_wave_slice">웨이브 슬라이스</string>
+
+    <string name="settings_gradient_dir_low_poly">로우 폴리</string>
 </resources>

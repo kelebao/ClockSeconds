@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">Хром</string>
     <string name="settings_gradient_dir_stripes">Леденцовые полосы</string>
     <string name="settings_gradient_dir_wave_slice">Волновой срез</string>
+
+    <string name="settings_gradient_dir_low_poly">Низкополигональный</string>
 </resources>

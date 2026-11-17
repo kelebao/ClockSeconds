@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">โครม</string>
     <string name="settings_gradient_dir_stripes">ลายขนมหวาน</string>
     <string name="settings_gradient_dir_wave_slice">เส้นคลื่นตัด</string>
+
+    <string name="settings_gradient_dir_low_poly">โลว์โปลี</string>
 </resources>

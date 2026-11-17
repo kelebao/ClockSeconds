@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">کروم</string>
     <string name="settings_gradient_dir_stripes">نوارهای آبنبات</string>
     <string name="settings_gradient_dir_wave_slice">برش موجی</string>
+
+    <string name="settings_gradient_dir_low_poly">لو پولی</string>
 </resources>

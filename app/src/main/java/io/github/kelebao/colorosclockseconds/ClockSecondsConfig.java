@@ -543,10 +543,13 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     /** U-20261118③：波浪切割 Wave-Slice（正弦波浪线分割的双渐变）。 */
     public static final int GRADIENT_DIRECTION_WAVE_SLICE = 21;
 
-    /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
-    public static final int GRADIENT_DIRECTION_COUNT = 22;
+    /** U-20261118④：低多边形晶格 Low-Poly（不规则三角切面，逐面独立明暗）。 */
+    public static final int GRADIENT_DIRECTION_LOW_POLY = 22;
 
-    /** 存「渐变方向」的 Secure 键（int 0..18，默认水平）。 */
+    /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
+    public static final int GRADIENT_DIRECTION_COUNT = 23;
+
+    /** 存「渐变方向」的 Secure 键（int 0..22，默认水平）。 */
     public static final String GRADIENT_DIRECTION_KEY =
             "coloros_clock_seconds_gradient_direction";
 

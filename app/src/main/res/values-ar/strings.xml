@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">كروم</string>
     <string name="settings_gradient_dir_stripes">خطوط الحلوى</string>
     <string name="settings_gradient_dir_wave_slice">قص الموجة</string>
+
+    <string name="settings_gradient_dir_low_poly">متعدد الأضلاع</string>
 </resources>

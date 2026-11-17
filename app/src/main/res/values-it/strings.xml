@@ -206,4 +206,6 @@ Codice sorgente di questo modulo: MIT © kelebao</string>
     <string name="settings_gradient_dir_chrome">Cromo</string>
     <string name="settings_gradient_dir_stripes">Righe caramella</string>
     <string name="settings_gradient_dir_wave_slice">Taglio ondulato</string>
+
+    <string name="settings_gradient_dir_low_poly">Low-Poly</string>
 </resources>

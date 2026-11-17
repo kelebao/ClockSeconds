@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">ქრომი</string>
     <string name="settings_gradient_dir_stripes">კანფეტის ზოლები</string>
     <string name="settings_gradient_dir_wave_slice">ტალღის კვეთა</string>
+
+    <string name="settings_gradient_dir_low_poly">დაბალი პოლიგონი</string>
 </resources>

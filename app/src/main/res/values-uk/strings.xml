@@ -206,4 +206,6 @@
     <string name="settings_gradient_dir_chrome">Хром</string>
     <string name="settings_gradient_dir_stripes">Цукеркові смуги</string>
     <string name="settings_gradient_dir_wave_slice">Хвильовий зріз</string>
+
+    <string name="settings_gradient_dir_low_poly">Низкополігональний</string>
 </resources>

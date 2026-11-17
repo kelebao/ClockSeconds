@@ -24,7 +24,9 @@ import android.graphics.SweepGradient;
  * <p>方向语义：0..9 与旧版完全一致（0 水平 / 1 竖直 / 2 对角 / 3..7 斜向 / 8 径向 / 9 扫掠）；
  * 10..18 为 U-20261118 特效方向（11 象限光晕 Mesh / 16 颗粒噪点 Grain 保留；其余已收编，
  * 旧 dir 值回落普通二色线性渐变）；
- * 19 镀铬金属 Chrome / 20 斜纹糖果 Stripes / 21 波浪切割 Wave-Slice 为 U-20261118③ 新形式方向。</p>
+ * 19 镀铬金属 Chrome / 20 斜纹糖果 Stripes / 21 波浪切割 Wave-Slice 为 U-20261118③ 新形式方向；
+ * 22 低多边形晶格 Low-Poly 为 U-20261118④ 新形式方向（按现有位图 Shader 模式：位图按 band×height
+ * 生成并按颜色+尺寸缓存，网格密度随位图尺寸自适应，不写死行列数）。</p>
  *
  * <p>特效方向 = 横向二色线性底 + 叠加层（ComposeShader：ADD 提亮 / SRC_OVER 覆盖），
  * 叠加层颜色全部由用户两端色派生，不引入固定配色。整个构建过程 try/catch 兜死，
@@ -45,7 +47,7 @@ public final class GradientShaderFactory {
      * 构建渐变 shader。
      *
      * @param colors 色标颜色（沿渐变轴顺序；0..9 用全部色标，10..18 只取首尾两色）
-     * @param dir    ClockSecondsConfig.GRADIENT_DIRECTION_*（0..21）
+     * @param dir    ClockSecondsConfig.GRADIENT_DIRECTION_*（0..22）
      * @param x0     色带左边缘 x
      * @param band   色带宽度（文字实测宽 / 预览矩形容）
      * @param top    行盒顶部 y（绘制坐标系原点由调用方决定）
@@ -163,6 +165,19 @@ public final class GradientShaderFactory {
                 bs.setLocalMatrix(lm);
                 return bs;
             }
+            case ClockSecondsConfig.GRADIENT_DIRECTION_LOW_POLY: {
+                // 22 低多边形晶格：按位图尺寸自适应的不规则三角网格，逐面独立明暗
+                // （与波浪切割同一套缓存 + BitmapShader + postTranslate 定位，不写死行列数）
+                final int w = Math.max(2, (int) Math.ceil(band));
+                final int h = Math.max(2, (int) Math.ceil(height));
+                final Bitmap bmp = lowPolyBitmap(c0, c1, w, h);
+                final BitmapShader bs = new BitmapShader(bmp,
+                        Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                final Matrix lm = new Matrix();
+                lm.postTranslate(x0, top);
+                bs.setLocalMatrix(lm);
+                return bs;
+            }
             default: {
                 // 已收编的旧特效 dir（10/12..15/17/18）：回落普通二色线性渐变
                 return base;
@@ -264,6 +279,83 @@ public final class GradientShaderFactory {
 
     private static float waveY(float x, float h, float amp, float wl) {
         return h * 0.5f + amp * (float) Math.sin(x * (Math.PI * 2.0) / wl);
+    }
+
+    /** 低多边形位图缓存（key=两色+尺寸；与波浪切割共用上限策略，最多留 6 张）。 */
+    private static final java.util.LinkedHashMap<String, Bitmap> sLowPolyCache =
+            new java.util.LinkedHashMap<String, Bitmap>(8, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<String, Bitmap> eldest) {
+                    return size() > 6;
+                }
+            };
+
+    /** 低多边形晶格位图：按位图尺寸自适应三角网格 + 双线性取色 + 逐面固定明暗扰动。 */
+    private static Bitmap lowPolyBitmap(int c0, int c1, int w, int h) {
+        final String key = c0 + "|" + c1 + "|" + w + "x" + h;
+        synchronized (sLowPolyCache) {
+            final Bitmap hit = sLowPolyCache.get(key);
+            if (hit != null && !hit.isRecycled()) return hit;
+        }
+        final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        final Canvas cv = new Canvas(b);
+        final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setStyle(Paint.Style.FILL);
+        // 网格单元随位图高度自适应（小字更少切面、预览大钟更多切面），不再写死 14×4
+        final float cell = Math.max(6f, h / 4f);
+        final int cols = Math.max(1, (int) Math.ceil(w / cell));
+        final int rows = Math.max(1, (int) Math.ceil(h / cell));
+        final float cw = w / (float) cols;
+        final float ch = h / (float) rows;
+        for (int j = 0; j < rows; j++) {
+            for (int i = 0; i < cols; i++) {
+                final float x0 = i * cw;
+                final float y0 = j * ch;
+                final float x1 = (i + 1) * cw;
+                final float y1 = (j + 1) * ch;
+                // 不规则内点：边点保持原位以免位图边缘漏像素
+                final float jx = (i == 0 || i == cols - 1) ? x0 : x0 + cw * (0.35f + 0.3f * facetNoise(i, j, 0));
+                final float jy = (j == 0 || j == rows - 1) ? y0 : y0 + ch * (0.35f + 0.3f * facetNoise(i, j, 1));
+                // 每个三角面独立明暗（固定种子，±7），颜色取面心在 c0→c1 的双线性位置
+                drawFacet(cv, p, x0, y0, x1, y0, jx, jy, c0, c1, w, h, facetNoise(i, j, 2));
+                drawFacet(cv, p, x0, y0, jx, jy, x0, y1, c0, c1, w, h, facetNoise(i, j, 3));
+                drawFacet(cv, p, x1, y0, x1, y1, jx, jy, c0, c1, w, h, facetNoise(i, j, 4));
+                drawFacet(cv, p, x0, y1, jx, jy, x1, y1, c0, c1, w, h, facetNoise(i, j, 5));
+            }
+        }
+        synchronized (sLowPolyCache) {
+            sLowPolyCache.put(key, b);
+        }
+        return b;
+    }
+
+    /** 绘制单个三角面：面心双线性取色 + 逐面固定 ±7 明暗扰动。 */
+    private static void drawFacet(Canvas cv, Paint p,
+                                  float ax, float ay, float bx, float by, float cx, float cy,
+                                  int c0, int c1, int w, int h, float noise) {
+        final float fx = (ax + bx + cx) / 3f;
+        final float fy = (ay + by + cy) / 3f;
+        final int base = mix(c0, c1, fx / w);
+        final int shifted = (int) (noise * 14f) - 7;
+        final int r = Math.max(0, Math.min(255, Color.red(base) + shifted));
+        final int g = Math.max(0, Math.min(255, Color.green(base) + shifted));
+        final int bl = Math.max(0, Math.min(255, Color.blue(base) + shifted));
+        p.setColor(Color.rgb(r, g, bl));
+        final Path path = new Path();
+        path.moveTo(ax, ay);
+        path.lineTo(bx, by);
+        path.lineTo(cx, cy);
+        path.close();
+        cv.drawPath(path, p);
+    }
+
+    /** 固定种子面扰动（0..1），不用 Random，保证同色同尺寸每次生成完全一致的晶格。 */
+    private static float facetNoise(int i, int j, int salt) {
+        int v = (i * 73856093) ^ (j * 19349663) ^ (salt * 83492791);
+        v ^= (v >>> 13);
+        v *= 1274126177;
+        v ^= (v >>> 16);
+        return (v & 0x7FFFFFFF) / (float) 0x7FFFFFFF;
     }
 
     // ---------------- 颜色工具 ----------------

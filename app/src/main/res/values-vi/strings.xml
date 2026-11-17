@@ -206,4 +206,6 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_gradient_dir_chrome">Mạ crôm</string>
     <string name="settings_gradient_dir_stripes">Sọc kẹo</string>
     <string name="settings_gradient_dir_wave_slice">Cắt sóng</string>
+
+    <string name="settings_gradient_dir_low_poly">Low-Poly</string>
 </resources>

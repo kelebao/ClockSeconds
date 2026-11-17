@@ -206,4 +206,6 @@ Código-fonte deste módulo: MIT © kelebao</string>
     <string name="settings_gradient_dir_chrome">Cromo</string>
     <string name="settings_gradient_dir_stripes">Listras de bala</string>
     <string name="settings_gradient_dir_wave_slice">Corte em onda</string>
+
+    <string name="settings_gradient_dir_low_poly">Low-Poly</string>
 </resources>
