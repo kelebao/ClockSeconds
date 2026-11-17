@@ -180,18 +180,26 @@ public class AdvancedSettingsActivity extends Activity {
         mAdaptiveColor = ClockSecondsConfig.isAdaptiveColorEnabled(getContentResolver());
         // f12-4：整页竖向可滚动（10 方向 5×2 网格在 1240x2772 首屏外）；
         // fillViewport 保证内容不足一屏时也撑满，宽度显式 MATCH_PARENT 让卡片横向铺满。
+        // U-20261118⑪：标题行固定不随内容滚动；单色/渐变页签在行内居中且间距均匀。
+        LinearLayout outer = new LinearLayout(this);
+        outer.setOrientation(LinearLayout.VERTICAL);
+        outer.setFitsSystemWindows(true);   // 状态栏 inset 由外层消费，头部与内容一起下移
+        int pageBgColor = isNight() ? 0xFF151021 : 0xFFF3F0FA;
+        outer.setBackgroundColor(pageBgColor);
+        View header = appbar();
+        header.setBackgroundColor(pageBgColor);
+        outer.addView(header, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
+        scroll.setBackgroundColor(pageBgColor);
         LinearLayout pageRoot = build();
-        pageRoot.setLayoutParams(new FrameLayout.LayoutParams(
+        pageRoot.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         scroll.addView(pageRoot);
-        // t34 F31-1：appbar 上半段（y≤140px）被 ColorOS 状态栏窗口吞点击——页签视觉中心落在死区。
-        // 顶层 ScrollView 消费状态栏 inset（自动加 paddingTop），内容整体下移出状态栏触控区；
-        // inset 条带同样刷成页面底色，避免出现一条窗口背景色。
-        scroll.setFitsSystemWindows(true);
-        scroll.setBackgroundColor(isNight() ? 0xFF151021 : 0xFFF3F0FA);
-        setContentView(scroll);
+        outer.addView(scroll, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        setContentView(outer);
         // U-20261116c：浅色渲染时声明 LIGHT_STATUS_BAR（状态栏深字），否则 ColorOS 对本窗口
         // 用白字渲染 → 「跟随系统」位（冒号）在高级页浅色界面变白（用户反馈 bug）。
         // 与首页 ModuleSettingsActivity.applyStatusBarAppearance 同语义；页签切换走 recreate 再进 onCreate。
@@ -250,7 +258,7 @@ public class AdvancedSettingsActivity extends Activity {
         pageBg.setColor(isNight() ? 0xFF151021 : 0xFFF3F0FA);
         root.setBackground(pageBg);
 
-        root.addView(appbar());
+        // U-20261118⑪：标题行已移到 onCreate 的 sticky header，不随卡片滚动。
 
         // 全量预设管理页（t5）：只渲染暗/浅两组网格 + 各自的保存按钮
         if (mAllPage) {
@@ -275,10 +283,9 @@ public class AdvancedSettingsActivity extends Activity {
         return root;
     }
 
-    private LinearLayout appbar() {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
+    private View appbar() {
+        FrameLayout row = new FrameLayout(this);
+        row.setPadding(0, dp(8), 0, dp(8));
         TextView back = new TextView(this);
         back.setText("‹");
         back.setTextSize(22f);
@@ -286,31 +293,45 @@ public class AdvancedSettingsActivity extends Activity {
         back.setClickable(true);
         back.setFocusable(true);
         back.setOnClickListener(v -> finish());
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.START | Gravity.CENTER_VERTICAL);
+        blp.leftMargin = dp(6);
+        back.setLayoutParams(blp);
         row.addView(back);
-        TextView title = new TextView(this);
-        title.setText(mAllPage ? R.string.settings_preset_all_title
-                : R.string.settings_advanced_title);   // t26⑥：两页合并后标题统一「高级设置」
-        title.setTextSize(17f);
-        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        title.setTextColor(text());
-        row.addView(title);
-        if (!mAllPage) {
-            // t26⑥：页内「单色 / 渐变」切换（首页合并入口后两页仍可达）
-            View spacer = new View(this);
-            spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
-            row.addView(spacer);
+        if (mAllPage) {
+            TextView title = new TextView(this);
+            title.setText(R.string.settings_preset_all_title);
+            title.setTextSize(17f);
+            title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            title.setTextColor(text());
+            FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER);
+            title.setLayoutParams(tlp);
+            row.addView(title);
+        } else {
+            // U-20261118⑪：删除「高级设置」标题；单色/渐变两个页签在该行正中，左右等距。
+            LinearLayout tabs = new LinearLayout(this);
+            tabs.setOrientation(LinearLayout.HORIZONTAL);
+            tabs.setGravity(Gravity.CENTER);
             TextView monoTab = pageTab(getString(R.string.settings_tab_mono), !mGradPage);
             monoTab.setOnClickListener(v -> switchPage(false));
-            row.addView(monoTab);
+            tabs.addView(monoTab);
             TextView gradTab = pageTab(getString(R.string.settings_tab_gradient), mGradPage);
             // t30：addView 前该 View 尚无父容器，getLayoutParams() 可能为 null，强转有 NPE 风险——
             // 先显式给全量 LayoutParams 再设间距。
             gradTab.setLayoutParams(new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             LinearLayout.LayoutParams glp = (LinearLayout.LayoutParams) gradTab.getLayoutParams();
-            glp.leftMargin = dp(6);
+            glp.leftMargin = dp(12);
             gradTab.setOnClickListener(v -> switchPage(true));
-            row.addView(gradTab);
+            tabs.addView(gradTab);
+            FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER);
+            tabs.setLayoutParams(tlp);
+            row.addView(tabs);
         }
         return row;
     }
@@ -781,13 +802,12 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         sl.topMargin = dp(14);
         rippleHost.setLayoutParams(sl);
         if (mGradPage) {
-            // 两个圆角色标（t36② 渐变回 2 色）：照搬首页起点/终点色点效果——底色=当前色标颜色，
-            // 选中=常驻呼吸涟漪（BreathSwatchDrawable，breathTick 每 50ms 推进相位，与首页一致）。label 用带圈数字 ①②。
+            // U-20261118⑪：两个端点圆圈在这一行居中、等距分开；删除 ①② 文字标签（编辑行仍保留编号）。
+            selRow.setGravity(Gravity.CENTER);
             mStopCircles = new FrameLayout[GRAD_UI_STOPS];
-            mStopLabels = new TextView[GRAD_UI_STOPS];
+            mStopLabels = null;
             for (int i = 0; i < GRAD_UI_STOPS; i++) {
                 FrameLayout wrap = new FrameLayout(this);
-                // 照搬首页起点/终点色点效果：占位灰圆（无呼吸），refreshStopCircles 用真实色重画并决定是否呼吸。
                 BreathSwatchDrawable placeholder = new BreathSwatchDrawable(
                         isNight() ? 0xFF3A3152 : 0xFFD8D4E8, false, accent(), 0f, GRAD_SOLID_RATIO);
                 wrap.setBackground(placeholder);
@@ -795,21 +815,12 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 wrap.setFocusable(true);
                 final int which = i;
                 wrap.setOnClickListener(v -> setGradTarget(which));
-                // t18③ + 本版：圆直径放大到 44dp（与首页起点色圆同比例），给呼吸涟漪留出扩散空间。
                 LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(dp(44), dp(44));
-                wl.rightMargin = dp(10);
+                wl.leftMargin = dp(22);
+                wl.rightMargin = dp(22);
                 wrap.setLayoutParams(wl);
                 selRow.addView(wrap);
                 mStopCircles[i] = wrap;
-
-                TextView num = new TextView(this);
-                num.setText(new String(Character.toChars(0x2460 + i)));   // ①②
-                num.setTextSize(11f);
-                num.setGravity(Gravity.CENTER);
-                num.setTextColor(text());
-                num.setPadding(0, dp(6), 0, 0);
-                selRow.addView(num);
-                mStopLabels[i] = num;
             }
         } else {
             final String[] slots = getString(R.string.settings_digit_slots).split(",");
