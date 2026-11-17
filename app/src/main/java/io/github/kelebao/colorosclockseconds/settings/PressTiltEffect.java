@@ -5,6 +5,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.OvershootInterpolator;
 
 import java.util.ArrayList;
@@ -95,6 +96,11 @@ public class PressTiltEffect {
     public void onTouch(MotionEvent ev) {
         final int a = ev.getActionMasked();
         if (a == MotionEvent.ACTION_DOWN) {
+            // 用户反馈：主页整卡按压变换会让开关命中偏移。开关自己有原生按压反馈，
+            // 触点落在 Switch 上时跳过整卡倾斜/缩放，避免按开关不准。
+            if (isOnSwitch(ev.getRawX(), ev.getRawY())) {
+                return;
+            }
             final Pair<View, GradientDrawable> hit = find(ev.getRawX(), ev.getRawY());
             if (hit != null) {
                 mPressing = true;
@@ -116,6 +122,37 @@ public class PressTiltEffect {
                 release(mCard, mGlow);
             }
         }
+    }
+
+    /** 触点是否落在任一已注册卡片内的 Switch 上（开关自带按压反馈，不再整卡变换）。 */
+    private boolean isOnSwitch(float rx, float ry) {
+        for (Pair<View, GradientDrawable> p : mTargets) {
+            if (containsSwitchAt(p.first, rx, ry)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsSwitchAt(View v, float rx, float ry) {
+        if (v == null || v.getVisibility() != View.VISIBLE) {
+            return false;
+        }
+        if (v instanceof android.widget.Switch) {
+            v.getGlobalVisibleRect(mRect);
+            if (mRect.contains((int) rx, (int) ry)) {
+                return true;
+            }
+        }
+        if (v instanceof ViewGroup) {
+            final ViewGroup group = (ViewGroup) v;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                if (containsSwitchAt(group.getChildAt(i), rx, ry)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** 命中测试：返回包含该屏幕坐标的「面积最小」（最内层）已注册卡片。 */

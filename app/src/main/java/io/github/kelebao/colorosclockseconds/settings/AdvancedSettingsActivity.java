@@ -663,7 +663,6 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         // 取景框（t11）：单色页框住当前编辑位；颜色跟 accent，随明暗页签在 refreshPreview 里刷新
         mPreviewClock.setViewfinderColor(accent());
         mPreviewClock.setPadding(0, 0, 0, 0);
-        mPreviewClock.setIncludeFontPadding(false);
         // 预览状态提供器：与首页 updatePreview 同一套规则（渐变开→整条渐变；否则逐位上色）。
         mPreviewClock.setTimeProvider(now -> {
             CharSequence t = previewTimeText();
