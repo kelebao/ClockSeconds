@@ -211,4 +211,6 @@
 
     <string name="settings_gradient_dir_terrazzo">テラゾー</string>
     <string name="settings_gradient_dir_qr_code">QRコード</string>
+
+    <string name="settings_gradient_dir_mercury">液体水銀</string>
 </resources>

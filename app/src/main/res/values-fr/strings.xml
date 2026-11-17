@@ -211,4 +211,6 @@ Code source de ce module : MIT © kelebao</string>
 
     <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
     <string name="settings_gradient_dir_qr_code">Code QR</string>
+
+    <string name="settings_gradient_dir_mercury">Mercure liquide</string>
 </resources>

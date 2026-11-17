@@ -211,4 +211,6 @@ Kode sumber modul ini: MIT © kelebao</string>
 
     <string name="settings_gradient_dir_terrazzo">Teraso</string>
     <string name="settings_gradient_dir_qr_code">Kode QR</string>
+
+    <string name="settings_gradient_dir_mercury">Air Raksa Cair</string>
 </resources>

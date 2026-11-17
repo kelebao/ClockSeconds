@@ -952,7 +952,8 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 ClockSecondsConfig.GRADIENT_DIRECTION_WAVE_SLICE,
                 ClockSecondsConfig.GRADIENT_DIRECTION_LOW_POLY,
                 ClockSecondsConfig.GRADIENT_DIRECTION_TERRAZZO,
-                ClockSecondsConfig.GRADIENT_DIRECTION_QR_CODE
+                ClockSecondsConfig.GRADIENT_DIRECTION_QR_CODE,
+                ClockSecondsConfig.GRADIENT_DIRECTION_MERCURY
         };
         final String[] dirLabels = {
                 getString(R.string.settings_gradient_dir_v),
@@ -964,9 +965,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 getString(R.string.settings_gradient_dir_wave_slice),
                 getString(R.string.settings_gradient_dir_low_poly),
                 getString(R.string.settings_gradient_dir_terrazzo),
-                getString(R.string.settings_gradient_dir_qr_code)
+                getString(R.string.settings_gradient_dir_qr_code),
+                getString(R.string.settings_gradient_dir_mercury)
         };
-        countBadge.setText(dirOrder.length + "");   // U-20261118①③④⑤：2 基础 + 2 特效 + 6 新形式 = 10
+        countBadge.setText(dirOrder.length + "");   // U-20261118①③④⑤⑥：2 基础 + 2 特效 + 7 新形式 = 11
         final int currentDir = ClockSecondsConfig.getGradientDirection(getContentResolver());
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);

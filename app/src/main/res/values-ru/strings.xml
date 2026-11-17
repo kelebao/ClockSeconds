@@ -211,4 +211,6 @@
 
     <string name="settings_gradient_dir_terrazzo">Терраццо</string>
     <string name="settings_gradient_dir_qr_code">QR-код</string>
+
+    <string name="settings_gradient_dir_mercury">Жидкая ртуть</string>
 </resources>

@@ -211,4 +211,6 @@
 
     <string name="settings_gradient_dir_terrazzo">ترازو</string>
     <string name="settings_gradient_dir_qr_code">کد QR</string>
+
+    <string name="settings_gradient_dir_mercury">جیوه مایع</string>
 </resources>

@@ -208,6 +208,18 @@ public final class GradientShaderFactory {
                 bs.setLocalMatrix(lm);
                 return bs;
             }
+            case ClockSecondsConfig.GRADIENT_DIRECTION_MERCURY: {
+                // 25 液态水银：用户两端色派生铬色带 + 分形噪声大位移（与波浪切割同一套位图管线）
+                final int w = Math.max(2, (int) Math.ceil(band));
+                final int h = Math.max(2, (int) Math.ceil(height));
+                final Bitmap bmp = mercuryBitmap(c0, c1, w, h);
+                final BitmapShader bs = new BitmapShader(bmp,
+                        Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+                final Matrix lm = new Matrix();
+                lm.postTranslate(x0, top);
+                bs.setLocalMatrix(lm);
+                return bs;
+            }
             default: {
                 // 已收编的旧特效 dir（10/12..15/17/18）：回落普通二色线性渐变
                 return base;
@@ -490,6 +502,69 @@ public final class GradientShaderFactory {
             sPatternCache.put(key, b);
         }
         return b;
+    }
+
+    /** 液态水银位图缓存（key=两色+尺寸；最多 6 张，LRU）。 */
+    private static final java.util.LinkedHashMap<String, Bitmap> sMercuryCache =
+            new java.util.LinkedHashMap<String, Bitmap>(8, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<String, Bitmap> eldest) {
+                    return size() > 6;
+                }
+            };
+
+    /** 平滑噪声双线性插值（0..1，固定种子，保证同色同尺寸结果一致）。 */
+    private static float smoothNoise(float x, float y, int salt) {
+        final int xi = (int) Math.floor(x), yi = (int) Math.floor(y);
+        final float fx = x - xi, fy = y - yi;
+        final float ux = fx * fx * (3f - 2f * fx), uy = fy * fy * (3f - 2f * fy);
+        final float a = facetNoise(xi, yi, salt), b = facetNoise(xi + 1, yi, salt);
+        final float c = facetNoise(xi, yi + 1, salt), d = facetNoise(xi + 1, yi + 1, salt);
+        return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+    }
+
+    /** 液态水银位图：用户两端色派生铬色带 + 分形噪声大位移 + 细高光。 */
+    private static Bitmap mercuryBitmap(int c0, int c1, int w, int h) {
+        final String key = c0 + "|" + c1 + "|" + w + "x" + h;
+        synchronized (sMercuryCache) {
+            final Bitmap hit = sMercuryCache.get(key);
+            if (hit != null && !hit.isRecycled()) return hit;
+        }
+        final int mid = mix(c0, c1, 0.5f);
+        final int[] pos = {0, 36, 77, 112, 133, 158, 194, 230, 255};
+        final int[] ramp = {towardWhite(c0, 0.85f), darken(c0, 0.55f), towardWhite(c0, 0.28f),
+                darken(mid, 0.45f), towardWhite(mid, 0.95f), towardWhite(c1, 0.28f),
+                darken(c1, 0.55f), towardWhite(c1, 0.72f), darken(c1, 0.78f)};
+        final int[] lut = new int[256];
+        for (int i = 0; i < 256; i++) {
+            int k = 1;
+            while (k < pos.length - 2 && i > pos[k]) k++;
+            lut[i] = mix(ramp[k - 1], ramp[k], (i - pos[k - 1]) / (float) (pos[k] - pos[k - 1]));
+        }
+        final int[] px = new int[w * h];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                final float n1 = smoothNoise(x * 0.018f, y * 0.045f, 17);
+                final float n2 = smoothNoise(x * 0.07f, y * 0.11f, 31);
+                final float yy = y + 22f * (n1 - 0.5f) + 7f * (n2 - 0.5f);
+                int idx = (int) (yy * 255f / h);
+                idx = idx < 0 ? 0 : (idx > 255 ? 255 : idx);
+                final int c = lut[idx];
+                final float sheen = (smoothNoise(x * 0.38f, y * 0.38f, 61) - 0.5f) * 26f;
+                px[y * w + x] = 0xFF000000 | (clampByte(Color.red(c) + sheen) << 16)
+                        | (clampByte(Color.green(c) + sheen) << 8) | clampByte(Color.blue(c) + sheen);
+            }
+        }
+        final Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        b.setPixels(px, 0, w, 0, 0, w, h);
+        synchronized (sMercuryCache) {
+            sMercuryCache.put(key, b);
+        }
+        return b;
+    }
+
+    private static int clampByte(float v) {
+        return v < 0f ? 0 : (v > 255f ? 255 : Math.round(v));
     }
 
     // ---------------- 颜色工具 ----------------

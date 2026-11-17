@@ -211,4 +211,6 @@
 
     <string name="settings_gradient_dir_terrazzo">테라조</string>
     <string name="settings_gradient_dir_qr_code">QR 코드</string>
+
+    <string name="settings_gradient_dir_mercury">액체 수은</string>
 </resources>

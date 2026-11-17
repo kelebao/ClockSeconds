@@ -211,4 +211,6 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
 
     <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
     <string name="settings_gradient_dir_qr_code">Kod QR</string>
+
+    <string name="settings_gradient_dir_mercury">Ciekła rtęć</string>
 </resources>

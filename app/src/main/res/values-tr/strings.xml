@@ -211,4 +211,6 @@ Bu modülün kaynak kodu: MIT © kelebao</string>
 
     <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
     <string name="settings_gradient_dir_qr_code">QR Kodu</string>
+
+    <string name="settings_gradient_dir_mercury">Sıvı cıva</string>
 </resources>

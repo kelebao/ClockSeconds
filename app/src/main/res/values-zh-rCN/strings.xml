@@ -212,4 +212,6 @@
 
     <string name="settings_gradient_dir_terrazzo">水磨石</string>
     <string name="settings_gradient_dir_qr_code">二维码</string>
+
+    <string name="settings_gradient_dir_mercury">液态水银</string>
 </resources>

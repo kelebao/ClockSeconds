@@ -211,4 +211,6 @@
 
     <string name="settings_gradient_dir_terrazzo">Τερράτσο</string>
     <string name="settings_gradient_dir_qr_code">Κωδικός QR</string>
+
+    <string name="settings_gradient_dir_mercury">Υγρός υδράργυρος</string>
 </resources>

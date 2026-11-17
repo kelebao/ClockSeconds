@@ -211,4 +211,6 @@
 
     <string name="settings_gradient_dir_terrazzo">تيرازو</string>
     <string name="settings_gradient_dir_qr_code">رمز الاستجابة السريعة</string>
+
+    <string name="settings_gradient_dir_mercury">الزئبق السائل</string>
 </resources>

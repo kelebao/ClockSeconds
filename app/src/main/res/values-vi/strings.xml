@@ -211,4 +211,6 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
 
     <string name="settings_gradient_dir_terrazzo">Terrazzo</string>
     <string name="settings_gradient_dir_qr_code">Mã QR</string>
+
+    <string name="settings_gradient_dir_mercury">Thủy ngân lỏng</string>
 </resources>

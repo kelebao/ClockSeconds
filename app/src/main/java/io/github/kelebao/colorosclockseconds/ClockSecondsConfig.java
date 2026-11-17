@@ -552,10 +552,13 @@ public static int getEffectiveSeconds(ContentResolver resolver) {
     /** U-20261118⑤：二维码 QR Code（方块矩阵 + 定位角）。 */
     public static final int GRADIENT_DIRECTION_QR_CODE = 24;
 
-    /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
-    public static final int GRADIENT_DIRECTION_COUNT = 25;
+    /** U-20261118⑥：液态水银 Liquid Mercury（跟随用户两端色的铬色带 + 分形噪声位移）。 */
+    public static final int GRADIENT_DIRECTION_MERCURY = 25;
 
-    /** 存「渐变方向」的 Secure 键（int 0..24，默认水平）。 */
+    /** 渐变方向总数（t6 十方向 + U-20261118① 九特效方向 = 19）。 */
+    public static final int GRADIENT_DIRECTION_COUNT = 26;
+
+    /** 存「渐变方向」的 Secure 键（int 0..25，默认水平）。 */
     public static final String GRADIENT_DIRECTION_KEY =
             "coloros_clock_seconds_gradient_direction";
 
