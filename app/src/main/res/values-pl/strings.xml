@@ -99,6 +99,7 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="settings_tab_dark">Ciemny</string>
     <string name="settings_tab_light">Jasny</string>
     <string name="settings_digit_follow">Jak w systemie</string>
+    <string name="settings_digit_hex">Niestandardowy</string>
     <string name="settings_digit_done">Gotowe</string>
     <string name="settings_digit_slots">Dziesiątki godz,Jednostki godz,Dziesiątki min,Jednostki min,Dziesiątki sek,Jednostki sek</string>
     <string name="settings_digit_editing">Edycja: %1$s</string>

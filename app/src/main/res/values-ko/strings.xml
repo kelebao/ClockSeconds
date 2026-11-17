@@ -99,6 +99,7 @@
     <string name="settings_tab_dark">어두움</string>
     <string name="settings_tab_light">밝음</string>
     <string name="settings_digit_follow">시스템 따르기</string>
+    <string name="settings_digit_hex">사용자 지정</string>
     <string name="settings_digit_done">완료</string>
     <string name="settings_digit_slots">시십,시일,분십,분일,초십,초일</string>
     <string name="settings_digit_editing">편집 중: %1$s</string>

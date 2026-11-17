@@ -99,6 +99,7 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_tab_dark">Dark</string>
     <string name="settings_tab_light">Light</string>
     <string name="settings_digit_follow">Follow system</string>
+    <string name="settings_digit_hex">Hex color</string>
     <string name="settings_digit_done">Done</string>
     <string name="settings_digit_slots">H tens,H ones,M tens,M ones,S tens,S ones</string>
     <string name="settings_digit_editing">Editing: %1$s</string>

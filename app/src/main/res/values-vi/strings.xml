@@ -99,6 +99,7 @@ Mã nguồn của mô-đun này: MIT © kelebao</string>
     <string name="settings_tab_dark">Tối</string>
     <string name="settings_tab_light">Sáng</string>
     <string name="settings_digit_follow">Theo hệ thống</string>
+    <string name="settings_digit_hex">Tùy chỉnh</string>
     <string name="settings_digit_done">Xong</string>
     <string name="settings_digit_slots">Hàng chục giờ,Hàng đơn vị giờ,Hàng chục phút,Hàng đơn vị phút,Hàng chục giây,Hàng đơn vị giây</string>
     <string name="settings_digit_editing">Đang chỉnh: %1$s</string>

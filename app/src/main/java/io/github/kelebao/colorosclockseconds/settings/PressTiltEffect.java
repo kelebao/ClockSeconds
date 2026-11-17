@@ -107,9 +107,9 @@ public class PressTiltEffect {
                 applyDown(mCard, mGlow, ev);
             }
         } else if (mPressing && a == MotionEvent.ACTION_MOVE) {
-            if (mCard != null) {
-                applyMove(mCard, ev);
-            }
+            // 拖动时不跟随倾斜：取色器、滑块这类控件靠持续拖动操作，
+            // 每帧重算倾角会让卡片跟着手指抽动，手感完全失控。
+            // 按下时的倾斜保留，松手照常回弹。
         } else if (mPressing && (a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_CANCEL)) {
             mPressing = false;
             if (mCard != null) {
@@ -150,16 +150,6 @@ public class PressTiltEffect {
             glow.setAlpha(255);
             card.invalidate();   // 强制整卡重绘，确保高光刷新
         }
-    }
-
-    private void applyMove(View card, MotionEvent e) {
-        final float w = card.getWidth(), h = card.getHeight();
-        if (w <= 0f || h <= 0f) {
-            return;
-        }
-        final float nx = clamp((e.getRawX() - mLoc[0] - w / 2f) / (w / 2f));
-        final float ny = clamp((e.getRawY() - mLoc[1] - h / 2f) / (h / 2f));
-        setTilt(card, nx, ny);
     }
 
     private void setTilt(View card, float nx, float ny) {

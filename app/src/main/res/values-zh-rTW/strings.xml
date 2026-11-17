@@ -99,6 +99,7 @@
     <string name="settings_tab_dark">暗色</string>
     <string name="settings_tab_light">淺色</string>
     <string name="settings_digit_follow">跟隨系統</string>
+    <string name="settings_digit_hex">色號</string>
     <string name="settings_digit_done">完成</string>
     <string name="settings_digit_slots">時十,時個,分十,分個,秒十,秒個</string>
     <string name="settings_digit_editing">正在編輯：%1$s</string>

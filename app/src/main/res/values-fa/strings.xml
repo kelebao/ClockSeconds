@@ -99,6 +99,7 @@
     <string name="settings_tab_dark">تاریک</string>
     <string name="settings_tab_light">روشن</string>
     <string name="settings_digit_follow">پیروی از سیستم</string>
+    <string name="settings_digit_hex">سفارشی</string>
     <string name="settings_digit_done">پایان</string>
     <string name="settings_digit_slots">دهگان ساعت,یکان ساعت,دهگان دقیقه,یکان دقیقه,دهگان ثانیه,یکان ثانیه</string>
     <string name="settings_digit_editing">در حال ویرایش: %1$s</string>
