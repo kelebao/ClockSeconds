@@ -286,20 +286,23 @@ public class AdvancedSettingsActivity extends Activity {
     private View appbar() {
         FrameLayout row = new FrameLayout(this);
         row.setPadding(0, dp(8), 0, dp(8));
-        TextView back = new TextView(this);
-        back.setText("‹");
-        back.setTextSize(22f);
-        back.setPadding(dp(6), dp(2), dp(10), dp(2));
-        back.setClickable(true);
-        back.setFocusable(true);
-        back.setOnClickListener(v -> finish());
-        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.START | Gravity.CENTER_VERTICAL);
-        blp.leftMargin = dp(6);
-        back.setLayoutParams(blp);
-        row.addView(back);
+        row.setClipChildren(false);
+
         if (mAllPage) {
+            TextView back = new TextView(this);
+            back.setText("‹");
+            back.setTextSize(22f);
+            back.setPadding(dp(6), dp(2), dp(10), dp(2));
+            back.setClickable(true);
+            back.setFocusable(true);
+            back.setOnClickListener(v -> finish());
+            FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.START | Gravity.CENTER_VERTICAL);
+            blp.leftMargin = dp(6);
+            back.setLayoutParams(blp);
+            row.addView(back);
+
             TextView title = new TextView(this);
             title.setText(R.string.settings_preset_all_title);
             title.setTextSize(17f);
@@ -310,30 +313,79 @@ public class AdvancedSettingsActivity extends Activity {
                     Gravity.CENTER);
             title.setLayoutParams(tlp);
             row.addView(title);
-        } else {
-            // U-20261118⑪：删除「高级设置」标题；单色/渐变两个页签在该行正中，左右等距。
-            LinearLayout tabs = new LinearLayout(this);
-            tabs.setOrientation(LinearLayout.HORIZONTAL);
-            tabs.setGravity(Gravity.CENTER);
-            TextView monoTab = pageTab(getString(R.string.settings_tab_mono), !mGradPage);
-            monoTab.setOnClickListener(v -> switchPage(false));
-            tabs.addView(monoTab);
-            TextView gradTab = pageTab(getString(R.string.settings_tab_gradient), mGradPage);
-            // t30：addView 前该 View 尚无父容器，getLayoutParams() 可能为 null，强转有 NPE 风险——
-            // 先显式给全量 LayoutParams 再设间距。
-            gradTab.setLayoutParams(new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            LinearLayout.LayoutParams glp = (LinearLayout.LayoutParams) gradTab.getLayoutParams();
-            glp.leftMargin = dp(12);
-            gradTab.setOnClickListener(v -> switchPage(true));
-            tabs.addView(gradTab);
-            FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.CENTER);
-            tabs.setLayoutParams(tlp);
-            row.addView(tabs);
+            return row;
         }
+
+        // U-20261118⑫（02D 全宽下划线）：返回 + 单色/渐变装进一枚铺满整排的一体胶囊；
+        // 选中态改为紫色文字 + 底部指示线，不再用整块紫色胶囊，视觉更轻。
+        LinearLayout pill = new LinearLayout(this);
+        pill.setOrientation(LinearLayout.HORIZONTAL);
+        pill.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable pillBg = new GradientDrawable();
+        pillBg.setColor(isNight() ? 0xFF241D38 : 0xFFFFFFFF);
+        pillBg.setCornerRadius(dp(28));
+        pill.setBackground(pillBg);
+        pill.setClipToOutline(true);
+        pill.setElevation(dp(2));
+
+        TextView back = new TextView(this);
+        back.setText("‹");
+        back.setTextSize(24f);
+        back.setTextColor(text2());
+        back.setGravity(Gravity.CENTER);
+        back.setClickable(true);
+        back.setFocusable(true);
+        back.setOnClickListener(v -> finish());
+        pill.addView(back, new LinearLayout.LayoutParams(dp(56), ViewGroup.LayoutParams.MATCH_PARENT));
+
+        View divider = new View(this);
+        divider.setBackgroundColor(isNight() ? 0x1FFFFFFF : 0x14000000);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(1), dp(26));
+        dlp.gravity = Gravity.CENTER_VERTICAL;
+        pill.addView(divider, dlp);
+
+        pill.addView(fullWidthTab(getString(R.string.settings_tab_mono), !mGradPage,
+                () -> switchPage(false)));
+        pill.addView(fullWidthTab(getString(R.string.settings_tab_gradient), mGradPage,
+                () -> switchPage(true)));
+
+        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+        plp.leftMargin = dp(16);
+        plp.rightMargin = dp(16);
+        plp.topMargin = dp(4);
+        plp.bottomMargin = dp(4);
+        row.addView(pill, plp);
         return row;
+    }
+
+    /** U-20261118⑫（02D）：全宽胶囊内的单个页签，选中态=紫色文字+底部指示线。 */
+    private View fullWidthTab(String label, boolean selected, Runnable onClick) {
+        LinearLayout wrap = new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        wrap.setGravity(Gravity.CENTER);
+        wrap.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        wrap.setClickable(true);
+        wrap.setFocusable(true);
+        wrap.setOnClickListener(v -> onClick.run());
+
+        TextView tv = new TextView(this);
+        tv.setText(label);
+        tv.setTextSize(12f);
+        tv.setGravity(Gravity.CENTER);
+        tv.setTypeface(Typeface.create("sans-serif-medium", selected ? Typeface.BOLD : Typeface.NORMAL));
+        tv.setTextColor(selected ? accent() : text2());
+        wrap.addView(tv, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        View line = new View(this);
+        line.setBackgroundColor(selected ? accent() : 0x00000000);
+        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(dp(28), dp(2));
+        llp.topMargin = dp(3);
+        llp.gravity = Gravity.CENTER_HORIZONTAL;
+        line.setLayoutParams(llp);
+        wrap.addView(line);
+        return wrap;
     }
 
     /** t26⑥：页内单色/渐变切换胶囊（样式沿用 makeTab 的选中态）。 */
