@@ -380,11 +380,13 @@ public class SettingsPreviewClock extends TextView {
         final float spacing = paint.getLetterSpacing() * paint.getTextSize();
         final float before = paint.measureText(cs, 0, charIndex) + spacing * charIndex;
         final float w = paint.measureText(cs, charIndex, charIndex + 1) + spacing;
-        final Paint.FontMetrics fm = paint.getFontMetrics();
-        final float top = baseline + fm.ascent;
-        final float bottom = baseline + fm.descent;
-        // 框外扩：不贴着字形，留一点呼吸感（t18①：18%→8% 字高，避免框盖到相邻数字）
-        final float pad = (bottom - top) * 0.08f;
+        // t18①/vc340：按当前数字的实际字形范围取框，比 FontMetrics 整行高低短一截，
+        // 框底不再落到 TextView 之外；只留少量呼吸感，避免取景框过长/被裁。
+        final android.graphics.Rect gb = new android.graphics.Rect();
+        paint.getTextBounds(cs, charIndex, charIndex + 1, gb);
+        final float top = baseline + gb.top;
+        final float bottom = baseline + gb.bottom;
+        final float pad = (bottom - top) * 0.10f;
         final float l = x0 + before - pad;
         final float r = x0 + before + w + pad;
         final float t = top - pad;
