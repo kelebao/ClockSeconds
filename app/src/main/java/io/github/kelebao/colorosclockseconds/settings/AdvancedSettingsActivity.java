@@ -989,16 +989,26 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         card.addView(rippleHost);
 
-        // 「正在编辑第 N 位 / 起点 #RRGGBB」行（R3 单色页样式）
+        // U-20261118：编辑目标文案与 16 进制色号并排一行，色号就地可改、边输边生效。
+        LinearLayout editRow = new LinearLayout(this);
+        editRow.setOrientation(LinearLayout.HORIZONTAL);
+        editRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams erl = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        erl.topMargin = dp(10);
+        editRow.setLayoutParams(erl);
+
         mEditingHex = new TextView(this);
         mEditingHex.setTextSize(12f);
         mEditingHex.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         mEditingHex.setTextColor(text2());
-        LinearLayout.LayoutParams el = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        el.topMargin = dp(10);
-        mEditingHex.setLayoutParams(el);
-        card.addView(mEditingHex);
+        mEditingHex.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        editRow.addView(mEditingHex);
+
+        mHexInput = buildHexInput();
+        editRow.addView(mHexInput);
+        card.addView(editRow);
 
         // 三条 HSV 滑杆：色相 / 饱和度 / 明度，拖动即把当前选中目标改成对应颜色
         seedController();
@@ -1007,8 +1017,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         mSatSlider = addHsvSlider(card, 1, mHsv.satProgress());
         mValSlider = addHsvSlider(card, 2, mHsv.valProgress());
         updateSliderGradients(hsv[0], hsv[1], hsv[2]);
-        // issue #12 / PR #13：三条滑杆下方加一行 16 进制色号输入，直接敲 #RRGGBB 精确取色。
-        addHexInputRow(card);
+        // issue #12 / PR #13：色号输入已并入上方「正在编辑」行（U-20261118），不再单独占一行。
         refreshEditingRow();
 
         // 滑杆（或之后的 2D 方块盘）推状态 → 更新条形渐变 → 写入 → 预览立即反映
@@ -1277,19 +1286,25 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         refreshPreview();
     }
 
-    /** 「正在编辑… #RRGGBB」行：切目标/写入后刷新。 */
+    /** 「正在编辑…」行：左侧文案随目标切换刷新，右侧色号由 syncHexInput 回填。 */
     private void refreshEditingRow() {
         if (mEditingHex == null) {
             return;
         }
-        int color = effectiveColor(currentTargetIndex());
-        // t34 F31-2：未自定义的位（FOLLOW=0）首帧显示 #00000000 是假值——兜底显示 follow 文案；
-        // 浅色页签下读副键为空回落常规键同样可能 0，一并兜底。
-        String hex = color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
-                ? getString(R.string.settings_digit_follow)
-                : hexOf(color);
-        mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel())
-                + "  " + hex);
+        mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel()));
+        syncHexInput();
+    }
+
+    /** 写入后立刻把色号框更新成刚写入的颜色（applyConfig 走异步广播，不能等回读）。 */
+    private void setEditingHexValue(int color) {
+        if (mHexInput == null || mHexSyncing || mHexInput.hasFocus()) {
+            return;
+        }
+        mHexSyncing = true;
+        mHexInput.setText(color == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                || color == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? "" : hexRgb(color));
+        mHexSyncing = false;
     }
 
     /** 目标选择胶囊选中态：选中=accent 实底白字，未选中=描边。 */
@@ -1432,8 +1447,8 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
         refreshPreview();
         if (mEditingHex != null && !mGradPage && slot == mSlotTarget) {
-            mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel())
-                    + "  " + hexOf(color));
+            mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel()));
+            setEditingHexValue(color);
         }
         if (mSlotPills != null) {
             styleTargets();
@@ -1454,8 +1469,8 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
         refreshPreview();
         if (mEditingHex != null && mGradPage && which == mGradTarget) {
-            mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel())
-                    + "  " + hexOf(color));
+            mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel()));
+            setEditingHexValue(color);
         }
         if (mStopCircles != null) {
             styleTargets();
@@ -2407,10 +2422,6 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 getResources().getDisplayMetrics()));
     }
 
-    private String hexOf(int color) {
-        return String.format("#%08X", color);
-    }
-
     private void toast(int res) {
         Toast.makeText(this, res, Toast.LENGTH_SHORT).show();
     }
@@ -2642,23 +2653,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     // 16 进制色号输入与渐变端点调色盘（issue #12 / PR #13 移植）
     // ==================================================================
 
-    /** 三条滑杆下方的「色号 + 输入框」一行，放在调色盘卡内、方向行之前。 */
-    private void addHexInputRow(LinearLayout card) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(10), 0, dp(2));
-
-        TextView label = new TextView(this);
-        label.setText(R.string.settings_digit_hex);
-        label.setTextSize(12f);
-        label.setTextColor(text2());
-        label.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        row.addView(label);
-
+    /** 「正在编辑」行右侧的 16 进制色号输入框：合法即写入当前目标，失焦时回填。 */
+    private EditText buildHexInput() {
         final EditText input = new EditText(this);
-        input.setTextSize(13f);
+        input.setTextSize(12f);
         input.setSingleLine(true);
         input.setHint("#RRGGBB");
         input.setHintTextColor(text2());
@@ -2675,11 +2673,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         bg.setColor(isNight() ? 0xFF3A2F5C : 0xFFF0ECFF);
         input.setBackground(bg);
         input.setLayoutParams(new LinearLayout.LayoutParams(
-                dp(110), ViewGroup.LayoutParams.WRAP_CONTENT));
-        row.addView(input);
-        card.addView(row);
-
-        mHexInput = input;
+                dp(96), ViewGroup.LayoutParams.WRAP_CONTENT));
         mHexSyncing = false;
         input.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) { }
@@ -2700,7 +2694,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 syncHexInput();
             }
         });
-        syncHexInput();
+        return input;
     }
 
     /** 把当前取色目标的颜色回填到 16 进制输入框（正在编辑时不覆盖用户内容）。 */
