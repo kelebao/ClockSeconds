@@ -896,13 +896,6 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 v -> saveCurrentColors(mLightMode)));
         card.addView(titleRow);
 
-        TextView hint = new TextView(this);
-        hint.setText(mGradPage ? R.string.settings_advanced_grad_sum
-                : R.string.settings_advanced_mono_sum);
-        hint.setTextSize(11f);
-        hint.setTextColor(text2());
-        hint.setPadding(0, dp(4), 0, 0);
-        card.addView(hint);
 
         // 编辑对象选择：单色页=6 个数字位胶囊；渐变页=①起点/②终点 两个圆形色标（t36② 渐变回 2 色）
         LinearLayout selRow = new LinearLayout(this);
@@ -1002,8 +995,11 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         mEditingHex.setTextSize(12f);
         mEditingHex.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         mEditingHex.setTextColor(text2());
-        mEditingHex.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        // U-20261118 (4): no weight -> the hex box sits right next to the label.
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mlp.rightMargin = dp(8);
+        mEditingHex.setLayoutParams(mlp);
         editRow.addView(mEditingHex);
 
         mHexInput = buildHexInput();
@@ -1291,7 +1287,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         if (mEditingHex == null) {
             return;
         }
-        mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel()));
+        mEditingHex.setText(getString(R.string.settings_digit_editing, ""));
         syncHexInput();
     }
 
@@ -1447,7 +1443,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
         refreshPreview();
         if (mEditingHex != null && !mGradPage && slot == mSlotTarget) {
-            mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel()));
+            mEditingHex.setText(getString(R.string.settings_digit_editing, ""));
             setEditingHexValue(color);
         }
         if (mSlotPills != null) {
@@ -1469,7 +1465,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         }
         refreshPreview();
         if (mEditingHex != null && mGradPage && which == mGradTarget) {
-            mEditingHex.setText(getString(R.string.settings_digit_editing, targetLabel()));
+            mEditingHex.setText(getString(R.string.settings_digit_editing, ""));
             setEditingHexValue(color);
         }
         if (mStopCircles != null) {
@@ -2661,7 +2657,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         input.setHint("#RRGGBB");
         input.setHintTextColor(text2());
         input.setTextColor(text());
-        input.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        input.setGravity(Gravity.CENTER);
         input.setInputType(InputType.TYPE_CLASS_TEXT
                 | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
                 | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
