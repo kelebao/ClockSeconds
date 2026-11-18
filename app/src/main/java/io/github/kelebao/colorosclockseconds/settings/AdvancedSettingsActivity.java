@@ -79,6 +79,8 @@ public class AdvancedSettingsActivity extends Activity {
     private EditText mHexInput;
     /** 回填输入框时置位，避免 TextWatcher 又写一次配置。 */
     private boolean mHexSyncing;
+    /** U-20261118 (5): the user is hand-editing the hex box; auto-refill must not overwrite it. */
+    private boolean mHexUserTyping;
 
     /** 共享实时预览钟（vc328）：与首页同一个组件，编辑即所见。 */
     private SettingsPreviewClock mPreviewClock;
@@ -206,6 +208,27 @@ public class AdvancedSettingsActivity extends Activity {
         outer.addView(scroll, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(outer);
+        // U-20261118 (5): closing the IME (back key) also ends hex editing, so the caret disappears.
+        outer.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            private boolean imeSeen;
+
+            @Override public void onGlobalLayout() {
+                if (mHexInput == null || !mHexInput.hasFocus()) {
+                    imeSeen = false;
+                    return;
+                }
+                android.graphics.Rect frame = new android.graphics.Rect();
+                outer.getWindowVisibleDisplayFrame(frame);
+                int screenH = outer.getRootView().getHeight();
+                boolean imeShown = screenH - frame.bottom > screenH * 0.15f;
+                if (imeShown) {
+                    imeSeen = true;
+                } else if (imeSeen) {
+                    imeSeen = false;
+                    endHexEditing();
+                }
+            }
+        });
         // U-20261116c：浅色渲染时声明 LIGHT_STATUS_BAR（状态栏深字），否则 ColorOS 对本窗口
         // 用白字渲染 → 「跟随系统」位（冒号）在高级页浅色界面变白（用户反馈 bug）。
         // 与首页 ModuleSettingsActivity.applyStatusBarAppearance 同语义；页签切换走 recreate 再进 onCreate。
@@ -222,6 +245,51 @@ public class AdvancedSettingsActivity extends Activity {
             flags |= android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
         }
         decor.setSystemUiVisibility(flags);
+    }
+
+    /** U-20261118 (5): lock auto-refill only while the user is really typing in the hex box. */
+    private boolean hexEditingLocked() {
+        return mHexUserTyping && mHexInput != null && mHexInput.hasFocus();
+    }
+
+    /** U-20261118 (5): leave hex editing: drop focus, hide caret and IME, then refill from config. */
+    private void endHexEditing() {
+        mHexUserTyping = false;
+        if (mHexInput == null) {
+            return;
+        }
+        if (mHexInput.hasFocus()) {
+            mHexInput.clearFocus();
+        }
+        mHexInput.setCursorVisible(false);
+        android.view.inputmethod.InputMethodManager imm =
+                (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(mHexInput.getWindowToken(), 0);
+        }
+        syncHexInput();
+    }
+
+    /** Touch point inside the hex box? */
+    private boolean isTouchInsideHex(android.view.MotionEvent ev) {
+        if (mHexInput == null || mHexInput.getVisibility() != View.VISIBLE) {
+            return false;
+        }
+        android.graphics.Rect r = new android.graphics.Rect();
+        if (!mHexInput.getGlobalVisibleRect(r)) {
+            return false;
+        }
+        return r.contains((int) ev.getRawX(), (int) ev.getRawY());
+    }
+
+    /** U-20261118 (5): tapping anywhere outside the hex box ends hex editing. */
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (ev.getActionMasked() == android.view.MotionEvent.ACTION_DOWN
+                && mHexInput != null && mHexInput.hasFocus() && !isTouchInsideHex(ev)) {
+            endHexEditing();
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     @Override
@@ -1034,7 +1102,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 mHsv.applyProgress(mHueSlider.getProgress(),
                         mSatSlider.getProgress(), mValSlider.getProgress());
             }
-            @Override public void onStartTrackingTouch(android.widget.SeekBar sb) { }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar sb) {
+                // U-20261118 (5): dragging a slider ends hex editing so the box follows the slider.
+                endHexEditing();
+            }
             @Override public void onStopTrackingTouch(android.widget.SeekBar sb) { }
         };
         mHueSlider.setOnSeekBarChangeListener(l);
@@ -1287,13 +1358,14 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         if (mEditingHex == null) {
             return;
         }
+        mHexUserTyping = false;
         mEditingHex.setText(getString(R.string.settings_digit_editing, ""));
         syncHexInput();
     }
 
     /** 写入后立刻把色号框更新成刚写入的颜色（applyConfig 走异步广播，不能等回读）。 */
     private void setEditingHexValue(int color) {
-        if (mHexInput == null || mHexSyncing || mHexInput.hasFocus()) {
+        if (mHexInput == null || mHexSyncing || hexEditingLocked()) {
             return;
         }
         mHexSyncing = true;
@@ -2678,6 +2750,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 if (mHexSyncing) {
                     return;
                 }
+                mHexUserTyping = true;
                 Integer parsed = parseHexColor(s.toString());
                 if (parsed == null) {
                     return;   // 不完整/非法：静默忽略，不打断输入
@@ -2685,8 +2758,14 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 applyTargetColor(currentTargetIndex(), parsed);
             }
         });
+        // U-20261118 (5): caret only while really editing; leaving the box clears it.
+        input.setCursorVisible(false);
         input.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
+            input.setCursorVisible(hasFocus);
+            if (hasFocus) {
+                mHexUserTyping = true;
+            } else {
+                mHexUserTyping = false;
                 syncHexInput();
             }
         });
@@ -2695,7 +2774,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
 
     /** 把当前取色目标的颜色回填到 16 进制输入框（正在编辑时不覆盖用户内容）。 */
     private void syncHexInput() {
-        if (mHexInput == null || mHexSyncing || mHexInput.hasFocus()) {
+        if (mHexInput == null || mHexSyncing || hexEditingLocked()) {
             return;
         }
         mHexSyncing = true;
