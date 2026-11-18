@@ -99,6 +99,8 @@
     <string name="settings_tab_dark">มืด</string>
     <string name="settings_tab_light">สว่าง</string>
     <string name="settings_digit_follow">ตามระบบ</string>
+
+    <string name="settings_digit_hex">กำหนดเอง</string>
     <string name="settings_digit_done">เสร็จสิ้น</string>
     <string name="settings_digit_slots">หลักสิบชั่วโมง,หลักหน่วยชั่วโมง,หลักสิบนาที,หลักหน่วยนาที,หลักสิบวินาที,หลักหน่วยวินาที</string>
     <string name="settings_digit_editing">กำลังแก้ไข: %1$s</string>

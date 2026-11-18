@@ -99,6 +99,8 @@
     <string name="settings_tab_dark">მუქი</string>
     <string name="settings_tab_light">ნათელი</string>
     <string name="settings_digit_follow">სისტემის მიხედვით</string>
+
+    <string name="settings_digit_hex">მორგებული</string>
     <string name="settings_digit_done">დასრულება</string>
     <string name="settings_digit_slots">ათეულები სთ,ერთეულები სთ,ათეულები წთ,ერთეულები წთ,ათეულები წმ,ერთეულები წმ</string>
     <string name="settings_digit_editing">რედაქტირება: %1$s</string>

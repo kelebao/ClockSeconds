@@ -99,6 +99,8 @@ Código fuente de este módulo: MIT © kelebao</string>
     <string name="settings_tab_dark">Oscuro</string>
     <string name="settings_tab_light">Claro</string>
     <string name="settings_digit_follow">Seguir el sistema</string>
+
+    <string name="settings_digit_hex">Personalizado</string>
     <string name="settings_digit_done">Listo</string>
     <string name="settings_digit_slots">Decenas de hora,Unidades de hora,Decenas de minuto,Unidades de minuto,Decenas de segundo,Unidades de segundo</string>
     <string name="settings_digit_editing">Editando: %1$s</string>

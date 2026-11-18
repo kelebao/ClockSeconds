@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.kelebao.colorosclockseconds.BreathSwatchDrawable;
+import io.github.kelebao.colorosclockseconds.HsvPickerView;
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
 import io.github.kelebao.colorosclockseconds.R;
 
@@ -73,6 +74,11 @@ public class AdvancedSettingsActivity extends Activity {
     private TextView mHelpIcon;
 
     private android.widget.SeekBar mHueSlider, mSatSlider, mValSlider;
+
+    /** 滑杆下方的 16 进制色号输入框；改色时回填，正在编辑时不覆盖。 */
+    private EditText mHexInput;
+    /** 回填输入框时置位，避免 TextWatcher 又写一次配置。 */
+    private boolean mHexSyncing;
 
     /** 共享实时预览钟（vc328）：与首页同一个组件，编辑即所见。 */
     private SettingsPreviewClock mPreviewClock;
@@ -926,7 +932,15 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 wrap.setClickable(true);
                 wrap.setFocusable(true);
                 final int which = i;
-                wrap.setOnClickListener(v -> setGradTarget(which));
+                wrap.setOnClickListener(v -> {
+                    if (mGradTarget == which) {
+                        // PR #13：已选中的端点再点一次 = 打开 HSV 调色盘（含 16 进制输入）；
+                        // 首次点击仍只切换取色目标。
+                        showStopPaletteDialog(which);
+                        return;
+                    }
+                    setGradTarget(which);
+                });
                 LinearLayout.LayoutParams wl = new LinearLayout.LayoutParams(dp(44), dp(44));
                 wl.leftMargin = dp(22);
                 wl.rightMargin = dp(22);
@@ -993,6 +1007,8 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         mSatSlider = addHsvSlider(card, 1, mHsv.satProgress());
         mValSlider = addHsvSlider(card, 2, mHsv.valProgress());
         updateSliderGradients(hsv[0], hsv[1], hsv[2]);
+        // issue #12 / PR #13：三条滑杆下方加一行 16 进制色号输入，直接敲 #RRGGBB 精确取色。
+        addHexInputRow(card);
         refreshEditingRow();
 
         // 滑杆（或之后的 2D 方块盘）推状态 → 更新条形渐变 → 写入 → 预览立即反映
@@ -1000,6 +1016,7 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             updateSliderGradients(h, s, v);
             writeCurrentTarget(color);
             refreshPreview();
+            syncHexInput();
         });
 
         final android.widget.SeekBar.OnSeekBarChangeListener l =
@@ -2620,6 +2637,300 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         return sb;
     }
 
+
+    // ==================================================================
+    // 16 进制色号输入与渐变端点调色盘（issue #12 / PR #13 移植）
+    // ==================================================================
+
+    /** 三条滑杆下方的「色号 + 输入框」一行，放在调色盘卡内、方向行之前。 */
+    private void addHexInputRow(LinearLayout card) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(10), 0, dp(2));
+
+        TextView label = new TextView(this);
+        label.setText(R.string.settings_digit_hex);
+        label.setTextSize(12f);
+        label.setTextColor(text2());
+        label.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(label);
+
+        final EditText input = new EditText(this);
+        input.setTextSize(13f);
+        input.setSingleLine(true);
+        input.setHint("#RRGGBB");
+        input.setHintTextColor(text2());
+        input.setTextColor(text());
+        input.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        input.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        input.setFilters(new android.text.InputFilter[]{
+                new android.text.InputFilter.LengthFilter(7)});
+        input.setPadding(dp(10), dp(6), dp(10), dp(6));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(10));
+        bg.setColor(isNight() ? 0xFF3A2F5C : 0xFFF0ECFF);
+        input.setBackground(bg);
+        input.setLayoutParams(new LinearLayout.LayoutParams(
+                dp(110), ViewGroup.LayoutParams.WRAP_CONTENT));
+        row.addView(input);
+        card.addView(row);
+
+        mHexInput = input;
+        mHexSyncing = false;
+        input.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) { }
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) { }
+            @Override public void afterTextChanged(android.text.Editable s) {
+                if (mHexSyncing) {
+                    return;
+                }
+                Integer parsed = parseHexColor(s.toString());
+                if (parsed == null) {
+                    return;   // 不完整/非法：静默忽略，不打断输入
+                }
+                applyTargetColor(currentTargetIndex(), parsed);
+            }
+        });
+        input.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                syncHexInput();
+            }
+        });
+        syncHexInput();
+    }
+
+    /** 把当前取色目标的颜色回填到 16 进制输入框（正在编辑时不覆盖用户内容）。 */
+    private void syncHexInput() {
+        if (mHexInput == null || mHexSyncing || mHexInput.hasFocus()) {
+            return;
+        }
+        mHexSyncing = true;
+        final int raw = currentRawTargetColor();
+        mHexInput.setText(raw == ClockSecondsConfig.DIGIT_COLOR_FOLLOW
+                || raw == ClockSecondsConfig.GRADIENT_COLOR_AUTO
+                ? "" : hexRgb(effectiveColor(currentTargetIndex())));
+        mHexSyncing = false;
+    }
+
+    /** 当前目标在 Secure 里的原始值（浅色页签且副键已设时读副键），用于判断 FOLLOW/AUTO。 */
+    private int currentRawTargetColor() {
+        final int target = currentTargetIndex();
+        if (target >= ClockSecondsConfig.DIGIT_COUNT) {
+            final int keyIndex = stopKeyIndex(target - ClockSecondsConfig.DIGIT_COUNT);
+            if (mAdaptiveColor && mLightMode) {
+                String stored = Settings.Secure.getString(getContentResolver(),
+                        ClockSecondsConfig.gradientStopLightKey(keyIndex));
+                if (stored != null) {
+                    try {
+                        return Integer.parseInt(stored);
+                    } catch (NumberFormatException ignored) {
+                        // 非法值回落常规键
+                    }
+                }
+            }
+            return ClockSecondsConfig.getGradientStopColor(getContentResolver(), keyIndex);
+        }
+        if (mAdaptiveColor && mLightMode) {
+            String stored = Settings.Secure.getString(getContentResolver(),
+                    ClockSecondsConfig.digitLightKey(target));
+            if (stored != null) {
+                try {
+                    return Integer.parseInt(stored);
+                } catch (NumberFormatException ignored) {
+                    // 非法值回落常规键
+                }
+            }
+        }
+        return ClockSecondsConfig.getDigitColor(getContentResolver(), target);
+    }
+
+    /** 把颜色写入指定目标并同步滑杆/编辑行/16 进制框/预览。 */
+    private void applyTargetColor(int target, int color) {
+        if (target >= ClockSecondsConfig.DIGIT_COUNT) {
+            writeGradientColor(target - ClockSecondsConfig.DIGIT_COUNT, color);
+        } else {
+            writeDigitColor(target, color);
+        }
+        mHsv.setFromColor(color);
+        if (mHueSlider != null) {
+            mHueSlider.setProgress(mHsv.hueProgress());
+            mSatSlider.setProgress(mHsv.satProgress());
+            mValSlider.setProgress(mHsv.valProgress());
+        }
+        updateSliderGradients(mHsv.getHue(), mHsv.getSat(), mHsv.getVal());
+        refreshEditingRow();
+        refreshPreview();
+        syncHexInput();
+    }
+
+    /**
+     * 渐变端点调色盘：自绘 HSV 面板 + 色相条 + 16 进制输入，确定后写入该端点。
+     * PR #13 语义：已选中的端点再点一次才打开，首次点击只切换目标。
+     */
+    private void showStopPaletteDialog(final int which) {
+        final LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(18), dp(14), dp(18), dp(6));
+
+        final boolean[] syncing = {false};
+
+        LinearLayout hexRow = new LinearLayout(this);
+        hexRow.setOrientation(LinearLayout.HORIZONTAL);
+        hexRow.setGravity(Gravity.CENTER_VERTICAL);
+        hexRow.setPadding(0, 0, 0, dp(10));
+
+        final TextView hex = new TextView(this);
+        hex.setTextSize(13f);
+        hex.setTextColor(text2());
+        hex.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        hexRow.addView(hex);
+
+        final EditText hexInput = new EditText(this);
+        hexInput.setTextSize(13f);
+        hexInput.setSingleLine(true);
+        hexInput.setHint("#RRGGBB");
+        hexInput.setHintTextColor(text2());
+        hexInput.setTextColor(text());
+        hexInput.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        hexInput.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        hexInput.setFilters(new android.text.InputFilter[]{
+                new android.text.InputFilter.LengthFilter(7)});
+        hexInput.setPadding(dp(10), dp(6), dp(10), dp(6));
+        GradientDrawable inputBg = new GradientDrawable();
+        inputBg.setCornerRadius(dp(10));
+        inputBg.setColor(isNight() ? 0xFF3A2F5C : 0xFFF0ECFF);
+        hexInput.setBackground(inputBg);
+        LinearLayout.LayoutParams inputLp = new LinearLayout.LayoutParams(
+                dp(110), ViewGroup.LayoutParams.WRAP_CONTENT);
+        inputLp.leftMargin = dp(10);
+        hexInput.setLayoutParams(inputLp);
+        hexRow.addView(hexInput);
+        box.addView(hexRow);
+
+        final HsvPickerView panel = new HsvPickerView(this, HsvPickerView.MODE_SV);
+        panel.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
+        final HsvPickerView hueBar = new HsvPickerView(this, HsvPickerView.MODE_HUE);
+        LinearLayout.LayoutParams hueLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(26));
+        hueLp.topMargin = dp(14);
+        hueBar.setLayoutParams(hueLp);
+        box.addView(panel);
+        box.addView(hueBar);
+
+        int start = effectiveColor(ClockSecondsConfig.DIGIT_COUNT + which);
+        final int raw = ClockSecondsConfig.getGradientStopColor(
+                getContentResolver(), stopKeyIndex(which));
+        boolean hasLight = false;
+        if (mAdaptiveColor && mLightMode) {
+            hasLight = Settings.Secure.getString(getContentResolver(),
+                    ClockSecondsConfig.gradientStopLightKey(stopKeyIndex(which))) != null;
+        }
+        if (raw == ClockSecondsConfig.GRADIENT_COLOR_AUTO && !hasLight) {
+            start = HOUR_COLORS[0];   // 未自定义的端点：从默认红起步
+        }
+        panel.setColor(start);
+        hueBar.setColor(start);
+
+        final Runnable syncHex = () -> {
+            if (syncing[0]) {
+                return;
+            }
+            syncing[0] = true;
+            final int color = panel.getColor();
+            hex.setText(hexRgb(color));
+            if (!hexInput.hasFocus()) {
+                hexInput.setText(hexRgb(color));
+            }
+            syncing[0] = false;
+        };
+        panel.setOnColorChanged(c -> syncHex.run());
+        hueBar.setOnColorChanged(c -> {
+            panel.setHue(hueBar.getHue());
+            syncHex.run();
+        });
+        hexInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) { }
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) { }
+            @Override public void afterTextChanged(android.text.Editable s) {
+                if (syncing[0]) {
+                    return;
+                }
+                Integer parsed = parseHexColor(s.toString());
+                if (parsed == null) {
+                    return;
+                }
+                syncing[0] = true;
+                panel.setColor(parsed);
+                hueBar.setColor(parsed);
+                hex.setText(hexRgb(parsed));
+                syncing[0] = false;
+            }
+        });
+        hexInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                syncing[0] = true;
+                hexInput.setText(hexRgb(panel.getColor()));
+                syncing[0] = false;
+            }
+        });
+        syncHex.run();
+
+        new AlertDialog.Builder(this)
+                .setTitle(targetLabel())
+                .setView(box)
+                .setNegativeButton(R.string.settings_cancel, null)
+                .setPositiveButton(R.string.settings_rule_apply,
+                        (dialog, w) -> applyTargetColor(ClockSecondsConfig.DIGIT_COUNT + which,
+                                panel.getColor()))
+                .show();
+    }
+
+    /** 解析 #RGB / RGB / #RRGGBB / RRGGBB；不完整或非法返回 null（静默跳过应用）。 */
+    private static Integer parseHexColor(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String s = raw.trim();
+        if (s.startsWith("#")) {
+            s = s.substring(1);
+        }
+        if (s.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            if (Character.digit(s.charAt(i), 16) < 0) {
+                return null;
+            }
+        }
+        try {
+            if (s.length() == 3) {
+                int r = Character.digit(s.charAt(0), 16);
+                int g = Character.digit(s.charAt(1), 16);
+                int b = Character.digit(s.charAt(2), 16);
+                return 0xFF000000 | (r * 17) << 16 | (g * 17) << 8 | (b * 17);
+            }
+            if (s.length() == 6) {
+                return 0xFF000000 | Integer.parseInt(s, 16);
+            }
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+        return null;
+    }
+
+    /** 颜色转输入框显示的 #RRGGBB（不含 alpha）。 */
+    private static String hexRgb(int color) {
+        return String.format(java.util.Locale.US, "#%06X", color & 0xFFFFFF);
+    }
+
     private void updateSliderGradients(float hue, float sat, float val) {
         if (mHueSlider != null) {
             ((HsvBarDrawable) mHueSlider.getProgressDrawable()).notifyGradientChanged();
@@ -2653,5 +2964,6 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             mValSlider.setProgress(mHsv.valProgress());
         }
         updateSliderGradients(hsv[0], hsv[1], hsv[2]);
+        syncHexInput();
     }
 }
