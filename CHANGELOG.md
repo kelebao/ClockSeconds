@@ -47,7 +47,7 @@
 
 **i18n**
 - 新增 settings_digit_hex / settings_preset_saved / settings_preset_full / settings_dir_swipe_hint 等键，22 语言同步；tools/check_i18n.py 增加重复键、XML 良构、代码引用覆盖三道门禁（当前 206 keys，reference coverage OK）。
-- ar / ja 等部分小语种仍有约 28 个键与英文同值（存量，待补译）。
+- 补齐 ar / ja / ko / ru / zh-rTW 与英文同值的存量文案（仅 settings_about_github 品牌名保留英文）。
 ## v1.2.0（测试线 versionCode 37 ~ 326）— 时分秒逐位取色、预览卡展开取色
 
 > **状态：已发布。** 正式版本 versionCode **249** / versionName **1.2.0**，GitHub tag `v1.2.0`。测试线从 vc37 累积到 vc326，下面按版本记录。
