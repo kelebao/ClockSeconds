@@ -10,7 +10,7 @@
 
 Hiển thị **giây** trên thanh trạng thái, chạm để bật/tắt. Có thể **tô màu từng chữ số** hoặc phủ **dải màu chuyển** lên cả chuỗi.<br>**Nhấn giữ** để mở cửa sổ kính mờ hiển thị **giờ mạng** (kéo, đổi kích thước, có cả dải màu); **tác vụ tự đặt** tự bật giây đúng giờ.<br>Phần lõi chỉ dùng API công khai của AOSP (lớp riêng của OPPO / OnePlus / realme là tuỳ chọn, không có thì bỏ qua). Đã kiểm chứng trên ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

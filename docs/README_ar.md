@@ -10,7 +10,7 @@
 
 يعرض **الثواني** في ساعة شريط الحالة، ويُبدَّل باللمس. يمكنك **تلوين كل رقم بلون** أو تطبيق **تدرّج** على النص كله.<br>**الضغط المطوّل** يفتح نافذة شبه شفافة تعرض **وقت الشبكة** (سحب، تحجيم، تدرّج)، و**المهام التلقائية** تُشغّل الثواني في الساعة المطلوبة.<br>المسار الأساسي يستخدم واجهات AOSP العامة فقط (أصناف OPPO / OnePlus / realme الخاصة اختيارية وتُتجاهل عند غيابها). مُختبَر على ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

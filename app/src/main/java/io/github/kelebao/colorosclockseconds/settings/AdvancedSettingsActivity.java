@@ -47,14 +47,18 @@ import io.github.kelebao.colorosclockseconds.R;
  * 深度调色与明暗两套配色都在这里。
  *
  * <p>数据全部走 {@link ClockSecondsConfig} 读的 Secure 键；「我的预设」存应用私有
- * SharedPreferences（advanced_presets，JSON 字符串），上限 9 组/套，长按删除，
+ * SharedPreferences（advanced_presets，JSON 字符串），上限 20 组/套，长按删除，
  * 点击整组应用通过 {@link ClockSecondsConfig#ACTION_SET_DIGIT_COLORS_BATCH} 一次下发。</p>
  */
 public class AdvancedSettingsActivity extends Activity {
 
     private static final String PREFS_NAME = "advanced_presets";
     private static final String KEY_PRESETS = "presets";
-    private static final int MAX_PRESETS = 12;
+    /** 内置默认预设（PHK110 实测导出，2026-11-18）：深色 2 渐变 + 2 单色，浅色同构。 */
+    private static final String SEED_PRESETS_JSON =
+            "{\"dark\":[{\"name\":\"预设 1\",\"colors\":[-13181964,0,0,-9837999,-8138587,-3829976],\"dir\":22,\"grad\":[-14155876,-60999]},{\"name\":\"预设 2\",\"colors\":[-13181964,0,0,-9837999,-8138587,-3829976],\"dir\":25,\"grad\":[-11872749,-15597650]},{\"name\":\"预设 3\",\"colors\":[-769226,0,0,0,0,0],\"dir\":-1},{\"name\":\"预设 4\",\"colors\":[-769226,-11751600,-14575885,-6543440,-6381922,-11751600],\"dir\":-1}],\"light\":[{\"name\":\"预设 1\",\"colors\":[-13175723,0,0,-13854633,-8138587,-8679448],\"dir\":23,\"grad\":[-14752203,-15636993]},{\"name\":\"预设 2\",\"colors\":[-13175723,0,0,-13854633,-8138587,-8679448],\"dir\":21,\"grad\":[-3143910,-15636993]},{\"name\":\"预设 3\",\"colors\":[-13175723,0,0,-13854633,0,-8679448],\"dir\":-1},{\"name\":\"预设 4\",\"colors\":[-16728876,0,0,0,0,0],\"dir\":-1}]}";
+
+    private static final int MAX_PRESETS = 20;
 
     /** 与首页一致的九色色板 + 第 10 颗跟随系统。 */
     private static final int[] HOUR_COLORS = {
@@ -193,6 +197,8 @@ public class AdvancedSettingsActivity extends Activity {
             // 系统切浅色后整页（含自适应下方所有卡片）统一按 night=false 重上色，并同步页签选择。
             mLightMode = !sysNight;   // night 派生 = !mLightMode（F23-1），浅色系统下高亮「浅色」页签
         }
+        // t-20seeds：首次使用还没有保存过任何预设时，内置 PHK110 实测的深/浅各 4 套默认预设。
+        seedDefaultPresetsIfNeeded(this);
         // 系统模式自适应默认开启（t4 已去开关）：初值仍须在 build() 前读好，暗/浅页签恒可见
         mAdaptiveColor = ClockSecondsConfig.isAdaptiveColorEnabled(getContentResolver());
         // f12-4：整页竖向可滚动（10 方向 5×2 网格在 1240x2772 首屏外）；
@@ -1623,6 +1629,19 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
     /** 读取全部预设（JSON 文本，容错解析）。 */
     private List<Preset>[] loadAllPresets() {
         return loadPresets(this);
+    }
+
+    /** t-20seeds：首次使用（还没有保存过任何预设）时内置 PHK110 实测的 4+4 套默认预设，
+     *  深色 / 浅色各 4（2 渐变 + 2 单色）；用户保存过（或已存在文件）则完全不覆盖。 */
+    static void seedDefaultPresetsIfNeeded(android.content.Context ctx) {
+        try {
+            android.content.SharedPreferences sp = ctx.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
+            if (sp.contains(KEY_PRESETS)) {
+                return;
+            }
+            sp.edit().putString(KEY_PRESETS, SEED_PRESETS_JSON).apply();
+        } catch (Throwable ignored) {
+        }
     }
 
     /** 同一份 advanced_presets 由自定义任务选色面板共用（同 UID 的应用私有目录）。 */

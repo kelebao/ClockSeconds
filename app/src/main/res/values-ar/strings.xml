@@ -186,7 +186,7 @@
     <string name="settings_preset_save">حفظ الألوان الحالية</string>
     <string name="settings_preset_saved">تم حفظ الإعداد</string>
     <string name="settings_preset_deleted">تم حذف الإعداد</string>
-    <string name="settings_preset_full">خانات الإعدادات ممتلئة (12) — اضغط مطولاً على إعداد لحذفه</string>
+    <string name="settings_preset_full">خانات الإعدادات ممتلئة (20) — اضغط مطولاً على إعداد لحذفه</string>
     <string name="settings_preset_applied">تم تطبيق الألوان</string>
     <string name="settings_preset_delete_q">حذف هذا الإعداد؟</string>
     <string name="settings_preset_default_name">إعداد %1$d</string>

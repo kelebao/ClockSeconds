@@ -186,7 +186,7 @@
     <string name="settings_preset_save">현재 색상 저장</string>
     <string name="settings_preset_saved">프리셋이 저장되었습니다</string>
     <string name="settings_preset_deleted">프리셋이 삭제되었습니다</string>
-    <string name="settings_preset_full">프리셋이 가득 찼습니다(12개) — 프리셋을 길게 눌러 삭제하세요</string>
+    <string name="settings_preset_full">프리셋이 가득 찼습니다(20개) — 프리셋을 길게 눌러 삭제하세요</string>
     <string name="settings_preset_applied">색상이 적용되었습니다</string>
     <string name="settings_preset_delete_q">이 프리셋을 삭제할까요?</string>
     <string name="settings_preset_default_name">프리셋 %1$d</string>

@@ -186,7 +186,7 @@
     <string name="settings_preset_save">儲存目前配色</string>
     <string name="settings_preset_saved">預設已儲存</string>
     <string name="settings_preset_deleted">預設已刪除</string>
-    <string name="settings_preset_full">預設已滿 12 組 — 長按某個預設可刪除或重新命名</string>
+    <string name="settings_preset_full">預設已滿 20 組 — 長按某個預設可刪除或重新命名</string>
     <string name="settings_preset_applied">顏色已套用</string>
     <string name="settings_preset_delete_q">刪除此預設？</string>
     <string name="settings_preset_default_name">預設 %1$d</string>

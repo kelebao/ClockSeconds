@@ -186,7 +186,7 @@
     <string name="settings_preset_save">現在の配色を保存</string>
     <string name="settings_preset_saved">プリセットを保存しました</string>
     <string name="settings_preset_deleted">プリセットを削除しました</string>
-    <string name="settings_preset_full">プリセットが上限（12 個）に達しました — プリセットを長押しすると削除できます</string>
+    <string name="settings_preset_full">プリセットが上限（20 個）に達しました — プリセットを長押しすると削除できます</string>
     <string name="settings_preset_applied">配色を適用しました</string>
     <string name="settings_preset_delete_q">このプリセットを削除しますか？</string>
     <string name="settings_preset_default_name">プリセット %1$d</string>

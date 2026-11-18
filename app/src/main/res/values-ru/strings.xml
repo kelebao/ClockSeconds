@@ -186,7 +186,7 @@
     <string name="settings_preset_save">Сохранить текущие цвета</string>
     <string name="settings_preset_saved">Пресет сохранён</string>
     <string name="settings_preset_deleted">Пресет удалён</string>
-    <string name="settings_preset_full">Все слоты пресетов заняты (12) — нажмите и удерживайте пресет, чтобы удалить</string>
+    <string name="settings_preset_full">Все слоты пресетов заняты (20) — нажмите и удерживайте пресет, чтобы удалить</string>
     <string name="settings_preset_applied">Цвета применены</string>
     <string name="settings_preset_delete_q">Удалить этот пресет?</string>
     <string name="settings_preset_default_name">Пресет %1$d</string>

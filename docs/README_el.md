@@ -10,7 +10,7 @@
 
 Δείχνει τα **δευτερόλεπτα** στο ρολόι της γραμμής κατάστασης, εναλλαγή με άγγιγμα. Μπορείτε να δώσετε **χρώμα σε κάθε ψηφίο** ή να εφαρμόσετε **διαβάθμιση** σε όλο το κείμενο.<br>**Παρατεταμένο πάτημα** ανοίγει ημιδιαφανές παράθυρο με την **ώρα δικτύου** (μετακίνηση, μέγεθος, διαβάθμιση)· οι **δικές σας εργασίες** ενεργοποιούν τα δευτερόλεπτα στην ώρα που θέλετε.<br>Η κύρια διαδρομή χρησιμοποιεί μόνο δημόσια API του AOSP (οι κλειστές κλάσεις OPPO / OnePlus / realme είναι προαιρετικές και παραλείπονται αν λείπουν). Δοκιμασμένο σε ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
