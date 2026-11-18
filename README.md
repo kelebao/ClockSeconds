@@ -10,7 +10,7 @@
 
 让状态栏时间显示**秒**，单击即切换；**六个数字可逐位上色**，也能整串铺一条**渐变**；<br>**长按**弹出毛玻璃浮窗实时显示**网络时间**（可拖动、可拉伸，同样支持渐变）；<br>还能给「整点 / 每天某时刻」排**自定义任务**，到点自动开秒。<br>核心链路只用 AOSP 公开 API（OPPO / 一加 / 真我的私有类兼容为可选增强、找不到即跳过），已在 ColorOS 15 / 16 真机验证。
 
-[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
@@ -27,7 +27,7 @@
 |------|------|
 | 状态栏显秒 | `HH:mm:ss` / `h:mm:ss a`（跟随系统 12/24 小时制与本地时区）；ColorOS 的时钟样式/第三方主题模块会按 `HH:mm(:ss)` 模式重建文本、把颜色 span 剥掉，模块在文本末尾追加一个**零宽空格**破坏该模式，并检测掉色后自动重绘（5 分钟冷却上限） |
 | 点击切换 | **单击**状态栏时间即切换显秒开/关；也可在设置页改为**双击**（长按专用于浮窗预览）。任务窗口内点击会提示「已由任务接管」而不偷改总开关 |
-| 逐位取色 / 整串渐变 | 六个数字**各自配色**（12 套预设 + HSV 滑杆 + 16 进制色号输入 + 「跟随系统」），冒号自动光学居中；或改用**整串渐变**：起点 → 中间②③ → 终点四色渐变，10 种方向，端点再点一次可打开调色盘，浅底自动压暗。高级设置页提供实时预览钟与暗 / 浅两套预设，可跟随系统深色 / 浅色模式自适应 |
+| 逐位取色 / 整串渐变 | 六个数字**各自配色**（12 套预设 + HSV 滑杆 + 16 进制色号输入 + 「跟随系统」），冒号自动光学居中；或改用**整串渐变**：起点 → 终点双端点渐变，11 种渐变形式，端点再点一次可打开调色盘，浅底自动压暗。高级设置页提供实时预览钟与暗 / 浅两套预设，可跟随系统深色 / 浅色模式自适应 |
 | 长按预览浮窗 | **长按**状态栏时间弹出**毛玻璃半透明浮窗**，实时显示**网络时间**；可整体拖动、按左下角 ◣ 拉伸缩放，位置与尺寸**自动记忆**；支持同款渐变、数字等宽（秒数跳动时整串不抖） |
 | 自定义任务 | 按「**整点** / **每天某时刻**」排任务：提前 N 分钟**自动开启秒**，持续 M 分钟后自动恢复原状态；改系统时间/时区会立即重算窗口，另有 60 秒兜底重算，深睡唤醒后也不会错过 |
 | 网络时间对比 | 设置页实时对比**网络标准时间**与本地时间偏差；偏差较大时点**同步**，即可打开系统「自动设置时间」向网络校准 |
@@ -37,11 +37,11 @@
 | 界面语言 | 应用内界面已适配 **21 种语言**（跟随系统语言自动切换）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული；其余语言回落到英文 |
 | 持久化 / 适配范围 | 状态存于 `Settings.Secure`，跨进程共享，重启 SystemUI 或重启设备后保持。**ColorOS 15 / 16（Android 15 / 16）已真机验证**；核心链路只用 AOSP 公开 API，理论上其它厂商同样生效，但作者手上只有 OPPO / 一加的机器，**其它厂商尚未真机验证**。最低支持 Android 10 |
 
-> 测试线最新构建为 **vc341**（versionName `1.2.0-test.20261118-1130`），包含高级设置页、12 套预设、16 进制色号输入与端点调色盘；正式 Release 仍为 **v1.2.0**。
+> 当前正式版为 **v1.3.0**（versionCode 342，modern API 102 为 `1.3.0-api102`），包含高级设置页、12 套预设、11 种渐变形式、16 进制色号输入与端点调色盘。
 
 ## 颜色效果
 
-两种上色方式，随时在「高级设置」里切换：**逐位颜色**（六个数字各自一色，支持 HSV 滑杆与 16 进制色号）与**整串渐变**（起点 → 中间②③ → 终点四色平滑过渡，支持 10 种方向）。
+两种上色方式，随时在「高级设置」里切换：**逐位颜色**（六个数字各自一色，支持 HSV 滑杆与 16 进制色号）与**整串渐变**（起点 → 终点双端点平滑过渡，支持 11 种渐变形式）。
 
 <table><tr>
 <td align="center" width="50%">
@@ -50,7 +50,7 @@
 逐位颜色：六位数字各选一色，冒号自动光学居中
 </td>
 <td align="center" width="50%">
-<img src="docs/screenshots/colors-gradient.png" alt="整串渐变：起点色 → 终点色平滑过渡，6 套预设、两端自定义" width="100%">
+<img src="docs/screenshots/colors-gradient.png" alt="整串渐变：起点色 → 终点色双端点过渡，12 套预设、11 种渐变形式" width="100%">
 <br>
 整串渐变：起点色 → 终点色平滑过渡，6 套预设、两端自定义
 </td>

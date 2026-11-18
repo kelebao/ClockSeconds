@@ -10,7 +10,7 @@
 
 Muestra los **segundos** en el reloj de la barra de estado, se alterna con un toque. Puedes dar **un color a cada dígito** o aplicar un **degradado** a toda la cadena.<br>**Mantén pulsado** para abrir una ventana translúcida con la **hora de red** (arrastrar, tamaño, degradado); las **tareas propias** activan los segundos a la hora indicada.<br>El camino principal solo usa API públicas de AOSP (las clases privadas de OPPO / OnePlus / realme son opcionales y se omiten si no existen). Probado en ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

@@ -10,7 +10,7 @@
 
 აჩვენებს **წამებს** სტატუსის ზოლის საათში, გადართვა შეხებით. შეგიძლიათ **თითოეულ ციფრს თავისი ფერი** მისცეთ ან მთელ ტექსტზე **გრადიენტი** დაადოთ.<br>**გრძელი დაჭერა** ხსნის ნახევრად გამჭვირვალე ფანჯარას **ქსელის დროით** (გადატანა, ზომა, გრადიენტი); **საკუთარი ამოცანები** წამებს სასურველ საათზე რთავს.<br>ძირითადი გზა მხოლოდ AOSP-ის საჯარო API-ებს იყენებს (OPPO / OnePlus / realme-ის დახურული კლასები არასავალდებულოა და არქონისას გამოტოვდება). შემოწმებულია ColorOS 15 / 16-ზე.
 
-[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

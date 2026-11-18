@@ -10,7 +10,7 @@
 
 ステータスバーの時刻に**秒**を表示し、タップで切り替えます。**桁ごとに色分け**も、文字列全体に**グラデーション**も可能です。<br>**長押し**で**ネットワーク時刻**を表示するすりガラス風ウィンドウ（ドラッグ・サイズ変更・グラデーション対応）。**カスタムタスク**で定時に秒を自動でオン。<br>コア処理は AOSP 公開 API のみ（OPPO / OnePlus / realme の非公開クラスは任意の追加対応で、無ければスキップ）。ColorOS 15 / 16 で実機検証済み。
 
-[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

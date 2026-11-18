@@ -10,7 +10,7 @@
 
 Menampilkan **detik** pada jam bilah status, bisa diganti dengan ketukan. Anda bisa memberi **warna pada setiap angka** atau memasang **gradien** pada seluruh teks.<br>**Tekan lama** membuka jendela tembus pandang berisi **waktu jaringan** (geser, ukuran, gradien); **tugas sendiri** menyalakan detik pada jam yang dipilih.<br>Jalur utama hanya memakai API publik AOSP (kelas khusus OPPO / OnePlus / realme opsional dan dilewati bila tidak ada). Diuji pada ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

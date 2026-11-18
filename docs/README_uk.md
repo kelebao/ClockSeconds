@@ -10,7 +10,7 @@
 
 Показує **секунди** у часі рядка стану, перемикання дотиком. Можна задати **колір кожній цифрі** або накласти **градієнт** на весь рядок.<br>**Довге натискання** відкриває напівпрозоре вікно з **мережевим часом** (перетягування, розмір, градієнт); **власні завдання** вмикають секунди потрібної години.<br>Основний шлях використовує лише відкриті API AOSP (закриті класи OPPO / OnePlus / realme необов’язкові, за відсутності пропускаються). Перевірено на ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
