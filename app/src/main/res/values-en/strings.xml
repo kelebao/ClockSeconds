@@ -215,4 +215,7 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_gradient_dir_qr_code">QR Code</string>
 
     <string name="settings_gradient_dir_mercury">Liquid Mercury</string>
+    <string name="settings_api102_notice_title">API 102 build available</string>
+    <string name="settings_api102_notice_msg">This module is also available in an API 102 build. If your device supports LSPosed API 102, you can download it from GitHub.</string>
+    <string name="settings_api102_notice_open">Open GitHub</string>
 </resources>

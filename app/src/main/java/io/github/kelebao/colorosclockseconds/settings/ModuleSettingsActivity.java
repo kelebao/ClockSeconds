@@ -108,6 +108,7 @@ public final class ModuleSettingsActivity extends Activity {
     private static final String PREFS_NAME = "clock_seconds_settings";
     private static final String KEY_AUTO_UPDATE = "auto_update";
     private static final String PREF_SEEN_INTRO = "seen_intro";
+    private static final String PREF_SEEN_API102_INSTALL = "seen_api102_notice_install";
 
     /**
      * 每一位数字可选的颜色（第一项为默认红）。
@@ -458,6 +459,7 @@ public final class ModuleSettingsActivity extends Activity {
         reconcileLauncherIcon();
         refreshStatus();
         maybeShowIntro();
+        maybeShowApi102LegacyNotice();   // U-20261119: legacy 每次安装后进入模块界面提示一次 API 102 版本
         maybeAutoCheckUpdate();
     }
 
@@ -7059,6 +7061,24 @@ public final class ModuleSettingsActivity extends Activity {
                 .setTitle(R.string.settings_about_licenses)
                 .setMessage(R.string.licenses_text)
                 .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    /** U-20261119: legacy 包每次安装后首次进入模块界面提示一次 API 102 版本（modern 不提示）。 */
+    private void maybeShowApi102LegacyNotice() {
+        if (!"legacy".equals(BuildConfig.FLAVOR)) return;
+        long installTime;
+        try {
+            installTime = getPackageManager().getPackageInfo(getPackageName(), 0).lastUpdateTime;
+        } catch (Throwable ignored) { return; }
+        SharedPreferences sp = prefs();
+        if (sp.getLong(PREF_SEEN_API102_INSTALL, -1L) == installTime) return;
+        sp.edit().putLong(PREF_SEEN_API102_INSTALL, installTime).apply();
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_api102_notice_title)
+                .setMessage(R.string.settings_api102_notice_msg)
+                .setPositiveButton(R.string.settings_api102_notice_open, (d, w) -> openUrl(REPO_URL + "/releases"))
+                .setNegativeButton(android.R.string.ok, null)
                 .show();
     }
 

@@ -10,7 +10,7 @@
 
 讓狀態列時間顯示**秒**，單擊即切換。六個數字可**逐位上色**，也能整串鋪一條**漸層**。<br>**長按**彈出毛玻璃懸浮視窗即時顯示**網路時間**（可拖曳、可縮放，同樣支援漸層）；還能排**自訂任務**，到點自動開秒。<br>核心鏈路只用 AOSP 公開 API（OPPO / 一加 / realme 私有類別為選用增強、找不到即跳過）。已在 ColorOS 15 / 16 實機驗證。
 
-[![version](https://img.shields.io/badge/version-1.3.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

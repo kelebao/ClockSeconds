@@ -10,7 +10,7 @@
 
 Zeigt **Sekunden** in der Uhr der Statusleiste, umschaltbar per Tippen. Entweder **jede Ziffer eigene Farbe** oder ein **Farbverlauf** über den ganzen Text.<br>**Langes Drücken** öffnet ein Milchglas-Fenster mit **Netzwerkzeit** (verschieben, Größe, Verlauf); **eigene Aufgaben** schalten Sekunden zur passenden Stunde ein.<br>Der Hauptpfad nutzt nur öffentliche AOSP-APIs (proprietäre OPPO / OnePlus / realme-Klassen sind optional, fehlen sie, werden sie übersprungen). Getestet auf ColorOS 15 / 16.
 
-[![version](https://img.shields.io/badge/version-1.3.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

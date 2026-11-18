@@ -215,4 +215,7 @@
     <string name="settings_gradient_dir_qr_code">二維碼</string>
 
     <string name="settings_gradient_dir_mercury">液態水銀</string>
+    <string name="settings_api102_notice_title">API 102 版本提示</string>
+    <string name="settings_api102_notice_msg">本模块同步更新了 API 102 版本，如你设备支持 LSPosed API 102，可前往 GitHub 下载。</string>
+    <string name="settings_api102_notice_open">前往 GitHub</string>
 </resources>

@@ -10,7 +10,7 @@
 
 让状态栏时间显示**秒**，单击即切换；**六个数字可逐位上色**，也能整串铺一条**渐变**；<br>**长按**弹出毛玻璃浮窗实时显示**网络时间**（可拖动、可拉伸，同样支持渐变）；<br>还能给「整点 / 每天某时刻」排**自定义任务**，到点自动开秒。<br>核心链路只用 AOSP 公开 API（OPPO / 一加 / 真我的私有类兼容为可选增强、找不到即跳过），已在 ColorOS 15 / 16 真机验证。
 
-[![version](https://img.shields.io/badge/version-1.3.4-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
