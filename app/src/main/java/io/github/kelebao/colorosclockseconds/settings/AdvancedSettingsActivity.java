@@ -136,6 +136,15 @@ public class AdvancedSettingsActivity extends Activity {
             new java.util.concurrent.atomic.AtomicInteger();
     private Handler handler = new Handler(Looper.getMainLooper());
 
+    /**
+     * U-20261118⑭ 修复「拖色相滑杆时渐变圆圈颜色不实时变化」：无 WRITE_SECURE_SETTINGS 时
+     * 写色走广播、由 SystemUI 代写，Secure 回读在当下仍是旧值；而圆圈与预览的颜色全部来自回读，
+     * 于是表现为「圆圈不变色」（数字位不受影响，因为胶囊只重画选中态、不读颜色）。
+     * 这里暂存「刚写下去、还没回读到」的端点色（key=UI 色标序号 0/1），绘制时优先使用，
+     * 回读窗口结束后清掉，回到以 Secure 为唯一真源。
+     */
+    private final java.util.HashMap<Integer, Integer> mPendingStopColors = new java.util.HashMap<>();
+
     /** 照搬首页：选中色圆呼吸涟漪相位推进（每 50ms 一次）。 */
     private final Runnable breathTick = new Runnable() {
         @Override
@@ -783,8 +792,12 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         heroLp.topMargin = dp(2);
         hero.setLayoutParams(heroLp);
+        // U-20261118⑭ 修复「单色页签预览时间被撑到整屏」：光晕是纯装饰 View，若用
+        // MATCH_PARENT 高度，FrameLayout(WRAP_CONTENT) 会按 View.onMeasure 的 getDefaultSize
+        // 直接取整屏可用高度 → 合并卡被撑到 2300+px，后面的调色盘/预设卡全被挤出屏幕。
+        // 改成固定 96dp 色带：纵向 DST_IN 蒙版自带上下淡出，观感与铺满一致但不参与测高。
         hero.addView(makePreviewGlow(), new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(96)));
         hero.addView(mPreviewClock, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER));
@@ -872,6 +885,15 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         int s0 = c0 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c0 : effectiveSlotPreviewColor(0);
         int s3 = c3 != ClockSecondsConfig.GRADIENT_COLOR_AUTO ? c3 : effectiveSlotPreviewColor(
                 ClockSecondsConfig.DIGIT_COUNT - 1);
+        // U-20261118⑭：刚写下去但还没回读到的端点色优先，否则预览比手指慢一拍。
+        Integer p0 = mPendingStopColors.get(0);
+        Integer p3 = mPendingStopColors.get(1);
+        if (p0 != null) {
+            s0 = p0;
+        }
+        if (p3 != null) {
+            s3 = p3;
+        }
         return new int[]{s0, s3};
     }
 
@@ -1358,6 +1380,13 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         if (mEditingHex == null) {
             return;
         }
+        // U-20261118⑭ 修复「色号框删空后不能重新输入」：用户正在框内输入时（hasFocus 且已开始编辑），
+        // 这里若照旧 mHexUserTyping=false + setText(回填色号)，会把用户刚敲的字符整段覆盖，
+        // 且 7 位长度上限已满 → 后续按键全部被过滤丢弃，看起来就是「再也输不进去」。
+        // 输入期间只跳过回填，标志与文案留给用户离开输入框时再同步。
+        if (hexEditingLocked()) {
+            return;
+        }
         mHexUserTyping = false;
         mEditingHex.setText(getString(R.string.settings_digit_editing, ""));
         syncHexInput();
@@ -1429,6 +1458,12 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
                         // 非法值维持常规键颜色
                     }
                 }
+            }
+            // U-20261118⑭：刚写下去还没回读到的颜色优先，保证圆圈跟着滑杆实时变色。
+            Integer pending = mPendingStopColors.get(i);
+            if (pending != null) {
+                color = pending;
+                isAuto = false;
             }
             final boolean selected = (i == mGradTarget);
             // 照搬首页：色点=实心圆 + （选中时）同色呼吸涟漪；不另加 accent 描边环。
@@ -1535,6 +1570,10 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
         } else {
             applyConfig(ClockSecondsConfig.gradientStopKey(stopKeyIndex(which)), color, intent, ok -> { });
         }
+        // U-20261118⑭：无直写权限时 Secure 回读滞后，先用本地值撑住圆圈与预览，回读落地再清。
+        mPendingStopColors.put(which, color);
+        handler.removeCallbacks(mClearPendingStops);
+        handler.postDelayed(mClearPendingStops, 1200L);
         refreshPreview();
         if (mEditingHex != null && mGradPage && which == mGradTarget) {
             mEditingHex.setText(getString(R.string.settings_digit_editing, ""));
@@ -1544,6 +1583,21 @@ mSelfThemeRecreate = true;   // t38④：标记本次 recreate 来自点页签�
             styleTargets();
         }
     }
+
+    /** U-20261118⑭：广播写色的回读窗口结束后清掉本地暂存，之后完全以 Secure 为准。 */
+    private final Runnable mClearPendingStops = new Runnable() {
+        @Override
+        public void run() {
+            if (mPendingStopColors.isEmpty()) {
+                return;
+            }
+            mPendingStopColors.clear();
+            if (mStopCircles != null) {
+                refreshStopCircles();
+            }
+            refreshPreview();
+        }
+    };
 
     // ---------------- ③ 我的预设 ----------------
 
