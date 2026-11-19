@@ -3873,6 +3873,15 @@ public final class ModuleSettingsActivity extends Activity {
         hint.setLineSpacing(dp(2), 1f);
         card.addView(hint);
 
+        // 本机字体「冒号对齐」体检（vc347）：与模块是否注入无关，直接按预览钟同款字体量字形边界，
+        // 方便用户（尤其换机型 / 非 ColorOS 用户）反馈冒号偏移时提供数据。
+        TextView fontInfo = new TextView(this);
+        fontInfo.setTextSize(11f);
+        fontInfo.setTextColor(text2());
+        fontInfo.setPadding(0, dp(2), 0, dp(8));
+        fontInfo.setText("本机预览字体：" + describePreviewColonMetrics());
+        card.addView(fontInfo);
+
         // 按钮行：重启 / 诊断。
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -4189,6 +4198,26 @@ public final class ModuleSettingsActivity extends Activity {
         return b;
     }
 
+    /** 按预览钟同款字体测量冒号字形，返回字号与需要抬升的像素数（仅用于诊断展示）。 */
+    private String describePreviewColonMetrics() {
+        try {
+            android.text.TextPaint tp = new android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            tp.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            tp.setTextSize(44f * getResources().getDisplayMetrics().scaledDensity);
+            tp.setFakeBoldText(true);
+            tp.setFontFeatureSettings("tnum");
+            android.graphics.Rect digit = new android.graphics.Rect();
+            android.graphics.Rect colon = new android.graphics.Rect();
+            tp.getTextBounds("0", 0, 1, digit);
+            tp.getTextBounds(":", 0, 1, colon);
+            int lift = io.github.kelebao.colorosclockseconds.ColonLiftSpan.computeLift(tp);
+            return "字号 " + (int) tp.getTextSize() + "px，数字 0 [" + digit.top + "," + digit.bottom
+                    + "]，冒号 [" + colon.top + "," + colon.bottom + "]，抬升 " + lift + "px";
+        } catch (Throwable t) {
+            return "测量失败：" + t;
+        }
+    }
+
     /** 把 SystemUI 回传的诊断 JSON 渲染成易读文本。 */
     private void renderDiagnostic(String json) {
         if (mDiagView == null) {
@@ -4273,6 +4302,21 @@ public final class ModuleSettingsActivity extends Activity {
                     }
                 }
                 sb.append("\n");
+            }
+
+            // 冒号对齐体检（vc347）：换机型/字体时冒号可能偏高或偏低，这里直接给出字号与抬升量，
+            // 用户反馈「冒号偏移」时点一次「运行诊断」就能提供数据。
+            JSONObject colon = d.optJSONObject("colonCheck");
+            if (colon != null && colon.optBoolean("applicable", false)) {
+                sb.append("【冒号对齐】\n");
+                sb.append("机型：").append(colon.optString("device", "?"))
+                        .append(" / SDK ").append(colon.optInt("sdk", 0)).append("\n");
+                sb.append("字号：").append(colon.optInt("textSize", 0)).append("px，抬升：")
+                        .append(colon.optInt("lift", 0)).append("px\n");
+                sb.append("数字 0：").append(colon.optInt("digitTop", 0)).append(" ~ ")
+                        .append(colon.optInt("digitBottom", 0)).append("；冒号：")
+                        .append(colon.optInt("colonTop", 0)).append(" ~ ")
+                        .append(colon.optInt("colonBottom", 0)).append("\n\n");
             }
 
             // 上次点击（含时间，时分秒）

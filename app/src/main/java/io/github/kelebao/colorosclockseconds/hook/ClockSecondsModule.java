@@ -1641,6 +1641,41 @@ public final class ClockSecondsModule implements IXposedHookLoadPackage {
             }
             root.put("colorCheck", cc);
 
+            // 冒号对齐体检（vc347）：不同 ROM / 字体的冒号字形高度不同，固定抬升比例会偏高或偏低。
+            // 这里把当前时钟画笔的字号、字形边界和实际抬升量写进诊断，用户反馈「冒号偏移」时
+            // 让他在 App 里点一次「运行诊断」即可拿到数据，不必抓 logcat。
+            org.json.JSONObject colonCheck = new org.json.JSONObject();
+            try {
+                colonCheck.put("device", Build.MANUFACTURER + " " + Build.MODEL);
+                colonCheck.put("rom", Build.DISPLAY);
+                colonCheck.put("sdk", Build.VERSION.SDK_INT);
+                TextView ck = sClockView != null ? sClockView : best;
+                if (ck == null) {
+                    colonCheck.put("applicable", false);
+                } else {
+                    android.text.TextPaint tp = new android.text.TextPaint(ck.getPaint());
+                    android.graphics.Rect digit = new android.graphics.Rect();
+                    android.graphics.Rect colon = new android.graphics.Rect();
+                    tp.getTextBounds("0", 0, 1, digit);
+                    tp.getTextBounds(":", 0, 1, colon);
+                    colonCheck.put("applicable", true);
+                    colonCheck.put("textSize", (int) tp.getTextSize());
+                    colonCheck.put("typeface", String.valueOf(tp.getTypeface()));
+                    colonCheck.put("digitTop", digit.top);
+                    colonCheck.put("digitBottom", digit.bottom);
+                    colonCheck.put("colonTop", colon.top);
+                    colonCheck.put("colonBottom", colon.bottom);
+                    colonCheck.put("lift", ColonLiftSpan.computeLift(tp));
+                }
+            } catch (Throwable t) {
+                try {
+                    colonCheck.put("error", String.valueOf(t));
+                } catch (Throwable ignored) {
+                    // 诊断自身异常不影响返回
+                }
+            }
+            root.put("colonCheck", colonCheck);
+
             // 结论：分三层定位根因。
             String verdict;
             if (arr.length() == 0) {
