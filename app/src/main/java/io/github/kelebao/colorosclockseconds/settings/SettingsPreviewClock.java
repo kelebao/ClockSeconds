@@ -1,4 +1,5 @@
-package io.github.kelebao.colorosclockseconds.settings;import io.github.kelebao.colorosclockseconds.GradientShaderFactory;
+package io.github.kelebao.colorosclockseconds.settings;import io.github.kelebao.colorosclockseconds.ColonLiftSpan;
+import io.github.kelebao.colorosclockseconds.GradientShaderFactory;
 
 
 import io.github.kelebao.colorosclockseconds.ClockSecondsConfig;
@@ -22,8 +23,9 @@ import java.util.Locale;
  *
  * <p>渐变模式自己画一遍文字（不把 shader 挂给 TextView）：ColorOS 15 实测同一个 shader
  * 会按「run」被量化拆成 3 段纯色（数字一跳就换色块，看着像随机渐变），且色带原点随
- * 系统版本漂移（Android 15 偏左、Android 16 偏右一个文字宽）。自己 canvas.drawText
- * 一次：色带起点 = 文字左边缘、宽度 = 文字宽度，跨版本一致。</p>
+ * 系统版本漂移（Android 15 偏左、Android 16 偏右一个文字宽）。自己逐字符 canvas.drawText：
+ * 色带起点 = 文字左边缘、宽度 = 文字宽度，跨版本一致；vc350 起每字符位置与冒号上下/宽度
+ * 都按 ColonLiftSpan 同一套字体实测规则计算，渐变预览与状态栏/单色预览的冒号表现一致。</p>
  *
  * <p>时间来源两种：高级页没有页面级 ticker，开 {@link #setAutoTick(boolean)} 由组件
  * 内部对齐整秒自刷；首页已有自己的 updatePreview()（span 逻辑在页面侧），保持
@@ -256,9 +258,12 @@ public class SettingsPreviewClock extends TextView {
         if (cs == null || cs.length() == 0) {
             return;
         }
-        final Paint paint = getPaint();
+        final android.text.TextPaint paint = (android.text.TextPaint) getPaint();
         final int len = cs.length();
-        final float band = paint.measureText(cs, 0, len);
+        // vc350：渐变自绘也按 ColonLiftSpan 同一套字体实测规则排冒号。
+        // xs 是逐字符左边界（已含自动冒号宽度），最后一个元素即整条文字实际宽度。
+        final float[] xs = gradientCharX(paint, cs);
+        final float band = xs[len];
         if (band <= 0f) {
             return;
         }
@@ -332,7 +337,16 @@ public class SettingsPreviewClock extends TextView {
         canvas.save();
         canvas.translate(ox, oy);
         paint.setShader(mGradShader);
-        canvas.drawText(cs, 0, len, x0, baseline, paint);
+        final float saveScaleX = paint.getTextScaleX();
+        final int lift = gradientColonLift(paint);
+        final float colonScale = gradientColonScale(paint);
+        for (int i = 0; i < len; i++) {
+            final boolean colon = isColonChar(cs.charAt(i));
+            paint.setTextScaleX(colon ? colonScale : saveScaleX);
+            // canvas.drawText 不读 TextPaint.baselineShift，这里直接把冒号基线抬上去。
+            canvas.drawText(cs, i, i + 1, x0 + xs[i], colon ? baseline - lift : baseline, paint);
+        }
+        paint.setTextScaleX(saveScaleX);
         canvas.restore();
         paint.setShader(saveShader);
         paint.setColor(saveColor);
@@ -370,9 +384,10 @@ public class SettingsPreviewClock extends TextView {
         if (manual != null) {
             x0 = manual[0];
             baseline = manual[1];
-            final float spacing = paint.getLetterSpacing() * paint.getTextSize();
-            before = paint.measureText(cs, 0, charIndex) + spacing * charIndex;
-            w = paint.measureText(cs, charIndex, charIndex + 1) + spacing;
+            // vc350：和渐变自绘同一套逐字符边界，冒号自动宽度也同步到取景框。
+            final float[] xs = gradientCharX(paint, cs);
+            before = xs[charIndex];
+            w = xs[charIndex + 1] - before;
         } else {
             android.text.Layout layout = getLayout();
             if (layout == null) {
@@ -428,7 +443,8 @@ public class SettingsPreviewClock extends TextView {
         final Paint paint = getPaint();
         android.text.Layout layout = getLayout();
         int lastSlot = -1;
-        if (layout != null) {
+        // vc350：渐变自绘不走 layout，点击位改按同一套自动冒号宽度计算。
+        if (!mGradOn && layout != null) {
             // vc349：用 layout 实际字形边界，和 ColonLiftSpan 自绘的冒号宽度保持一致。
             final float lineLeft = layout.getLineLeft(0);
             for (int i = 0; i < cs.length(); i++) {
@@ -444,22 +460,79 @@ public class SettingsPreviewClock extends TextView {
             }
             return lastSlot;
         }
-        final float band = paint.measureText(cs, 0, cs.length());
+        final float[] xs = gradientCharX(paint, cs);
+        final float band = xs[cs.length()];
         final float x0 = (getWidth() - band) / 2f;
-        final float spacing = paint.getLetterSpacing() * paint.getTextSize();
-        float acc = x0;
         for (int i = 0; i < cs.length(); i++) {
-            final float w = paint.measureText(cs, i, i + 1) + spacing;
-            if (x >= acc && x < acc + w) {
+            final float l = x0 + xs[i];
+            final float rr = x0 + xs[i + 1];
+            if (x >= l && x < rr) {
                 return ClockSecondsConfig.slotOfChar(cs, i);
             }
             final int slot = ClockSecondsConfig.slotOfChar(cs, i);
             if (slot >= 0) {
                 lastSlot = slot;
             }
-            acc += w;
         }
         return lastSlot;
+    }
+
+    /** vc350：渐变自绘与 ColonLiftSpan 共用「冒号是否算冒号」判定。 */
+    private static boolean isColonChar(char c) {
+        return c == ':' || c == '：';
+    }
+
+    /** vc350：当前字体下冒号应占宽度（数字 advance × 比例，带极端字体保护）。 */
+    private static float gradientColonTarget(Paint paint) {
+        final float digit = paint.measureText("0");
+        final float colon = paint.measureText(":");
+        if (digit <= 0f || colon <= 0f) {
+            return colon;
+        }
+        float target = digit * 0.45f;
+        final float lo = digit * 0.30f;
+        final float hi = digit * 0.55f;
+        if (target < lo) {
+            target = lo;
+        }
+        if (target > hi) {
+            target = hi;
+        }
+        return target;
+    }
+
+    /** vc350：冒号横向缩放系数，等价于 ColonLiftSpan 对 TextPaint 的设置。 */
+    private static float gradientColonScale(Paint paint) {
+        final float colon = paint.measureText(":");
+        return colon > 0f ? gradientColonTarget(paint) / colon : 1f;
+    }
+
+    /** vc350：冒号纵向抬升量，直接复用 ColonLiftSpan 的实测算法。 */
+    private static int gradientColonLift(Paint paint) {
+        return ColonLiftSpan.computeLift(paint instanceof android.text.TextPaint
+                ? (android.text.TextPaint) paint : new android.text.TextPaint(paint));
+    }
+
+    /**
+     * vc350：渐变自绘的逐字符左边界。返回长度 len+1，最后一项是整条文字实际宽度。
+     * 冒号按自动宽度占位，数字按当前字体原始 advance，letterSpacing 只在非冒号位追加。
+     */
+    private static float[] gradientCharX(Paint paint, CharSequence cs) {
+        final int len = cs.length();
+        final float[] xs = new float[len + 1];
+        final float colonW = gradientColonTarget(paint);
+        final float spacing = paint.getLetterSpacing() * paint.getTextSize();
+        float x = 0f;
+        for (int i = 0; i < len; i++) {
+            xs[i] = x;
+            if (isColonChar(cs.charAt(i))) {
+                x += colonW;
+            } else {
+                x += paint.measureText(cs, i, i + 1) + spacing;
+            }
+        }
+        xs[len] = x;
+        return xs;
     }
 
     /** n 个渐变色标均匀分布的位置数组（0..1）。 */
