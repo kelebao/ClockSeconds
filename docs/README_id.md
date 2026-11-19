@@ -27,7 +27,7 @@ Menampilkan **detik** pada jam bilah status, bisa diganti dengan ketukan. Anda b
 |------|------|
 | Detik di bilah status | `HH:mm:ss` / `h:mm:ss a`, mengikuti format 12/24 jam dan zona waktu. Di akhir ditambahkan **spasi lebar nol** agar tema tidak menghapus warna, dan warna digambar ulang otomatis bila hilang (jeda 5 menit). |
 | Ganti dengan ketukan | **Ketuk** jam untuk menyalakan/mematikan detik (bisa memilih **ketuk dua kali**); **tekan lama** dipakai untuk jendela pratinjau. Di dalam jendela tugas muncul pesan bahwa tugas yang mengatur. |
-| Warna per angka / gradien | Enam angka **masing-masing satu warna** (10 preset + slider HSV + warna sistem) dan dua titik ditengahkan secara optis. Atau **gradien** dari warna awal ke akhir (6 set, kedua ujung bisa diubah, digelapkan di latar terang). Kartu pratinjau **menggambar sendiri** sehingga cocok dengan bilah status. |
+| Warna per angka / gradien | Enam angka **masing-masing satu warna** (20 preset + slider HSV + warna sistem) dan dua titik ditengahkan secara optis. Atau **gradien** dari warna awal ke akhir (20 set, kedua ujung bisa diubah, digelapkan di latar terang). Kartu pratinjau **menggambar sendiri** sehingga cocok dengan bilah status. |
 | Jendela tekan lama | Jendela tembus pandang berisi **waktu jaringan**; geser untuk memindah, sudut ◣ untuk ukuran, posisi dan ukuran **diingat**; mendukung gradien dan angka sama lebar. |
 | Tugas sendiri | Jendela **tiap jam** atau **tiap hari**: nyalakan detik N menit sebelum selama M menit lalu kembalikan. Perubahan waktu atau zona langsung dihitung ulang, plus pemeriksaan tiap 60 detik. |
 | Bandingkan waktu jaringan | Menampilkan selisih dengan **waktu jaringan**; tombol **Sinkronkan** menyalakan penyetelan otomatis sistem. |
@@ -48,11 +48,16 @@ Dua cara mewarnai, diganti di kartu **Warna angka**: **per angka** atau **gradie
 Per angka: tiap angka satu warna, dua titik ditengahkan optis
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Gradien: dari warna awal ke akhir, 6 set atau ujung sendiri" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Gradien: dari warna awal ke akhir, 20 set atau ujung sendiri" width="100%">
 <br>
-Gradien: dari warna awal ke akhir, 6 set atau ujung sendiri
+Gradien: dari warna awal ke akhir, 20 set atau ujung sendiri
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Pemasangan
 

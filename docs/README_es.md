@@ -27,7 +27,7 @@ Muestra los **segundos** en el reloj de la barra de estado, se alterna con un to
 |------|------|
 | Segundos en la barra | `HH:mm:ss` / `h:mm:ss a`, respeta el formato de 12/24 h y la zona horaria. Al final se añade un **espacio de ancho cero** para que los temas no borren los colores; si se pierden, se redibuja solo (pausa de 5 minutos). |
 | Alternar con un toque | **Tocar** la hora activa o desactiva los segundos (se puede elegir **doble toque**); **mantener pulsado** queda para la ventana de vista previa. Dentro de una tarea avisa de que la controla la tarea. |
-| Color por dígito / degradado | Seis dígitos **cada uno con su color** (10 preajustes + barras HSV + color del sistema) y los dos puntos centrados ópticamente. O un **degradado** de color inicial a final (6 juegos, extremos editables, se oscurece sobre fondo claro). La tarjeta de vista previa **se dibuja sola**, así que coincide píxel a píxel con la barra. |
+| Color por dígito / degradado | Seis dígitos **cada uno con su color** (20 preajustes + barras HSV + color del sistema) y los dos puntos centrados ópticamente. O un **degradado** de color inicial a final (20 juegos, extremos editables, se oscurece sobre fondo claro). La tarjeta de vista previa **se dibuja sola**, así que coincide píxel a píxel con la barra. |
 | Vista previa al mantener pulsado | Ventana translúcida con la **hora de red**; arrastra para mover, esquina ◣ para el tamaño, posición y tamaño **se recuerdan**; admite degradado y cifras de ancho fijo. |
 | Tareas propias | Ventanas **cada hora** o **cada día**: activar los segundos N minutos antes durante M minutos y luego restaurar. Si cambias la hora o la zona se recalcula al instante, con repaso cada 60 segundos. |
 | Comparación con la hora de red | Muestra la desviación frente a la **hora de red**; un toque en **Sincronizar** activa el ajuste automático del sistema. |
@@ -48,11 +48,16 @@ Dos formas de colorear, se cambian en la tarjeta **Colores de dígitos**: **por 
 Por dígito: cada cifra con su color, puntos suspensivos centrados ópticamente
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Degradado: de color inicial a final, 6 juegos o extremos propios" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Degradado: de color inicial a final, 20 juegos o extremos propios" width="100%">
 <br>
-Degradado: de color inicial a final, 6 juegos o extremos propios
+Degradado: de color inicial a final, 20 juegos o extremos propios
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Instalación
 

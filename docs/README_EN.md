@@ -27,7 +27,7 @@ Show **seconds** in the status bar time, toggle with a tap. Colour **each digit*
 |------|------|
 | Seconds in the status bar | `HH:mm:ss` / `h:mm:ss a`, follows the system 12/24-hour setting and time zone; a **zero-width space** is appended so theme modules cannot strip the colours, with automatic repaint when colours are lost (5-minute cooldown). |
 | Tap to toggle | **Tap** the time to switch seconds on/off (double tap selectable); **long-press** is reserved for the floating preview; a tap inside a task window says the task has taken over. |
-| Per-digit colours / gradient | Six digits, **one colour each** (10 presets + HSV sliders + follow-system), colons optically centred; or one **gradient** from start to end colour (6 presets, both ends custom, auto-darkened on light backgrounds). The preview card is **self-drawn**, so it matches the status bar pixel for pixel. |
+| Per-digit colours / gradient | Six digits, **one colour each** (20 presets + HSV sliders + follow-system), colons optically centred; or one **gradient** from start to end colour (20 presets, both ends custom, auto-darkened on light backgrounds). The preview card is **self-drawn**, so it matches the status bar pixel for pixel. |
 | Long-press floating window | Frosted-glass overlay showing **network time**; drag to move, drag the ◣ corner to resize, position and size are **remembered**; same gradient, tabular digits so the seconds do not jitter. |
 | Custom tasks | Windows on **every hour** or **every day**: turn seconds on N minutes early for M minutes, then restore; time or time-zone changes recompute at once, plus a 60-second fallback, so deep sleep cannot miss it. |
 | Network time comparison | Shows the offset between **network time** and the device clock; tap **Sync** to enable the system "set time automatically" switch. |
@@ -48,11 +48,16 @@ Two ways to colour the time, switched inside the **Digit colours** card: **per-d
 Per-digit: every digit has its own colour, colons optically centred
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Gradient: start colour to end colour, 6 presets or custom ends" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Gradient: start colour to end colour, 20 presets or custom ends" width="100%">
 <br>
-Gradient: start colour to end colour, 6 presets or custom ends
+Gradient: start colour to end colour, 20 presets or custom ends
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Install
 

@@ -27,7 +27,7 @@ Pokazuje **sekundy** w zegarze paska stanu, przełączanie dotknięciem. Możesz
 |------|------|
 | Sekundy na pasku | `HH:mm:ss` / `h:mm:ss a`, uwzględnia format 12/24 h i strefę czasową. Na końcu dodawana jest **spacja o zerowej szerokości**, aby motywy nie usuwały kolorów; po utracie kolor jest przerysowywany (pauza 5 minut). |
 | Przełączanie dotknięciem | **Dotknięcie** włącza lub wyłącza sekundy (można wybrać **podwójne dotknięcie**); **długie naciśnięcie** należy do okna podglądu. W oknie zadania pojawia się informacja „zarządza zadanie". |
-| Kolor cyfr / gradient | Sześć cyfr **każda w innym kolorze** (10 gotowych + suwaki HSV + jak w systemie), dwukropki optycznie wyśrodkowane. Albo **gradient** od koloru początkowego do końcowego (6 zestawów, oba końce edytowalne, na jasnym tle przyciemniany). Karta podglądu **rysuje się sama**, więc zgadza się z paskiem co do piksela. |
+| Kolor cyfr / gradient | Sześć cyfr **każda w innym kolorze** (20 gotowych + suwaki HSV + jak w systemie), dwukropki optycznie wyśrodkowane. Albo **gradient** od koloru początkowego do końcowego (20 zestawów, oba końce edytowalne, na jasnym tle przyciemniany). Karta podglądu **rysuje się sama**, więc zgadza się z paskiem co do piksela. |
 | Okno po długim naciśnięciu | Półprzezroczyste okno z **czasem sieciowym**; przesuwanie, rozmiar za róg ◣, pozycja i rozmiar **są pamiętane**; gradient i cyfry o równej szerokości. |
 | Własne zadania | Okna **co godzinę** lub **codziennie**: włącz sekundy N minut wcześniej na M minut, potem przywróć. Zmiana godziny lub strefy przelicza od razu, plus kontrola co 60 sekund. |
 | Porównanie z czasem sieciowym | Pokazuje odchylenie od **czasu sieciowego**; przycisk **Synchronizuj** włącza automatyczne ustawianie czasu w systemie. |
@@ -48,11 +48,16 @@ Dwa sposoby kolorowania, przełączane w karcie **Kolory cyfr**: **według cyfr*
 Według cyfr: każda cyfra własny kolor, dwukropki optycznie wyśrodkowane
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Gradient: od koloru początkowego do końcowego, 6 zestawów lub własne końce" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Gradient: od koloru początkowego do końcowego, 20 zestawów lub własne końce" width="100%">
 <br>
-Gradient: od koloru początkowego do końcowego, 6 zestawów lub własne końce
+Gradient: od koloru początkowego do końcowego, 20 zestawów lub własne końce
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Instalacja
 

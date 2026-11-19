@@ -27,7 +27,7 @@ Mostra os **segundos** no relógio da barra de status, alternando com um toque. 
 |------|------|
 | Segundos na barra | `HH:mm:ss` / `h:mm:ss a`, respeita o formato 12/24 h e o fuso horário. Um **espaço de largura zero** é adicionado no fim para os temas não removerem as cores; se as cores caírem, o texto é redesenhado (pausa de 5 minutos). |
 | Alternar com um toque | **Tocar** no horário liga ou desliga os segundos (pode escolher **toque duplo**); o **toque longo** é da janela de prévia. Dentro de uma tarefa aparece o aviso de que ela está no controle. |
-| Cor por dígito / gradiente | Seis dígitos **cada um com sua cor** (10 predefinições + barras HSV + cor do sistema) e os dois-pontos centralizados opticamente. Ou um **gradiente** da cor inicial à final (6 conjuntos, pontas editáveis, escurecido em fundo claro). A prévia **se desenha sozinha**, então bate com a barra pixel a pixel. |
+| Cor por dígito / gradiente | Seis dígitos **cada um com sua cor** (20 predefinições + barras HSV + cor do sistema) e os dois-pontos centralizados opticamente. Ou um **gradiente** da cor inicial à final (20 conjuntos, pontas editáveis, escurecido em fundo claro). A prévia **se desenha sozinha**, então bate com a barra pixel a pixel. |
 | Prévia no toque longo | Janela translúcida com o **horário da rede**; arraste para mover, canto ◣ para o tamanho, posição e tamanho **ficam guardados**; aceita gradiente e dígitos de largura fixa. |
 | Tarefas próprias | Janelas **a cada hora** ou **a cada dia**: ligar os segundos N minutos antes por M minutos e depois restaurar. Mudança de hora ou fuso é recalculada na hora, com revisão a cada 60 segundos. |
 | Comparação com o horário da rede | Mostra a diferença para o **horário da rede**; um toque em **Sincronizar** liga o ajuste automático do sistema. |
@@ -48,11 +48,16 @@ Duas formas de colorir, alternadas no cartão **Cores dos dígitos**: **por díg
 Por dígito: cada número com sua cor, dois-pontos centralizados opticamente
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Gradiente: da cor inicial à final, 6 conjuntos ou pontas próprias" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Gradiente: da cor inicial à final, 20 conjuntos ou pontas próprias" width="100%">
 <br>
-Gradiente: da cor inicial à final, 6 conjuntos ou pontas próprias
+Gradiente: da cor inicial à final, 20 conjuntos ou pontas próprias
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Instalação
 

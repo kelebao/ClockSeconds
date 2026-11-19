@@ -27,7 +27,7 @@ Hiển thị **giây** trên thanh trạng thái, chạm để bật/tắt. Có 
 |------|------|
 | Giây trên thanh trạng thái | `HH:mm:ss` / `h:mm:ss a`, theo định dạng 12/24 giờ và múi giờ của hệ thống. Cuối chuỗi được thêm **khoảng trắng độ rộng 0** để module giao diện không xoá mất màu, và tự vẽ lại khi mất màu (nghỉ 5 phút). |
 | Chạm để chuyển | **Chạm** vào thời gian để bật/tắt giây (có thể chọn **chạm hai lần**); **nhấn giữ** dành cho cửa sổ xem trước; trong khung giờ có tác vụ, chạm sẽ báo "tác vụ đang điều khiển". |
-| Màu từng chữ số / dải màu | Sáu chữ số **mỗi số một màu** (10 màu sẵn + thanh HSV + theo hệ thống), dấu hai chấm tự căn quang học; hoặc **dải màu** từ màu đầu đến màu cuối (6 bộ sẵn, tự chọn hai đầu, nền sáng tự làm tối). Thẻ xem trước được **tự vẽ** nên khớp từng điểm ảnh với thanh trạng thái. |
+| Màu từng chữ số / dải màu | Sáu chữ số **mỗi số một màu** (20 màu sẵn + thanh HSV + theo hệ thống), dấu hai chấm tự căn quang học; hoặc **dải màu** từ màu đầu đến màu cuối (20 bộ sẵn, tự chọn hai đầu, nền sáng tự làm tối). Thẻ xem trước được **tự vẽ** nên khớp từng điểm ảnh với thanh trạng thái. |
 | Cửa sổ xem trước | Cửa sổ kính mờ hiển thị **giờ mạng**; kéo để di chuyển, kéo góc ◣ để đổi kích thước, vị trí và kích thước **được ghi nhớ**; có dải màu, chữ số đều nhau. |
 | Tác vụ tự đặt | Khung **mỗi giờ** hoặc **mỗi ngày**: bật giây trước N phút trong M phút rồi trả lại như cũ. Đổi giờ hệ thống hoặc múi giờ sẽ tính lại ngay, kèm bước dự phòng 60 giây. |
 | So sánh giờ mạng | Hiển thị chênh lệch giữa **giờ mạng** và giờ máy; nhấn **Đồng bộ** để bật "tự động đặt giờ" của hệ thống. |
@@ -48,11 +48,16 @@ Hai cách tô màu, chuyển trong thẻ **Màu chữ số**: **từng chữ s�
 Từng chữ số: mỗi số một màu, dấu hai chấm căn quang học
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Dải màu: từ màu đầu đến màu cuối, 6 bộ sẵn hoặc tự chọn" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Dải màu: từ màu đầu đến màu cuối, 20 bộ sẵn hoặc tự chọn" width="100%">
 <br>
-Dải màu: từ màu đầu đến màu cuối, 6 bộ sẵn hoặc tự chọn
+Dải màu: từ màu đầu đến màu cuối, 20 bộ sẵn hoặc tự chọn
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Cài đặt
 

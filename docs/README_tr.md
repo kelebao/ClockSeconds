@@ -27,7 +27,7 @@ Durum çubuğu saatinde **saniye** gösterir, dokunuşla açılıp kapanır. **H
 |------|------|
 | Durum çubuğunda saniye | `HH:mm:ss` / `h:mm:ss a`, sistemin 12/24 saat ve saat dilimi ayarına uyar. Tema modülleri renk spanlarını silemesin diye sona **sıfır genişlikli boşluk** eklenir ve renk kaybolursa otomatik yeniden çizilir (5 dakika bekleme). |
 | Dokunarak değiştirme | Saate **dokununca** saniye açılır/kapanır (**çift dokunma** seçilebilir); **uzun basma** yüzen önizlemeye ayrılmıştır. Görev penceresinde "görev devraldı" bilgisi görünür. |
-| Rakam başına renk / geçiş | Altı rakam **ayrı ayrı** renklendirilir (10 hazır renk + HSV kaydırıcıları + sistemi izle), iki nokta optik olarak ortalanır; ya da tüm dize için **renk geçişi** (başlangıç → bitiş, 6 hazır, iki uç özelleştirilebilir, açık zeminde otomatik koyulaştırma). Önizleme **kendi çizimimiz** olduğu için durum çubuğuyla birebir aynıdır. |
+| Rakam başına renk / geçiş | Altı rakam **ayrı ayrı** renklendirilir (20 hazır renk + HSV kaydırıcıları + sistemi izle), iki nokta optik olarak ortalanır; ya da tüm dize için **renk geçişi** (başlangıç → bitiş, 20 hazır, iki uç özelleştirilebilir, açık zeminde otomatik koyulaştırma). Önizleme **kendi çizimimiz** olduğu için durum çubuğuyla birebir aynıdır. |
 | Uzun basma önizlemesi | **Ağ saati**ni gösteren buzlu cam pencere; sürükleyerek taşıyın, ◣ köşesinden boyutlandırın, konum ve boyut **hatırlanır**; renk geçişi ve eşit genişlikli rakamlar desteklenir. |
 | Özel görevler | **Her saat** veya **her gün** pencereleri: N dakika önce saniyeleri aç, M dakika sonra eski duruma dön. Sistem saati veya saat dilimi değişirse anında yeniden hesaplanır, ayrıca 60 saniyelik yedek vardır. |
 | Ağ saati karşılaştırması | **Ağ saati** ile cihaz saati arasındaki farkı gösterir; **Eşitle** sistemin "saati otomatik ayarla" seçeneğini açar. |
@@ -48,11 +48,16 @@ Rengi iki şekilde uygulayabilirsiniz, **Rakam renkleri** kartından geçiş yap
 Rakam başına: altı rakamın her biri kendi rengi, iki nokta optik ortada
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Renk geçişi: başlangıçtan bitişe, 6 hazır veya iki uç özel" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Renk geçişi: başlangıçtan bitişe, 20 hazır veya iki uç özel" width="100%">
 <br>
-Renk geçişi: başlangıçtan bitişe, 6 hazır veya iki uç özel
+Renk geçişi: başlangıçtan bitişe, 20 hazır veya iki uç özel
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Kurulum
 

@@ -27,7 +27,7 @@ Mostra i **secondi** nell'orologio della barra di stato, si attiva con un tocco.
 |------|------|
 | Secondi nella barra | `HH:mm:ss` / `h:mm:ss a`, rispetta il formato 12/24 h e il fuso orario. In coda viene aggiunto uno **spazio di larghezza zero** così i temi non tolgono i colori; se i colori cadono, il testo viene ridisegnato automaticamente (pausa di 5 minuti). |
 | Attivazione al tocco | **Toccare** l'ora attiva o disattiva i secondi (si può scegliere il **doppio tocco**); la **pressione lunga** è riservata alla finestra di anteprima. Dentro un'attività viene mostrato che è lei a comandare. |
-| Colore per cifra / gradiente | Sei cifre **ognuna del proprio colore** (10 preset + slider HSV + colore di sistema) e i due punti centrati otticamente. Oppure un **gradiente** dal colore iniziale a quello finale (6 set, estremi modificabili, scurito su fondo chiaro). L'anteprima **si disegna da sola**, quindi coincide con la barra pixel per pixel. |
+| Colore per cifra / gradiente | Sei cifre **ognuna del proprio colore** (20 preset + slider HSV + colore di sistema) e i due punti centrati otticamente. Oppure un **gradiente** dal colore iniziale a quello finale (20 set, estremi modificabili, scurito su fondo chiaro). L'anteprima **si disegna da sola**, quindi coincide con la barra pixel per pixel. |
 | Finestra su pressione lunga | Finestra traslucida con l'**ora di rete**; trascina per spostare, angolo ◣ per la dimensione, posizione e dimensione **vengono ricordate**; gradiente e cifre a larghezza fissa. |
 | Attività personali | Finestre **ogni ora** o **ogni giorno**: accendere i secondi N minuti prima per M minuti e poi ripristinare. Il cambio di ora o fuso viene ricalcolato subito, più un controllo ogni 60 secondi. |
 | Confronto con l'ora di rete | Mostra lo scostamento dall'**ora di rete**; un tocco su **Sincronizza** attiva l'ora automatica di sistema. |
@@ -48,11 +48,16 @@ Due modi di colorare, si cambiano nella scheda **Colori delle cifre**: **per cif
 Per cifra: ogni cifra ha il suo colore, due punti centrati otticamente
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Gradiente: dal colore iniziale a quello finale, 6 set o estremi personalizzati" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Gradiente: dal colore iniziale a quello finale, 20 set o estremi personalizzati" width="100%">
 <br>
-Gradiente: dal colore iniziale a quello finale, 6 set o estremi personalizzati
+Gradiente: dal colore iniziale a quello finale, 20 set o estremi personalizzati
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Installazione
 

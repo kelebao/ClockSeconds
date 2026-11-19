@@ -27,7 +27,7 @@ Zeigt **Sekunden** in der Uhr der Statusleiste, umschaltbar per Tippen. Entweder
 |------|------|
 | Sekunden in der Statusleiste | `HH:mm:ss` / `h:mm:ss a`, folgt 12/24-Stunden-Format und Zeitzone. Am Ende steht ein **Leerzeichen der Breite null**, damit Themes die Farben nicht verlieren, bei Farbverlust wird automatisch neu gezeichnet (5 Minuten Pause). |
 | Tippen zum Umschalten | **Tippen** schaltet die Sekunden (wahlweise **Doppeltippen**), **langes Drücken** gehört dem Vorschaufenster. Innerhalb einer Aufgabe wird „von Aufgabe gesteuert" gemeldet. |
-| Farbe je Ziffer / Verlauf | Sechs Ziffern **jede in eigener Farbe** (10 Vorlagen + HSV-Regler + Systemfarbe), Doppelpunkte optisch zentriert. Oder ein **Verlauf** von Start- zu Endfarbe (6 Sätze, freie Enden, auf hellem Grund abgedunkelt). Die Vorschaukarte **zeichnet selbst** und stimmt pixelgenau mit der Statusleiste. |
+| Farbe je Ziffer / Verlauf | Sechs Ziffern **jede in eigener Farbe** (20 Vorlagen + HSV-Regler + Systemfarbe), Doppelpunkte optisch zentriert. Oder ein **Verlauf** von Start- zu Endfarbe (20 Sätze, freie Enden, auf hellem Grund abgedunkelt). Die Vorschaukarte **zeichnet selbst** und stimmt pixelgenau mit der Statusleiste. |
 | Vorschau per langem Drücken | Milchglas-Fenster mit **Netzwerkzeit**; verschieben, Größe an der Ecke ◣, Position und Größe **werden gemerkt**; Verlauf und Ziffern mit gleicher Breite. |
 | Eigene Aufgaben | Fenster **jede Stunde** oder **jeden Tag**: Sekunden N Minuten vorher für M Minuten an, dann zurück. Zeitänderung oder Zeitzonenwechsel wird sofort neu berechnet, plus Sicherheitslauf alle 60 Sekunden. |
 | Vergleich mit Netzwerkzeit | Zeigt die Abweichung zur **Netzwerkzeit**; ein Tippen auf **Synchronisieren** aktiviert die automatische Systemzeit. |
@@ -48,11 +48,16 @@ Zwei Arten der Färbung, umschaltbar in der Karte **Ziffernfarben**: **je Ziffer
 Je Ziffer: jede Ziffer eigene Farbe, Doppelpunkte optisch zentriert
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Verlauf: von Start- zu Endfarbe, 6 Sätze oder freie Enden" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Verlauf: von Start- zu Endfarbe, 20 Sätze oder freie Enden" width="100%">
 <br>
-Verlauf: von Start- zu Endfarbe, 6 Sätze oder freie Enden
+Verlauf: von Start- zu Endfarbe, 20 Sätze oder freie Enden
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Installation
 

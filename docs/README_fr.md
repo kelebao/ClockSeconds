@@ -27,7 +27,7 @@ Affiche les **secondes** dans l'horloge de la barre d'état, bascule au toucher.
 |------|------|
 | Secondes dans la barre | `HH:mm:ss` / `h:mm:ss a`, respecte le format 12/24 h et le fuseau horaire. Un **espace de largeur nulle** est ajouté à la fin pour que les thèmes ne retirent pas les couleurs ; en cas de perte, redessin automatique (pause de 5 minutes). |
 | Bascule au toucher | **Toucher** l'heure active ou coupe les secondes (option **double toucher**) ; l'**appui long** est réservé à la fenêtre d'aperçu. Pendant une tâche, un message indique qu'elle contrôle. |
-| Couleur par chiffre / dégradé | Six chiffres **chacun sa couleur** (10 préréglages + curseurs HSV + couleur système), deux-points centrés optiquement. Ou un **dégradé** du début à la fin (6 jeux, extrémités libres, assombri sur fond clair). La carte d'aperçu **se dessine elle-même** et correspond au pixel près à la barre. |
+| Couleur par chiffre / dégradé | Six chiffres **chacun sa couleur** (20 préréglages + curseurs HSV + couleur système), deux-points centrés optiquement. Ou un **dégradé** du début à la fin (20 jeux, extrémités libres, assombri sur fond clair). La carte d'aperçu **se dessine elle-même** et correspond au pixel près à la barre. |
 | Aperçu par appui long | Fenêtre translucide avec l'**heure réseau** ; glisser pour déplacer, coin ◣ pour la taille, position et taille **mémorisées** ; dégradé et chiffres de largeur fixe. |
 | Tâches personnelles | Fenêtres **chaque heure** ou **chaque jour** : activer les secondes N minutes avant pendant M minutes puis restaurer. Changement d'heure ou de fuseau recalculé aussitôt, plus un contrôle toutes les 60 secondes. |
 | Comparaison heure réseau | Affiche l'écart avec l'**heure réseau** ; un appui sur **Synchroniser** active l'heure automatique du système. |
@@ -48,11 +48,16 @@ Deux façons de colorer, à basculer dans la carte **Couleurs des chiffres** : *
 Par chiffre : une couleur par chiffre, deux-points centrés optiquement
 </td>
 <td align="center" width="50%">
-<img src="screenshots/colors-gradient.png" alt="Dégradé : du début à la fin, 6 jeux ou extrémités personnalisées" width="100%">
+<img src="screenshots/colors-gradient.png" alt="Dégradé : du début à la fin, 20 jeux ou extrémités personnalisées" width="100%">
 <br>
-Dégradé : du début à la fin, 6 jeux ou extrémités personnalisées
+Dégradé : du début à la fin, 20 jeux ou extrémités personnalisées
 </td>
 </tr></table>
+
+![Status bar time effects](screenshots/statusbar-effects.png)
+
+![Gradient form examples](screenshots/gradient-forms.png)
+
 
 ## Installation
 
