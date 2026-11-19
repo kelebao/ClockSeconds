@@ -57,4 +57,18 @@ public class UpdateCheckerTest {
         assertEquals(-1, Integer.signum(UpdateChecker.compareVersions("1.2.0", "1.3.0")));
         assertEquals(1, Integer.signum(UpdateChecker.compareVersions("1.10.0", "1.9.9")));
     }
+
+    @Test
+    public void compareVersions_ignoresFlavorSuffix() {
+        // 模块仓库 tag=354-1.3.1 -> 远端 "1.3.1"；modern 包 BuildConfig.VERSION_NAME="1.3.1-api102"
+        assertEquals(0, UpdateChecker.compareVersions("1.3.1", "1.3.1-api102"));
+        assertEquals(0, UpdateChecker.compareVersions("1.3.1-api102", "1.3.1"));
+        assertEquals(0, UpdateChecker.compareVersions("1.3.1-api102", "1.3.1-api102"));
+        assertEquals(-1, Integer.signum(
+                UpdateChecker.compareVersions("1.3.1-api102", "1.3.2")));
+        assertEquals(1, Integer.signum(
+                UpdateChecker.compareVersions("1.3.2", "1.3.1-api102")));
+        assertEquals(0, UpdateChecker.compareVersions(
+                "1.2.0-test.20261102-1500", "1.2.0"));
+    }
 }

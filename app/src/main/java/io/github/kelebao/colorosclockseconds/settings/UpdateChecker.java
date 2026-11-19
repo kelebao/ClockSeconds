@@ -242,7 +242,8 @@ public final class UpdateChecker {
 
     /**
      * 版本比较：a 比 b 新返回正数，相同返回 0，旧返回负数。
-     * 按 "." 分段逐段比对数字；任一非数字段按 0 处理，无法比较时退化为字符串比较。
+     * 先剥离 flavor/构建后缀（如 "-api102"），再按 "." 分段逐段比对数字；
+     * 非数字段按 0 处理。
      */
     public static int compareVersions(String a, String b) {
         if (a == null && b == null) {
@@ -254,6 +255,10 @@ public final class UpdateChecker {
         if (b == null) {
             return 1;
         }
+        // modern 包 versionName 带 "-api102" 后缀；模块仓库 tag 解析出的远端版本不带后缀。
+        // 不归一化会把 "1.3.1" 误判为比 "1.3.1-api102" 新，导致已装最新版仍弹更新。
+        a = normalizeVersion(a);
+        b = normalizeVersion(b);
         String[] pa = a.split("\\.");
         String[] pb = b.split("\\.");
         int n = Math.max(pa.length, pb.length);
@@ -267,9 +272,31 @@ public final class UpdateChecker {
         return 0;
     }
 
+    /** 去掉版本名里的 flavor/构建后缀（如 "-api102"、"-test.20261102"），只留数字版本。 */
+    private static String normalizeVersion(String version) {
+        String s = version.trim();
+        if (s.startsWith("v") || s.startsWith("V")) {
+            s = s.substring(1).trim();
+        }
+        int cut = s.length();
+        int dash = s.indexOf('-');
+        if (dash >= 0) cut = Math.min(cut, dash);
+        int plus = s.indexOf('+');
+        if (plus >= 0) cut = Math.min(cut, plus);
+        return s.substring(0, cut).trim();
+    }
+
     private static int parseIntSafe(String s) {
+        String t = s.trim();
+        int end = 0;
+        while (end < t.length() && Character.isDigit(t.charAt(end))) {
+            end++;
+        }
+        if (end == 0) {
+            return 0;
+        }
         try {
-            return Integer.parseInt(s.trim());
+            return Integer.parseInt(t.substring(0, end));
         } catch (NumberFormatException e) {
             return 0;
         }
