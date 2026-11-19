@@ -74,6 +74,8 @@ Kod źródłowy tego modułu: MIT © kelebao</string>
     <string name="launcher_label">Zegar</string>
     <string name="settings_about_guide">Przewodnik</string>
     <string name="settings_about_guide_sum">Jak używać i FAQ</string>
+    <string name="settings_about_author">Author: 阿不1299</string>
+    <string name="settings_about_author_sum">Coolapk profile · @Abu1299</string>
     <string name="settings_intro_title">Witaj w Clock Seconds</string>
     <string name="settings_intro_msg">Dziękujemy za zainstalowanie Clock Seconds!\n\n1. Aktywacja: w LSPosed włącz ten moduł i zaznacz «SystemUI», a następnie zrestartuj SystemUI.\n2. Pokaż/ukryj sekundy: dotknij godziny na pasku stanu (lewy górny róg), aby przełączyć. Jeśli koliduje to z opuszczaniem panelu powiadomień, zmień na podwójne dotknięcie w „Gescie przełączania sekund”.\n3. Kolor godziny: pokoloruj cyfrę dziesiątek godziny dowolnym kolorem; po wyłączeniu przywraca domyślne ustawienie systemu.\n4. Zwijana godzina: przytrzymaj godzinę na pasku stanu, aby pokazać czas sieciowy.\n5. Zmiany są natychmiastowe; w przeciwnym razie zrestartuj SystemUI lub urządzenie.</string>
     <string name="settings_intro_ok">Zacznij</string>

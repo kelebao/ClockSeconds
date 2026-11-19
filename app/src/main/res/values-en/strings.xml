@@ -73,6 +73,8 @@ Source code of this module: MIT © kelebao</string>
     <string name="settings_launcher_off">Launcher icon hidden; reboot for it to disappear from the home screen</string>
     <string name="settings_about_guide">Usage guide</string>
     <string name="settings_about_guide_sum">How to use &amp; FAQ</string>
+    <string name="settings_about_author">Author: 阿不1299</string>
+    <string name="settings_about_author_sum">Coolapk profile · @Abu1299</string>
     <string name="settings_intro_title">Welcome to Clock Seconds</string>
     <string name="settings_intro_msg">Thanks for installing Clock Seconds!\n\n1. Activate: in LSPosed, enable this module and check “SystemUI”, then restart SystemUI.\n2. Show/hide seconds: tap the status-bar time (top left) to toggle. If it conflicts with pulling down the shade, switch to double-tap in “Toggle seconds gesture”.\n3. Hour color: tint the hour tens digit any color; off restores the system default.\n4. Floating time: long-press the status-bar time to show network time.\n5. Changes are immediate; if not, restart SystemUI or the device.</string>
     <string name="settings_intro_ok">Get started</string>

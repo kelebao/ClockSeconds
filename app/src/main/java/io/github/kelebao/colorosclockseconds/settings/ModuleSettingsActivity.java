@@ -104,6 +104,7 @@ public final class ModuleSettingsActivity extends Activity {
             "https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases";
     /** 源码仓库主页。 */
     private static final String REPO_URL = "https://github.com/kelebao/ClockSeconds";
+    private static final String COOLAPK_URL = "https://www.coolapk.com/u/609816";
 
     private static final String PREFS_NAME = "clock_seconds_settings";
     private static final String KEY_AUTO_UPDATE = "auto_update";
@@ -4819,6 +4820,9 @@ public final class ModuleSettingsActivity extends Activity {
         card.addView(divider());
         card.addView(linkRow(R.string.settings_about_guide, R.string.settings_about_guide_sum,
                 v -> showGuideDialog()));
+        card.addView(divider());
+        card.addView(linkRow(R.string.settings_about_author, R.string.settings_about_author_sum,
+                v -> openUrl(COOLAPK_URL)));
         root.addView(card);
     }
 
