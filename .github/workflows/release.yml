@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coloros-clock-seconds-release
-          path: app/build/outputs/apk/release/app-release.apk
+          path: app/build/outputs/apk/*/release/*.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -65,8 +65,17 @@ jobs:
           set -euo pipefail
           tag="${GITHUB_REF#refs/tags/}"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" app/build/outputs/apk/release/app-release.apk --clobber
-            echo "uploaded app-release.apk to existing release $tag"
+            version="${tag#v}"
+            for apk in app/build/outputs/apk/*/release/*.apk; do
+              case "$apk" in
+                */legacy/release/*) name="io.github.kelebao.colorosclockseconds_${version}.apk" ;;
+                */modern/release/*) name="io.github.kelebao.colorosclockseconds_${version}-api102.apk" ;;
+                *) continue ;;
+              esac
+              cp "$apk" "$RUNNER_TEMP/$name"
+              gh release upload "$tag" "$RUNNER_TEMP/$name" --clobber
+              echo "uploaded $name to existing release $tag"
+            done
           else
             echo "no release for $tag yet — skipped (maintainer creates it with notes and the canonical APK name)"
           fi
