@@ -45,10 +45,10 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Lint
-        run: ./gradlew lintDebug --no-daemon
+        run: ./gradlew lintLegacyDebug lintModernDebug --no-daemon
 
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest --no-daemon
+        run: ./gradlew testLegacyDebugUnitTest --no-daemon
 
       # CI 无本地签名 secrets → 走 unsigned 路径（build.gradle.kts 的 hasReleaseSigning 判断），
       # 构建仍成功；此步用于尽早发现 release 变体的打包/资源/lintVital 问题。
