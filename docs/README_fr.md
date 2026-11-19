@@ -54,7 +54,7 @@ Dégradé : du début à la fin, 20 jeux ou extrémités personnalisées
 </td>
 </tr></table>
 
-![Status bar time effects](screenshots/statusbar-effects.png)
+![Notification shade clock](screenshots/notification-time.png)
 
 ![Gradient form examples](screenshots/gradient-forms.png)
 

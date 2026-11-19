@@ -54,7 +54,7 @@ Dải màu: từ màu đầu đến màu cuối, 20 bộ sẵn hoặc tự chọ
 </td>
 </tr></table>
 
-![Status bar time effects](screenshots/statusbar-effects.png)
+![Notification shade clock](screenshots/notification-time.png)
 
 ![Gradient form examples](screenshots/gradient-forms.png)
 

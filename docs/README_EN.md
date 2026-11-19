@@ -54,7 +54,7 @@ Gradient: start colour to end colour, 20 presets or custom ends
 </td>
 </tr></table>
 
-![Status bar time effects](screenshots/statusbar-effects.png)
+![Notification shade clock](screenshots/notification-time.png)
 
 ![Gradient form examples](screenshots/gradient-forms.png)
 

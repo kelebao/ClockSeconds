@@ -54,7 +54,7 @@ Gradient: od koloru początkowego do końcowego, 20 zestawów lub własne końce
 </td>
 </tr></table>
 
-![Status bar time effects](screenshots/statusbar-effects.png)
+![Notification shade clock](screenshots/notification-time.png)
 
 ![Gradient form examples](screenshots/gradient-forms.png)
 

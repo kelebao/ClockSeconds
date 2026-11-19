@@ -54,7 +54,7 @@ Gradiente: da cor inicial à final, 20 conjuntos ou pontas próprias
 </td>
 </tr></table>
 
-![Status bar time effects](screenshots/statusbar-effects.png)
+![Notification shade clock](screenshots/notification-time.png)
 
 ![Gradient form examples](screenshots/gradient-forms.png)
 

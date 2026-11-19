@@ -54,7 +54,7 @@ Gradien: dari warna awal ke akhir, 20 set atau ujung sendiri
 </td>
 </tr></table>
 
-![Status bar time effects](screenshots/statusbar-effects.png)
+![Notification shade clock](screenshots/notification-time.png)
 
 ![Gradient form examples](screenshots/gradient-forms.png)
 

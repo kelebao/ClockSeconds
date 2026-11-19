@@ -54,7 +54,7 @@ Degradado: de color inicial a final, 20 juegos o extremos propios
 </td>
 </tr></table>
 
-![Status bar time effects](screenshots/statusbar-effects.png)
+![Notification shade clock](screenshots/notification-time.png)
 
 ![Gradient form examples](screenshots/gradient-forms.png)
 

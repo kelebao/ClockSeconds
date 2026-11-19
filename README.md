@@ -58,9 +58,9 @@
 
 ## 通知栏时间效果
 
-下面两张图都是实机截图：第一张是状态栏时间效果，第二张是 4 种状态栏时间渐变效果。
+下面两张图都是实机截图：第一张是通知栏时间效果，第二张是 4 种状态栏时间渐变效果。
 
-![状态栏时间效果（实机截图）](docs/screenshots/statusbar-effects.png)
+![通知栏时间效果（实机截图）](docs/screenshots/notification-time.png)
 
 ![状态栏时间渐变效果（4 种实机示例）](docs/screenshots/gradient-forms.png)
 
