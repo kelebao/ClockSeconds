@@ -54,28 +54,3 @@ jobs:
           path: app/build/outputs/apk/*/release/*.apk
           if-no-files-found: error
           retention-days: 30
-
-      # 只往"已存在的" Release 追加 APK，避免 CI 抢先建一个正文为空、附件名不规范的 Release。
-      # 正式 Release（含更新说明 + io.github.kelebao.colorosclockseconds_<versionName>.apk）由维护者在本地创建。
-      - name: Attach APK to an existing GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          tag="${GITHUB_REF#refs/tags/}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            version="${tag#v}"
-            for apk in app/build/outputs/apk/*/release/*.apk; do
-              case "$apk" in
-                */legacy/release/*) name="io.github.kelebao.colorosclockseconds_${version}.apk" ;;
-                */modern/release/*) name="io.github.kelebao.colorosclockseconds_${version}-api102.apk" ;;
-                *) continue ;;
-              esac
-              cp "$apk" "$RUNNER_TEMP/$name"
-              gh release upload "$tag" "$RUNNER_TEMP/$name" --clobber
-              echo "uploaded $name to existing release $tag"
-            done
-          else
-            echo "no release for $tag yet — skipped (maintainer creates it with notes and the canonical APK name)"
-          fi
