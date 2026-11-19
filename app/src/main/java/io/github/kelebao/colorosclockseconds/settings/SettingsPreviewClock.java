@@ -365,9 +365,14 @@ public class SettingsPreviewClock extends TextView {
         final Paint paint = getPaint();
         float x0;
         float baseline;
+        float before;
+        float w;
         if (manual != null) {
             x0 = manual[0];
             baseline = manual[1];
+            final float spacing = paint.getLetterSpacing() * paint.getTextSize();
+            before = paint.measureText(cs, 0, charIndex) + spacing * charIndex;
+            w = paint.measureText(cs, charIndex, charIndex + 1) + spacing;
         } else {
             android.text.Layout layout = getLayout();
             if (layout == null) {
@@ -375,11 +380,13 @@ public class SettingsPreviewClock extends TextView {
             }
             x0 = layout.getLineLeft(0);
             baseline = layout.getLineBaseline(0);
+            // vc349：直接取 layout 的真实字形位置，包含 ColonLiftSpan 动态冒号宽度与 letterSpacing。
+            before = layout.getPrimaryHorizontal(charIndex);
+            w = layout.getPrimaryHorizontal(charIndex + 1) - before;
         }
-        // t18②：layout 排版含 letterSpacing，逐字 advance = measureText + spacing * textSize
-        final float spacing = paint.getLetterSpacing() * paint.getTextSize();
-        final float before = paint.measureText(cs, 0, charIndex) + spacing * charIndex;
-        final float w = paint.measureText(cs, charIndex, charIndex + 1) + spacing;
+        if (w <= 0f) {
+            return;
+        }
         // t18①/vc340：按当前数字的实际字形范围取框，比 FontMetrics 整行高低短一截，
         // 框底不再落到 TextView 之外；只留少量呼吸感，避免取景框过长/被裁。
         final android.graphics.Rect gb = new android.graphics.Rect();
@@ -420,25 +427,35 @@ public class SettingsPreviewClock extends TextView {
         }
         final Paint paint = getPaint();
         android.text.Layout layout = getLayout();
-        float x0;
+        int lastSlot = -1;
         if (layout != null) {
-            x0 = layout.getLineLeft(0);
-        } else {
-            final float band = paint.measureText(cs, 0, cs.length());
-            x0 = (getWidth() - band) / 2f;
+            // vc349：用 layout 实际字形边界，和 ColonLiftSpan 自绘的冒号宽度保持一致。
+            final float lineLeft = layout.getLineLeft(0);
+            for (int i = 0; i < cs.length(); i++) {
+                final float l = lineLeft + layout.getPrimaryHorizontal(i);
+                final float r = lineLeft + layout.getPrimaryHorizontal(i + 1);
+                final int slot = ClockSecondsConfig.slotOfChar(cs, i);
+                if (slot >= 0) {
+                    lastSlot = slot;
+                }
+                if (x >= l && x < r) {
+                    return slot;
+                }
+            }
+            return lastSlot;
         }
-        // t18②：与排版一致，逐字 advance 计入 letterSpacing
+        final float band = paint.measureText(cs, 0, cs.length());
+        final float x0 = (getWidth() - band) / 2f;
         final float spacing = paint.getLetterSpacing() * paint.getTextSize();
         float acc = x0;
-        int lastSlot = -1;
         for (int i = 0; i < cs.length(); i++) {
             final float w = paint.measureText(cs, i, i + 1) + spacing;
             if (x >= acc && x < acc + w) {
                 return ClockSecondsConfig.slotOfChar(cs, i);
             }
-            int s = ClockSecondsConfig.slotOfChar(cs, i);
-            if (s >= 0) {
-                lastSlot = s;
+            final int slot = ClockSecondsConfig.slotOfChar(cs, i);
+            if (slot >= 0) {
+                lastSlot = slot;
             }
             acc += w;
         }
