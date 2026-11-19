@@ -58,11 +58,11 @@
 
 ## 通知栏时间效果
 
-下面两张图都是真机截图：第一张看逐位颜色、整串渐变和跟随系统深浅色的效果；第二张是 11 种渐变形式中的 6 种示例。
+下面两张图都是实机截图：第一张是状态栏时间效果，第二张是 4 种状态栏时间渐变效果。
 
-![通知栏时间效果：逐位颜色、整串渐变、跟随系统深浅色](docs/screenshots/statusbar-effects.png)
+![状态栏时间效果（实机截图）](docs/screenshots/statusbar-effects.png)
 
-![11 种渐变形式中的 6 种实机效果](docs/screenshots/gradient-forms.png)
+![状态栏时间渐变效果（4 种实机示例）](docs/screenshots/gradient-forms.png)
 
 
 ## 安装
