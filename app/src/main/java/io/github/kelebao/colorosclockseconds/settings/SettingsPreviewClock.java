@@ -393,9 +393,10 @@ public class SettingsPreviewClock extends TextView {
             if (layout == null) {
                 return;
             }
-            x0 = layout.getLineLeft(0);
+            // vc351：getPrimaryHorizontal 已经是视图内容区里的绝对 x，不能再加 getLineLeft(0)。
+            // vc349 多加了一次行左边距，居中文本会把取景框整体右移约一个行左边距。
+            x0 = 0f;
             baseline = layout.getLineBaseline(0);
-            // vc349：直接取 layout 的真实字形位置，包含 ColonLiftSpan 动态冒号宽度与 letterSpacing。
             before = layout.getPrimaryHorizontal(charIndex);
             w = layout.getPrimaryHorizontal(charIndex + 1) - before;
         }
@@ -411,10 +412,11 @@ public class SettingsPreviewClock extends TextView {
         final float pad = (bottom - top) * 0.10f;
         final float l = x0 + before - pad;
         final float r = x0 + before + w + pad;
+        // vc353：框高维持原样（上一版收竖向是改错方向），只把四角笔画改短。
         final float t = top - pad;
         final float b = bottom + pad;
         // 四角「相机取景框」线：每角横竖两笔，臂长 ≈ 30% 框宽
-        final float arm = Math.min(r - l, b - t) * 0.3f;
+        final float arm = Math.min(r - l, b - t) * 0.18f;
         final float stroke = Math.max(2f, (bottom - top) * 0.05f);
         mViewfinderPaint.setColor(mViewfinderColor);
         mViewfinderPaint.setStrokeWidth(stroke);
@@ -446,10 +448,10 @@ public class SettingsPreviewClock extends TextView {
         // vc350：渐变自绘不走 layout，点击位改按同一套自动冒号宽度计算。
         if (!mGradOn && layout != null) {
             // vc349：用 layout 实际字形边界，和 ColonLiftSpan 自绘的冒号宽度保持一致。
-            final float lineLeft = layout.getLineLeft(0);
+            // vc351：与取景框同步，getPrimaryHorizontal 已含行左偏移，不再叠加 getLineLeft(0)。
             for (int i = 0; i < cs.length(); i++) {
-                final float l = lineLeft + layout.getPrimaryHorizontal(i);
-                final float r = lineLeft + layout.getPrimaryHorizontal(i + 1);
+                final float l = layout.getPrimaryHorizontal(i);
+                final float r = layout.getPrimaryHorizontal(i + 1);
                 final int slot = ClockSecondsConfig.slotOfChar(cs, i);
                 if (slot >= 0) {
                     lastSlot = slot;
