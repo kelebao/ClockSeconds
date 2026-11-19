@@ -10,7 +10,7 @@
 
 Durum çubuğu saatinde **saniye** gösterir, dokunuşla açılıp kapanır. **Her rakamı ayrı renklendirin** ya da tüm dizeye **renk geçişi** uygulayın.<br>**Uzun basınca** **ağ saati**ni gösteren buzlu cam penceresi açılır (sürüklenebilir, boyutlandırılabilir, renk geçişli); **özel görevler** saat başında saniyeleri otomatik açar.<br>Çekirdek yol yalnızca AOSP açık API kullanır (OPPO / OnePlus / realme özel sınıfları isteğe bağlıdır, yoksa atlanır). ColorOS 15 / 16 üzerinde doğrulandı.
 
-[![version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.1-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
