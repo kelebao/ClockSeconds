@@ -10,7 +10,7 @@
 
 상태 표시줄 시간에 **초**를 표시하고 탭으로 전환합니다. **자리마다 색**을 지정하거나 문자열 전체에 **그라데이션**을 넣을 수 있습니다.<br>**길게 누르면** **네트워크 시간**을 보여 주는 반투명 창(드래그·크기 조절·그라데이션 지원)이 열리고, **사용자 지정 작업**으로 정시에 초를 자동으로 켤 수 있습니다.<br>핵심 경로는 AOSP 공개 API만 사용합니다(OPPO / OnePlus / realme 비공개 클래스는 선택 사항이며 없으면 건너뜀). ColorOS 15 / 16 실기기 검증 완료.
 
-[![version](https://img.shields.io/badge/version-1.3.1-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.2-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)

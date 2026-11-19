@@ -10,7 +10,7 @@
 
 让状态栏时间显示**秒**，单击即切换；**六个数字可逐位上色**，也能整串铺一条**渐变**；<br>**长按**弹出毛玻璃浮窗实时显示**网络时间**（可拖动、可拉伸，同样支持渐变）；<br>还能给「整点 / 每天某时刻」排**自定义任务**，到点自动开秒。<br>核心链路只用 AOSP 公开 API（OPPO / 一加 / 真我的私有类兼容为可选增强、找不到即跳过），已在 ColorOS 15 / 16 真机验证。
 
-[![version](https://img.shields.io/badge/version-1.3.1-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.2-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
@@ -42,7 +42,7 @@
 | 界面语言 | 应用内界面已适配 **21 种语言**（跟随系统语言自动切换）：简体中文、English、繁體中文、日本語、한국어、Türkçe、Русский、Tiếng Việt、ไทย、Deutsch、Español、Français、Українська、Polski、Português (Brasil)、فارسی、العربية、Bahasa Indonesia、Italiano、Ελληνικά、ქართული；其余语言回落到英文 |
 | 持久化 / 适配范围 | 状态存于 `Settings.Secure`，跨进程共享，重启 SystemUI 或重启设备后保持。**ColorOS 15 / 16（Android 15 / 16）已真机验证**；核心链路只用 AOSP 公开 API，理论上其它厂商同样生效，但作者手上只有 OPPO / 一加的机器，**其它厂商尚未真机验证**。最低支持 Android 10 |
 
-> 当前正式版为 **v1.3.1**（versionCode 354，modern API 102 为 `1.3.1-api102`）。通俗版升级说明见 [v1.3.0 → v1.3.1](docs/更新说明-v1.3.1.md)；上一版说明见 [v1.2.0 → v1.3.0](docs/更新说明-v1.3.0.md)。
+> 当前正式版为 **v1.3.2**（versionCode 355，modern API 102 为 `1.3.2-api102`）。更新说明见 [CHANGELOG](CHANGELOG.md) 与 [v1.3.2 Release](https://github.com/kelebao/ClockSeconds/releases/tag/v1.3.2)；上一版说明见 [v1.3.0 → v1.3.1](docs/更新说明-v1.3.1.md)。
 
 ## 颜色效果
 

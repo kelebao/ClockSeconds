@@ -10,7 +10,7 @@
 
 **ثانیه** را روی ساعت نوار وضعیت نشان می‌دهد و با لمس روشن/خاموش می‌شود. می‌توانید به **هر رقم یک رنگ** داد یا **گرادیان** را روی کل متن گذاشت.<br>**نگه‌داشتن** پنجره نیمه‌شفاف **زمان شبکه** را باز می‌کند (جابه‌جایی، اندازه، گرادیان)؛ **کارهای خودکار** ثانیه را در ساعت مشخص روشن می‌کنند.<br>مسیر اصلی فقط از APIهای عمومی AOSP استفاده می‌کند (کلاس‌های اختصاصی OPPO / OnePlus / realme اختیاری هستند و در صورت نبود رد می‌شوند). روی ColorOS 15 / 16 آزمایش شده است.
 
-[![version](https://img.shields.io/badge/version-1.3.1-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
+[![version](https://img.shields.io/badge/version-1.3.2-blue.svg?style=flat-square)](https://github.com/kelebao/ClockSeconds/releases/latest)
 ![android](https://img.shields.io/badge/Android-10%2B-brightgreen.svg?style=flat-square)
 [![lsposed](https://img.shields.io/badge/LSPosed-module-orange.svg?style=flat-square)](https://github.com/Xposed-Modules-Repo/io.github.kelebao.colorosclockseconds/releases)
 ![coloros](https://img.shields.io/badge/ColorOS%2015%2F16-verified-success.svg?style=flat-square)
